@@ -3,13 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { date } from "@/tarkov/lib/format";
+import { tarkovDevSearchUrl, type Mode } from "@/tarkov/lib/modes";
 import Lines from "@/components/Lines";
 
 type Hit = { aid: number; name: string; last: number | null };
 
-const NOT_FOUND = "찾는 닉네임이 없습니다. 닉네임 목록은 하루 한 번 갱신되므로, 오늘 처음 조회된 계정은 tarkov.dev 주소 끝의 계정 번호로 찾아주세요.";
+const NOT_FOUND = "찾는 닉네임이 없습니다. tarkov.dev 프로필 주소 끝의 계정 번호로 찾아주세요.";
 
-export default function SearchBox({ autoFocus, compact, initial }: { autoFocus?: boolean; compact?: boolean; initial?: string }) {
+export default function SearchBox({ autoFocus, compact, initial, mode }: { autoFocus?: boolean; compact?: boolean; initial?: string; mode?: Mode }) {
   const router = useRouter();
   const [q, setQ] = useState(initial ?? "");
   // 첫 화면 검색창에서 전달된 검색어는 결과가 오면 한 번 제출
@@ -20,6 +21,8 @@ export default function SearchBox({ autoFocus, compact, initial }: { autoFocus?:
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const seq = useRef(0);
+  const searched = useRef("");
+  const failed = useRef(false);
   const input = useRef<HTMLInputElement>(null);
 
   // 휴대폰에서는 키보드가 화면을 가리지 않게 자동 초점을 주지 않음
@@ -40,6 +43,8 @@ export default function SearchBox({ autoFocus, compact, initial }: { autoFocus?:
         const r = await fetch(`/api/search?q=${encodeURIComponent(t)}`);
         const data = (await r.json()) as { results?: Hit[]; error?: string };
         if (n !== seq.current) return;
+        searched.current = t;
+        failed.current = Boolean(data.error);
         setHits(data.results ?? []);
         setActive(-1);
         setOpen(true);
@@ -57,13 +62,24 @@ export default function SearchBox({ autoFocus, compact, initial }: { autoFocus?:
           } else if (!list.length && !data.error) setMsg(NOT_FOUND);
         }
       } catch {
-        if (n === seq.current) setMsg("검색하지 못했습니다.");
+        if (n !== seq.current) return;
+        // 검색이 실패해도 계정 번호는 바로 열리게 실패한 검색어도 끝난 것으로 둠
+        searched.current = t;
+        failed.current = true;
+        setHits([]);
+        const aid = pending.current && /^\d{1,10}$/.test(t) ? Number(t) : 0;
+        pending.current = false;
+        if (aid) {
+          setBusy(true);
+          router.push(`/tarkov/players/${aid}`);
+        } else setMsg("검색하지 못했습니다.");
       }
     }, 150);
     return () => clearTimeout(timer);
   }, [q, router]);
 
   const go = (h: Hit) => {
+    pending.current = false;
     setOpen(false);
     setBusy(true);
     router.push(`/tarkov/players/${h.aid}`);
@@ -72,13 +88,27 @@ export default function SearchBox({ autoFocus, compact, initial }: { autoFocus?:
   const submit = () => {
     const t = q.trim().toLowerCase();
     if (!t) return;
-    const pick = active >= 0 ? hits[active] : hits.find((h) => h.name.toLowerCase() === t || String(h.aid) === t) ?? (hits.length === 1 ? hits[0] : null);
+    // 목록에서 고른 후보는 결과를 기다리지 않고 바로 열림
+    if (active >= 0 && hits[active]) {
+      go(hits[active]);
+      return;
+    }
+    if (t.length < 2 && !/^\d+$/.test(t)) {
+      setMsg("두 글자 이상 입력해주세요.");
+      return;
+    }
+    // 지금 검색어의 결과가 오기 전이면 결과가 온 뒤 한 번 제출
+    if (searched.current !== q.trim()) {
+      pending.current = true;
+      return;
+    }
+    const pick = hits.find((h) => h.name.toLowerCase() === t || String(h.aid) === t) ?? (hits.length === 1 ? hits[0] : null);
     if (pick) go(pick);
     else if (hits.length) setOpen(true);
     // 닉네임 목록에 아직 없는 새 계정도 계정 번호로는 바로 열림
     else if (/^\d{1,10}$/.test(t)) go({ aid: Number(t), name: t, last: null });
-    else
-      setMsg(t.length < 2 ? "두 글자 이상 입력해주세요." : NOT_FOUND);
+    // 검색이 실패한 검색어는 실패 안내를 그대로 둠
+    else if (!failed.current) setMsg(NOT_FOUND);
   };
 
   const shown = open && q.trim().length > 0;
@@ -110,6 +140,8 @@ export default function SearchBox({ autoFocus, compact, initial }: { autoFocus?:
           onChange={(e) => {
             setQ(e.target.value);
             setMsg("");
+            searched.current = "";
+            pending.current = false;
             if (!e.target.value.trim()) setHits([]);
           }}
           onFocus={() => setOpen(true)}
@@ -155,6 +187,14 @@ export default function SearchBox({ autoFocus, compact, initial }: { autoFocus?:
       {msg && (
         <p className="err" role="status">
           <Lines text={msg} />
+          {msg === NOT_FOUND && (
+            <>
+              <br />
+              <a className="link" href={tarkovDevSearchUrl(mode)} target="_blank" rel="noreferrer">
+                tarkov.dev 플레이어 검색
+              </a>
+            </>
+          )}
         </p>
       )}
     </div>

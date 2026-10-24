@@ -704,7 +704,7 @@ export default async function Profile({ params, searchParams }: Props) {
     <>
       <Header crumb={{ href: "/tarkov/players", label: "계정 조회" }} />
       <main id="main" className="wrap profile">
-        <SearchBox compact />
+        <SearchBox compact mode={mode} />
         {name !== `#${aid}` && <Remember aid={aid} name={name} />}
 
         <nav className="tabs" aria-label="모드">
