@@ -72,7 +72,7 @@ const TagBox = ({ t, size }: { t: Tag; size: number }) => (
 );
 
 const ROW = 60;
-const COL = { rank: 54, kill: 82, total: 96, delta: 52 };
+const COL = { rank: 54, kill: 82, total: 116, delta: 52 };
 
 export async function roundImage(b: Board) {
   const [medium, bold, extra] = await fonts;
