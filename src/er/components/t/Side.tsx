@@ -54,7 +54,7 @@ export function Penalties({ group, result, rules, run }: { group: GroupView; res
       {teams.length === 0 ? (
         <p className="text-[13px] text-fg-3">경기 결과를 등록하면 감점을 추가할 수 있습니다.</p>
       ) : (
-        <form className="mt-3 grid grid-cols-2 gap-2.5 *:min-w-0" onSubmit={submit}>
+        <form className="mt-3 grid grid-cols-2 gap-2.5 *:min-w-0" onSubmit={submit} noValidate>
           <div className="col-span-full">
             <label className="lbl" htmlFor={`pt-${group.idx}`}>팀</label>
             <select id={`pt-${group.idx}`} className="field sm" value={selectedTeam} onChange={(e) => setTeam(e.target.value)}>

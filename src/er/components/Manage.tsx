@@ -234,6 +234,7 @@ function Settings({ view, onSaved, onError }: { view: TournamentView; onSaved: (
       <h2 className={H2} id="s-h">대회 설정</h2>
       <form
         className="mt-3 grid gap-3.5"
+        noValidate
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);

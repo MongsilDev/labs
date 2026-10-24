@@ -7,6 +7,7 @@ import ThemeToggle from "@/er/components/ThemeToggle";
 import { int as rp, TIERS, tens } from "@/er/lib/cut";
 import { getCut } from "@/er/server/cut";
 import CutMini from "@/er/components/cut/CutMini";
+import HubSearch from "@/tarkov/components/players/HubSearch";
 import { exampleView } from "@/er/lib/example";
 import Highlights from "@/er/components/kel/Highlights";
 import { kelData } from "@/er/server/kel";
@@ -207,22 +208,7 @@ export default async function Hub() {
             desc="시즌, PvP, PvE, 아레나 전적과 판정 배지"
             stats={[{ label: "찾을 수 있는 계정", value: int(Number(getMeta("accounts")) || 0) }]}
           >
-            <form className="flex gap-2" action="/tarkov/players" method="get" role="search">
-              <input
-                className="field min-w-0 flex-1"
-                type="search"
-                name="q"
-                placeholder="닉네임 또는 계정 번호"
-                aria-label="닉네임 또는 계정 번호"
-                autoComplete="off"
-                spellCheck={false}
-                maxLength={32}
-                required
-              />
-              <button className="btn primary" type="submit">
-                조회
-              </button>
-            </form>
+            <HubSearch />
             <p className="mt-3 text-[13px] text-fg-3">
               tarkov.dev에서 한 번 이상 조회된 계정만 찾을 수 있습니다.
               <br />

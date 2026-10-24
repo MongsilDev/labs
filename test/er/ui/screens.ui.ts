@@ -150,7 +150,7 @@ const KEL_LIST = Object.values(KEL_SCREENS);
 // 404 화면에도 er 레이아웃 설명의 "2026 KEL 기록"이 나와 공개하지 않은 화면 제목만 찾음
 const HIDDEN_TITLES = new RegExp(KEL_LIST.filter((s) => !s.public).map((s) => s.title).join("|") || "(?!)");
 
-type Problems = { overflow: number; undefinedClass: string[]; unstyled: string[] };
+type Problems = { overflow: number; undefinedClass: string[]; unstyled: string[]; nativeCheck: string[] };
 
 function inspect(): Problems {
   const defined = new Set<string>();
@@ -176,7 +176,11 @@ function inspect(): Problems {
     const border = getComputedStyle(el).borderTopStyle;
     if (border === "outset" || border === "inset") unstyled.push(label(el));
   }
-  return { overflow: document.documentElement.scrollWidth - innerWidth, undefinedClass: [...undefinedClass], unstyled };
+  // noValidate 없는 폼의 검증 속성은 제출할 때 브라우저 기본 말풍선을 띄움
+  const nativeCheck = [...document.forms]
+    .filter((f) => !f.noValidate)
+    .flatMap((f) => [...f.elements].filter((el) => el.matches("[required], [pattern], [min], [max], [step], [type=email], [type=url], [type=number]")).map(label));
+  return { overflow: document.documentElement.scrollWidth - innerWidth, undefinedClass: [...undefinedClass], unstyled, nativeCheck };
 }
 
 async function open(screen: Screen, width: number, theme: "dark" | "light"): Promise<{ page: Page; errors: string[]; status: number }> {
@@ -206,7 +210,7 @@ describe("화면 점검", () => {
             expect(status).toBe(screen.status ?? 200);
             expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
             const p = await page.evaluate(inspect);
-            expect(p, "가로 넘침, 정의 없는 클래스, 브라우저 기본 모양 컨트롤").toEqual({ overflow: 0, undefinedClass: [], unstyled: [] });
+            expect(p, "가로 넘침, 정의 없는 클래스, 브라우저 기본 모양 컨트롤, 브라우저 기본 검증").toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
             expect(errors).toEqual([]);
           } catch (e) {
             await page.screenshot({ path: join(SHOTS, `${screen.name}-${width}-${theme}.png`), fullPage: true });
@@ -227,7 +231,7 @@ describe("화면 점검", () => {
     await page.locator("svg[role=img]").hover({ position: { x: 200, y: 120 } });
     const p = await page.evaluate(inspect);
     await page.context().close();
-    expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [] });
+    expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
     expect(errors).toEqual([]);
   });
 

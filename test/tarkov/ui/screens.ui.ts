@@ -324,6 +324,29 @@ describe("화면 점검", () => {
     }
   });
 
+  it("빈 칸으로 조회하면 브라우저 기본 말풍선 대신 입력칸 아래에 안내가 뜬다", async () => {
+    const { page } = await open({ name: "첫 화면", path: "/" }, 390, "dark");
+    try {
+      for (const path of ["/", "/tarkov/players"]) {
+        if (path !== "/") await page.goto(base + path, { waitUntil: "networkidle" });
+        // 기본 검증이 실패하면 말풍선과 함께 invalid 이벤트가 생김
+        await page.evaluate(() => document.addEventListener("invalid", () => (document.body.dataset.invalid = "1"), true));
+        const box = page.getByRole(path === "/" ? "searchbox" : "combobox", { name: "닉네임 또는 계정 번호" });
+        await page.getByRole("button", { name: "조회" }).click();
+        const msg = page.getByText("닉네임이나 계정 번호를 입력해주세요.");
+        await msg.waitFor({ timeout: 5_000 });
+        expect([path, await page.evaluate(() => document.body.dataset.invalid ?? null), await box.getAttribute("aria-invalid"), await box.getAttribute("aria-describedby")]).toEqual([
+          path,
+          null,
+          "true",
+          await msg.getAttribute("id"),
+        ]);
+      }
+    } finally {
+      await page.context().close();
+    }
+  });
+
   it("첫 화면 검색창에서 닉네임을 넣으면 그 계정으로 바로 간다", async () => {
     // 첫 화면은 Tailwind라 이 파일의 정의 없는 클래스 검사 대상이 아님
     const { page } = await open({ name: "첫 화면", path: "/" }, 1440, "dark");

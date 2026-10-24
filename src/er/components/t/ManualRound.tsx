@@ -39,6 +39,7 @@ export default function ManualRound({
     if (filled.length === 0) return setError("팀 이름과 순위를 하나 이상 입력해주세요.");
     const places = filled.map((r) => r.placement);
     if (new Set(places).size !== places.length) return setError("두 팀에 같은 순위를 입력했습니다. 순위를 다시 확인해주세요.");
+    if (filled.some((r) => (r.killScore * 2) % 1 !== 0)) return setError("킬 점수는 0.5 단위로 입력해주세요.");
     setBusy(true);
     try {
       await onSave(filled);
@@ -50,7 +51,7 @@ export default function ManualRound({
 
   return (
     <div className="dim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <form className="panel dialog max-w-[520px]" role="dialog" aria-modal="true" aria-labelledby="manual-h" onSubmit={save}>
+      <form className="panel dialog max-w-[520px]" role="dialog" aria-modal="true" aria-labelledby="manual-h" onSubmit={save} noValidate>
         <h2 id="manual-h">{round}라운드 직접 입력</h2>
         <table className="manual mt-3">
           <thead>

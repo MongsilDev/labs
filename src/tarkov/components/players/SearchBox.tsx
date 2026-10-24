@@ -8,6 +8,8 @@ import Lines from "@/components/Lines";
 
 type Hit = { aid: number; name: string; last: number | null };
 
+export const EMPTY_QUERY = "닉네임이나 계정 번호를 입력해주세요.";
+const SHORT = "두 글자 이상 입력해주세요.";
 const NOT_FOUND = "찾는 닉네임이 없습니다. tarkov.dev 프로필 주소 끝의 계정 번호로 찾아주세요.";
 
 export default function SearchBox({ autoFocus, compact, initial, mode }: { autoFocus?: boolean; compact?: boolean; initial?: string; mode?: Mode }) {
@@ -87,14 +89,17 @@ export default function SearchBox({ autoFocus, compact, initial, mode }: { autoF
 
   const submit = () => {
     const t = q.trim().toLowerCase();
-    if (!t) return;
+    if (!t) {
+      setMsg(EMPTY_QUERY);
+      return;
+    }
     // 목록에서 고른 후보는 결과를 기다리지 않고 바로 열림
     if (active >= 0 && hits[active]) {
       go(hits[active]);
       return;
     }
     if (t.length < 2 && !/^\d+$/.test(t)) {
-      setMsg("두 글자 이상 입력해주세요.");
+      setMsg(SHORT);
       return;
     }
     // 지금 검색어의 결과가 오기 전이면 결과가 온 뒤 한 번 제출
@@ -137,6 +142,8 @@ export default function SearchBox({ autoFocus, compact, initial, mode }: { autoF
           aria-expanded={shown && hits.length > 0}
           aria-controls={listId}
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
+          aria-invalid={msg === EMPTY_QUERY || msg === SHORT || undefined}
+          aria-describedby={msg ? `${listId}-msg` : undefined}
           onChange={(e) => {
             setQ(e.target.value);
             setMsg("");
@@ -185,7 +192,7 @@ export default function SearchBox({ autoFocus, compact, initial, mode }: { autoF
         </ul>
       )}
       {msg && (
-        <p className="err" role="status">
+        <p className="err" id={`${listId}-msg`} role="status">
           <Lines text={msg} />
           {msg === NOT_FOUND && (
             <>
