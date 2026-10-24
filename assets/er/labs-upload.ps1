@@ -1,6 +1,6 @@
 # Labs 대회 결과 자동 업로드
 # 이 파일에는 업로드 키가 들어 있습니다. 다른 사람에게 보내지 마세요.
-# 실행: powershell -ExecutionPolicy Bypass -File .\이 파일 이름.ps1
+# 실행: powershell -ExecutionPolicy Bypass -File ".\이 파일 이름.ps1"
 # 결과 폴더를 바꾸려면 -Folder "경로"를 붙여 실행합니다.
 param([string]$Folder)
 

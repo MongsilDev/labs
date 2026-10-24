@@ -103,11 +103,23 @@ describe("업로드 API", () => {
     const { key } = t.issueUploadKey(code, op, 0);
     t.removeMember(code, owner, op.id);
     expect((await upload(code, "a", key, csv(7301, teams(["가"])))).status).toBe(404);
+    expect(t.uploadKeys(code, owner)).toEqual([]);
+    expect(t.issueUploadKey(code, owner, 0).label).toBe("A");
+  });
+
+  it("조 수를 줄였다가 다시 늘려도 줄인 조의 키는 404", async () => {
+    const code = t.createTournament(owner, { name: "줄임", mode: "points", preset: "masters", plannedRounds: 4, groupCount: 2 });
+    const { key } = t.issueUploadKey(code, owner, 1);
+    expect(t.applyOp(code, owner, { op: "update_settings", groupCount: 1 }).ok).toBe(true);
+    expect(t.applyOp(code, owner, { op: "update_settings", groupCount: 2 }).ok).toBe(true);
+    expect(t.uploadKeys(code, owner)).toEqual([]);
+    expect((await upload(code, "b", key, csv(7311, teams(["가"])))).status).toBe(404);
   });
 
   it("끝난 조는 410, 보관 기간이 지나거나 삭제된 대회는 404", async () => {
     const done = setup(1, 1);
     expect((await upload(done.code, "a", done.key, csv(7401, teams(["가"])))).status).toBe(200);
+    expect((await upload(done.code, "a", done.key, csv(7401, teams(["가"])))).status).toBe(409);
     expect(await upload(done.code, "a", done.key, csv(7402, teams(["가"])))).toMatchObject({ status: 410, body: { status: "ended", message: "끝난 대회입니다." } });
 
     const old = setup();
@@ -164,6 +176,13 @@ describe("업로드 API", () => {
     // 다른 키는 따로 셈
     const other = setup();
     expect((await upload(other.code, "a", other.key, csv(7798, teams(["가"])))).status).toBe(200);
+  });
+
+  it("틀린 키를 30번 보낸 IP는 맞는 키로 보내도 잠시 429", async () => {
+    const { code, key } = setup();
+    const h = { "x-forwarded-for": "203.0.113.60" };
+    for (let i = 0; i < 30; i++) expect((await upload(code, "a", "wrong", "x", h)).status).toBe(404);
+    expect((await upload(code, "a", key, csv(7401, teams(["가"])), h)).status).toBe(429);
   });
 
   it("한 IP에서 틀린 키를 계속 보내면 429", async () => {

@@ -7,9 +7,10 @@ type Bucket = { count: number; reset: number };
 const g = globalThis as unknown as { __limits?: Map<string, Bucket> };
 const buckets = (g.__limits ??= new Map());
 
+export const ipOf = (h: Headers) => limitKey(h.get("cf-connecting-ip") || h.get("x-forwarded-for")?.split(",")[0].trim() || "local");
+
 export async function clientIp(): Promise<string> {
-  const h = await headers();
-  return limitKey(h.get("cf-connecting-ip") || h.get("x-forwarded-for")?.split(",")[0].trim() || "local");
+  return ipOf(await headers());
 }
 
 export function allow(key: string, max: number, windowMs: number): boolean {

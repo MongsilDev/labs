@@ -531,6 +531,8 @@ function runOp(t: TRow, role: "owner" | "operator", user: User, op: Op, via = ""
       }
       if (groups !== t.group_count) changes.push(`조 ${groups}개`);
       if (changes.length === 0) break;
+      // 줄인 조의 키는 조 수를 다시 늘려도 되살아나지 않게 지움
+      if (groups < t.group_count) conn.prepare("DELETE FROM upload_keys WHERE tournament_id = ? AND group_idx >= ?").run(t.id, groups);
       conn
         .prepare("UPDATE tournaments SET name = ?, mode = ?, rules = ?, planned_rounds = ?, group_count = ? WHERE id = ?")
         .run(name, mode, JSON.stringify(rules), planned, groups, t.id);
@@ -656,6 +658,8 @@ export function removeMember(code: string, user: User, target: string) {
       .get(t.id, target) as { name: string; role: string } | undefined;
     if (!m || m.role === "owner") return;
     db().prepare("DELETE FROM members WHERE tournament_id = ? AND user_id = ?").run(t.id, target);
+    // 운영진이 아닌 사람의 키는 받지 않으므로 화면에도 남기지 않음
+    db().prepare("DELETE FROM upload_keys WHERE tournament_id = ? AND created_by = ?").run(t.id, target);
     // 내보낸 사람과, 개최자일 때 만든 링크를 남기고 나간 사람은 전에 있던 링크로 재참여 불가. 남은 링크는 다른 사람이 그대로 사용
     const minted = db().prepare("SELECT 1 FROM invites WHERE tournament_id = ? AND created_by = ?").get(t.id, target);
     if (!self) db().prepare("DELETE FROM invites WHERE tournament_id = ? AND created_by = ?").run(t.id, target);
@@ -740,7 +744,7 @@ export function uploadWithKey(code: string, group: string, key: string, file: { 
     const k = keyRow(code, group, key);
     if (!k) return { status: "gone", message: "" };
     const { t, g } = k;
-    if (groupResult(loadView(t.code, null)!, g).ended) return { status: "ended", message: t.group_count > 1 ? `${groupLabel(g)}조 경기가 끝났습니다.` : "끝난 대회입니다." };
+    // 마지막 라운드 응답을 받지 못한 스크립트가 다시 보내면 끝난 조가 아니라 이미 올린 경기로 알림
     const parsed = parseRoundCsv(file.text);
     if (parsed.ok) {
       const dup = db()
@@ -748,6 +752,7 @@ export function uploadWithKey(code: string, group: string, key: string, file: { 
         .get(t.id, parsed.round.gameId) as { group_idx: number; round_no: number } | undefined;
       if (dup) return { status: "duplicate", message: `이미 ${prefix(t, dup.group_idx)}${dup.round_no}라운드에 올린 경기입니다.` };
     }
+    if (groupResult(loadView(t.code, null)!, g).ended) return { status: "ended", message: t.group_count > 1 ? `${groupLabel(g)}조 경기가 끝났습니다.` : "끝난 대회입니다." };
     const r = runOp(t, k.role, k.issuer, { op: "add_csv", group: g, files: [file] }, " (자동 업로드)");
     if (!r.ok) return { status: "invalid", message: r.errors.join("\n").replace(/^[^:\n]*: /gm, "") };
     db().prepare("UPDATE upload_keys SET last_used_at = ? WHERE hash = ?").run(now(), k.hash);

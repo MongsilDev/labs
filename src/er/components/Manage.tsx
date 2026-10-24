@@ -40,7 +40,14 @@ export default function Manage({
   const [uses, setUses] = useState(1);
   const [confirm, setConfirm] = useState<null | Ask>(null);
   const [keys, setKeys] = useState(initialKeys);
-  const [fresh, setFresh] = useState<{ group: number; key: string; script: string; file: string } | null>(null);
+  const [fresh, setFresh] = useState<Record<number, Fresh>>({});
+  // 설정 저장 뒤 새로 받은 키 목록을 반영하고, 지워진 키의 새 키 표시는 버림
+  const [seen, setSeen] = useState(initialKeys);
+  if (seen !== initialKeys) {
+    setSeen(initialKeys);
+    setKeys(initialKeys);
+    setFresh((f) => Object.fromEntries(Object.entries(f).filter(([g]) => initialKeys.some((k) => k.group === Number(g)))));
+  }
   const owner = view.role === "owner";
   const origin = useSyncExternalStore(
     () => () => {},
@@ -204,7 +211,8 @@ export default function Manage({
           try {
             const r = await api.uploadKey(view.code, { action: "issue", group });
             setKeys(r.keys);
-            if (r.key && r.script && r.file) setFresh({ group, key: r.key, script: r.script, file: r.file });
+            const { key, script, file } = r;
+            if (key && script && file) setFresh((f) => ({ ...f, [group]: { key, script, file } }));
             setMsg(null);
           } catch (e) {
             setMsg({ text: e instanceof Error ? e.message : "발급하지 못했습니다.", bad: true });
@@ -246,7 +254,8 @@ export default function Manage({
               try {
                 const r = await api.uploadKey(view.code, { action: "revoke", group: confirm.group });
                 setKeys(r.keys);
-                if (fresh?.group === confirm.group) setFresh(null);
+                const g = confirm.group;
+                setFresh((f) => Object.fromEntries(Object.entries(f).filter(([k]) => Number(k) !== g)));
                 setMsg({ text: `${keyName(view, confirm.group)}를 폐기했습니다.` });
               } catch (e) {
                 setMsg({ text: e instanceof Error ? e.message : "폐기하지 못했습니다.", bad: true });
@@ -267,6 +276,8 @@ export default function Manage({
 
 const keyName = (view: TournamentView, g: number) => (view.groupCount > 1 ? `${groupLabel(g)}조 업로드 키` : "업로드 키");
 
+type Fresh = { key: string; script: string; file: string };
+
 function Uploads({
   view,
   keys,
@@ -277,18 +288,17 @@ function Uploads({
 }: {
   view: TournamentView;
   keys: UploadKeyRow[];
-  fresh: { group: number; key: string; script: string; file: string } | null;
+  fresh: Record<number, Fresh>;
   onIssue: (group: number) => Promise<void>;
   onRevoke: (group: number) => void;
   onMsg: (text: string, bad?: boolean) => void;
 }) {
   const [busy, setBusy] = useState<number | null>(null);
-  const download = () => {
-    if (!fresh) return;
-    const url = URL.createObjectURL(new Blob([fresh.script], { type: "text/plain;charset=utf-8" }));
+  const download = (f: Fresh) => {
+    const url = URL.createObjectURL(new Blob([f.script], { type: "text/plain;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = fresh.file;
+    a.download = f.file;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
@@ -300,7 +310,7 @@ function Uploads({
       <ul className="mt-2.5 list-none">
         {Array.from({ length: view.groupCount }, (_, g) => {
           const k = keys.find((x) => x.group === g);
-          const shown = fresh?.group === g ? fresh : null;
+          const shown = fresh[g];
           return (
             <li key={g} className={`${LI} flex-wrap`}>
               <b className="whitespace-nowrap">{view.groupCount > 1 ? `${groupLabel(g)}조` : "업로드 키"}</b>
@@ -347,7 +357,7 @@ function Uploads({
                     >
                       키 복사
                     </button>
-                    <button type="button" className="btn sm primary" onClick={download}>
+                    <button type="button" className="btn sm primary" onClick={() => download(shown)}>
                       스크립트 내려받기
                     </button>
                   </span>
@@ -359,9 +369,7 @@ function Uploads({
         })}
       </ul>
       <p className="mt-3 text-[13px] text-fg-3">
-        실행: <code translate="no">powershell -ExecutionPolicy Bypass -File .\파일 이름.ps1</code>
-        <br />
-        실행 정책이나 인터넷에서 받은 파일이라 막히면 위 명령으로 실행하거나 <code translate="no">Unblock-File .\파일 이름.ps1</code> 뒤에 실행합니다.
+        실행 정책이나 인터넷에서 받은 파일 표시 때문에 막히면 <code translate="no">{'powershell -ExecutionPolicy Bypass -File ".\\파일 이름.ps1"'}</code>로 실행해주세요.
       </p>
     </section>
   );

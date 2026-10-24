@@ -307,6 +307,28 @@ describe("화면 점검", () => {
     }
   });
 
+  it("두 조에 이어서 키를 발급해도 먼저 발급한 조의 키와 스크립트 내려받기가 남는다", async () => {
+    const { page } = await open(SCREENS.find((s) => s.name === "운영자와 설정")!, 1440, "dark");
+    try {
+      const rows = page.locator("#u-h + ul > li");
+      const revoke = async (i: number) => {
+        await rows.nth(i).getByRole("button", { name: "폐기" }).click();
+        await page.getByRole("alertdialog").getByRole("button", { name: "폐기" }).click();
+        await rows.nth(i).getByRole("button", { name: "키 발급" }).waitFor();
+      };
+      await revoke(0);
+      for (const i of [0, 1]) {
+        await rows.nth(i).getByRole("button", { name: "키 발급" }).click();
+        await rows.nth(i).getByRole("button", { name: "스크립트 내려받기" }).waitFor();
+      }
+      await expect(rows.nth(0).getByRole("button", { name: "스크립트 내려받기" }).isVisible()).resolves.toBe(true);
+      await revoke(1);
+      await expect(rows.nth(0).getByRole("button", { name: "스크립트 내려받기" }).isVisible()).resolves.toBe(true);
+    } finally {
+      await page.context().close();
+    }
+  });
+
   it("업로드 API는 로그인과 Origin 없이 키로만 받고, 틀린 키는 본문 없이 404", async () => {
     const send = (key: string, gameId: number, headers: Record<string, string> = {}) =>
       fetch(`${base}/api/upload/${upCode}/a`, { method: "POST", headers: { "x-upload-key": key, "content-type": "text/csv", ...headers }, body: csv(gameId, [{ team: "가", place: 1, ks: 1 }]) });

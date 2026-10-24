@@ -3,8 +3,7 @@ import type { NextRequest } from "next/server";
 import { LIMITS } from "@/er/lib/rules";
 import { handle, json } from "@/er/server/http";
 import { uploadKeyId, uploadWithKey } from "@/er/server/tournament";
-import { limitKey } from "@/ip";
-import { allow } from "@/limits";
+import { allow, blocked, ipOf, miss } from "@/limits";
 
 type Ctx = { params: Promise<{ code: string; group: string }> };
 
@@ -15,12 +14,15 @@ const limited = () => json({ status: "limited", message: "요청이 너무 많�
 // 업로드 스크립트 전용. 로그인 쿠키와 Origin 대신 조마다 발급한 키로 받고, 키가 맞지 않으면 주소가 없는 것처럼 응답
 export async function POST(req: NextRequest, ctx: Ctx) {
   return handle(async () => {
-    const ip = limitKey(req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local");
-    if (!allow(`up-ip:${ip}`, 60, 60_000)) return limited();
+    const ip = ipOf(req.headers);
+    if (blocked(ip) || !allow(`up-ip:${ip}`, 60, 60_000)) return limited();
     const { code, group } = await ctx.params;
     const key = req.headers.get("x-upload-key") ?? "";
     const id = uploadKeyId(code, group, key);
-    if (!id) return hidden();
+    if (!id) {
+      miss(ip);
+      return hidden();
+    }
     if (!allow(`up:${id}`, 10, 60_000)) return limited();
     if (Number(req.headers.get("content-length") ?? 0) > LIMITS.csvBytes) return tooLarge();
     const bytes = await readBody(req);
