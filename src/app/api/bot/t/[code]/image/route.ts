@@ -15,8 +15,8 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const board = botBoard(code, req.nextUrl.searchParams.get("group"), null);
     if (board === null) return fail("없거나 지워진 대회입니다.", 404);
     if (board === "no-group") return fail("없는 조입니다.", 400);
-    const img = await roundImage(board);
-    img.headers.set("Cache-Control", "no-store");
-    return img;
+    // ImageResponse는 본문을 읽을 때 그려서, 렌더 오류가 200 응답으로 나가지 않게 먼저 다 읽음
+    const png = await (await roundImage(board)).arrayBuffer();
+    return new Response(png, { headers: { "Content-Type": "image/png", "Cache-Control": "no-store" } });
   });
 }
