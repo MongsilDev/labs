@@ -22,7 +22,7 @@ export const cookieOptions = (maxAge: number) => ({
   maxAge,
 });
 
-const hash = (value: string) => createHash("sha256").update(value).digest("hex");
+export const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 export const token = (bytes = 24) => randomBytes(bytes).toString("base64url");
 
 export function safeEqual(a: string, b: string): boolean {

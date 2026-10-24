@@ -108,6 +108,15 @@ CREATE TABLE IF NOT EXISTS logs (
   text TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS upload_keys (
+  tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  group_idx INTEGER NOT NULL,
+  hash TEXT NOT NULL UNIQUE,
+  created_by TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  last_used_at INTEGER,
+  PRIMARY KEY (tournament_id, group_idx)
+);
 CREATE INDEX IF NOT EXISTS logs_t ON logs(tournament_id, id);
 CREATE INDEX IF NOT EXISTS members_user ON members(user_id);
 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
