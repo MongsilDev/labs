@@ -103,6 +103,7 @@ describe("업로드 API", () => {
     const { key } = t.issueUploadKey(code, op, 0);
     t.removeMember(code, owner, op.id);
     expect((await upload(code, "a", key, csv(7301, teams(["가"])))).status).toBe(404);
+    expect(t.uploadKeys(code, owner)).toEqual([]);
   });
 
   it("끝난 조는 410, 보관 기간이 지나거나 삭제된 대회는 404", async () => {

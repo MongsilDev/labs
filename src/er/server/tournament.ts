@@ -659,6 +659,7 @@ export function removeMember(code: string, user: User, target: string) {
     // 내보낸 사람과, 개최자일 때 만든 링크를 남기고 나간 사람은 전에 있던 링크로 재참여 불가. 남은 링크는 다른 사람이 그대로 사용
     const minted = db().prepare("SELECT 1 FROM invites WHERE tournament_id = ? AND created_by = ?").get(t.id, target);
     if (!self) db().prepare("DELETE FROM invites WHERE tournament_id = ? AND created_by = ?").run(t.id, target);
+    db().prepare("DELETE FROM upload_keys WHERE tournament_id = ? AND created_by = ?").run(t.id, target);
     if (!self || minted) {
       db()
         .prepare("INSERT INTO removals(tournament_id, user_id, removed_at) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET removed_at = excluded.removed_at")
