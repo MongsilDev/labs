@@ -172,7 +172,7 @@ function Invoke-Upload([string]$Path, [string]$StatePath, $State, [int[]]$Delays
       Start-Sleep -Seconds $wait
     }
   }
-  Show-Notice '서버에 보내지 못했습니다. 다음 결과를 저장할 때 다시 시도합니다.' $true
+  Show-Notice '서버에 보내지 못했습니다. 잠시 뒤 다시 시도합니다.' $true
   return 'failed'
 }
 
@@ -201,13 +201,15 @@ try {
   Write-Host "$Title 결과 업로드를 시작합니다. 끝내려면 이 창을 닫거나 Ctrl+C를 누르세요."
   Write-Host "감시하는 파일: $Path"
   # 켜기 전에 있던 결과는 지난 경기일 수 있어 물어봄
+  $first = ''
   if (Test-Path -LiteralPath $Path) {
     $bytes = [System.IO.File]::ReadAllBytes($Path)
     $csv = Read-ResultCsv ([System.Text.Encoding]::UTF8.GetString($bytes))
     if ($csv.Ok -and (Get-SendDecision $State $csv.GameId (Get-ContentHash $bytes)) -eq 'send') {
       $answer = Read-Host "지금 있는 결과(gameId $($csv.GameId))도 올릴까요? (y/N)"
       if ($answer -match '^[yY]') {
-        if ((Invoke-Upload $Path $StatePath $State) -eq 'stop') { return }
+        $first = Invoke-Upload $Path $StatePath $State
+        if ($first -eq 'stop') { return }
       } else {
         $State.LastHash = Get-ContentHash $bytes
         Save-State $StatePath $State
@@ -216,14 +218,17 @@ try {
   }
   $watcher = New-Object System.IO.FileSystemWatcher($State.Folder, $ResultFile)
   $watcher.NotifyFilter = [System.IO.NotifyFilters]'FileName, LastWrite, Size, CreationTime'
-  $last = Get-Stamp $Path
+  # 보내지 못한 결과는 파일이 바뀌지 않아도 다음 차례에 다시 보냄
+  $last = if ($first -eq 'failed') { '' } else { Get-Stamp $Path }
   while ($true) {
     [void]$watcher.WaitForChanged([System.IO.WatcherChangeTypes]::All, 5000)
     $stamp = Get-Stamp $Path
     if ($stamp -eq '' -or $stamp -eq $last) { continue }
     if (-not (Wait-Stable $Path)) { continue }
     $last = Get-Stamp $Path
-    if ((Invoke-Upload $Path $StatePath $State) -eq 'stop') { break }
+    $result = Invoke-Upload $Path $StatePath $State
+    if ($result -eq 'stop') { break }
+    if ($result -eq 'failed') { $last = '' }
   }
 } finally {
   if ($watcher) { $watcher.Dispose() }
