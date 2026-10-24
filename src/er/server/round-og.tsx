@@ -94,8 +94,7 @@ export async function roundImage(b: Board) {
 
   const body: React.ReactNode[] = [
     <div key="col" style={{ display: "flex", alignItems: "flex-end", height: px(colHead), paddingBottom: px(6), fontSize: z(21), fontWeight: 700, color: C.text3, borderBottom: border }}>
-      <span style={{ display: "flex", width: z(COL.rank) }}>순위</span>
-      <span style={{ display: "flex", flex: 1 }}>팀</span>
+      <span style={{ display: "flex", flex: 1 }} />
       <span style={{ ...right, width: z(COL.kill) }}>킬 점수</span>
       <span style={{ ...right, width: z(COL.total) }}>총점</span>
       <span style={{ ...right, width: z(COL.delta) }}>{showDelta ? "변동" : ""}</span>
