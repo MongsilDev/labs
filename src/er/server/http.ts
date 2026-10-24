@@ -7,8 +7,8 @@ import { currentUser, sameOrigin, type User } from "./auth";
 import { allow, blocked, clientIp, miss } from "@/limits";
 import { loadView, OpError } from "./tournament";
 
-export const json = (data: unknown, status = 200) =>
-  NextResponse.json(data, { status, headers: { "Cache-Control": "no-store" } });
+export const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
+  NextResponse.json(data, { status, headers: { "Cache-Control": "no-store", ...headers } });
 
 export const fail = (message: string, status = 400) => json({ error: message }, status);
 

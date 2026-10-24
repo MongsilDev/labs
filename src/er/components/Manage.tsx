@@ -6,7 +6,8 @@ import { useState, useSyncExternalStore } from "react";
 import { api } from "@/er/lib/client";
 import { timeKo } from "@/er/lib/format";
 import { LIMITS, PRESET_LABEL, presetRules, type Mode, type Preset, type Rules } from "@/er/lib/rules";
-import type { InviteRow, MemberRow, TournamentView } from "@/er/lib/view";
+import { groupLabel } from "@/er/lib/rules";
+import type { InviteRow, MemberRow, TournamentView, UploadKeyRow } from "@/er/lib/view";
 import Avatar from "./Avatar";
 import ModeSeg from "./ModeSeg";
 import RulesFields from "./RulesFields";
@@ -17,13 +18,29 @@ const H2 = "flex flex-wrap items-baseline gap-2 text-[15px] font-bold";
 const LI = "flex min-w-0 items-center gap-2.5 border-t border-line-soft py-[11px] text-[14px] max-[760px]:flex-wrap";
 const ACTS = "ml-auto flex gap-1.5 max-[760px]:w-full";
 
-export default function Manage({ view, me, initialMembers, initialInvites }: { view: TournamentView; me: string; initialMembers: MemberRow[]; initialInvites: InviteRow[] }) {
+type Ask = { kind: "transfer" | "remove"; user: MemberRow } | { kind: "delete" } | { kind: "revoke"; group: number };
+
+export default function Manage({
+  view,
+  me,
+  initialMembers,
+  initialInvites,
+  initialKeys,
+}: {
+  view: TournamentView;
+  me: string;
+  initialMembers: MemberRow[];
+  initialInvites: InviteRow[];
+  initialKeys: UploadKeyRow[];
+}) {
   const router = useRouter();
   const [list, setList] = useState(initialMembers);
   const [invites, setInvites] = useState(initialInvites);
   const [msg, setMsg] = useState<{ text: string; bad?: boolean } | null>(null);
   const [uses, setUses] = useState(1);
-  const [confirm, setConfirm] = useState<null | { kind: "transfer" | "remove"; user: MemberRow } | { kind: "delete" }>(null);
+  const [confirm, setConfirm] = useState<null | Ask>(null);
+  const [keys, setKeys] = useState(initialKeys);
+  const [fresh, setFresh] = useState<{ group: number; key: string; script: string; file: string } | null>(null);
   const owner = view.role === "owner";
   const origin = useSyncExternalStore(
     () => () => {},
@@ -179,6 +196,24 @@ export default function Manage({ view, me, initialMembers, initialInvites }: { v
         </section>
       )}
 
+      <Uploads
+        view={view}
+        keys={keys}
+        fresh={fresh}
+        onIssue={async (group) => {
+          try {
+            const r = await api.uploadKey(view.code, { action: "issue", group });
+            setKeys(r.keys);
+            if (r.key && r.script && r.file) setFresh({ group, key: r.key, script: r.script, file: r.file });
+            setMsg(null);
+          } catch (e) {
+            setMsg({ text: e instanceof Error ? e.message : "발급하지 못했습니다.", bad: true });
+          }
+        }}
+        onRevoke={(group) => setConfirm({ kind: "revoke", group })}
+        onMsg={(text, bad) => setMsg({ text, bad })}
+      />
+
       {owner && <Settings view={view} onSaved={(t) => setMsg({ text: t })} onError={(t) => setMsg({ text: t, bad: true })} />}
 
       {owner && (
@@ -197,6 +232,7 @@ export default function Manage({ view, me, initialMembers, initialInvites }: { v
         <Confirm
           confirm={confirm}
           name={view.name}
+          keyName={confirm.kind === "revoke" ? keyName(view, confirm.group) : ""}
           onClose={() => setConfirm(null)}
           onOk={async (typed) => {
             if (confirm.kind === "delete") {
@@ -205,6 +241,15 @@ export default function Manage({ view, me, initialMembers, initialInvites }: { v
                 router.push("/er/score");
               } catch (e) {
                 setMsg({ text: e instanceof Error ? e.message : "삭제하지 못했습니다.", bad: true });
+              }
+            } else if (confirm.kind === "revoke") {
+              try {
+                const r = await api.uploadKey(view.code, { action: "revoke", group: confirm.group });
+                setKeys(r.keys);
+                if (fresh?.group === confirm.group) setFresh(null);
+                setMsg({ text: `${keyName(view, confirm.group)}를 폐기했습니다.` });
+              } catch (e) {
+                setMsg({ text: e instanceof Error ? e.message : "폐기하지 못했습니다.", bad: true });
               }
             } else if (confirm.kind === "transfer") {
               await act({ action: "transfer", user: confirm.user.id }, `${confirm.user.name}님에게 개최자를 넘겼습니다.`);
@@ -217,6 +262,108 @@ export default function Manage({ view, me, initialMembers, initialInvites }: { v
         />
       )}
     </main>
+  );
+}
+
+const keyName = (view: TournamentView, g: number) => (view.groupCount > 1 ? `${groupLabel(g)}조 업로드 키` : "업로드 키");
+
+function Uploads({
+  view,
+  keys,
+  fresh,
+  onIssue,
+  onRevoke,
+  onMsg,
+}: {
+  view: TournamentView;
+  keys: UploadKeyRow[];
+  fresh: { group: number; key: string; script: string; file: string } | null;
+  onIssue: (group: number) => Promise<void>;
+  onRevoke: (group: number) => void;
+  onMsg: (text: string, bad?: boolean) => void;
+}) {
+  const [busy, setBusy] = useState<number | null>(null);
+  const download = () => {
+    if (!fresh) return;
+    const url = URL.createObjectURL(new Blob([fresh.script], { type: "text/plain;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fresh.file;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  return (
+    <section className={BOX} aria-labelledby="u-h">
+      <h2 className={H2} id="u-h">
+        결과 자동 업로드
+      </h2>
+      <ul className="mt-2.5 list-none">
+        {Array.from({ length: view.groupCount }, (_, g) => {
+          const k = keys.find((x) => x.group === g);
+          const shown = fresh?.group === g ? fresh : null;
+          return (
+            <li key={g} className={`${LI} flex-wrap`}>
+              <b className="whitespace-nowrap">{view.groupCount > 1 ? `${groupLabel(g)}조` : "업로드 키"}</b>
+              <span className="min-w-0 text-[13px] text-fg-3">
+                {k ? `${k.createdBy || "운영자"} 발급, ${k.lastUsedAt ? `마지막 업로드 ${timeKo(k.lastUsedAt)}` : "올린 기록 없음"}` : "키 없음"}
+              </span>
+              <span className={`${ACTS} max-[760px]:ml-0`}>
+                {k ? (
+                  <button type="button" className="btn sm danger" onClick={() => onRevoke(g)}>
+                    폐기
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn sm"
+                    disabled={busy !== null}
+                    onClick={async () => {
+                      setBusy(g);
+                      await onIssue(g);
+                      setBusy(null);
+                    }}
+                  >
+                    키 발급
+                  </button>
+                )}
+              </span>
+              {shown && (
+                <div className="flex w-full min-w-0 flex-wrap items-center gap-2" role="status">
+                  <code className="min-w-0 flex-1 truncate text-fg-2 [font:inherit]" translate="no" aria-label="업로드 키">
+                    {shown.key}
+                  </code>
+                  <span className="flex gap-1.5 max-[760px]:w-full">
+                    <button
+                      type="button"
+                      className="btn sm"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(shown.key);
+                          onMsg("업로드 키를 복사했습니다.");
+                        } catch {
+                          onMsg("복사하지 못했습니다. 키를 직접 선택해 복사해주세요.", true);
+                        }
+                      }}
+                    >
+                      키 복사
+                    </button>
+                    <button type="button" className="btn sm primary" onClick={download}>
+                      스크립트 내려받기
+                    </button>
+                  </span>
+                  <p className="w-full text-[13px] text-fg-3">키는 지금만 보입니다.</p>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-3 text-[13px] text-fg-3">
+        실행: <code translate="no">powershell -ExecutionPolicy Bypass -File .\파일 이름.ps1</code>
+        <br />
+        실행 정책이나 인터넷에서 받은 파일이라 막히면 위 명령으로 실행하거나 <code translate="no">Unblock-File .\파일 이름.ps1</code> 뒤에 실행합니다.
+      </p>
+    </section>
   );
 }
 
@@ -297,21 +444,29 @@ function Settings({ view, onSaved, onError }: { view: TournamentView; onSaved: (
 function Confirm({
   confirm,
   name,
+  keyName,
   onClose,
   onOk,
 }: {
-  confirm: { kind: "transfer" | "remove"; user: MemberRow } | { kind: "delete" };
+  confirm: Ask;
   name: string;
+  keyName: string;
   onClose: () => void;
   onOk: (typed: string) => Promise<void>;
 }) {
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const title =
-    confirm.kind === "delete" ? "대회를 삭제할까요?" : confirm.kind === "transfer" ? `${confirm.user.name}님에게 개최자를 넘길까요?` : `${confirm.user.name}님을 운영자에서 뺄까요?`;
+    confirm.kind === "delete"
+      ? "대회를 삭제할까요?"
+      : confirm.kind === "revoke"
+        ? `${keyName}를 폐기할까요?`
+        : confirm.kind === "transfer" ? `${confirm.user.name}님에게 개최자를 넘길까요?` : `${confirm.user.name}님을 운영자에서 뺄까요?`;
   const body =
     confirm.kind === "delete"
       ? "확인을 위해 대회 이름을 입력해주세요."
+      : confirm.kind === "revoke"
+        ? "이 키를 넣은 스크립트로는 더 올릴 수 없습니다."
       : confirm.kind === "transfer"
         ? "넘기면 본인은 운영자가 되고, 설정과 운영자 관리는 새 개최자만 할 수 있습니다."
         : "다시 운영을 맡기려면 새 초대 링크를 보내야 합니다.";
@@ -339,7 +494,7 @@ function Confirm({
             취소
           </button>
           <button className={`btn ${confirm.kind === "transfer" ? "primary" : "danger"}`} disabled={busy || (confirm.kind === "delete" && typed.trim() !== name)}>
-            {confirm.kind === "delete" ? "삭제" : confirm.kind === "transfer" ? "넘기기" : "빼기"}
+            {confirm.kind === "delete" ? "삭제" : confirm.kind === "revoke" ? "폐기" : confirm.kind === "transfer" ? "넘기기" : "빼기"}
           </button>
         </div>
       </form>

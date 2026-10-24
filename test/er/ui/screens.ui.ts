@@ -29,6 +29,8 @@ let base = "";
 let browser: Browser;
 let code = "";
 let invite = "";
+let upCode = "";
+let upKey = "";
 
 function freePort(): Promise<number> {
   return new Promise((resolve) => {
@@ -66,6 +68,10 @@ async function seed() {
   t.applyOp(code, owner, { op: "add_csv", group: 0, files });
   t.applyOp(code, owner, { op: "add_penalty", group: 0, team: "모래성", round: 2, kind: "rule", points: 3, reason: "지각" });
   invite = t.createInvite(code, owner);
+  t.issueUploadKey(code, owner, 0);
+  conn.prepare("UPDATE upload_keys SET last_used_at = ? WHERE tournament_id = (SELECT id FROM tournaments WHERE code = ?)").run(Date.now() - 600_000, code);
+  upCode = t.createTournament(owner, { name: "자동 업로드", mode: "points", preset: "masters", plannedRounds: 4, groupCount: 2 });
+  upKey = t.issueUploadKey(upCode, owner, 0).key;
 }
 
 beforeAll(async () => {
@@ -276,6 +282,45 @@ describe("화면 점검", () => {
     }
     const sitemap = await fetch(`${base}/sitemap.xml`).then((r) => r.text());
     expect(sitemap).toContain(`${base}/er/kel/characters?view=build<`);
+  });
+
+  it("업로드 키를 발급하면 키와 스크립트 내려받기가 화면 안에 나오고, 폐기하면 사라진다", async () => {
+    for (const width of [390, 1440]) {
+      for (const theme of ["dark", "light"] as const) {
+        const { page, errors } = await open(SCREENS.find((s) => s.name === "운영자와 설정")!, width, theme);
+        const row = page.locator("#u-h + ul > li").nth(1);
+        await row.getByRole("button", { name: "키 발급" }).click();
+        await row.getByRole("button", { name: "스크립트 내려받기" }).waitFor();
+        const p = await page.evaluate(inspect);
+        const [download] = await Promise.all([page.waitForEvent("download"), row.getByRole("button", { name: "스크립트 내려받기" }).click()]);
+        const script = readFileSync((await download.path())!);
+        await row.getByRole("button", { name: "폐기" }).click();
+        await page.getByRole("alertdialog").getByRole("button", { name: "폐기" }).click();
+        await row.getByRole("button", { name: "키 발급" }).waitFor();
+        await page.context().close();
+        expect([width, theme, p]).toEqual([width, theme, { overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] }]);
+        expect(errors).toEqual([]);
+        expect(download.suggestedFilename()).toBe(`labs-upload-${code}-b.ps1`);
+        expect([...script.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+        expect(script.toString("utf8")).toContain(`$UploadUrl = '${base}/api/upload/${code}/b'`);
+      }
+    }
+  });
+
+  it("업로드 API는 로그인과 Origin 없이 키로만 받고, 틀린 키는 본문 없이 404", async () => {
+    const send = (key: string, gameId: number, headers: Record<string, string> = {}) =>
+      fetch(`${base}/api/upload/${upCode}/a`, { method: "POST", headers: { "x-upload-key": key, "content-type": "text/csv", ...headers }, body: csv(gameId, [{ team: "가", place: 1, ks: 1 }]) });
+    const ok = await send(upKey, 9101, { origin: "https://evil.example" });
+    expect([ok.status, await ok.json()]).toEqual([200, { status: "added", message: "A조 1라운드에 1팀 기록을 추가했습니다." }]);
+    const again = await send(upKey, 9101);
+    expect(again.status).toBe(409);
+    const wrong = await send("nope", 9102);
+    expect([wrong.status, await wrong.text()]).toEqual([404, ""]);
+    const other = await fetch(`${base}/api/upload/${upCode}/b`, { method: "POST", headers: { "x-upload-key": upKey }, body: "x" });
+    expect(other.status).toBe(404);
+    // 일반 쓰기 API는 그대로 로그인과 Origin을 요구함
+    const op = await fetch(`${base}/api/t/${upCode}`, { method: "POST", headers: { "x-upload-key": upKey, "content-type": "application/json" }, body: JSON.stringify({ op: "delete_round", id: 1 }) });
+    expect(op.status).toBe(403);
   });
 
   it("방송 화면은 1920x1080 안에 들어간다", async () => {
