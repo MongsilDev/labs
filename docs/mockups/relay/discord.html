@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>디스코드 결과 전달</title>
+<link rel="stylesheet" href="../../../public/fonts/pretendard/pretendardvariable-dynamic-subset.css">
+<script>
+  const theme = () => document.documentElement.setAttribute("data-theme", location.hash === "#light" ? "light" : "dark");
+  theme();
+  addEventListener("hashchange", theme);
+</script>
+<style>
+  :root,
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #313338;
+    --box: #2b2d31;
+    --line: #3f4147;
+    --text: #dbdee1;
+    --head: #f2f3f5;
+    --muted: #949ba4;
+    --pick: #1e1f22;
+    --btn: #4e5058;
+    --btn-text: #ffffff;
+    --file: #2b2d31;
+    --hover: #2e3035;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #ffffff;
+    --box: #f2f3f5;
+    --line: #e3e5e8;
+    --text: #313338;
+    --head: #060607;
+    --muted: #5c5e66;
+    --pick: #e3e5e8;
+    --btn: #6d6f78;
+    --btn-text: #ffffff;
+    --file: #f2f3f5;
+    --hover: #f7f7f8;
+  }
+  :root {
+    --red: #da373c;
+    --blurple: #5865f2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); }
+  body {
+    color: var(--text);
+    font: 15px/1.375 "Pretendard Variable", Pretendard, system-ui, sans-serif;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    -webkit-font-smoothing: antialiased;
+    padding: 24px 0 40px;
+  }
+  .chat { max-width: 600px; }
+  .state {
+    margin: 28px 16px 6px 72px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .state:first-child { margin-top: 0; }
+  .msg {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    column-gap: 16px;
+    padding: 4px 16px;
+  }
+  .msg + .msg { margin-top: 12px; }
+  .ava {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .ava.u { background: #3ba55c; }
+  .ava.b { background: var(--blurple); }
+  .who { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .who b { color: var(--head); font-weight: 600; white-space: nowrap; }
+  .tag {
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 3px;
+    background: var(--blurple);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 15px;
+  }
+  .who time { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .file {
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(100%, 400px);
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--file);
+  }
+  .file svg { flex: none; }
+  .file a { display: block; color: #00a8fc; text-decoration: none; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :root[data-theme="light"] .file a { color: #006ce7; }
+  .file small { font-size: 12px; color: var(--muted); }
+  .file div { min-width: 0; }
+  .box {
+    margin-top: 4px;
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--box);
+  }
+  .box.bad { border-left: 4px solid var(--red); }
+  .box h3 { color: var(--head); font-size: 16px; font-weight: 700; }
+  .sep { height: 1px; background: var(--line); margin: 4px 0; }
+  .ranks { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; font-size: 14px; }
+  .ranks span:nth-child(3n + 1) { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .ranks span:nth-child(3n + 2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ranks span:nth-child(3n) { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--head); text-align: right; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--btn);
+    color: var(--btn-text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .btn.primary { background: var(--blurple); }
+  .g { font-size: 14px; font-weight: 700; color: var(--head); }
+  .g:not(:first-child) { margin-top: 6px; }
+  .pick {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--pick);
+    font-size: 14px;
+  }
+  .pick > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pick > svg:last-child { margin-left: auto; flex: none; color: var(--muted); }
+  .pick .hash { color: var(--muted); font-weight: 600; }
+  .pick .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #f0b232; }
+  @media (max-width: 480px) {
+    .msg { grid-template-columns: 32px minmax(0, 1fr); column-gap: 12px; }
+    .ava { width: 32px; height: 32px; font-size: 13px; }
+    .state { margin-left: 60px; }
+    .box { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="csv" viewBox="0 0 30 40"><path d="M2 0h18l10 10v28a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2z" fill="#5865f2"/><path d="M20 0v8a2 2 0 0 0 2 2h8z" fill="#8a94ff"/><text x="15" y="31" fill="#fff" font-size="8" font-weight="700" text-anchor="middle" font-family="sans-serif">CSV</text></symbol>
+  <symbol id="out" viewBox="0 0 16 16"><path d="M9 2h5v5M14 2 7 9M12 10v4H2V4h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="down" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+<main class="chat">
+
+  <p class="state">반영 완료</p>
+  <div class="msg">
+    <div class="ava u">보</div>
+    <div>
+      <div class="who"><b>보리차</b><time>오후 9:12</time></div>
+      <div class="file"><svg width="30" height="40"><use href="#csv"/></svg><div><a href="#">er_0412_2.csv</a><small>3.8 KB</small></div></div>
+    </div>
+  </div>
+  <div class="msg">
+    <div class="ava b">몽</div>
+    <div>
+      <div class="who"><b>몽실봇</b><span class="tag">앱</span><time>오후 9:12</time></div>
+      <div class="box">
+        <h3>봄 스크림 A조 2라운드</h3>
+        <div class="sep"></div>
+        <div class="ranks">
+          <span>1</span><span>새벽까마귀</span><span>18</span>
+          <span>2</span><span>푸른여우단</span><span>14</span>
+          <span>3</span><span>달토끼클럽</span><span>11</span>
+          <span>4</span><span>모래성</span><span>9</span>
+          <span>5</span><span>번개오리</span><span>7</span>
+          <span>6</span><span>호박고구마</span><span>5</span>
+          <span>7</span><span>은하수산책</span><span>4</span>
+          <span>8</span><span>고요한늑대</span><span>2</span>
+        </div>
+        <div class="row"><button class="btn" type="button">Labs에서 보기<svg width="14" height="14"><use href="#out"/></svg></button></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="state">같은 결과 중복</p>
+  <div class="msg">
+    <div class="ava u">보</div>
+    <div>
+      <div class="who"><b>보리차</b><time>오후 9:15</time></div>
+      <div class="file"><svg width="30" height="40"><use href="#csv"/></svg><div><a href="#">er_0412_1.csv</a><small>3.7 KB</small></div></div>
+    </div>
+  </div>
+  <div class="msg">
+    <div class="ava b">몽</div>
+    <div>
+      <div class="who"><b>몽실봇</b><span class="tag">앱</span><time>오후 9:15</time></div>
+      <div class="box">
+        <p>이미 1라운드에 올린 경기입니다.</p>
+        <div class="row"><button class="btn" type="button">Labs에서 보기<svg width="14" height="14"><use href="#out"/></svg></button></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="state">CSV 형식 오류</p>
+  <div class="msg">
+    <div class="ava u">보</div>
+    <div>
+      <div class="who"><b>보리차</b><time>오후 9:18</time></div>
+      <div class="file"><svg width="30" height="40"><use href="#csv"/></svg><div><a href="#">팀명단.csv</a><small>0.6 KB</small></div></div>
+    </div>
+  </div>
+  <div class="msg">
+    <div class="ava b">몽</div>
+    <div>
+      <div class="who"><b>몽실봇</b><span class="tag">앱</span><time>오후 9:18</time></div>
+      <div class="box bad"><p>게임 결과 CSV가 아닙니다.</p></div>
+    </div>
+  </div>
+
+  <p class="state">끝난 조</p>
+  <div class="msg">
+    <div class="ava u">보</div>
+    <div>
+      <div class="who"><b>보리차</b><time>오후 9:21</time></div>
+      <div class="file"><svg width="30" height="40"><use href="#csv"/></svg><div><a href="#">er_0412_7.csv</a><small>3.9 KB</small></div></div>
+    </div>
+  </div>
+  <div class="msg">
+    <div class="ava b">몽</div>
+    <div>
+      <div class="who"><b>몽실봇</b><span class="tag">앱</span><time>오후 9:21</time></div>
+      <div class="box">
+        <p>A조 경기가 끝났습니다.</p>
+        <div class="row"><button class="btn" type="button">Labs에서 보기<svg width="14" height="14"><use href="#out"/></svg></button></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="state">권한 없는 사람</p>
+  <div class="msg">
+    <div class="ava u" style="background:#eb459e">솜</div>
+    <div>
+      <div class="who"><b>솜사탕구름</b><time>오후 9:24</time></div>
+      <div class="file"><svg width="30" height="40"><use href="#csv"/></svg><div><a href="#">er_0412_2.csv</a><small>3.8 KB</small></div></div>
+    </div>
+  </div>
+  <div class="msg">
+    <div class="ava b">몽</div>
+    <div>
+      <div class="who"><b>몽실봇</b><span class="tag">앱</span><time>오후 9:24</time></div>
+      <div class="box bad"><p>올릴 수 있는 역할이 아닙니다.</p></div>
+    </div>
+  </div>
+
+  <p class="state">Labs 오류</p>
+  <div class="msg">
+    <div class="ava u">보</div>
+    <div>
+      <div class="who"><b>보리차</b><time>오후 9:27</time></div>
+      <div class="file"><svg width="30" height="40"><use href="#csv"/></svg><div><a href="#">er_0412_3.csv</a><small>3.8 KB</small></div></div>
+    </div>
+  </div>
+  <div class="msg">
+    <div class="ava b">몽</div>
+    <div>
+      <div class="who"><b>몽실봇</b><span class="tag">앱</span><time>오후 9:27</time></div>
+      <div class="box bad">
+        <p>Labs에 연결하지 못했습니다.</p>
+        <div class="row"><button class="btn" type="button">다시 보내기</button></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="state">결과 받기</p>
+  <div class="msg">
+    <div class="ava b">몽</div>
+    <div>
+      <div class="who"><b>몽실봇</b><span class="tag">앱</span><time>오후 8:50</time></div>
+      <div class="box">
+        <p class="g">A조</p>
+        <div class="pick"><span class="hash">#</span><span>a조-결과</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <div class="pick"><i class="dot"></i><span>스크림 운영진</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <p class="g">B조</p>
+        <div class="pick"><span class="hash">#</span><span>b조-결과</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <div class="pick"><i class="dot"></i><span>스크림 운영진</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <p class="g">C조</p>
+        <div class="pick"><span class="hash">#</span><span>c조-결과</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <div class="pick"><i class="dot"></i><span>스크림 운영진</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <p class="g">D조</p>
+        <div class="pick"><span class="hash">#</span><span>d조-결과</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <div class="pick"><i class="dot"></i><span>스크림 운영진</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <p class="g">E조</p>
+        <div class="pick"><span class="hash">#</span><span>e조-결과</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <div class="pick"><i class="dot"></i><span>스크림 운영진</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <p class="g">F조</p>
+        <div class="pick"><span class="hash">#</span><span>f조-결과</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <div class="pick"><i class="dot"></i><span>스크림 운영진</span><svg width="16" height="16"><use href="#down"/></svg></div>
+        <div class="row" style="margin-top:4px"><button class="btn primary" type="button">저장</button></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</body>
+</html>

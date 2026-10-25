@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>운영자와 설정</title>
+<link rel="stylesheet" href="../../../public/fonts/pretendard/pretendardvariable-dynamic-subset.css">
+<script>
+  const theme = () => document.documentElement.setAttribute("data-theme", location.hash === "#light" ? "light" : "dark");
+  theme();
+  addEventListener("hashchange", theme);
+</script>
+<style>
+  :root,
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0a0d14;
+    --surface: #11161f;
+    --field: #171d29;
+    --hover: #1d2431;
+    --line: #2a3242;
+    --line-strong: #3d4759;
+    --line-soft: #1d2431;
+    --text: #e9edf3;
+    --text-2: #a3acbd;
+    --text-3: #808a9d;
+    --minus: #ff6b6b;
+    --ramp-a: #0f5c66;
+    --ramp-b: #26f1f6;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #eef1f5;
+    --surface: #ffffff;
+    --field: #f6f8fa;
+    --hover: #eef1f5;
+    --line: #c9d0db;
+    --line-strong: #8f99aa;
+    --line-soft: #e2e6ec;
+    --text: #0a0d14;
+    --text-2: #3a4252;
+    --text-3: #5f6878;
+    --minus: #d93a3a;
+    --ramp-a: #6fd6dd;
+    --ramp-b: #0a5f66;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 "Pretendard Variable", Pretendard, system-ui, sans-serif;
+    font-feature-settings: "tnum" 1;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; }
+  ul { list-style: none; }
+  .wrap { margin: 0 auto; padding: 24px; max-width: 1280px; }
+  .wrap > * { max-width: 712px; }
+  .back { font-size: 13px; color: var(--text-3); text-decoration: none; }
+  h1 { margin: 6px 0 2px; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .sub { margin-bottom: 18px; font-size: 14px; color: var(--text-3); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  .box { padding: 18px 20px; }
+  .box + .box, .box + .rounds, .rounds + .log { margin-top: 14px; }
+  h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; font-size: 15px; font-weight: 700; }
+  .list { margin-top: 10px; }
+  .li { display: flex; min-width: 0; align-items: center; gap: 10px; border-top: 1px solid var(--line-soft); padding: 11px 0; font-size: 14px; }
+  .acts { margin-left: auto; display: flex; gap: 6px; }
+  .ava { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; }
+  .g { white-space: nowrap; }
+  .ch { min-width: 0; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta { font-size: 13px; color: var(--text-3); white-space: nowrap; }
+  code { font: inherit; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--surface); font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer;
+  }
+  .btn.sm { height: 30px; padding: 0 10px; font-size: 13px; }
+  .btn.danger { color: var(--minus); }
+  .chip {
+    display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 4px;
+    font-size: 12px; font-weight: 600; background: var(--field); color: var(--text-2);
+    border: 1px solid var(--line); white-space: nowrap;
+  }
+  .chip.bad { color: var(--minus); }
+  .chip.dashed { border-style: dashed; background: transparent; }
+  .rounds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+  .rounds h2 { grid-column: 1 / -1; }
+  .rd { display: flex; min-width: 0; flex-direction: column; gap: 8px; padding: 12px 14px; }
+  .rd-top { display: flex; min-width: 0; align-items: center; gap: 8px; }
+  .rd-top b { font-size: 15px; font-weight: 800; white-space: nowrap; }
+  .sq { flex: none; width: 12px; height: 12px; border-radius: 2px; }
+  .fn { margin-left: auto; display: flex; min-width: 0; align-items: center; gap: 4px; font-size: 12px; color: var(--text-3); }
+  .fn span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fn svg { flex: none; }
+  .win { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; font-size: 13px; }
+  .win span:first-child { color: var(--text-3); }
+  .win span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .log { padding: 16px; }
+  .log li { display: flex; gap: 10px; padding: 7px 0; font-size: 13px; }
+  .log li span:first-child { min-width: 0; flex: 1; }
+  .log li span:last-child { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+  .dc { color: #5865f2; }
+  :root[data-theme="dark"] .dc { color: #7984f5; }
+  @media (max-width: 760px) {
+    .wrap { padding: 16px; }
+    .li { flex-wrap: wrap; row-gap: 6px; }
+    .acts { width: 100%; }
+    .li .ch { flex: 1 1 calc(100% - 40px); white-space: normal; }
+    .op .acts { margin-left: 34px; }
+    .fn { margin-left: 0; width: 100%; }
+    .fn span { white-space: normal; overflow-wrap: anywhere; }
+    .rd-top { flex-wrap: wrap; }
+    .log li { flex-wrap: wrap; row-gap: 0; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="dc" viewBox="0 0 24 24"><path fill="currentColor" d="M19.3 5.3A16.6 16.6 0 0 0 15.2 4l-.5 1.1a15.4 15.4 0 0 0-5.4 0L8.8 4a16.5 16.5 0 0 0-4.1 1.3C2.1 9.2 1.4 13 1.7 16.7a16.7 16.7 0 0 0 5 2.6l1.1-1.7c-.6-.2-1.2-.5-1.7-.9l.4-.3a11.9 11.9 0 0 0 11 0l.4.3c-.5.4-1.1.7-1.7.9l1.1 1.7a16.6 16.6 0 0 0 5-2.6c.4-4.3-.7-8-3-11.4zM8.7 14.4c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2zm6.6 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2z"/></symbol>
+</svg>
+<main class="wrap">
+  <a class="back" href="#">대회 화면으로 돌아가기</a>
+  <h1>운영자와 설정</h1>
+  <p class="sub">봄 스크림, 대회 코드 <b translate="no">K7QX9M</b></p>
+
+  <section class="panel box">
+    <h2>운영자</h2>
+    <ul class="list">
+      <li class="li op"><span class="ava" style="background:#3ba55c">보</span><b>보리차</b><span class="chip">개최자</span></li>
+      <li class="li op"><span class="ava" style="background:#eb459e">레</span><b>레몬소다</b><span class="meta">4월 2일 참여</span>
+        <span class="acts"><button class="btn sm" type="button">개최자 넘기기</button><button class="btn sm danger" type="button">운영자에서 빼기</button></span></li>
+    </ul>
+  </section>
+
+  <section class="panel box">
+    <h2>디스코드</h2>
+    <ul class="list">
+      <li class="li"><b class="g">A조</b><span class="ch">달빛 스크림 #a조-결과</span><span class="meta">2라운드, 3분 전, 보리차</span><span class="chip">반영</span>
+        <span class="acts"><button class="btn sm danger" type="button">연결 해제</button></span></li>
+      <li class="li"><b class="g">B조</b><span class="ch">달빛 스크림 #b조-결과</span><span class="meta">2라운드, 5분 전, 레몬소다</span><span class="chip">반영</span>
+        <span class="acts"><button class="btn sm danger" type="button">연결 해제</button></span></li>
+      <li class="li"><b class="g">C조</b><span class="ch">달빛 스크림 #c조-결과</span><span class="meta">2라운드, 8분 전, 보리차</span><span class="chip">반영</span>
+        <span class="acts"><button class="btn sm danger" type="button">연결 해제</button></span></li>
+      <li class="li"><b class="g">D조</b><span class="ch">달빛 스크림 #d조-결과</span><span class="meta">2라운드, 11분 전, 레몬소다</span><span class="chip bad">형식 오류</span>
+        <span class="acts"><button class="btn sm danger" type="button">연결 해제</button></span></li>
+      <li class="li"><b class="g">E조</b><span class="ch">달빛 스크림 #e조-결과</span><span class="meta">1라운드, 14분 전, 보리차</span><span class="chip">중복</span>
+        <span class="acts"><button class="btn sm danger" type="button">연결 해제</button></span></li>
+      <li class="li"><b class="g">F조</b><span class="ch">연결 안 됨</span>
+        <span class="acts"><code class="chip dashed" translate="no">/대회 K7QX9M</code><button class="btn sm" type="button">복사</button></span></li>
+    </ul>
+  </section>
+
+  <section class="rounds">
+    <h2>A조</h2>
+    <div class="panel rd">
+      <div class="rd-top"><span class="sq" style="background:var(--ramp-a)"></span><b>1라운드</b><span class="fn"><span>er_0412_1.csv</span></span></div>
+      <div class="win"><span>1위</span><span>푸른여우단</span></div>
+    </div>
+    <div class="panel rd">
+      <div class="rd-top"><span class="sq" style="background:var(--ramp-b)"></span><b>2라운드</b><span class="fn"><span>er_0412_2.csv</span><svg class="dc" width="14" height="14" role="img" aria-label="디스코드"><use href="#dc"/></svg></span></div>
+      <div class="win"><span>1위</span><span>새벽까마귀</span></div>
+    </div>
+  </section>
+
+  <section class="panel log">
+    <h2>변경 기록</h2>
+    <ul style="margin-top:8px">
+      <li><span>A조 2라운드 CSV 추가 (디스코드, 보리차)</span><span>3분 전</span></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
