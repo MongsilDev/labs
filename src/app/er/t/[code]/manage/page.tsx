@@ -6,7 +6,7 @@ import Manage from "@/er/components/Manage";
 import Limited from "@/er/components/t/Limited";
 import { avatarUrl, currentUser } from "@/er/server/auth";
 import { openView } from "@/er/server/http";
-import { members, uploadKeys } from "@/er/server/tournament";
+import { members } from "@/er/server/tournament";
 
 export const metadata: Metadata = { title: "운영자", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -28,7 +28,6 @@ export default async function Page({ params }: { params: Promise<{ code: string 
         me={user.id}
         initialMembers={data.members.map((m) => ({ ...m, avatar: m.avatar ? avatarUrl(m) : null }))}
         initialInvites={data.invites}
-        initialKeys={uploadKeys(view.code, user)}
       />
       <Footer />
     </>
