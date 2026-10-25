@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
   return handle(async () => {
     if (!botAuthorized(req.headers.get("x-bot-token"))) return new Response(null, { status: 404 });
     if (!allow("bot", 1200, 60_000)) return fail("요청이 너무 많습니다.", 429);
-    const body = (await readJson<Body>(req).catch(() => null)) ?? {};
+    const body = await readJson<Body>(req).catch(() => null);
+    if (!body) return json({ status: "invalid" }, 400);
     return json(botRelay(body.channelId, body.actor, body.fileName, body.data));
   });
 }
