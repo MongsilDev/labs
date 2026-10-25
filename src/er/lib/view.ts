@@ -11,6 +11,7 @@ export type RoundRow = {
   gameId: number | null;
   fileName: string | null;
   players: Player[];
+  discord?: boolean;
 };
 
 export type GroupView = {
@@ -64,12 +65,20 @@ export type Op =
   | { op: "restore_penalty"; id: number }
   | { op: "rename_team"; group: number; from: string; to: string; also?: string[] }
   | { op: "set_checkpoint"; group: number; round: number; team: string; state: boolean | null }
-  | { op: "update_settings"; name?: string; mode?: Mode; preset?: Preset; rules?: Partial<Rules>; plannedRounds?: number; groupCount?: number };
+  | { op: "update_settings"; name?: string; mode?: Mode; preset?: Preset; rules?: Partial<Rules>; plannedRounds?: number; groupCount?: number }
+  | { op: "unlink_discord"; group: number };
 
 export type OpResult = { ok: boolean; version: number; notices: string[]; errors: string[]; undo?: { op: Op; label: string } };
 
 export type MemberRow = { id: string; name: string; avatar: string | null; role: "owner" | "operator"; joinedAt: number };
 export type UploadKeyRow = { group: number; createdBy: string; createdAt: number; lastUsedAt: number | null };
+export type RelayStatus = "duplicate" | "ended" | "invalid" | "added";
+export type DiscordLinkRow = {
+  group: number;
+  guild: string;
+  channel: string;
+  last: { at: number; status: RelayStatus; round: number | null; user: string } | null;
+};
 export type InviteRow = { token: string; createdAt: number; usesLeft: number };
 export type MyTournament = {
   code: string;

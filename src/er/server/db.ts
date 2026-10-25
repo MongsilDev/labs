@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS rounds (
   file_name TEXT,
   players TEXT NOT NULL,
   deleted_at INTEGER,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  discord INTEGER NOT NULL DEFAULT 0
 );
 CREATE UNIQUE INDEX IF NOT EXISTS rounds_slot ON rounds(tournament_id, group_idx, round_no) WHERE deleted_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS rounds_game ON rounds(tournament_id, game_id) WHERE deleted_at IS NULL AND game_id IS NOT NULL;
@@ -117,6 +118,19 @@ CREATE TABLE IF NOT EXISTS upload_keys (
   last_used_at INTEGER,
   PRIMARY KEY (tournament_id, group_idx)
 );
+CREATE TABLE IF NOT EXISTS discord_links (
+  channel_id TEXT PRIMARY KEY,
+  tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  group_idx INTEGER NOT NULL,
+  guild TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  last_at INTEGER,
+  last_status TEXT,
+  last_round INTEGER,
+  last_user TEXT,
+  UNIQUE (tournament_id, group_idx)
+);
 CREATE INDEX IF NOT EXISTS logs_t ON logs(tournament_id, id);
 CREATE INDEX IF NOT EXISTS members_user ON members(user_id);
 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
@@ -141,6 +155,8 @@ export function db(): DatabaseSync {
     conn.exec(SCHEMA);
     const cols = conn.prepare("PRAGMA table_info(invites)").all() as { name: string }[];
     if (!cols.some((c) => c.name === "uses_left")) conn.exec("ALTER TABLE invites ADD COLUMN uses_left INTEGER NOT NULL DEFAULT 1");
+    const roundCols = conn.prepare("PRAGMA table_info(rounds)").all() as { name: string }[];
+    if (!roundCols.some((c) => c.name === "discord")) conn.exec("ALTER TABLE rounds ADD COLUMN discord INTEGER NOT NULL DEFAULT 0");
     g.__erDb = conn;
   }
   return g.__erDb;

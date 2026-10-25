@@ -52,3 +52,6 @@ export function toCsv(rows: (string | number)[][]): string {
     )
     .join("\r\n");
 }
+
+// 게임 CSV는 UTF-8이지만 메모장 등으로 저장해 UTF-16이 된 파일도 읽음
+export const decodeCsv = (b: Uint8Array) => (b[0] === 0xff && b[1] === 0xfe ? new TextDecoder("utf-16le") : new TextDecoder()).decode(b);

@@ -1,5 +1,6 @@
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import type { NextRequest } from "next/server";
+import { decodeCsv } from "@/er/lib/csv";
 import { LIMITS } from "@/er/lib/rules";
 import { handle, json } from "@/er/server/http";
 import { uploadKeyId, uploadWithKey } from "@/er/server/tournament";
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     const bytes = await readBody(req);
     if (!bytes) return tooLarge();
     const name = (req.headers.get("x-file-name") ?? "").slice(0, 120) || "GameResult_.csv";
-    const r = uploadWithKey(code, group, key, { name, text: decode(bytes) });
+    const r = uploadWithKey(code, group, key, { name, text: decodeCsv(bytes) });
     if (r.status === "gone") return hidden();
     return json({ status: r.status, message: r.message }, STATUS[r.status]);
   });
@@ -47,6 +48,3 @@ async function readBody(req: Request): Promise<Buffer | null> {
     }
   return Buffer.concat(chunks);
 }
-
-// 게임 CSV는 UTF-8이지만 메모장 등으로 저장해 UTF-16이 된 파일도 읽음
-const decode = (b: Buffer) => (b[0] === 0xff && b[1] === 0xfe ? new TextDecoder("utf-16le") : new TextDecoder()).decode(b);

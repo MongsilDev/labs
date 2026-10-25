@@ -68,6 +68,10 @@ async function seed() {
   t.applyOp(code, owner, { op: "add_csv", group: 0, files });
   t.applyOp(code, owner, { op: "add_penalty", group: 0, team: "모래성", round: 2, kind: "rule", points: 3, reason: "지각" });
   invite = t.createInvite(code, owner);
+  // A조는 디스코드 채널에 연결하고 마지막 결과를 형식 오류로, B조는 연결 안 된 상태로 둠
+  t.setDiscordLinks(code, owner.id, [{ group: "A", channelId: "100000000000000001", guild: "시험 서버", channel: "결과-a조" }]);
+  conn.prepare("UPDATE discord_links SET last_at = ?, last_status = 'invalid', last_round = NULL, last_user = ? WHERE channel_id = ?").run(Date.now() - 300_000, owner.name, "100000000000000001");
+  conn.prepare("UPDATE rounds SET discord = 1 WHERE tournament_id = (SELECT id FROM tournaments WHERE code = ?) AND group_idx = 0 AND round_no <= 2").run(code);
   upCode = t.createTournament(owner, { name: "자동 업로드", mode: "points", preset: "masters", plannedRounds: 4, groupCount: 2 });
   upKey = t.issueUploadKey(upCode, owner, 0).key;
 }

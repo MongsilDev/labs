@@ -108,7 +108,7 @@ pnpm build
 | `PLAYERS_BASE` | Tarkov 프로필 JSON을 받을 주소.<br>기본값은 `https://players.tarkov.dev` |
 | `JOBS` | `0`이면 Tarkov 이름 목록 적재와 비교군 수집을 하지 않습니다 |
 | `CUT_API` | 이터컷 예측 데이터를 받을 주소.<br>기본값은 `https://bot.mongsil.dev/api/cut` |
-| `LABS_BOT_TOKEN` | 몽실봇이 `x-bot-token` 헤더로 보내는 토큰.<br>`/api/bot/t/{코드}`와 `/api/bot/users/{디스코드 ID}/tournaments`에 씁니다.<br>비우면 두 주소는 응답하지 않습니다 |
+| `LABS_BOT_TOKEN` | 몽실봇이 `x-bot-token` 헤더로 보내는 토큰.<br>`/api/bot/t/{코드}`, `/api/bot/users/{디스코드 ID}/tournaments`, 채널을 조에 연결하는 `PUT /api/bot/t/{코드}/links`, 채널에 올라온 결과 CSV를 넣는 `POST /api/bot/relay`에 씁니다.<br>비우면 이 주소들은 응답하지 않습니다 |
 | `SENTRY_DSN` | 서버 오류를 보낼 Sentry DSN.<br>비우면 보내지 않습니다 |
 
 ## 데이터
