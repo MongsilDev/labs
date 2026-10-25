@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { api } from "@/er/lib/client";
-import { timeKo } from "@/er/lib/format";
-import { LIMITS, PRESET_LABEL, presetRules, type Mode, type Preset, type Rules } from "@/er/lib/rules";
-import type { InviteRow, MemberRow, TournamentView } from "@/er/lib/view";
+import { ago, timeKo } from "@/er/lib/format";
+import { LIMITS, PRESET_LABEL, groupLabel, presetRules, type Mode, type Preset, type Rules } from "@/er/lib/rules";
+import { useNow } from "@/er/lib/useNow";
+import type { DiscordLinkRow, InviteRow, MemberRow, RelayStatus, TournamentView } from "@/er/lib/view";
 import Avatar from "./Avatar";
 import ModeSeg from "./ModeSeg";
 import RulesFields from "./RulesFields";
@@ -24,11 +25,13 @@ export default function Manage({
   me,
   initialMembers,
   initialInvites,
+  initialLinks,
 }: {
   view: TournamentView;
   me: string;
   initialMembers: MemberRow[];
   initialInvites: InviteRow[];
+  initialLinks: DiscordLinkRow[];
 }) {
   const router = useRouter();
   const [list, setList] = useState(initialMembers);
@@ -36,6 +39,7 @@ export default function Manage({
   const [msg, setMsg] = useState<{ text: string; bad?: boolean } | null>(null);
   const [uses, setUses] = useState(1);
   const [confirm, setConfirm] = useState<null | Ask>(null);
+  const [links, setLinks] = useState(initialLinks);
   const owner = view.role === "owner";
   const origin = useSyncExternalStore(
     () => () => {},
@@ -191,6 +195,21 @@ export default function Manage({
         </section>
       )}
 
+      <Discord
+        view={view}
+        links={links}
+        onUnlink={async (group) => {
+          try {
+            await api.op(view.code, { op: "unlink_discord", group });
+            setLinks((l) => l.filter((x) => x.group !== group));
+            setMsg({ text: view.groupCount > 1 ? `${groupLabel(group)}조 디스코드 연결을 해제했습니다.` : "디스코드 연결을 해제했습니다." });
+          } catch (e) {
+            setMsg({ text: e instanceof Error ? e.message : "연결을 해제하지 못했습니다.", bad: true });
+          }
+        }}
+        onMsg={(text, bad) => setMsg({ text, bad })}
+      />
+
       {owner && <Settings view={view} onSaved={(t) => setMsg({ text: t })} onError={(t) => setMsg({ text: t, bad: true })} />}
 
       {owner && (
@@ -229,6 +248,95 @@ export default function Manage({
         />
       )}
     </main>
+  );
+}
+
+const RELAY_LABEL: Record<RelayStatus, string> = { added: "반영", duplicate: "중복", invalid: "형식 오류", ended: "끝남" };
+
+function Discord({
+  view,
+  links,
+  onUnlink,
+  onMsg,
+}: {
+  view: TournamentView;
+  links: DiscordLinkRow[];
+  onUnlink: (group: number) => Promise<void>;
+  onMsg: (text: string, bad?: boolean) => void;
+}) {
+  const now = useNow();
+  const [busy, setBusy] = useState<number | null>(null);
+  const guilds = [...new Set(links.map((l) => l.guild))];
+  const command = `/대회 ${view.code}`;
+  return (
+    <section className={BOX} aria-labelledby="dc-h">
+      <h2 className={H2} id="dc-h">
+        디스코드
+        {guilds.length === 1 && guilds[0] && <span className="min-w-0 truncate text-[13px] font-medium text-fg-3">{guilds[0]}</span>}
+      </h2>
+      <ul className="mt-2.5 list-none">
+        {Array.from({ length: view.groupCount }, (_, g) => {
+          const l = links.find((x) => x.group === g);
+          const last = l?.last;
+          return (
+            <li key={g} className={LI}>
+              {view.groupCount > 1 && <b className="whitespace-nowrap">{groupLabel(g)}조</b>}
+              {l ? (
+                <>
+                  {guilds.length > 1 && <span className="min-w-0 truncate text-[13px] text-fg-3">{l.guild}</span>}
+                  <span className="min-w-0 truncate">#{l.channel}</span>
+                  {last && (
+                    <>
+                      <span className="text-[13px] whitespace-nowrap text-fg-3">
+                        {[last.round && `${last.round}라운드`, now && ago(last.at, now), last.user].filter(Boolean).join(", ")}
+                      </span>
+                      <span className={`chip${last.status === "invalid" ? " border-minus text-minus" : ""}`}>{RELAY_LABEL[last.status]}</span>
+                    </>
+                  )}
+                  <span className={`${ACTS} max-[760px]:ml-0`}>
+                    <button
+                      type="button"
+                      className="btn sm"
+                      disabled={busy !== null}
+                      onClick={async () => {
+                        setBusy(g);
+                        await onUnlink(g);
+                        setBusy(null);
+                      }}
+                    >
+                      연결 해제
+                    </button>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-fg-3">연결 안 됨</span>
+                  <code className="rounded-[4px] bg-field px-1.5 py-0.5 font-mono text-[13px] whitespace-nowrap text-fg-2" translate="no">
+                    {command}
+                  </code>
+                  <span className={`${ACTS} max-[760px]:ml-0`}>
+                    <button
+                      type="button"
+                      className="btn sm"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(command);
+                          onMsg("명령어를 복사했습니다.");
+                        } catch {
+                          onMsg("복사하지 못했습니다. 명령어를 직접 선택해 복사해주세요.", true);
+                        }
+                      }}
+                    >
+                      복사
+                    </button>
+                  </span>
+                </>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

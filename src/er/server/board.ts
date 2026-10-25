@@ -6,7 +6,8 @@ import { characterName } from "@/er/lib/format";
 import type { Mode, Tiebreak } from "@/er/lib/rules";
 import type { Role, TournamentView } from "@/er/lib/view";
 import { BASE_URL } from "./auth";
-import { loadView, myTournaments, tournamentVersion } from "./tournament";
+import { groupLabel } from "@/er/lib/rules";
+import { loadView, myTournaments, relayDiscord, tournamentVersion } from "./tournament";
 
 export const EXAMPLE_CODE = "EXAMPLE";
 
@@ -105,4 +106,36 @@ export function botTournaments(userId: string): BotTournament[] {
   return myTournaments(user)
     .slice(0, 100)
     .map((t) => ({ code: t.code, name: t.name, role: t.role, played: t.played }));
+}
+
+export type RelayReply =
+  | { status: "unlinked" }
+  | {
+      status: "forbidden" | "duplicate" | "ended" | "invalid" | "added";
+      message: string;
+      code: string;
+      name: string;
+      group: string;
+      groupCount: number;
+      url: string;
+      round?: number;
+      ranking?: { rank: number; team: string; score: number }[];
+    };
+
+// 디스코드 채널에 올라온 결과 파일을 연결된 조에 넣고, 넣은 라운드의 순위를 대회 화면과 같은 계산으로 돌려줌
+export function botRelay(channelId: unknown, actor: unknown, fileName: unknown, data: unknown): RelayReply {
+  const bytes = typeof data === "string" ? Buffer.from(data, "base64") : Buffer.alloc(0);
+  const r = relayDiscord(channelId, actor, { name: typeof fileName === "string" ? fileName : "", bytes });
+  if (r.status === "unlinked") return r;
+  const label = groupLabel(r.group);
+  const out = { status: r.status, message: r.message, code: r.code, name: r.name, group: label, groupCount: r.groupCount, url: `${BASE_URL}/er/t/${r.code}/${label.toLowerCase()}` };
+  if (r.status !== "added" || r.round === null) return out;
+  const round = r.round;
+  const ranking = groupResult(loadView(r.code, null)!, r.group)
+    .standings.flatMap((s) => {
+      const x = s.rounds[round - 1];
+      return x && x.placement !== null ? [{ rank: x.placement, team: s.name, score: x.score }] : [];
+    })
+    .sort((a, b) => a.rank - b.rank);
+  return { ...out, round, ranking };
 }

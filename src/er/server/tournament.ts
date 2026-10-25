@@ -2,6 +2,7 @@ import "server-only";
 import { randomInt } from "node:crypto";
 import type { PenaltyInput } from "@/er/lib/engine";
 import { groupResult, normalize } from "@/er/lib/engine";
+import { decodeCsv } from "@/er/lib/csv";
 import { parseRoundCsv, type Player } from "@/er/lib/parse";
 import { cleanName } from "@/er/lib/text";
 import {
@@ -18,12 +19,14 @@ import {
 import {
   RETENTION_MS,
   type CreateInput,
+  type DiscordLinkRow,
   type GroupView,
   type InviteRow,
   type MemberRow,
   type MyTournament,
   type Op,
   type OpResult,
+  type RelayStatus,
   type Role,
   type RoundRow,
   type TournamentView,
@@ -150,7 +153,7 @@ export function loadView(code: string, user: User | null): TournamentView | null
     aliases: {},
     overrides: {},
   }));
-  type RR = { id: number; group_idx: number; round_no: number; source: "csv" | "manual"; game_id: number | null; file_name: string | null; players: string };
+  type RR = { id: number; group_idx: number; round_no: number; source: "csv" | "manual"; game_id: number | null; file_name: string | null; players: string; discord: number };
   for (const r of conn.prepare("SELECT * FROM rounds WHERE tournament_id = ? AND deleted_at IS NULL ORDER BY round_no").all(t.id) as RR[]) {
     groups[r.group_idx]?.rounds.push({
       id: r.id,
@@ -159,6 +162,7 @@ export function loadView(code: string, user: User | null): TournamentView | null
       gameId: r.game_id,
       fileName: r.file_name,
       players: JSON.parse(r.players) as Player[],
+      ...(r.discord ? { discord: true } : {}),
     });
   }
   type PR = { id: number; group_idx: number; team: string; round_no: number; kind: "death" | "rule"; count: number; points: number; reason: string };
@@ -532,12 +536,20 @@ function runOp(t: TRow, role: "owner" | "operator", user: User, op: Op, via = ""
       if (groups !== t.group_count) changes.push(`조 ${groups}개`);
       if (changes.length === 0) break;
       // 줄인 조의 키는 조 수를 다시 늘려도 되살아나지 않게 지움
-      if (groups < t.group_count) conn.prepare("DELETE FROM upload_keys WHERE tournament_id = ? AND group_idx >= ?").run(t.id, groups);
+      if (groups < t.group_count) {
+        conn.prepare("DELETE FROM upload_keys WHERE tournament_id = ? AND group_idx >= ?").run(t.id, groups);
+        conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx >= ?").run(t.id, groups);
+      }
       conn
         .prepare("UPDATE tournaments SET name = ?, mode = ?, rules = ?, planned_rounds = ?, group_count = ? WHERE id = ?")
         .run(name, mode, JSON.stringify(rules), planned, groups, t.id);
       bump(t, user, `설정 변경: ${changes.join(", ")}`);
       notices.push("설정을 저장했습니다.");
+      break;
+    }
+    case "unlink_discord": {
+      const g = assertGroup(t, op.group);
+      if (Number(conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx = ?").run(t.id, g).changes) > 0) bump(t, user, `${prefix(t, g)}디스코드 연결 해제`);
       break;
     }
     default:
@@ -737,26 +749,126 @@ export function uploadKeyId(code: string, group: string, key: string): string | 
   return keyRow(code, group, key)?.hash ?? null;
 }
 
-export type UploadResult = { status: "gone" | "ended" | "duplicate" | "invalid" | "added"; message: string };
+export type UploadResult = { status: "gone" | RelayStatus; message: string };
+
+type Landed = { status: RelayStatus; message: string; round: number | null; id?: number };
+
+// 업로드 키와 디스코드 전달이 함께 쓰는 판정. 트랜잭션은 부르는 쪽이 엶
+function landCsv(t: TRow, g: number, role: "owner" | "operator", user: User, file: { name: string; text: string }, via: string): Landed {
+  // 마지막 라운드 응답을 받지 못하고 다시 보내면 끝난 조가 아니라 이미 올린 경기로 알림
+  const parsed = parseRoundCsv(file.text);
+  if (parsed.ok) {
+    const dup = db()
+      .prepare("SELECT group_idx, round_no FROM rounds WHERE tournament_id = ? AND game_id = ? AND deleted_at IS NULL")
+      .get(t.id, parsed.round.gameId) as { group_idx: number; round_no: number } | undefined;
+    if (dup) return { status: "duplicate", message: `이미 ${prefix(t, dup.group_idx)}${dup.round_no}라운드에 올린 경기입니다.`, round: dup.round_no };
+  }
+  if (groupResult(loadView(t.code, null)!, g).ended) return { status: "ended", message: t.group_count > 1 ? `${groupLabel(g)}조 경기가 끝났습니다.` : "끝난 대회입니다.", round: null };
+  const r = runOp(t, role, user, { op: "add_csv", group: g, files: [file] }, via);
+  if (!r.ok || !parsed.ok) return { status: "invalid", message: r.errors.join("\n").replace(/^[^:\n]*: /gm, ""), round: null };
+  const row = db().prepare("SELECT id, round_no FROM rounds WHERE tournament_id = ? AND game_id = ? AND deleted_at IS NULL").get(t.id, parsed.round.gameId) as {
+    id: number;
+    round_no: number;
+  };
+  return { status: "added", message: r.notices.join("\n"), round: row.round_no, id: row.id };
+}
 
 export function uploadWithKey(code: string, group: string, key: string, file: { name: string; text: string }): UploadResult {
   return tx(() => {
     const k = keyRow(code, group, key);
     if (!k) return { status: "gone", message: "" };
-    const { t, g } = k;
-    // 마지막 라운드 응답을 받지 못한 스크립트가 다시 보내면 끝난 조가 아니라 이미 올린 경기로 알림
-    const parsed = parseRoundCsv(file.text);
-    if (parsed.ok) {
-      const dup = db()
-        .prepare("SELECT group_idx, round_no FROM rounds WHERE tournament_id = ? AND game_id = ? AND deleted_at IS NULL")
-        .get(t.id, parsed.round.gameId) as { group_idx: number; round_no: number } | undefined;
-      if (dup) return { status: "duplicate", message: `이미 ${prefix(t, dup.group_idx)}${dup.round_no}라운드에 올린 경기입니다.` };
+    const r = landCsv(k.t, k.g, k.role, k.issuer, file, " (자동 업로드)");
+    if (r.status === "added") db().prepare("UPDATE upload_keys SET last_used_at = ? WHERE hash = ?").run(now(), k.hash);
+    return { status: r.status, message: r.message };
+  });
+}
+
+const DISCORD_ID = /^\d{1,20}$/;
+
+function userById(id: unknown): User | null {
+  if (typeof id !== "string" || !DISCORD_ID.test(id)) return null;
+  return (db().prepare("SELECT id, name, avatar FROM users WHERE id = ?").get(id) as User | undefined) ?? null;
+}
+
+const live = (t: TRow) => t.updated_at + RETENTION_MS > now();
+
+export type LinkResult = { status: "gone" | "forbidden" | "invalid" } | { status: "ok"; links: { group: string; channelId: string }[] };
+
+// 채널 하나는 한 대회의 한 조에만, 조 하나에는 채널 하나만 연결함. 본문에 없는 조는 그대로 둠
+export function setDiscordLinks(code: string, actor: unknown, links: unknown): LinkResult {
+  const t = typeof code === "string" ? find(code) : undefined;
+  if (!t || !live(t)) return { status: "gone" };
+  const user = userById(actor);
+  const role = user ? roleOf(t, user) : null;
+  if (!user || !role) return { status: "forbidden" };
+  if (!Array.isArray(links) || links.length > LIMITS.groups) return { status: "invalid" };
+  const want: { g: number; channelId: string | null; guild: string; channel: string }[] = [];
+  for (const l of links as { group?: unknown; channelId?: unknown; guild?: unknown; channel?: unknown }[]) {
+    const g = typeof l?.group === "string" ? Array.from({ length: t.group_count }, (_, i) => groupLabel(i)).indexOf(l.group.trim().toUpperCase()) : -1;
+    const channelId = l?.channelId ?? null;
+    if (g < 0 || want.some((w) => w.g === g) || (channelId !== null && (typeof channelId !== "string" || !DISCORD_ID.test(channelId)))) return { status: "invalid" };
+    want.push({ g, channelId, guild: clean(l.guild, 100), channel: clean(l.channel, 100) });
+  }
+  return tx(() => {
+    const conn = db();
+    for (const w of want) {
+      if (w.channelId === null) {
+        conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx = ?").run(t.id, w.g);
+        continue;
+      }
+      conn.prepare("DELETE FROM discord_links WHERE channel_id = ? OR (tournament_id = ? AND group_idx = ?)").run(w.channelId, t.id, w.g);
+      conn
+        .prepare("INSERT INTO discord_links(channel_id, tournament_id, group_idx, guild, channel, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(w.channelId, t.id, w.g, w.guild, w.channel, now());
     }
-    if (groupResult(loadView(t.code, null)!, g).ended) return { status: "ended", message: t.group_count > 1 ? `${groupLabel(g)}조 경기가 끝났습니다.` : "끝난 대회입니다." };
-    const r = runOp(t, k.role, k.issuer, { op: "add_csv", group: g, files: [file] }, " (자동 업로드)");
-    if (!r.ok) return { status: "invalid", message: r.errors.join("\n").replace(/^[^:\n]*: /gm, "") };
-    db().prepare("UPDATE upload_keys SET last_used_at = ? WHERE hash = ?").run(now(), k.hash);
-    return { status: "added", message: r.notices.join("\n") };
+    bump(t, user, "디스코드 연결 변경");
+    const rows = conn.prepare("SELECT channel_id, group_idx FROM discord_links WHERE tournament_id = ? ORDER BY group_idx").all(t.id) as { channel_id: string; group_idx: number }[];
+    return { status: "ok", links: rows.map((r) => ({ group: groupLabel(r.group_idx), channelId: r.channel_id })) };
+  });
+}
+
+export function discordLinks(code: string, user: User): DiscordLinkRow[] {
+  const { t } = findRole(code, user);
+  const rows = db()
+    .prepare("SELECT * FROM discord_links WHERE tournament_id = ? AND group_idx < ? ORDER BY group_idx")
+    .all(t.id, t.group_count) as { group_idx: number; guild: string; channel: string; last_at: number | null; last_status: RelayStatus | null; last_round: number | null; last_user: string | null }[];
+  return rows.map((r) => ({
+    group: r.group_idx,
+    guild: r.guild,
+    channel: r.channel,
+    last: r.last_at && r.last_status ? { at: r.last_at, status: r.last_status, round: r.last_round, user: r.last_user ?? "" } : null,
+  }));
+}
+
+export type Relay =
+  | { status: "unlinked" }
+  | { status: "forbidden" | RelayStatus; message: string; code: string; name: string; group: number; groupCount: number; round: number | null };
+
+// 연결된 채널에 올라온 결과 파일을 그 조에 넣음. 올린 사람의 권한으로 넣고, 연결과 권한이 맞으면 결과를 연결 행에 남김
+export function relayDiscord(channelId: unknown, actor: unknown, file: { name: string; bytes: Uint8Array }): Relay {
+  if (typeof channelId !== "string" || !DISCORD_ID.test(channelId)) return { status: "unlinked" };
+  return tx(() => {
+    const conn = db();
+    const link = conn.prepare("SELECT t.*, l.group_idx FROM discord_links l JOIN tournaments t ON t.id = l.tournament_id WHERE l.channel_id = ?").get(channelId) as
+      | (TRow & { group_idx: number })
+      | undefined;
+    if (!link || link.group_idx >= link.group_count || !live(link)) return { status: "unlinked" };
+    const t: TRow = link;
+    const g = link.group_idx;
+    const base = { code: t.code, name: t.name, group: g, groupCount: t.group_count };
+    const user = userById(actor);
+    const role = user ? roleOf(t, user) : null;
+    if (!user || !role) return { ...base, status: "forbidden", message: "이 대회의 개최자나 운영자만 결과를 올릴 수 있습니다.", round: null };
+    const name = clean(file.name, 120) || "GameResult_.csv";
+    const r: Landed =
+      file.bytes.length > LIMITS.csvBytes
+        ? { status: "invalid", message: "200KB가 넘는 파일은 올릴 수 없습니다.", round: null }
+        : landCsv(t, g, role, user, { name, text: decodeCsv(file.bytes) }, " (디스코드)");
+    if (r.id) conn.prepare("UPDATE rounds SET discord = 1 WHERE id = ?").run(r.id);
+    conn
+      .prepare("UPDATE discord_links SET last_at = ?, last_status = ?, last_round = ?, last_user = ? WHERE channel_id = ?")
+      .run(now(), r.status, r.round, user.name, channelId);
+    return { ...base, status: r.status, message: r.message, round: r.round };
   });
 }
 
