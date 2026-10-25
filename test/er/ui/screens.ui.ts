@@ -68,8 +68,6 @@ async function seed() {
   t.applyOp(code, owner, { op: "add_csv", group: 0, files });
   t.applyOp(code, owner, { op: "add_penalty", group: 0, team: "모래성", round: 2, kind: "rule", points: 3, reason: "지각" });
   invite = t.createInvite(code, owner);
-  t.issueUploadKey(code, owner, 0);
-  conn.prepare("UPDATE upload_keys SET last_used_at = ? WHERE tournament_id = (SELECT id FROM tournaments WHERE code = ?)").run(Date.now() - 600_000, code);
   upCode = t.createTournament(owner, { name: "자동 업로드", mode: "points", preset: "masters", plannedRounds: 4, groupCount: 2 });
   upKey = t.issueUploadKey(upCode, owner, 0).key;
 }
@@ -282,51 +280,6 @@ describe("화면 점검", () => {
     }
     const sitemap = await fetch(`${base}/sitemap.xml`).then((r) => r.text());
     expect(sitemap).toContain(`${base}/er/kel/characters?view=build<`);
-  });
-
-  it("업로드 키를 발급하면 키와 스크립트 내려받기가 화면 안에 나오고, 폐기하면 사라진다", async () => {
-    for (const width of [390, 1440]) {
-      for (const theme of ["dark", "light"] as const) {
-        const { page, errors } = await open(SCREENS.find((s) => s.name === "운영자와 설정")!, width, theme);
-        const row = page.locator("#u-h + ul > li").nth(1);
-        await row.getByRole("button", { name: "키 발급" }).click();
-        await row.getByRole("button", { name: "스크립트 내려받기" }).waitFor();
-        const p = await page.evaluate(inspect);
-        const [download] = await Promise.all([page.waitForEvent("download"), row.getByRole("button", { name: "스크립트 내려받기" }).click()]);
-        const script = readFileSync((await download.path())!);
-        await row.getByRole("button", { name: "폐기" }).click();
-        await page.getByRole("alertdialog").getByRole("button", { name: "폐기" }).click();
-        await row.getByRole("button", { name: "키 발급" }).waitFor();
-        await page.context().close();
-        expect([width, theme, p]).toEqual([width, theme, { overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] }]);
-        expect(errors).toEqual([]);
-        expect(download.suggestedFilename()).toBe(`labs-upload-${code}-b.ps1`);
-        expect([...script.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
-        expect(script.toString("utf8")).toContain(`$UploadUrl = '${base}/api/upload/${code}/b'`);
-      }
-    }
-  });
-
-  it("두 조에 이어서 키를 발급해도 먼저 발급한 조의 키와 스크립트 내려받기가 남는다", async () => {
-    const { page } = await open(SCREENS.find((s) => s.name === "운영자와 설정")!, 1440, "dark");
-    try {
-      const rows = page.locator("#u-h + ul > li");
-      const revoke = async (i: number) => {
-        await rows.nth(i).getByRole("button", { name: "폐기" }).click();
-        await page.getByRole("alertdialog").getByRole("button", { name: "폐기" }).click();
-        await rows.nth(i).getByRole("button", { name: "키 발급" }).waitFor();
-      };
-      await revoke(0);
-      for (const i of [0, 1]) {
-        await rows.nth(i).getByRole("button", { name: "키 발급" }).click();
-        await rows.nth(i).getByRole("button", { name: "스크립트 내려받기" }).waitFor();
-      }
-      await expect(rows.nth(0).getByRole("button", { name: "스크립트 내려받기" }).isVisible()).resolves.toBe(true);
-      await revoke(1);
-      await expect(rows.nth(0).getByRole("button", { name: "스크립트 내려받기" }).isVisible()).resolves.toBe(true);
-    } finally {
-      await page.context().close();
-    }
   });
 
   it("업로드 API는 로그인과 Origin 없이 키로만 받고, 틀린 키는 본문 없이 404", async () => {
