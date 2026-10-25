@@ -761,7 +761,7 @@ function landCsv(t: TRow, g: number, role: "owner" | "operator", user: User, fil
     const dup = db()
       .prepare("SELECT group_idx, round_no FROM rounds WHERE tournament_id = ? AND game_id = ? AND deleted_at IS NULL")
       .get(t.id, parsed.round.gameId) as { group_idx: number; round_no: number } | undefined;
-    if (dup) return { status: "duplicate", message: `이미 ${prefix(t, dup.group_idx)}${dup.round_no}라운드에 올린 경기입니다.`, round: dup.round_no };
+    if (dup) return { status: "duplicate", message: `이미 ${prefix(t, dup.group_idx)}${dup.round_no}라운드에 올린 경기입니다.`, round: dup.group_idx === g ? dup.round_no : null };
   }
   if (groupResult(loadView(t.code, null)!, g).ended) return { status: "ended", message: t.group_count > 1 ? `${groupLabel(g)}조 경기가 끝났습니다.` : "끝난 대회입니다.", round: null };
   const r = runOp(t, role, user, { op: "add_csv", group: g, files: [file] }, via);
@@ -811,17 +811,24 @@ export function setDiscordLinks(code: string, actor: unknown, links: unknown): L
   }
   return tx(() => {
     const conn = db();
+    let changed = 0;
     for (const w of want) {
       if (w.channelId === null) {
-        conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx = ?").run(t.id, w.g);
+        changed += Number(conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx = ?").run(t.id, w.g).changes);
         continue;
       }
+      // 같은 조에 같은 채널을 다시 보내면 이름만 갱신하고 마지막 결과는 유지
+      const same = conn
+        .prepare("UPDATE discord_links SET guild = ?, channel = ? WHERE channel_id = ? AND tournament_id = ? AND group_idx = ?")
+        .run(w.guild, w.channel, w.channelId, t.id, w.g);
+      if (Number(same.changes)) continue;
       conn.prepare("DELETE FROM discord_links WHERE channel_id = ? OR (tournament_id = ? AND group_idx = ?)").run(w.channelId, t.id, w.g);
       conn
         .prepare("INSERT INTO discord_links(channel_id, tournament_id, group_idx, guild, channel, created_at) VALUES (?, ?, ?, ?, ?, ?)")
         .run(w.channelId, t.id, w.g, w.guild, w.channel, now());
+      changed++;
     }
-    bump(t, user, "디스코드 연결 변경");
+    if (changed) bump(t, user, "디스코드 연결 변경");
     const rows = conn.prepare("SELECT channel_id, group_idx FROM discord_links WHERE tournament_id = ? ORDER BY group_idx").all(t.id) as { channel_id: string; group_idx: number }[];
     return { status: "ok", links: rows.map((r) => ({ group: groupLabel(r.group_idx), channelId: r.channel_id })) };
   });
