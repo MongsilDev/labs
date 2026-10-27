@@ -115,7 +115,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
       )}
       {low && (
         <>
-          <Ranking id="low-damage" title="가장 적게 가한 피해" rows={low.damage} label="가한 피해" value={(r) => int(r.damage)} />
+          <Ranking id="low-damage" title="최저 가한 피해" rows={low.damage} label="가한 피해" value={(r) => int(r.damage)} />
           <Ranking id="most-deaths" title="최다 데스" rows={low.deaths} label="데스" value={(r) => r.deaths} />
         </>
       )}
@@ -127,7 +127,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
                 <tr>
                   <th className="l">실험체</th>
                   <th>최다 킬</th>
-                  <th>가장 많이 가한 피해</th>
+                  <th>최다 가한 피해</th>
                 </tr>
               </thead>
               <tbody>

@@ -10,9 +10,9 @@ type Tile = { label: string; row: (x: Records) => KelRow | null; value: (r: KelR
 // 첫 화면과 한 게임 기록이 같이 쓰는 칸
 const TILES = {
   kills: { label: "최다 킬", row: (x) => x.kills, value: (r) => r.kills, unit: "킬" },
-  damage: { label: "가장 많이 가한 피해", row: (x) => x.damage[0]?.r ?? null, value: (r) => int(r.damage) },
-  taken: { label: "가장 많이 받은 피해", row: (x) => x.taken, value: (r) => int(r.taken) },
-  lowTeamDamage: { label: "7위 이하 팀에서 가장 많이 가한 피해", row: (x) => x.lowTeamDamage, value: (r) => int(r.damage) },
+  damage: { label: "최다 가한 피해", row: (x) => x.damage[0]?.r ?? null, value: (r) => int(r.damage) },
+  taken: { label: "최다 받은 피해", row: (x) => x.taken, value: (r) => int(r.taken) },
+  lowTeamDamage: { label: "7위 이하 팀의 최다 가한 피해", row: (x) => x.lowTeamDamage, value: (r) => int(r.damage) },
   cc: { label: "최다 군중제어 시간", row: (x) => x.cc, value: (r) => r.dak!.cc.toFixed(1), unit: "초" },
   heal: { label: "최다 팀원 회복", row: (x) => x.heal, value: (r) => int(r.dak!.heal) },
   camera: { label: "최다 망원\u00a0카메라 설치", row: (x) => x.camera, value: (r) => r.dak!.camera, unit: "개" },
