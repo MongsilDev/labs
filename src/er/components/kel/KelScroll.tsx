@@ -6,7 +6,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 function fit(el: HTMLDivElement) {
   const row = el.querySelector("tbody tr") as HTMLTableRowElement | null;
   if (!row) return;
-  for (const c of row.cells) c.style.minWidth = "";
+  for (const c of row.cells) c.style.minWidth = c.style.width = "";
   const cells = [...row.cells].filter((c) => c.offsetWidth);
   const sticky = (c: HTMLTableCellElement) => getComputedStyle(c).position === "sticky";
   // 고정 칸이 없는 표는 가장 넓은 왼쪽 정렬 칸을 넓힘
@@ -15,7 +15,8 @@ function fit(el: HTMLDivElement) {
   if (el.scrollWidth <= el.clientWidth) return;
   // sticky 칸은 offsetParent가 표가 아니라서 화면 좌표로 계산
   const left = el.getBoundingClientRect().left - el.scrollLeft;
-  const pinEnd = () => (last ? last.getBoundingClientRect().right - left : 0);
+  // 고정 칸은 스크롤해도 제자리라 스크롤 위치를 빼지 않음
+  const pinEnd = () => (last ? last.getBoundingClientRect().right - (sticky(last) ? el.getBoundingClientRect().left : left) : 0);
   // 고정 칸을 넓히면 다른 열 폭도 다시 나뉘어서 몇 번 되풀이해 맞춤
   for (let n = 0; last && n < 6; n++) {
     const edges = cells.filter((c) => !sticky(c)).map((c) => c.getBoundingClientRect().right - left).filter((x) => x > pinEnd() + 1 && x <= el.clientWidth + 0.5);
@@ -25,7 +26,8 @@ function fit(el: HTMLDivElement) {
       el.setAttribute("data-fit", "");
       break;
     }
-    last.style.minWidth = `${last.getBoundingClientRect().width + rest}px`;
+    // 표 칸 min-width는 브라우저마다 다르게 다뤄 width도 함께 줌
+    last.style.minWidth = last.style.width = `${last.getBoundingClientRect().width + rest}px`;
   }
   el.style.scrollPaddingInlineStart = cells.some(sticky) ? `${pinEnd()}px` : "";
 }
