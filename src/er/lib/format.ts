@@ -4,6 +4,11 @@ const KO = characters as Record<string, string>;
 
 export const fmt = (v: number) => (Number.isInteger(v) ? String(v) : (Math.round(v * 100) / 100).toString());
 export const fmt1 = (v: number) => (Math.round(v * 10) / 10).toFixed(1);
+// 순위표 점수 표기. 소수 첫째 자리에서 반올림해 정수면 소수점 없이 씀
+export const num = (v: number) => {
+  const r = Math.round(v * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+};
 export const pct = (v: number, digits = 1) => `${(v * 100).toFixed(digits)}%`;
 export const duration = (seconds: number) => {
   const s = Math.round(seconds);

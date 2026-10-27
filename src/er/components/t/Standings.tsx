@@ -1,5 +1,5 @@
 import { barTotal, type GroupResult } from "@/er/lib/engine";
-import { fmt, fmt1 } from "@/er/lib/format";
+import { fmt, num } from "@/er/lib/format";
 import type { Mode, Rules } from "@/er/lib/rules";
 import Bar, { Legend } from "./Bar";
 
@@ -12,7 +12,7 @@ const TIE: Record<string, string> = {
 };
 
 export function Delta({ d }: { d: number }) {
-  if (d > 0) return <span className="text-[12px] font-bold whitespace-nowrap text-accent-text" role="img" aria-label={`${d}계단 상승`}>▲{d}</span>;
+  if (d > 0) return <span className="text-[12px] font-bold whitespace-nowrap text-up" role="img" aria-label={`${d}계단 상승`}>▲{d}</span>;
   if (d < 0) return <span className="text-[12px] font-bold whitespace-nowrap text-minus" role="img" aria-label={`${-d}계단 하락`}>▼{-d}</span>;
   return null;
 }
@@ -38,6 +38,11 @@ export default function Standings({ result, rules, mode, label }: { result: Grou
   }
   return (
     <section className="panel overflow-x-auto" aria-label={`${label} 순위표`} tabIndex={0}>
+      {played > 0 && (
+        <div className="border-b border-line-soft px-2 py-2.5 min-[761px]:hidden">
+          <Legend rounds={played} advance={advance} />
+        </div>
+      )}
       <table className="stand">
         <thead>
           <tr>
@@ -75,18 +80,18 @@ export default function Standings({ result, rules, mode, label }: { result: Grou
                   <Bar s={s} max={max} rounds={played} />
                 </td>
                 <td className="r c-extra tabular-nums">{s.wins}</td>
-                <td className="r c-extra tabular-nums">{fmt(s.rankScore)}</td>
-                <td className="r c-ks tabular-nums">{rules.tiebreak === "kills" ? fmt(s.kills) : fmt1(s.killScore)}</td>
+                <td className="r c-extra tabular-nums">{num(s.rankScore)}</td>
+                <td className="r c-ks tabular-nums">{rules.tiebreak === "kills" ? fmt(s.kills) : num(s.killScore)}</td>
                 {anyPenalty && <td className="r c-pen tabular-nums">{s.penalty > 0 ? `-${fmt(s.penalty)}` : ""}</td>}
                 <td className="r tot tabular-nums">
-                  {fmt1(s.total)}
+                  {num(s.total)}
                   {s.tiedBy && (
                     <span className="tie-mark" title={`동점, ${TIE[s.tiedBy]}`} role="img" aria-label={`동점, ${TIE[s.tiedBy]}`}>
                       =
                     </span>
                   )}
                   <small className="ks-mobile text-fg-3">
-                    {killLabel} {rules.tiebreak === "kills" ? fmt(s.kills) : fmt(s.killScore)}
+                    {killLabel} {rules.tiebreak === "kills" ? fmt(s.kills) : num(s.killScore)}
                     {s.penalty > 0 && <span className="text-minus">, 감점 {fmt(s.penalty)}</span>}
                   </small>
                 </td>

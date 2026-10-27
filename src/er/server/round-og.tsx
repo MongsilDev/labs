@@ -2,6 +2,7 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { num } from "@/er/lib/format";
 import { glyphs, keepGlyphs } from "@/glyphs";
 import type { Board, BoardRow } from "./board";
 
@@ -25,8 +26,6 @@ const C = {
 // 디스코드 모바일에서 이미지 폭이 약 300px라 720 기준으로 짜고 1.5배로 그림
 const W = 720;
 const px = (n: number) => Math.round(n * 1.5);
-
-const num = (v: number) => (Number.isInteger(v) ? String(v) : (Math.round(v * 10) / 10).toFixed(1));
 
 const MODE = { points: "포인트제", checkpoint: "체크포인트", double: "더블 체크포인트" } as const;
 

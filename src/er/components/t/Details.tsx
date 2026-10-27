@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { GroupResult } from "@/er/lib/engine";
-import { fmt } from "@/er/lib/format";
+import { fmt, num } from "@/er/lib/format";
 import type { Rules } from "@/er/lib/rules";
 import Char from "./Char";
 
@@ -14,6 +14,7 @@ export default function Details({ result, rules }: { result: GroupResult; rules:
   const [tab, setTab] = useState<Tab>("rounds");
   const { standings, played, picks, players } = result;
   if (played === 0) return null;
+  const anyPenalty = standings.some((s) => s.penalty > 0);
   const tabs: [Tab, string][] = [
     ["rounds", "라운드별 점수"],
     ["picks", "실험체 선택"],
@@ -39,7 +40,7 @@ export default function Details({ result, rules }: { result: GroupResult; rules:
                     {i + 1}라운드
                   </th>
                 ))}
-                <th scope="col" rowSpan={2} className="rs">감점</th>
+                {anyPenalty && <th scope="col" rowSpan={2} className="rs">감점</th>}
                 <th scope="col" rowSpan={2} className="rs sticky-r">총점</th>
               </tr>
               <tr>
@@ -56,11 +57,11 @@ export default function Details({ result, rules }: { result: GroupResult; rules:
                   <th scope="row" className="l sticky">{s.name}</th>
                   {s.rounds.slice(0, played).map((r, i) => [
                     <td key={`p${i}`} className={r?.placement === 1 ? "rs win" : "rs"}>{r?.placement ?? "-"}</td>,
-                    <td key={`k${i}`}>{r ? fmt(r.killScore) : "-"}</td>,
-                    <td key={`s${i}`}>{r ? fmt(r.score) : "-"}</td>,
+                    <td key={`k${i}`}>{r ? num(r.killScore) : "-"}</td>,
+                    <td key={`s${i}`}>{r ? num(r.score) : "-"}</td>,
                   ])}
-                  <td className="rs minus">{s.penalty > 0 ? `-${fmt(s.penalty)}` : ""}</td>
-                  <td className="rs strong sticky-r">{fmt(s.total)}</td>
+                  {anyPenalty && <td className="rs minus">{s.penalty > 0 ? `-${fmt(s.penalty)}` : ""}</td>}
+                  <td className="rs strong sticky-r">{num(s.total)}</td>
                 </tr>
               ))}
             </tbody>

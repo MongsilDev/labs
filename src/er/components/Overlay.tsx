@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api } from "@/er/lib/client";
-import { fmt1 } from "@/er/lib/format";
+import { num } from "@/er/lib/format";
 import type { TournamentView } from "@/er/lib/view";
 import { barTotal } from "@/er/lib/engine";
 import Bar from "./t/Bar";
@@ -84,10 +84,9 @@ export default function Overlay({
             </div>
             <Bar s={s} max={max} rounds={result.played} height={6} labels={false} />
           </div>
-          <span className="ov-tt">{fmt1(s.total)}</span>
+          <span className="ov-tt">{num(s.total)}</span>
         </div>
       ))}
-      <div className="ov-ft">labs.mongsil.dev/er</div>
     </div>
   );
 }
