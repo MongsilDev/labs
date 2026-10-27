@@ -1,4 +1,4 @@
-import type { CreateInput, InviteRow, MemberRow, Op, OpResult, TournamentView } from "./view";
+import type { CreateInput, DiscordGuild, InviteRow, MemberRow, Op, OpResult, TournamentView } from "./view";
 
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response;
@@ -21,6 +21,7 @@ export const api = {
   members: (code: string) => call<{ members: MemberRow[]; invites: InviteRow[] }>(`/api/t/${code}/members`),
   member: (code: string, body: { action: string; token?: string; user?: string; uses?: number }) =>
     call<{ ok?: true; token?: string }>(`/api/t/${code}/members`, { method: "POST", body: JSON.stringify(body) }),
+  channels: (code: string) => call<{ guilds: DiscordGuild[] | null }>(`/api/t/${code}/channels`),
   accept: (token: string) => call<{ code: string; already: boolean }>(`/api/i/${token}`, { method: "POST" }),
 };
 

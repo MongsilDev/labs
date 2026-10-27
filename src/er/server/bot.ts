@@ -1,4 +1,5 @@
 import "server-only";
+import type { DiscordGuild } from "@/er/lib/view";
 
 // 몽실봇 웹 서버를 부르는 쪽. 주소가 없으면 운영 환경에서만 기본 주소를 쓰고, 그 밖에서는 부르지 않음
 export function botApiUrl(): string | null {
@@ -32,7 +33,7 @@ export function notifyChanged(code: string) {
   }
 }
 
-export type BotGuild = { id: string; name: string; channels: { id: string; name: string }[] };
+export type BotGuild = DiscordGuild;
 
 const ID = /^\d{1,20}$/;
 const text = (v: unknown) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 100) : "");

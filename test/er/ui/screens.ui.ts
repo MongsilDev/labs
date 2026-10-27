@@ -20,11 +20,19 @@ process.env.DATA_DIR = DATA;
 const owner = { id: "9001", name: "개최자", avatar: null };
 const OWNER_SID = "ui-owner-session";
 const OTHER_SID = "ui-other-session";
+// 몽실봇 대역이 고를 수 있는 채널을 비워 주는 운영자와, 채널 목록 요청에 실패하는 운영자
+const EMPTY = { id: "9003", name: "채널 없는 운영자", sid: "ui-empty-session" };
+const FAILING = { id: "9004", name: "목록 실패 운영자", sid: "ui-fail-session" };
+const GUILDS = [
+  { id: "200000000000000001", name: "시험 서버", channels: [{ id: "100000000000000001", name: "결과-a조" }, { id: "100000000000000002", name: "결과-b조" }, { id: "100000000000000003", name: "공지" }] },
+  { id: "200000000000000002", name: "두 번째 서버", channels: [{ id: "100000000000000004", name: "대회-결과" }] },
+];
 const LONG_TEAM = "아주아주긴팀이름입니다정말로";
 const TEAMS = [LONG_TEAM, "모래성", "번개팀", "새벽길", "은하수", "파도", "단풍", "등대"];
 
 let server: ChildProcess;
 let cutApi: Server;
+let botApi: Server;
 let base = "";
 let browser: Browser;
 let code = "";
@@ -52,6 +60,10 @@ async function seed() {
     .run(createHash("sha256").update(OWNER_SID).digest("hex"), owner.id, Date.now() + 864e5);
   conn.prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?)").run("9002", "다른 사람", Date.now());
   conn.prepare("INSERT INTO sessions(hash, user_id, expires_at) VALUES (?, ?, ?)").run(createHash("sha256").update(OTHER_SID).digest("hex"), "9002", Date.now() + 864e5);
+  for (const u of [EMPTY, FAILING]) {
+    conn.prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?)").run(u.id, u.name, Date.now());
+    conn.prepare("INSERT INTO sessions(hash, user_id, expires_at) VALUES (?, ?, ?)").run(createHash("sha256").update(u.sid).digest("hex"), u.id, Date.now() + 864e5);
+  }
   kelFixture(DATA);
   code = t.createTournament(owner, {
     name: "조별 예선 아주 긴 대회 이름을 넣어서 줄바꿈 확인하기",
@@ -67,6 +79,7 @@ async function seed() {
   });
   t.applyOp(code, owner, { op: "add_csv", group: 0, files });
   t.applyOp(code, owner, { op: "add_penalty", group: 0, team: "모래성", round: 2, kind: "rule", points: 3, reason: "지각" });
+  for (const u of [EMPTY, FAILING]) t.acceptInvite(t.createInvite(code, owner), { ...u, avatar: null });
   invite = t.createInvite(code, owner);
   // A조는 디스코드 채널에 연결하고 마지막 결과를 형식 오류로, B조는 연결 안 된 상태로 둠
   t.setDiscordLinks(code, owner.id, [{ group: "A", channelId: "100000000000000001", guild: "시험 서버", channel: "결과-a조" }]);
@@ -86,12 +99,23 @@ beforeAll(async () => {
   cutApi = createHttpServer((_, res) => res.writeHead(200, { "content-type": "application/json" }).end(cut));
   const cutPort = await freePort();
   await new Promise<void>((r) => cutApi.listen(cutPort, "127.0.0.1", r));
+  // 몽실봇 대역. 채널 목록은 사용자마다 있음, 비었음, 실패로 나누고 변경 알림은 받기만 함
+  botApi = createHttpServer((req, res) => {
+    const url = new URL(req.url ?? "/", "http://bot");
+    if (req.method === "POST" && url.pathname === "/api/t/changed") return res.writeHead(202).end();
+    if (url.pathname !== "/api/t/channels") return res.writeHead(404).end();
+    const user = url.searchParams.get("user");
+    if (user === FAILING.id) return res.writeHead(500).end();
+    res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ guilds: user === owner.id ? GUILDS : [] }));
+  });
+  const botPort = await freePort();
+  await new Promise<void>((r) => botApi.listen(botPort, "127.0.0.1", r));
   const port = await freePort();
   base = `http://localhost:${port}`;
   // 운영 .env가 섞이지 않게 환경 변수를 직접 지정
   server = spawn(process.execPath, ["server.js"], {
     cwd: STANDALONE,
-    env: { NODE_ENV: "production", PATH: process.env.PATH ?? "", PORT: String(port), HOSTNAME: "127.0.0.1", BASE_URL: base, DATA_DIR: DATA, DISCORD_CLIENT_ID: "1111", JOBS: "0", KEL_OWNER_ID: owner.id, CUT_API: `http://127.0.0.1:${cutPort}/api/cut` },
+    env: { NODE_ENV: "production", PATH: process.env.PATH ?? "", PORT: String(port), HOSTNAME: "127.0.0.1", BASE_URL: base, DATA_DIR: DATA, DISCORD_CLIENT_ID: "1111", JOBS: "0", KEL_OWNER_ID: owner.id, CUT_API: `http://127.0.0.1:${cutPort}/api/cut`, BOT_API_URL: `http://127.0.0.1:${botPort}` },
     stdio: "ignore",
   });
   for (let i = 0; i < 50; i++) {
@@ -105,11 +129,14 @@ afterAll(async () => {
   await browser?.close();
   server?.kill();
   cutApi?.close();
+  botApi?.close();
   rmSync(DATA, { recursive: true, force: true });
   if (readdirSync(SHOTS).length === 0) rmSync(SHOTS, { recursive: true });
 });
 
-type Screen = { name: string; path: () => string; login?: boolean | "other"; tab?: string; status?: number };
+type Screen = { name: string; path: () => string; login?: boolean | "other" | "empty" | "fail"; tab?: string; status?: number };
+
+const SID = { other: OTHER_SID, empty: EMPTY.sid, fail: FAILING.sid } as const;
 
 const SCREENS: Screen[] = [
   { name: "Labs", path: () => "/" },
@@ -124,6 +151,8 @@ const SCREENS: Screen[] = [
   { name: "대회 운영 라운드별 점수", path: () => `/er/t/${code}/a`, login: true, tab: "라운드별 점수" },
   { name: "빈 조 운영", path: () => `/er/t/${code}/b`, login: true },
   { name: "운영자와 설정", path: () => `/er/t/${code}/manage`, login: true },
+  { name: "운영자와 설정 채널 없음", path: () => `/er/t/${code}/manage`, login: "empty" },
+  { name: "운영자와 설정 채널 목록 실패", path: () => `/er/t/${code}/manage`, login: "fail" },
   { name: "초대", path: () => `/er/i/${invite}` },
   { name: "없는 대회", path: () => "/er/t/ZZZZZZ/a", status: 404 },
   { name: "없는 페이지", path: () => "/nope", status: 404 },
@@ -193,7 +222,7 @@ function inspect(): Problems {
 
 async function open(screen: Screen, width: number, theme: "dark" | "light"): Promise<{ page: Page; errors: string[]; status: number }> {
   const ctx = await browser.newContext({ viewport: { width, height: 900 } });
-  if (screen.login) await ctx.addCookies([{ name: "er_session", value: screen.login === "other" ? OTHER_SID : OWNER_SID, url: base }]);
+  if (screen.login) await ctx.addCookies([{ name: "er_session", value: screen.login === true ? OWNER_SID : SID[screen.login], url: base }]);
   await ctx.addInitScript((t) => localStorage.setItem("labs-theme", t), theme);
   const page = await ctx.newPage();
   const errors: string[] = [];
@@ -300,6 +329,33 @@ describe("화면 점검", () => {
     // 일반 쓰기 API는 그대로 로그인과 Origin을 요구함
     const op = await fetch(`${base}/api/t/${upCode}`, { method: "POST", headers: { "x-upload-key": upKey, "content-type": "application/json" }, body: JSON.stringify({ op: "delete_round", id: 1 }) });
     expect(op.status).toBe(403);
+  });
+
+  it("관리 화면의 디스코드 채널은 봇 목록에서 고르고, 목록이 없으면 명령어를 보여 준다", async () => {
+    const manage = (login: Screen["login"], path = () => `/er/t/${code}/manage`) => open({ name: "관리", path, login }, 1440, "dark");
+    const owned = await manage(true);
+    const a = owned.page.locator("#dc-h ~ ul select").first();
+    await expect(a.inputValue()).resolves.toBe("100000000000000001");
+    await expect(owned.page.locator("#dc-h ~ ul select").nth(1).inputValue()).resolves.toBe("");
+    await expect(a.locator("optgroup").evaluateAll((els) => els.map((e) => e.getAttribute("label")))).resolves.toEqual(["시험 서버", "두 번째 서버"]);
+    await owned.page.context().close();
+    for (const [login, text] of [["empty", "고를 수 있는 채널이 없습니다."], ["fail", "채널 목록을 불러오지 못했습니다."]] as const) {
+      const { page, errors } = await manage(login);
+      await expect(page.getByText(text).isVisible()).resolves.toBe(true);
+      await expect(page.locator("#dc-h ~ ul code").allTextContents()).resolves.toEqual([`/대회 ${code} B`]);
+      await expect(page.getByRole("link", { name: "몽실봇 초대" }).getAttribute("href")).resolves.toBe("https://bot.mongsil.dev/invite");
+      await page.context().close();
+      expect(errors).toEqual([]);
+    }
+    // 고르면 바로 저장하고, 대회 화면 운영 도구 줄에 연결한 채널이 나옴
+    const up = await manage(true, () => `/er/t/${upCode}/manage`);
+    await up.page.locator("#dc-h ~ ul select").nth(1).selectOption("100000000000000004");
+    await expect(up.page.getByText("B조를 #대회-결과에 연결했습니다.").waitFor()).resolves.toBeUndefined();
+    await up.page.goto(`${base}/er/t/${upCode}/b`, { waitUntil: "networkidle" });
+    await expect(up.page.getByRole("link", { name: "디스코드 #대회-결과" }).getAttribute("href")).resolves.toBe(`/er/t/${upCode}/manage#dc-h`);
+    await up.page.goto(`${base}/er/t/${upCode}/a`, { waitUntil: "networkidle" });
+    await expect(up.page.getByRole("link", { name: "디스코드 연결 안 됨" }).isVisible()).resolves.toBe(true);
+    await up.page.context().close();
   });
 
   it("방송 화면은 1920x1080 안에 들어간다", async () => {

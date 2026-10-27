@@ -12,7 +12,7 @@ import { LIMITS, MODE_LABEL, PRESET_LABEL } from "@/er/lib/rules";
 import type { Op, TournamentView } from "@/er/lib/view";
 import Details from "./Details";
 import ManualRound from "./ManualRound";
-import Rounds from "./Rounds";
+import Rounds, { DiscordMark } from "./Rounds";
 import { Logs, Penalties, Teams } from "./Side";
 import Standings from "./Standings";
 import Lines from "@/components/Lines";
@@ -56,8 +56,8 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
     if (!view.groups[groupIdx]) router.replace(`${basePath}/a`);
   }, [view.groups, groupIdx, basePath, router]);
   const operator = !example && !preview && view.role !== null;
-  const owner = operator && view.role === "owner";
   const label = view.groupCount > 1 ? `${group.label}조` : view.name;
+  const linked = view.discord?.find((d) => d.group === group.idx);
 
   const toast = useCallback((t: Omit<Toast, "id">, ms = 5000) => {
     const id = Date.now() + Math.random();
@@ -113,7 +113,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
         await refresh(true);
         return res;
       } catch (e) {
-        toast({ text: e instanceof Error ? e.message : "처리하지 못했습니다.", bad: true }, 9000);
+        toast({ text: e instanceof Error ? e.message : "처리하지 못했습니다.\n잠시 후 다시 시도해주세요.", bad: true }, 9000);
         if ((e as { status?: number }).status === 401 || (e as { status?: number }).status === 400) refresh(true);
         throw e;
       }
@@ -184,7 +184,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
       await navigator.clipboard.writeText(text);
       toast({ text: done });
     } catch {
-      toast({ text: "복사하지 못했습니다. 주소창의 주소를 직접 복사해주세요.", bad: true });
+      toast({ text: `복사하지 못했습니다.\n아래 주소를 직접 복사해주세요.\n${text}`, bad: true }, 15000);
     }
   };
   const origin = useSyncExternalStore(
@@ -199,7 +199,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
       <main id="main" className="wrap slim">
         <section className="panel mt-6 grid justify-items-start gap-2.5 p-7">
           <h1 className="text-[22px]">없거나 지워진 대회입니다</h1>
-          <p className="text-fg-3">대회는 마지막으로 수정하고 24시간이 지나면 자동으로 삭제됩니다.</p>
+          <p className="text-fg-3">대회는 마지막으로 수정한 지 24시간이 지나면 자동으로 삭제됩니다.</p>
           <Link className="btn primary" href="/er/score">
             새 대회 만들기
           </Link>
@@ -217,6 +217,16 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
             {preview ? "참가자 화면 미리 보기" : view.role === "owner" ? "개최자" : "운영자"}
             {now !== null && `, ${remaining(view.expiresAt, now)}`}
           </span>
+          {!preview && (
+            <Link
+              className="flex min-w-0 items-center gap-1.5 text-[13px] text-fg-2 no-underline hover:text-fg"
+              href={`/er/t/${view.code}/manage#dc-h`}
+              aria-label={linked ? `디스코드 #${linked.channel}` : "디스코드 연결 안 됨"}
+            >
+              <DiscordMark />
+              <span className={`min-w-0 truncate${linked ? "" : " text-fg-3"}`}>{linked ? `#${linked.channel}` : "연결 안 됨"}</span>
+            </Link>
+          )}
           <div className="ml-auto flex flex-wrap gap-2 max-[760px]:ml-0">
             {!preview && (
               <>
@@ -224,12 +234,12 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
                   보기 링크 복사
                 </button>
                 <Link className="btn sm" href={`/er/t/${view.code}/manage`}>
-                  운영자{owner ? "와 설정" : ""}
+                  관리
                 </Link>
               </>
             )}
             <button type="button" className="btn sm" aria-pressed={preview} onClick={() => setPreview(!preview)}>
-              {preview ? "운영 화면으로" : "참가자 화면"}
+              {preview ? "운영 화면" : "참가자 화면"}
             </button>
           </div>
         </div>
@@ -260,9 +270,6 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
               닫기
             </button>
           </div>
-          <p className="text-[14px] text-fg-2">
-            디스코드에서는 몽실봇의 <b className="text-fg" translate="no">/대회</b> 명령에 이 코드를 넣으면 순위 카드를 올릴 수 있습니다.
-          </p>
         </section>
       )}
 
@@ -299,7 +306,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
             </button>
           )}
           {!example && (
-            <button type="button" className="btn" onClick={() => copy(`${origin}/er/t/${view.code}/${group.label.toLowerCase()}/overlay`, "방송 화면 주소를 복사했습니다. OBS 브라우저 소스에 붙여 넣어주세요.")}>
+            <button type="button" className="btn" onClick={() => copy(`${origin}/er/t/${view.code}/${group.label.toLowerCase()}/overlay`, "방송 화면 주소를 복사했습니다.")}>
               방송 화면 주소 복사
             </button>
           )}
