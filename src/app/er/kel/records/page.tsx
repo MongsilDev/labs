@@ -108,7 +108,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         <>
           <section className="grid grid-cols-5 gap-3 max-[1280px]:grid-cols-2" aria-label="한 게임 최고 기록">
             <Bests rec={rec} keys={["kills", "damage", "taken", "lowTeamDamage", "cc", "heal", "camera", "vision"]} href={(r) => playerPath(r.player)} />
-            <Best label="팀 킬" value={rec.teamKills.kills} unit="킬">
+            <Best label="팀이 기록한 킬" value={rec.teamKills.kills} unit="킬">
               <TeamWho g={rec.teamKills} />
             </Best>
             <Best label="팀 게임 점수" value={fmt(rec.teamScore.value)} unit="점">
