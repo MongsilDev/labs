@@ -71,12 +71,12 @@ export default function Manage({
       <Link className="text-[13px] text-fg-3 no-underline" href={`/er/t/${view.code}/a`}>
         대회 화면으로 돌아가기
       </Link>
-      <h1 className="mt-1.5 mb-0.5 text-[28px] font-extrabold tracking-[-0.5px]">운영자{owner ? "와 설정" : ""}</h1>
+      <h1 className="mt-1.5 mb-0.5 text-[28px] font-extrabold tracking-[-0.5px]">관리</h1>
       <p className="mb-[18px] text-[14px] text-fg-3">
         {view.name}, 대회 코드 <b translate="no">{view.code}</b>
       </p>
       {msg && (
-        <p className={`panel mb-3.5 border-minus px-4 py-3${msg.bad ? " text-minus" : ""}`} role={msg.bad ? "alert" : "status"}>
+        <p className={`panel mb-3.5 px-4 py-3${msg.bad ? " border-minus text-minus" : ""}`} role={msg.bad ? "alert" : "status"}>
           <Lines text={msg.text} />
         </p>
       )}
@@ -384,39 +384,41 @@ function Discord({
                   <span className={`chip${last.status === "invalid" ? " border-minus text-minus" : ""}`}>{RELAY_LABEL[last.status]}</span>
                 </span>
               )}
-              <span className={l ? `${ACTS} max-[760px]:ml-0` : "ml-auto flex gap-1.5"}>
-                {l ? (
-                  <button
-                    type="button"
-                    className="btn sm"
-                    disabled={busy !== null}
-                    onClick={async () => {
-                      setBusy(g);
-                      await onUnlink(g);
-                      setBusy(null);
-                    }}
-                  >
-                    연결 해제
-                  </button>
-                ) : (
-                  none && (
+              {(l || none) && (
+                <span className={l ? `${ACTS} max-[760px]:ml-0` : "ml-auto flex gap-1.5"}>
+                  {l ? (
                     <button
                       type="button"
                       className="btn sm"
+                      disabled={busy !== null}
                       onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(command(g));
-                          onMsg("명령어를 복사했습니다.");
-                        } catch {
-                          onMsg("복사하지 못했습니다.\n명령어를 직접 선택해 복사해주세요.", true);
-                        }
+                        setBusy(g);
+                        await onUnlink(g);
+                        setBusy(null);
                       }}
                     >
-                      복사
+                      연결 해제
                     </button>
-                  )
-                )}
-              </span>
+                  ) : (
+                    none && (
+                      <button
+                        type="button"
+                        className="btn sm"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(command(g));
+                            onMsg("명령어를 복사했습니다.");
+                          } catch {
+                            onMsg("복사하지 못했습니다.\n명령어를 직접 선택해 복사해주세요.", true);
+                          }
+                        }}
+                      >
+                        복사
+                      </button>
+                    )
+                  )}
+                </span>
+              )}
             </li>
           );
         })}

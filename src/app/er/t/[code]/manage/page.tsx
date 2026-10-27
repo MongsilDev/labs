@@ -8,7 +8,7 @@ import { avatarUrl, currentUser } from "@/er/server/auth";
 import { openView } from "@/er/server/http";
 import { discordLinks, members } from "@/er/server/tournament";
 
-export const metadata: Metadata = { title: "운영자", robots: { index: false } };
+export const metadata: Metadata = { title: "관리", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function Page({ params }: { params: Promise<{ code: string }> }) {
