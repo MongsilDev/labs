@@ -113,7 +113,7 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
             const r = row(p);
             return (
               r && (
-                <li key={label} className="grid grid-cols-[6rem_4.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 max-[560px]:grid-cols-[6rem_4.5rem_minmax(0,1fr)]">
+                <li key={label} className="grid grid-cols-[6rem_4.5rem_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5 max-[560px]:grid-cols-[6rem_4.5rem_minmax(0,1fr)]">
                   <span className="text-fg-3">{label}</span>
                   <b className="text-right tabular-nums">{value(r)}</b>
                   <Char name={r.character} />
