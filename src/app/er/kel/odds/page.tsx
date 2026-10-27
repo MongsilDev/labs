@@ -61,7 +61,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
       screen="odds"
       lead={["서킷 단계가 끝날 때마다 그때까지의 결과로 계산한 확률입니다.", `서킷 포인트 합계 1~${SEEDS}위 팀은 결승에 직행하고, ${SEEDS + 1}~${QUALIFY}위 팀은 준결승에 출전합니다.`]}
       notes={[
-        "확률은 남은 경기에서 각 팀이 갈 수 있는 순위를 모두 같은 확률로 얻는다고 보고 계산했습니다.",
+        "확률은 남은 경기에서 각 팀이 오를 수 있는 순위를 모두 같은 확률로 얻는다고 보고 계산했습니다.",
         "표의 -는 남은 경기 결과와 관계없이 일어날 수 없는 경우입니다.",
         "포인트 열은 그 단계까지 확보한 서킷 포인트이고, 진행 중인 서킷의 포인트는 팀이 진출한 단계에서 받을 수 있는 가장 낮은 포인트로 계산했습니다.",
       ]}
@@ -154,8 +154,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
         </section>
       )}
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="trend">
-        <h2 id="trend" className="text-[17px] font-extrabold">
+        <h2 id="trend" className="flex flex-wrap items-baseline gap-x-3 text-[17px] font-extrabold">
           단계별 결승 직행 확률
+          <span className="text-[14px] font-semibold text-fg-3">단위 %</span>
         </h2>
         <KelScroll label="단계별 결승 직행 확률" className="mt-3">
           <table className="kel-table kel-heat">

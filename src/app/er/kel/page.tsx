@@ -50,13 +50,13 @@ export default async function Page() {
   return (
     <KelPage user={user} owner={owner} screen="home" lead={lead}>
       <div className="grid grid-cols-2 items-start gap-4 max-[760px]:grid-cols-1">
-        <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="정규 시즌 5~12위 8팀이 6라운드를 치릅니다. 상위 4팀이 결승에 진출합니다." />
+        <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="준결승에는 정규 시즌 5~12위 8팀이 출전해 6라운드를 진행합니다. 상위 4팀이 결승에 진출합니다." />
         <Event
           date="11월 8일 일요일, 대전이스포츠경기장"
           name="결승"
           teams={seeds}
           slot="준결승 상위 4팀"
-          text={"정규 시즌 1~4위는 결승에 직행했습니다. 결승은 순차 체크포인트 방식으로 최대\u00a09라운드를 치릅니다."}
+          text={"정규 시즌 1~4위는 결승에 직행했습니다. 결승은 순차 체크포인트 방식으로 최대\u00a09라운드까지 진행합니다."}
         />
       </div>
       {rec && (
