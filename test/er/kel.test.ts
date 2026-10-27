@@ -136,7 +136,7 @@ describe("KEL 자료", () => {
     expect(dates).toEqual([...dates].sort());
   });
 
-  it("낮은 기록은 5위 안의 기록을 넣고, 같은 값은 같은 순위로 모두 넣는다", () => {
+  it("부진한 기록은 5위 안의 기록을 넣고, 같은 값은 같은 순위로 모두 넣는다", () => {
     kelFixture(process.env.DATA_DIR!);
     const { damage, deaths } = lows(kelData()!);
     expect(damage.map((x) => [x.rank, x.r.damage])).toEqual([

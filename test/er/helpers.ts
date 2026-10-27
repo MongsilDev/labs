@@ -171,7 +171,7 @@ export function kelFixture(dataDir: string) {
         const ks = ((r + i) % 5) * 1.5;
         for (let p = 0; p < 3; p++) {
           const c = (i * 3 + p + r) % KEL_CHARS.length;
-          // 첫 게임에만 최다 데스와 최저 가한 피해를 따로 두어 낮은 기록 표가 다섯 줄 남짓 나옴
+          // 첫 게임에만 최다 데스와 최저 가한 피해를 따로 두어 부진한 기록 표가 다섯 줄 남짓 나옴
           const first = f === 0 && r === 1;
           const deaths = first && p === 0 && i < 7 ? (i ? 8 : 10) : p % 2;
           const low = first ? LOW_DAMAGE.get(`${i}-${p}`) : undefined;

@@ -178,7 +178,7 @@ const SCREENS: Screen[] = [
   { name: "KEL 3인 조합", path: () => "/er/kel/comps", login: true },
   { name: "KEL 한 게임 기록", path: () => "/er/kel/records", login: true },
   { name: "KEL 한 게임 기록 실험체별", path: () => "/er/kel/records?view=characters", login: true },
-  { name: "KEL 한 게임 기록 낮은 기록", path: () => "/er/kel/records?view=low", login: true },
+  { name: "KEL 한 게임 기록 부진한 기록", path: () => "/er/kel/records?view=low", login: true },
   { name: "KEL 기록 로그아웃", path: () => "/er/kel" },
   { name: "없는 KEL 화면 다른 계정", path: () => "/er/kel/calc", login: "other", status: 404 },
 ];

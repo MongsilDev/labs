@@ -15,7 +15,7 @@ export const generateMetadata = () => kelMetadata("records");
 const VIEWS: ["season" | "characters" | "low", string][] = [
   ["season", "시즌 전체"],
   ["characters", "실험체별"],
-  ["low", "낮은 기록"],
+  ["low", "부진한 기록"],
 ];
 
 const chunks = <T,>(list: T[], n: number) => {
@@ -108,10 +108,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         <>
           <section className="grid grid-cols-5 gap-3 max-[1280px]:grid-cols-2" aria-label="한 게임 최고 기록">
             <Bests rec={rec} keys={["kills", "damage", "taken", "lowTeamDamage", "cc", "heal", "camera", "vision"]} href={(r) => playerPath(r.player)} />
-            <Best label="팀 최다 킬" value={rec.teamKills.kills} unit="킬">
+            <Best label="팀 킬" value={rec.teamKills.kills} unit="킬">
               <TeamWho g={rec.teamKills} />
             </Best>
-            <Best label="팀 최고 게임 점수" value={fmt(rec.teamScore.value)} unit="점">
+            <Best label="팀 게임 점수" value={fmt(rec.teamScore.value)} unit="점">
               {rec.teamScore.games.map((s) => (
                 <TeamWho key={`${s.gameId}-${s.team}`} g={s} detail={`순위\u00a0점수\u00a0${placementPoints(s.placement)} + 킬\u00a0점수\u00a0${fmt(s.killScore)}`} />
               ))}
@@ -122,8 +122,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
       )}
       {low && (
         <>
-          <Ranking id="low-damage" title="최저 가한 피해" rows={low.damage} label="가한 피해" value={(r) => int(r.damage)} />
-          <Ranking id="most-deaths" title="최다 데스" rows={low.deaths} label="데스" value={(r) => r.deaths} />
+          <Ranking id="low-damage" title="가한 피해" rows={low.damage} label="가한 피해" value={(r) => int(r.damage)} />
+          <Ranking id="most-deaths" title="데스" rows={low.deaths} label="데스" value={(r) => r.deaths} />
         </>
       )}
       {view === "characters" && (
@@ -135,8 +135,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
                 <thead>
                   <tr>
                     <th className="l">실험체</th>
-                    <th>최다 킬</th>
-                    <th>최다 가한 피해</th>
+                    <th>킬</th>
+                    <th>가한 피해</th>
                   </tr>
                 </thead>
                 <tbody>
