@@ -18,6 +18,10 @@ export default function Char({ name, label, size = 22 }: { name: string; label?:
         width={size}
         height={size}
         loading="lazy"
+        ref={(img) => {
+          // hydration 전에 실패한 그림은 onError가 오지 않음
+          if (img?.complete && img.naturalWidth === 0 && img.currentSrc) img.hidden = true;
+        }}
         onError={(e) => (e.currentTarget.hidden = true)}
       />
       {label ?? characterName(name)}
