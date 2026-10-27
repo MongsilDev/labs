@@ -77,8 +77,14 @@ export default async function Page() {
         support && "팀원 회복은 팀원에게 준 회복량이고, 자기 보호막으로 막은 피해는 포함하지 않았습니다.",
       ]}
     >
+      <div className="grid grid-cols-2 items-start gap-5 max-[760px]:grid-cols-1">
+        <Top id="top-taken" title={`받은 피해 비중 상위 ${TOP}명`} rows={taken} value={(p) => p.takenShare} />
+        <Top id="top-damage" title={`가한 피해 비중 상위 ${TOP}명`} rows={damage} value={(p) => p.damageShare} />
+        {support && <Top id="top-cc" title={`군중제어 시간 비중 상위 ${TOP}명`} rows={cc} value={(p) => p.ccShare} per={["게임당 시간", (p) => `${p.cc.toFixed(1)}초`]} />}
+        {support && <Top id="top-heal" title={`팀원 회복 비중 상위 ${TOP}명`} rows={heal} value={(p) => p.healShare} per={["게임당 회복량", (p) => int(p.heal)]} />}
+      </div>
       <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)] items-start gap-5 max-[1080px]:grid-cols-1">
-        <section className="panel p-5 max-[760px]:p-4 min-[1081px]:sticky min-[1081px]:top-6" aria-label="팀이 가한 피해와 받은 피해에서 차지한 비중">
+        <section className="panel p-5 max-[760px]:p-4" aria-label="팀이 가한 피해와 받은 피해에서 차지한 비중">
           <span className="legend">
             <span>
               <i style={{ background: TONES[1], width: 10, borderRadius: 999 }} />
@@ -110,71 +116,61 @@ export default async function Page() {
               refY={1 / 3}
             />
           </div>
-          <details className="mt-3 text-[14px]">
-            <summary className="cursor-pointer text-fg-2">
-              {MIN_GAMES}게임 이상 출전한 선수 {players.length}명 표
-            </summary>
-            <KelScroll label="선수별 비중" className="mt-2">
-              <table className="kel-table">
-                <thead>
-                  <tr>
-                    <th className="l pin">선수</th>
-                    <th>
-                      가한 피해
-                      <br />
-                      비중
-                    </th>
-                    <th>
-                      받은 피해
-                      <br />
-                      비중
-                    </th>
-                    {support && (
-                      <th>
-                        군중제어 시간
-                        <br />
-                        비중
-                      </th>
-                    )}
-                    {support && (
-                      <th>
-                        팀원 회복
-                        <br />
-                        비중
-                      </th>
-                    )}
-                    <th>게임</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {all.map((p) => (
-                    <tr key={p.name}>
-                      <td className="l pin max-w-[180px]">
-                        <PlayerName name={p.name} team={TEAM.get(p.team)} />
-                      </td>
-                      <td>{pct(p.damageShare)}</td>
-                      <td>{pct(p.takenShare)}</td>
-                      {support && <td>{pct(p.ccShare)}</td>}
-                      {support && <td>{pct(p.healShare)}</td>}
-                      <td className="text-fg-3">{p.games}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </KelScroll>
-          </details>
         </section>
-        <div className="grid gap-5">
-          <Top id="top-taken" title={`받은 피해 비중 상위 ${TOP}명`} rows={taken} value={(p) => p.takenShare} />
-          <Top id="top-damage" title={`가한 피해 비중 상위 ${TOP}명`} rows={damage} value={(p) => p.damageShare} />
-        </div>
+        <section className="panel p-5 max-[760px]:p-4" aria-labelledby="all-players">
+          <h2 id="all-players" className="text-[17px] font-extrabold">
+            {MIN_GAMES}게임 이상 출전한 선수 {players.length}명
+          </h2>
+            <KelScroll label="선수별 비중" className="mt-3 max-h-[560px] overflow-y-auto">
+            <table className="kel-table">
+              <thead>
+                <tr>
+                  <th className="l pin">선수</th>
+                  <th>
+                    가한 피해
+                    <br />
+                    비중
+                  </th>
+                  <th>
+                    받은 피해
+                    <br />
+                    비중
+                  </th>
+                  {support && (
+                    <th>
+                      군중제어 시간
+                      <br />
+                      비중
+                    </th>
+                  )}
+                  {support && (
+                    <th>
+                      팀원 회복
+                      <br />
+                      비중
+                    </th>
+                  )}
+                  <th>게임</th>
+                </tr>
+              </thead>
+              <tbody>
+                {all.map((p) => (
+                  <tr key={p.name}>
+                    <td className="l pin max-w-[180px]">
+                      <PlayerName name={p.name} team={TEAM.get(p.team)} />
+                    </td>
+                    <td>{pct(p.damageShare)}</td>
+                    <td>{pct(p.takenShare)}</td>
+                    {support && <td>{pct(p.ccShare)}</td>}
+                    {support && <td>{pct(p.healShare)}</td>}
+                    <td className="text-fg-3">{p.games}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </KelScroll>
+        </section>
       </div>
-      {support && (
-        <div className="grid grid-cols-2 items-start gap-5 max-[1080px]:grid-cols-1">
-          <Top id="top-cc" title={`군중제어 시간 비중 상위 ${TOP}명`} rows={cc} value={(p) => p.ccShare} per={["게임당 시간", (p) => `${p.cc.toFixed(1)}초`]} />
-          <Top id="top-heal" title={`팀원 회복 비중 상위 ${TOP}명`} rows={heal} value={(p) => p.healShare} per={["게임당 회복량", (p) => int(p.heal)]} />
-        </div>
-      )}
     </KelPage>
   );
 }
