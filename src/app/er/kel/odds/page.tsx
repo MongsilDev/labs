@@ -161,7 +161,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
           <table className="kel-table kel-heat">
             <thead>
               <tr>
-                <th rowSpan={2} className="l">
+                <th rowSpan={2} className="l pin">
                   팀
                 </th>
                 {CIRCUITS.map((c) => (
@@ -183,7 +183,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
             <tbody>
               {rows.map(({ t }) => (
                 <tr key={t}>
-                  <td className="l">
+                  <td className="l pin">
                     <span className="inline-flex min-w-0 items-center gap-2">
                       <Logo team={KEL_TEAMS[t]} />
                       <span className="truncate max-[760px]:sr-only">{KEL_TEAMS[t].name}</span>

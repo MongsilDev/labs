@@ -17,7 +17,7 @@ const VIEWS: ["score" | "ops", string][] = [
 ];
 
 const OPS_NOTES = [
-  "위클라인 처치는 그 팀 선수가 위클라인을 처치해 크레딧을 받은 게임 수입니다.",
+  "위클라인 처치 게임은 그 팀 선수가 위클라인을 처치해 크레딧을 받은 게임 수입니다.",
   "평균 생존 시간은 게임마다 팀에서 가장 오래 생존한 선수의 생존 시간을 평균한 값입니다.",
   "게임당 시야 점수와 망원 카메라 설치 수는 팀 세 명의 합계입니다.",
   "탈출은 팀 세 명이 모두 탈출로 기록된 게임 수입니다.",
@@ -36,6 +36,46 @@ function href(scope: StyleScope, view: (typeof VIEWS)[number][0]) {
 function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
   return (
     <>
+      <section className="panel p-5 max-[760px]:p-4">
+        <KelScroll label="팀별 기록">
+          <table className="kel-table">
+            <thead>
+              <tr>
+                <th className="l pin">팀</th>
+                <th>게임</th>
+                <th>1위</th>
+                <th>8위</th>
+                <th className="wide">3위 이내</th>
+                <th>
+                  킬 점수{" "}
+                  <br className="min-[761px]:hidden" />
+                  비중
+                </th>
+                <th>순위 점수</th>
+                <th>킬 점수</th>
+                <th>합계</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.team}>
+                  <td className="l pin max-w-[180px]">
+                    <TeamName team={TEAM.get(r.team)!} />
+                  </td>
+                  <td>{r.games}</td>
+                  <td>{r.wins}</td>
+                  <td>{r.eighth}</td>
+                  <td className="wide">{pct(r.top3)}</td>
+                  <td>{pct(r.killShare)}</td>
+                  <td>{r.rankPerGame.toFixed(2)}</td>
+                  <td>{r.killPerGame.toFixed(2)}</td>
+                  <td className="font-bold">{r.perGame.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </KelScroll>
+      </section>
       <section className="panel p-5 max-[760px]:p-4" aria-label="게임당 순위 점수와 킬 점수">
         <Scatter
           key={scope}
@@ -53,46 +93,6 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
           height={440}
         />
       </section>
-      <section className="panel p-5 max-[760px]:p-4">
-        <KelScroll label="팀별 기록">
-          <table className="kel-table">
-            <thead>
-              <tr>
-                <th className="l pin">팀</th>
-                <th>게임</th>
-                <th>1위</th>
-                <th>8위</th>
-                <th className="wide">3위 이내</th>
-                <th>
-                  킬 점수{" "}
-                  <br className="min-[761px]:hidden" />
-                  비중
-                </th>
-                <th className="wide">순위 점수</th>
-                <th className="wide">킬 점수</th>
-                <th>합계</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.team}>
-                  <td className="l pin max-w-[180px]">
-                    <TeamName team={TEAM.get(r.team)!} />
-                  </td>
-                  <td>{r.games}</td>
-                  <td>{r.wins}</td>
-                  <td>{r.eighth}</td>
-                  <td className="wide">{pct(r.top3)}</td>
-                  <td>{pct(r.killShare)}</td>
-                  <td className="wide">{r.rankPerGame.toFixed(2)}</td>
-                  <td className="wide">{r.killPerGame.toFixed(2)}</td>
-                  <td className="font-bold">{r.perGame.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </KelScroll>
-      </section>
     </>
   );
 }
@@ -105,8 +105,9 @@ function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
   return (
     <>
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="ops">
-        <h2 id="ops" className="text-[17px] font-extrabold">
+        <h2 id="ops" className="flex flex-wrap items-baseline gap-x-3 text-[17px] font-extrabold">
           팀별 기록
+          <span className="text-[14px] font-semibold text-fg-3">정규 시즌 순위 순서</span>
         </h2>
         <KelScroll label="팀별 기록" className="mt-3">
           <table className="kel-table">
@@ -114,7 +115,11 @@ function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
               <tr>
                 <th className="l pin">팀</th>
                 <th>게임</th>
-                <th>위클라인 처치</th>
+                <th>
+                  위클라인
+                  <br />
+                  처치 게임
+                </th>
                 <th>
                   처치한 게임
                   <br />

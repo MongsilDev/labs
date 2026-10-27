@@ -101,7 +101,7 @@ export const KEL_SCREENS: Record<KelScreen, { path: string; title: string; publi
   roles: { path: "/er/kel/roles", title: "팀 안에서 맡은 역할", public: true },
   kills: { path: "/er/kel/kills", title: "처치 관계", public: true },
   characters: { path: "/er/kel/characters", title: "실험체", public: true },
-  comps: { path: "/er/kel/comps", title: "자주 등장한 3인 조합", public: true },
+  comps: { path: "/er/kel/comps", title: "많이 등장한 3인 조합", public: true },
   records: { path: "/er/kel/records", title: "한 게임 기록", public: true },
 };
 

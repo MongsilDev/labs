@@ -24,15 +24,16 @@ export default async function Page() {
       notes={`표에는 ${MIN}번 이상 등장한 ${rows.length}개 조합을 표시했습니다.`}
     >
       <section className="panel p-5 max-[760px]:p-4">
-        <KelScroll label="자주 등장한 3인 조합">
+        <KelScroll label="많이 등장한 3인 조합">
           <table className="kel-table">
             <thead>
               <tr>
                 <th className="l">조합</th>
                 <th>횟수</th>
                 <th>평균 순위</th>
-                <th>1위</th>
+                <th>1위 횟수</th>
                 <th className="l wide">많이 고른 팀</th>
+                <th className="w-full max-[760px]:hidden" aria-hidden="true" />
               </tr>
             </thead>
             <tbody>
@@ -43,6 +44,12 @@ export default async function Page() {
                       {r.characters.map((c) => (
                         <Char key={c} name={c} />
                       ))}
+                    </span>
+                    <span className="narrow mt-1">
+                      <span className="inline-flex items-center gap-1.5 text-[12px] text-fg-3">
+                        <Logo team={TEAM.get(r.teams[0][0])!} size={18} label />
+                        {r.teams[0][1]}번
+                      </span>
                     </span>
                   </td>
                   <td>{r.count}</td>
@@ -58,6 +65,7 @@ export default async function Page() {
                       ))}
                     </span>
                   </td>
+                  <td className="max-[760px]:hidden" aria-hidden="true" />
                 </tr>
               ))}
             </tbody>

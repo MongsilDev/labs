@@ -96,7 +96,7 @@ export default async function Page() {
             </span>
             <span>
               <i className="dash" />
-              세 명이 똑같이 나눈 몫 33.3%
+              세 명이 똑같이 나눌 때의 비중 33.3%
             </span>
           </span>
           <div className="mt-3">

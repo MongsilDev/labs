@@ -85,8 +85,8 @@ export default function Highlights({ data }: { data: Data }) {
         </section>
       )}
       {data.comps.length > 0 && (
-        <section className="min-w-0" aria-label="자주 등장한 3인 조합">
-          <Head href={comps.path}>자주 등장한 3인 조합</Head>
+        <section className="min-w-0" aria-label="많이 등장한 3인 조합">
+          <Head href={comps.path}>많이 등장한 3인 조합</Head>
           <ul className={`grid ${first}`}>
             {data.comps.map((c) => {
               const names = c.characters.map(characterName).join(", ");

@@ -50,7 +50,6 @@ export default async function Page() {
       ]}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-5 max-[1080px]:grid-cols-1">
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
           <section className="panel p-5 max-[760px]:p-4" aria-labelledby="start-rank">
             <h2 id="start-rank" className="text-[17px] font-extrabold">
               시작 지역별 팀 순위
@@ -82,18 +81,19 @@ export default async function Page() {
             <h2 id="deaths" className="text-[17px] font-extrabold">
               사망이 많았던 지역
             </h2>
+            <p className="mt-1 text-[13px] text-fg-3">굵은 숫자는 사망 수이고, 오른쪽 숫자는 그 지역에서 시작한 횟수입니다.</p>
             <ul className="mt-4 grid grid-cols-[88px_minmax(0,1fr)_auto_auto] gap-x-3 gap-y-2.5 text-[14px]">
               {reg.deaths.map((x) => (
                 <li key={x.area} className="col-span-4 grid grid-cols-subgrid items-center">
                   <span className="font-semibold">{x.area}</span>
                   <span className="h-2.5 rounded-r-[4px]" style={{ width: `${(x.count / maxDeath) * 100}%`, background: TONES[1] }} aria-hidden="true" />
                   <b className="text-right tabular-nums">{int(x.count)}</b>
-                  <span className="text-right text-[12px] text-fg-3 tabular-nums">시작 {x.starts}</span>
+                  <span className="text-right text-[12px] text-fg-3 tabular-nums">시작 {x.starts}번</span>
                 </li>
               ))}
             </ul>
           </section>
-          <section className="panel p-5 max-[760px]:p-4" aria-labelledby="team-starts">
+          <section className="panel col-span-full p-5 max-[760px]:p-4" aria-labelledby="team-starts">
             <h2 id="team-starts" className="text-[17px] font-extrabold">
               팀별로 많이 시작한 지역
             </h2>
@@ -122,8 +122,7 @@ export default async function Page() {
               </table>
             </KelScroll>
           </section>
-        </div>
-        <section className="panel p-5 max-[760px]:p-4" aria-labelledby="player-starts">
+        <section className="panel col-span-full p-5 max-[760px]:p-4" aria-labelledby="player-starts">
           <h2 id="player-starts" className="text-[17px] font-extrabold">
             선수별로 많이 시작한 지역
           </h2>

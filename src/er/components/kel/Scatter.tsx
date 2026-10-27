@@ -57,7 +57,7 @@ export default function Scatter({
   const [ref, w, measured] = useWidth<HTMLDivElement>(640);
   const [hover, setHover] = useState<string | null>(null);
   const narrow = w < 560;
-  const h = height;
+  const h = narrow ? Math.min(height, 360) : height;
   const pad = { l: 40, r: 16, t: 26, b: 40 };
   const [x0, x1] = domain(
     points.map((p) => p.x),
