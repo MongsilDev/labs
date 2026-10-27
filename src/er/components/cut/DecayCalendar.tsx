@@ -60,11 +60,11 @@ export default function DecayCalendar({ data }: { data: CutData }) {
         </ol>
       </div>
       <p className="mt-4 text-[13px] text-fg-3">
-        {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정은 유예 {data.rule.grace}일을 소진한 뒤 매일 15시에 {data.rule.step}점씩 깎입니다.
+        {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정은 유예 {data.rule.grace}일이 지난 뒤 매일 15시에 RP가 {data.rule.step}점씩 깎입니다.
         <br />
         막대는 휴면 계정이 지금 컷 아래로 내려가는 날과 인원을 표시합니다.
         <br />
-        10월 29일 12.7 패치로 유예 상한이 이터니티 8일, 데미갓 10일로 줄면 더 일찍 내려갈 수 있습니다.
+        10월 29일 12.7 패치로 유예 상한이 이터니티 8일, 데미갓 10일로 줄면 휴면 계정이 더 일찍 내려갈 수 있습니다.
       </p>
     </div>
   );
