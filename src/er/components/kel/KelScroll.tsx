@@ -7,8 +7,12 @@ function fit(el: HTMLDivElement) {
   el.style.maxWidth = "";
   const row = el.querySelector("tbody tr") as HTMLTableRowElement | null;
   if (!row || el.scrollWidth <= el.clientWidth) return;
-  const pin = [...row.cells].filter((c) => getComputedStyle(c).position === "sticky").reduce((n, c) => n + c.offsetWidth, 0);
-  const edges = [...row.cells].map((c) => c.offsetLeft + c.offsetWidth).filter((x) => x > pin && x <= el.clientWidth);
+  const cells = [...row.cells].filter((c) => c.offsetWidth);
+  const sticky = (c: HTMLTableCellElement) => getComputedStyle(c).position === "sticky";
+  const pin = cells.filter(sticky).reduce((n, c) => n + c.offsetWidth, 0);
+  // sticky 칸은 offsetParent가 표가 아니라서 화면 좌표로 계산
+  const left = el.getBoundingClientRect().left - el.scrollLeft;
+  const edges = cells.filter((c) => !sticky(c)).map((c) => c.getBoundingClientRect().right - left).filter((x) => x > pin && x <= el.clientWidth);
   if (edges.length) el.style.maxWidth = `${Math.max(...edges)}px`;
   el.style.scrollPaddingInlineStart = `${pin}px`;
 }

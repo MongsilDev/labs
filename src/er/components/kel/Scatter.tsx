@@ -106,16 +106,15 @@ export default function Scatter({
 
   // 강조한 점의 이름표는 오른쪽, 왼쪽, 위, 아래, 대각선 네 곳 가운데 겹침이 가장 적은 자리에 둠
   const named = points.filter((p) => p.tone !== undefined);
-  const dots = named.length ? points.map((p) => ({ box: { x: x(p.x) - 6, y: y(p.y) - 6, w: 12, h: 12 }, weight: p.tone === undefined ? 2 : 4 })) : [];
+  const dots = named.length ? points.map((p) => ({ box: { x: at.get(p.key)![0] - 6, y: at.get(p.key)![1] - 6, w: 12, h: 12 }, weight: p.tone === undefined ? 2 : 4 })) : [];
   const frame: Box = { x: pad.l, y: pad.t, w: w - pad.l - pad.r, h: h - pad.t - pad.b };
   const placed: Box[] = [];
   const tags = named.map((p) => {
-    const cx = x(p.x);
-    const cy = y(p.y);
+    const [cx, cy] = at.get(p.key)!;
     const tw = textWidth(p.name, 11);
     const options = SPOTS.map(([dx, dy, anchor]) => ({ box: { x: cx + dx - tw * SHIFT[anchor], y: cy + dy - 7, w: tw, h: 14 }, tx: cx + dx, ty: cy + dy, anchor }));
     // 글자 기준점이 다른 강조 점에 더 가까우면 그 점의 이름표로 읽힘
-    const near = (o: (typeof options)[number]) => named.filter((q) => q !== p && Math.hypot(x(q.x) - o.tx, y(q.y) - o.ty) < Math.hypot(cx - o.tx, cy - o.ty)).length * 400;
+    const near = (o: (typeof options)[number]) => named.filter((q) => q !== p && Math.hypot(at.get(q.key)![0] - o.tx, at.get(q.key)![1] - o.ty) < Math.hypot(cx - o.tx, cy - o.ty)).length * 400;
     const cost = (b: Box) => placed.reduce((n, o) => n + area(b, o) * 3, 0) + dots.reduce((n, d) => n + area(b, d.box) * d.weight, 0) + (b.w * b.h - area(b, frame)) * 4;
     const best = options.map((o) => ({ ...o, cost: cost(o.box) + near(o) })).reduce((a, o) => (o.cost < a.cost ? o : a));
     placed.push(best.box);
