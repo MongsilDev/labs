@@ -33,15 +33,17 @@ const cut = (b: Board) => (b.mode === "points" && b.advance > 0 && b.advance < b
 
 function meta(b: Board): string {
   const parts: string[] = [MODE[b.mode]];
-  if (b.ended) parts.push(`${b.played}라운드`);
+  // 결과 전 이미지는 안내 메시지로 대회가 끝날 때까지 남아 진행 상황 대신 방식만 씀
+  if (!b.played && !b.ended) parts.push(b.mode === "points" ? `${b.plannedRounds}라운드` : `최대 ${b.plannedRounds}라운드`);
+  else if (b.ended) parts.push(`${b.played}라운드`);
   else if (cut(b)) parts.push(`상위 ${b.advance}팀 진출`);
   return parts.join(" | ");
 }
 
 function roundLabel(b: Board): string {
   if (b.ended) return "최종";
-  if (b.mode === "points") return `${b.played}/${b.plannedRounds}라운드`;
-  return b.played ? `${b.played}라운드` : "";
+  if (!b.played) return "";
+  return b.mode === "points" ? `${b.played}/${b.plannedRounds}라운드` : `${b.played}라운드`;
 }
 
 type Tag = { text: string; color: string; fill?: boolean };
@@ -104,7 +106,7 @@ export async function roundImage(b: Board) {
   const head = 100;
   const colHead = 36 * k;
   const advance = cut(b);
-  const height = px(pad * 2 + head + colHead + Math.max(1, rows.length) * ROW * k + (advance ? 6 : 0));
+  const height = px(pad * 2 + head + (rows.length ? colHead + rows.length * ROW * k + (advance ? 6 : 0) : 0));
   const showDelta = b.played > 1;
   const title = keepGlyphs(b.name, shown) || b.code;
   const group = b.groupCount > 1 ? `${b.group}조` : "";
@@ -167,7 +169,7 @@ export async function roundImage(b: Board) {
           <span style={{ fontSize: px(24), fontWeight: 500, color: C.text2, marginTop: px(8) }}>{meta(b)}</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {rows.length ? body : <span style={{ fontSize: px(26), color: C.text3, marginTop: px(16) }}>아직 등록된 경기 결과가 없습니다.</span>}
+          {rows.length ? body : null}
         </div>
       </div>
     ),
