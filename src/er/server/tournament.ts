@@ -914,10 +914,10 @@ export function allBotLinks(): { channelId: string; code: string; group: string 
   });
 }
 
-// 대회를 만든 계정. 로그인이 디스코드라 id는 디스코드 사용자 ID
+// 지금 개최자. 개최자는 넘길 수 있어 만든 계정이 아니라 owner를 씀. 로그인이 디스코드라 id는 디스코드 사용자 ID
 export function tournamentHost(code: string): { id: string; name: string } | null {
   const row = db()
-    .prepare("SELECT t.created_by AS id, u.name FROM tournaments t LEFT JOIN users u ON u.id = t.created_by WHERE t.code = ?")
+    .prepare("SELECT m.user_id AS id, u.name FROM tournaments t JOIN members m ON m.tournament_id = t.id AND m.role = 'owner' LEFT JOIN users u ON u.id = m.user_id WHERE t.code = ?")
     .get(normalizeCode(code)) as { id: string; name: string | null } | undefined;
   return row ? { id: row.id, name: row.name ?? "" } : null;
 }
