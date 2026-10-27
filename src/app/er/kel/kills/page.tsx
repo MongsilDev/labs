@@ -16,7 +16,7 @@ export default async function Page() {
   const { user, owner } = await kelGate("kills");
   const data = kelData();
   const stats = data ? killStats(data) : null;
-  if (!stats?.pairs.length) return <KelPage user={user} owner={owner} screen="kills" lead={NO_DATA} />;
+  if (!stats?.pairs.length) return <KelPage user={user} owner={owner} screen="kills" missing={NO_DATA} />;
   const sorted = [...stats.pairs].sort((a, b) => byText(a.killer.player, b.killer.player) || byText(a.victim.player, b.victim.player));
   const pairs = ranked(sorted, (p) => p.count, TOP);
   const teams = seasonStandings()

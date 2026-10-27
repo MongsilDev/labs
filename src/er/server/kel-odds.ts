@@ -39,7 +39,8 @@ export function interval(input: OddsInput, c: number, done: number, t: number): 
 
 // 진행 중인 서킷 칸에 쓰는 지금 위치
 export function status(input: OddsInput, { circuit: c, done }: View, t: number): string {
-  return nextStage(input, c, done, t) ?? `${input.ranks[t][c - 1]}위`;
+  const s = nextStage(input, c, done, t);
+  return s ? `${s} 경기 전` : `${input.ranks[t][c - 1]}위`;
 }
 
 // 지난 서킷 포인트에 진행 중인 서킷에서 지금 위치로 받을 수 있는 가장 낮은 포인트를 더한 값
@@ -377,8 +378,8 @@ function certainty(input: OddsInput, view: View): Pick<TeamOdds, "sure" | "never
   });
 }
 
-const within = (r: number) => (r === 1 ? "1위를 하면" : `${r}위 안에 들면`);
-const short = (r: number) => (r === 1 ? "1위를 하지 못하면" : `${r}위 안에 들지 못하면`);
+const within = (r: number) => (r === 1 ? "1위를 차지하면" : `${r}위 안에 들면`);
+const short = (r: number) => (r === 1 ? "1위를 차지하지 못하면" : `${r}위 안에 들지 못하면`);
 
 // 마지막 서킷 결승만 남은 시점에 순위 하나로 갈리는 조건과, 결승에 못 오른 팀이 탈락하는 조건
 function cases(input: OddsInput, final: ReturnType<typeof enumerateFinal>): Map<number, string[]> {
@@ -403,13 +404,13 @@ function cases(input: OddsInput, final: ReturnType<typeof enumerateFinal>): Map<
       const d = run((v) => !v[1] && !v[2]);
       if (d) lines.push(`${within(d)} 결승 직행이 확정됩니다.`);
       const k = from((v) => v[0]);
-      if (k) lines.push(`${short(k - 1)} 결승에 바로 갈 수 없습니다.`);
+      if (k) lines.push(`${short(k - 1)} 결승에 직행할 수 없습니다.`);
     }
     if (p[t][2] > 0 && p[t][2] < 1) {
       const s = run((v) => v[2] === 0);
       if (s) lines.push(`${within(s)} 챔피언십 진출이 확정됩니다.`);
       const k = from((v) => v[0] + v[1]);
-      if (k) lines.push(`${short(k - 1)} 탈락합니다.`);
+      if (k) lines.push(`${short(k - 1)} 챔피언십에 진출하지 못합니다.`);
     }
     if (lines.length) out.set(t, [`${where}에서 ${lines[0]}`, ...lines.slice(1)]);
   }
@@ -426,7 +427,7 @@ function cases(input: OddsInput, final: ReturnType<typeof enumerateFinal>): Map<
     // 넘을 수 있는 팀이 모두 넘어야 탈락할 때만 문장으로 씀
     if (!need || need !== maybe.length) continue;
     const parts = maybe.map(({ u, r }, i) => `${josa(KEL_TEAMS[u].name, "이", "가")} ${i ? "" : `${where} `}${r === 1 ? "1위에" : `${r}위 안에`}`);
-    out.set(t, [`${parts.join(", ")} ${need > 1 ? "함께 " : ""}들면 탈락합니다.`]);
+    out.set(t, [`${josa(KEL_TEAMS[t].name, "은", "는")} ${parts.join(", ")} ${need > 1 ? "함께 " : ""}들면 챔피언십에 진출하지 못합니다.`]);
   }
   return out;
 }

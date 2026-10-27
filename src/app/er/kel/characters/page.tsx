@@ -271,7 +271,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   const view = pickTab(VIEWS, q.view);
   const sort = pickTab(SORTS, q.sort);
   const data = kelData();
-  if (!data) return <KelPage user={user} owner={owner} screen="characters" lead={NO_DATA} />;
+  if (!data) return <KelPage user={user} owner={owner} screen="characters" missing={NO_DATA} />;
   const { total, eventGames, rows } = characterStats(data);
   const tabs = <KelTabs screen="characters" param="view" label="보기" items={VIEWS} current={view} />;
 

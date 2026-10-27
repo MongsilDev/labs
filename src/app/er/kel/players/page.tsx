@@ -165,7 +165,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const q = await searchParams;
   const data = kelData();
   const all = data ? playerStats(data) : [];
-  if (!data || !all.length) return <KelPage user={user} owner={owner} screen="players" lead={NO_DATA} />;
+  if (!data || !all.length) return <KelPage user={user} owner={owner} screen="players" missing={NO_DATA} />;
   const byTeam = seasonStandings()
     .map((r) => ({ team: r.team, players: all.filter((p) => p.team === r.team.key).sort((a, b) => b.games - a.games) }))
     .filter((t) => t.players.length);

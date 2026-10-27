@@ -2,7 +2,7 @@ import HeatCell from "@/er/components/kel/HeatCell";
 import KelPage, { KelScroll, KelTabs, NO_DATA } from "@/er/components/kel/KelPage";
 import { Logo, TeamName } from "@/er/components/kel/Team";
 import { byText } from "@/er/lib/format";
-import { EVENT_NAME, josa, KEL_SCREENS, KEL_TEAMS, QUALIFY, SEEDS, seasonStandings, type KelEvent } from "@/er/lib/kel";
+import { EVENT_NAME, josa, KEL_SCREENS, KEL_TEAMS, QUALIFY, SEEDS, type KelEvent } from "@/er/lib/kel";
 import { CIRCUIT_STAGES, kelData, kelGate, kelMetadata } from "@/er/server/kel";
 import { guaranteed, kelOdds, status, type TeamOdds } from "@/er/server/kel-odds";
 
@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
   const q = await searchParams;
   const data = kelData();
   const odds = data && (await kelOdds(data));
-  if (!odds) return <KelPage user={user} owner={owner} screen="odds" lead={data ? "서킷 1~4의 단계별 경기 기록이 모자라거나 서킷 최종 순위와 맞지 않습니다. 서킷마다 A조부터 결승까지의 경기 기록 CSV를 서버 데이터 폴더의 kel 폴더에 넣어주세요." : NO_DATA} />;
+  if (!odds) return <KelPage user={user} owner={owner} screen="odds" missing={data ? ["진출 확률을 계산하지 못했습니다.", "서킷 1~4의 단계별 경기 기록이 모자라거나 서킷 최종 순위와 맞지 않습니다. 서킷마다 A조부터 결승까지의 경기 기록 CSV를 서버 데이터 폴더의 kel 폴더에 넣어주세요."] : NO_DATA} />;
   const { input, views } = odds;
   const circuit = CIRCUITS.includes(Number(q.c)) ? Number(q.c) : DEFAULT.c;
   const done = DONE.includes(Number(q.s)) ? Number(q.s) : DEFAULT.s;
@@ -53,16 +53,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
   const stage = CIRCUIT_STAGES[done - 1];
   const shown = CIRCUITS.filter((c) => c <= circuit);
   const cases = circuit === 4 && done === 5 ? rows.filter((r) => odds.cases.has(r.t)) : [];
-  const order = seasonStandings().map((r) => KEL_TEAMS.indexOf(r.team));
 
   return (
     <KelPage
       user={user}
       owner={owner}
       screen="odds"
-      lead={["서킷 단계가 끝날 때마다 그때까지의 결과로 계산한 확률입니다.", `서킷 포인트 1~${SEEDS}위는 결승에 바로 진출하고, ${SEEDS + 1}~${QUALIFY}위는 준결승에 출전합니다.`]}
+      lead={["서킷 단계가 끝날 때마다 그때까지의 결과로 계산한 확률입니다.", `서킷 포인트 합계 1~${SEEDS}위 팀은 결승에 직행하고, ${SEEDS + 1}~${QUALIFY}위 팀은 준결승에 출전합니다.`]}
       notes={[
-        "확률은 남은 경기에서 모든 팀이 각 순위를 같은 확률로 얻는다고 보고 계산했습니다.",
+        "확률은 남은 경기에서 각 팀이 갈 수 있는 순위를 모두 같은 확률로 얻는다고 보고 계산했습니다.",
         "표의 -는 남은 경기 결과와 관계없이 일어날 수 없는 경우입니다.",
         "포인트 열은 그 단계까지 확보한 서킷 포인트이고, 진행 중인 서킷의 포인트는 팀이 진출한 단계에서 받을 수 있는 가장 낮은 포인트로 계산했습니다.",
       ]}
@@ -99,7 +98,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
                 <th className="wide">포인트</th>
                 <th>결승 직행</th>
                 <th>준결승</th>
-                <th>탈락</th>
+                <th>진출 실패</th>
               </tr>
             </thead>
             <tbody>
@@ -175,14 +174,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
                 {CIRCUITS.flatMap((c) =>
                   CIRCUIT_STAGES.map((s, i) => (
                     <th key={`${c}-${s}`} aria-label={`${s} 뒤`} className={["text-center", c !== circuit && "wide", c === circuit && i + 1 === done && "on"].filter(Boolean).join(" ")}>
-                      {s.slice(0, 2)}
+                      {s}
                     </th>
                   )),
                 )}
               </tr>
             </thead>
             <tbody>
-              {order.map((t) => (
+              {rows.map(({ t }) => (
                 <tr key={t}>
                   <td className="l">
                     <span className="inline-flex min-w-0 items-center gap-2">

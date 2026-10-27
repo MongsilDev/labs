@@ -26,9 +26,9 @@ function Areas({ areas }: { areas: [string, number][] }) {
 export default async function Page() {
   const { user, owner } = await kelGate("regions");
   const data = kelData();
-  if (!data) return <KelPage user={user} owner={owner} screen="regions" lead={NO_DATA} />;
+  if (!data) return <KelPage user={user} owner={owner} screen="regions" missing={NO_DATA} />;
   const reg = regions(data);
-  if (!reg.starts.length) return <KelPage user={user} owner={owner} screen="regions" lead={NO_DAK} />;
+  if (!reg.starts.length) return <KelPage user={user} owner={owner} screen="regions" missing={NO_DAK} />;
   const starts = reg.starts.filter((s) => s.count > MIN_STARTS);
   const most = reg.deaths[0];
   const deaths = data.rows.reduce((a, r) => a + (r.dak ? r.deaths : 0), 0);

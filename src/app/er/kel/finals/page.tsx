@@ -22,7 +22,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   const data = kelData();
   const list = data ? finals(data) : [];
   const f = list.find((x) => x.event === q.f) ?? list.at(-1);
-  if (!f) return <KelPage user={user} owner={owner} screen="finals" lead={NO_DATA} />;
+  if (!f) return <KelPage user={user} owner={owner} screen="finals" missing={NO_DATA} />;
 
   const { state, rounds, teams } = f;
   const played = state.played;

@@ -189,7 +189,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const scope = pickTab(scopes, q.s);
   const view = pickTab(VIEWS, q.v);
   const rows = data ? teamStyles(data, scope) : [];
-  if (!data || !rows.length) return <KelPage user={user} owner={owner} screen="teams" lead={NO_DATA} />;
+  if (!data || !rows.length) return <KelPage user={user} owner={owner} screen="teams" missing={NO_DATA} />;
   const tabs = (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <KelTabs label="범위" items={scopes} current={scope} href={(s) => href(s, view)} />
@@ -201,7 +201,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
     const { rows: ops, ranks } = teamOps(data, scope);
     if (!ops.length) {
       return (
-        <KelPage user={user} owner={owner} screen="teams" lead={NO_DAK}>
+        <KelPage user={user} owner={owner} screen="teams" missing={NO_DAK}>
           {tabs}
         </KelPage>
       );

@@ -95,7 +95,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   const { user, owner } = await kelGate("records");
   const view = pickTab(VIEWS, (await searchParams).view);
   const data = kelData();
-  if (!data) return <KelPage user={user} owner={owner} screen="records" lead={NO_DATA} />;
+  if (!data) return <KelPage user={user} owner={owner} screen="records" missing={NO_DATA} />;
   const rec = records(data);
   const low = view === "low" ? lows(data) : null;
 

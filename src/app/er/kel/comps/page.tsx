@@ -14,7 +14,7 @@ export default async function Page() {
   const { user, owner } = await kelGate("comps");
   const data = kelData();
   const rows = data ? comps(data, MIN) : [];
-  if (!rows.length) return <KelPage user={user} owner={owner} screen="comps" lead={NO_DATA} />;
+  if (!rows.length) return <KelPage user={user} owner={owner} screen="comps" missing={NO_DATA} />;
 
   return (
     <KelPage

@@ -56,7 +56,7 @@ export default async function Page() {
   const { user, owner } = await kelGate("roles");
   const data = kelData();
   const players = data ? playerStats(data).filter((p) => p.games >= MIN_GAMES) : [];
-  if (!players.length) return <KelPage user={user} owner={owner} screen="roles" lead={NO_DATA} />;
+  if (!players.length) return <KelPage user={user} owner={owner} screen="roles" missing={NO_DATA} />;
   const taken = [...players].sort((a, b) => b.takenShare - a.takenShare).slice(0, TOP);
   const damage = [...players].sort((a, b) => b.damageShare - a.damageShare).slice(0, TOP);
   const cc = [...players].sort((a, b) => b.ccShare - a.ccShare).slice(0, TOP);
