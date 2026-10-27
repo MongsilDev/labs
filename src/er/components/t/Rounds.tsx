@@ -59,8 +59,8 @@ export default function Rounds({ group, result, mode, planned, multi, editable, 
                   {r.sub && <span className="chip">{r.sub}</span>}
                 </div>
                 {r.winner && (
-                  <div className="grid grid-cols-[34px_minmax(0,1fr)] gap-2 text-[13px]">
-                    <span className="text-fg-3">1위</span>
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 text-[13px]">
+                    <span className="text-fg-3">게임 1위</span>
                     <span className="min-w-0 truncate">{r.winner}</span>
                   </div>
                 )}
