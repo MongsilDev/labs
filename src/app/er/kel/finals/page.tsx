@@ -2,7 +2,7 @@ import FlowChart from "@/er/components/kel/FlowChart";
 import KelPage, { KelScroll, KelTabs, NO_DATA } from "@/er/components/kel/KelPage";
 import { TeamName } from "@/er/components/kel/Team";
 import { fmt } from "@/er/lib/format";
-import { EVENT_NAME, TEAM, TONES, type KelEvent } from "@/er/lib/kel";
+import { EVENT_NAME, KEL_SCREENS, TEAM, TONES, type KelEvent } from "@/er/lib/kel";
 import { gameScore, standings } from "@/er/lib/kel-calc";
 import { kelData, kelGate, kelMetadata } from "@/er/server/kel";
 import { finals } from "@/er/server/kel-stats";
@@ -45,7 +45,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         NOTES[f.event],
       ]}
     >
-      <KelTabs screen="finals" param="f" label="결승" items={list.map((x) => [x.event, EVENT_NAME[x.event]] as const)} current={f.event} />
+      <KelTabs
+        label="결승"
+        items={list.map((x) => [x.event, EVENT_NAME[x.event]] as const)}
+        current={f.event}
+        href={(k) => (k === list.at(-1)!.event ? KEL_SCREENS.finals.path : `${KEL_SCREENS.finals.path}?f=${k}`)}
+      />
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="flow">
         <h2 id="flow" className="text-[17px] font-extrabold">
           {EVENT_NAME[f.event]} 결승 누적 점수
