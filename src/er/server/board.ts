@@ -7,7 +7,7 @@ import type { Mode, Tiebreak } from "@/er/lib/rules";
 import type { Role, TournamentView } from "@/er/lib/view";
 import { BASE_URL } from "./auth";
 import { groupLabel } from "@/er/lib/rules";
-import { linkedChannel, loadView, myTournaments, relayDiscord, tournamentVersion } from "./tournament";
+import { linkedChannel, loadView, myTournaments, relayDiscord, tournamentHost, tournamentVersion } from "./tournament";
 
 export const EXAMPLE_CODE = "EXAMPLE";
 
@@ -44,6 +44,7 @@ export type Board = {
   channelId: string | null;
   standings: BoardRow[];
   next: { roundNo: number; main: string; sub: string | null; bans: string[] } | null;
+  host?: { id: string; name: string } | null;
 };
 
 export type BotTournament = { code: string; name: string; role: "owner" | "operator"; played: number };
@@ -99,6 +100,7 @@ export function botBoard(code: string, group: string | null, userId: string | nu
       fixed: s.fixed,
       tiedBy: s.tiedBy,
     })),
+    host: example ? null : tournamentHost(view.code),
     next: res.next && !res.ended ? { roundNo: res.next.roundNo, main: res.next.main, sub: res.next.sub, bans: res.next.bans.map(characterName) } : null,
   };
 }

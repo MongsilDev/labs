@@ -31,12 +31,13 @@ const MODE = { points: "포인트제", checkpoint: "체크포인트", double: "�
 
 const cut = (b: Board) => (b.mode === "points" && b.advance > 0 && b.advance < b.standings.length ? b.advance : 0);
 
-function meta(b: Board): string {
+function meta(b: Board, host: string): string {
   const parts: string[] = [MODE[b.mode]];
   // 결과 전 이미지는 안내 메시지로 대회가 끝날 때까지 남아 진행 상황 대신 방식만 씀
   if (!b.played && !b.ended) parts.push(b.mode === "points" ? `${b.plannedRounds}라운드` : `최대 ${b.plannedRounds}라운드`);
   else if (b.ended) parts.push(`${b.played}라운드`);
   else if (cut(b)) parts.push(`상위 ${b.advance}팀 진출`);
+  if (host) parts.push(`개최 ${host}`);
   return parts.join(" | ");
 }
 
@@ -95,7 +96,8 @@ function score(v: number, size: number) {
   return [...digits(`${whole}.`, size, "w"), ...digits(frac, small, "f", (size - small) * BASE)];
 }
 
-export async function roundImage(b: Board) {
+/** host는 안내 메시지 이미지에만 넣는 개최자 이름 */
+export async function roundImage(b: Board, host = "") {
   const [medium, bold, extra] = await fonts;
   const shown = await covered;
   const rows = b.standings;
@@ -166,7 +168,7 @@ export async function roundImage(b: Board) {
             {group && <span style={{ fontSize: px(36), fontWeight: 800, color: C.accent }}>{group}</span>}
             {roundLabel(b) && <span style={{ marginLeft: "auto", fontSize: px(34), fontWeight: 800, color: C.gold }}>{roundLabel(b)}</span>}
           </div>
-          <span style={{ fontSize: px(24), fontWeight: 500, color: C.text2, marginTop: px(8) }}>{meta(b)}</span>
+          <span style={{ fontSize: px(24), fontWeight: 500, color: C.text2, marginTop: px(8), maxWidth: px(W - pad * 2), overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{meta(b, keepGlyphs(host, shown))}</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {rows.length ? body : null}

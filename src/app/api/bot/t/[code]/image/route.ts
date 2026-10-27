@@ -16,7 +16,13 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     if (board === null) return fail("없거나 지워진 대회입니다.", 404);
     if (board === "no-group") return fail("없는 조입니다.", 400);
     // ImageResponse는 본문을 읽을 때 그려서, 렌더 오류가 200 응답으로 나가지 않게 먼저 다 읽음
-    const png = await (await roundImage(board)).arrayBuffer();
+    // info는 안내 메시지용 대회 정보 이미지. 순위 없이 방식과 개최자만 그림
+    const q = req.nextUrl.searchParams;
+    const info = q.get("info") === "1";
+    const image = info
+      ? roundImage({ ...board, standings: [], played: 0, ended: false }, (q.get("host") || board.host?.name || "").slice(0, 64))
+      : roundImage(board);
+    const png = await (await image).arrayBuffer();
     return new Response(png, { headers: { "Content-Type": "image/png", "Cache-Control": "no-store" } });
   });
 }

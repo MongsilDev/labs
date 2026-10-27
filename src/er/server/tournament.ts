@@ -914,6 +914,14 @@ export function allBotLinks(): { channelId: string; code: string; group: string 
   });
 }
 
+// 대회를 만든 계정. 로그인이 디스코드라 id는 디스코드 사용자 ID
+export function tournamentHost(code: string): { id: string; name: string } | null {
+  const row = db()
+    .prepare("SELECT t.created_by AS id, u.name FROM tournaments t LEFT JOIN users u ON u.id = t.created_by WHERE t.code = ?")
+    .get(normalizeCode(code)) as { id: string; name: string | null } | undefined;
+  return row ? { id: row.id, name: row.name ?? "" } : null;
+}
+
 export function linkedChannel(code: string, group: number): string | null {
   const row = db()
     .prepare("SELECT l.channel_id FROM discord_links l JOIN tournaments t ON t.id = l.tournament_id WHERE t.code = ? AND l.group_idx = ?")
