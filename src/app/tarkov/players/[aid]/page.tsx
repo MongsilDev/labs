@@ -281,7 +281,7 @@ function Achievements({ s }: { s: Summary }) {
           {rows.length < s.achievements.length && (
             <>
               <br />
-              이 계정은 {s.achievements.length}개 가운데 {rows.length}개를 표시합니다.
+              이 계정의 도전과제 {s.achievements.length}개 가운데 {rows.length}개를 표시합니다.
             </>
           )}
         </p>
@@ -382,7 +382,7 @@ function Gear({ gear, arena }: { gear?: Worn[]; arena?: boolean }) {
         {guns && (
           <>
             <br />
-            무기 그림은 기본 구성 모양이며, 실제로 단 부착물은 그림에 반영되지 않습니다.
+            무기 그림은 기본 구성 모양이라, 실제로 단 부착물은 그림에 나오지 않습니다.
           </>
         )}
       </p>
@@ -806,7 +806,7 @@ export default async function Profile({ params, searchParams }: Props) {
         {!s && !res.error && (
           <section className="panel empty">
             <p>아직 tarkov.dev에서 이 계정의 {mode.label} 기록을 조회한 사람이 없습니다.</p>
-            <p className="sub">위의 tarkov.dev에서 갱신 버튼으로 이 계정을 열면 tarkov.dev에 기록이 생성됩니다.<br />그 뒤 이 화면으로 돌아오면 기록을 자동으로 다시 불러옵니다.</p>
+            <p className="sub">위의 tarkov.dev에서 갱신 버튼으로 이 계정을 열면 tarkov.dev에 기록이 생깁니다.<br />그 뒤 이 화면으로 돌아오면 기록을 자동으로 다시 불러옵니다.</p>
           </section>
         )}
 
