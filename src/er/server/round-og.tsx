@@ -40,8 +40,8 @@ function meta(b: Board): string {
 
 function roundLabel(b: Board): string {
   if (b.ended) return "최종";
-  if (!b.played) return "";
-  return b.mode === "points" ? `${b.played}/${b.plannedRounds}라운드` : `${b.played}라운드`;
+  if (b.mode === "points") return `${b.played}/${b.plannedRounds}라운드`;
+  return b.played ? `${b.played}라운드` : "";
 }
 
 type Tag = { text: string; color: string; fill?: boolean };
