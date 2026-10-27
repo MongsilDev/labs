@@ -21,6 +21,8 @@ const VIEWS: [View, string][] = [
 
 type Sort = "picks" | "place" | "rise";
 
+const AVG_NOTE = "평균 순위는 이 실험체를 고른 선수가 속한 팀의 순위를 평균한 값이고, 1위 비율은 그 팀이 1위를 차지한 비율입니다.";
+
 const SORTS: [Sort, string][] = [
   ["picks", "등장률 순"],
   ["place", "평균 순위 순"],
@@ -90,7 +92,7 @@ function Card({ b }: { b: CharacterBuild }) {
                 <Logo team={TEAM.get(p.team)!} size={22} label />
                 <span className="truncate">{p.name}</span>
               </span>
-              <span className="text-fg-3">{p.count}번</span>
+              <span className="text-fg-3">{p.count}게임</span>
             </li>
           ))}
         </ul>
@@ -140,15 +142,15 @@ function Card({ b }: { b: CharacterBuild }) {
             <>
               <ol className="flex flex-wrap gap-1.5" aria-label={b.order.name}>
                 {order.map((s, i) => (
-                  <li key={i} className={`grid size-[34px] place-items-center rounded-lg font-extrabold ${s === "R" ? "bg-adv text-[#0a0d14]" : "bg-field"}`}>
+                  <li key={i} className="grid size-[34px] place-items-center rounded-lg bg-field font-extrabold">
                     {s}
                   </li>
                 ))}
               </ol>
               <ul className="mt-2.5 text-[13px] leading-relaxed text-fg-3">
-                {SKILL_SLOTS.filter((s) => b.skills[s] && order.includes(s)).map((s) => (
+                {[...new Set(order)].filter((s) => b.skills[s as (typeof SKILL_SLOTS)[number]]).map((s) => (
                   <li key={s}>
-                    {s} {b.skills[s]}
+                    {s} {b.skills[s as (typeof SKILL_SLOTS)[number]]}
                   </li>
                 ))}
               </ul>
@@ -222,22 +224,26 @@ function Build({ data, b }: { data: Kel; b: CharacterBuild }) {
                 href={buildPath(x.key)}
                 aria-current={x.key === b.key ? "page" : undefined}
                 aria-label={characterName(x.key)}
-                title={characterName(x.key)}
-                className="grid size-10 place-items-center rounded-full border-2 border-transparent hover:border-line-strong aria-[current=page]:border-accent"
+                className="group grid w-14 justify-items-center gap-0.5 no-underline"
               >
-                <Char name={x.key} label="" size={32} />
+                <span className="grid size-10 place-items-center rounded-full border-2 border-transparent group-hover:border-line-strong group-aria-[current=page]:border-accent">
+                  <Char name={x.key} label="" size={32} />
+                </span>
+                <span className="w-full truncate text-center text-[11px] text-fg-3 group-aria-[current=page]:font-bold group-aria-[current=page]:text-fg" aria-hidden="true">
+                  {characterName(x.key)}
+                </span>
               </Link>
             </li>
           ))}
         </ul>
       </section>
       <div className="grid grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)] gap-5 max-[1280px]:grid-cols-1">
-        <RateTable title="모든 실험체의 전술 스킬 대회별 선택률" rows={season.tactical} events={events} />
+        <RateTable title="전술 스킬 대회별 선택률" rows={season.tactical} events={events} />
         <section className="panel min-w-0 p-5 max-[760px]:p-4" aria-labelledby="traits">
           <h2 id="traits" className="text-[17px] font-extrabold">
-            모든 실험체에서 많이 고른 핵심 특성
+            핵심 특성 선택률
           </h2>
-          <KelScroll label="모든 실험체에서 많이 고른 핵심 특성" className="mt-3">
+          <KelScroll label="핵심 특성 선택률" className="mt-3">
             <table className="kel-table w-full">
               <thead>
                 <tr>
@@ -286,11 +292,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         owner={owner}
         screen="characters"
         notes={[
-          `카드의 비율은 그 실험체를 고른 기록 가운데 경기 상세가 있는 ${b.records}개로 계산하고, 무기 칸의 장비는 그 무기를 든 기록만 셉니다.`,
+          `카드의 비율은 그 실험체를 고른 기록 가운데 경기 상세가 있는 ${b.records}개로 계산하고, 무기 칸의 장비는 그 무기를 장착한 기록만 집계합니다.`,
           `마지막 일격 스킬은 한 게임에서 선수마다 세 번까지 남는 사망 기록 가운데 첫 번째 기록만 사용하며, 이 실험체가 처치한 ${b.deaths}번을 기준으로 집계합니다.`,
           b.unnamed > 0 && `공식 이름을 찾지 못한 스킬로 처치한 ${b.unnamed}번은 스킬 이름을 dak.gg 원문 그대로 표시했습니다.`,
-          `전술 스킬과 핵심 특성 선택률은 선수 기록 ${records.toLocaleString("ko-KR")}개 전체에서 구했고, 대회별 칸은 그 대회의 선수 기록에서 따로 구했습니다.`,
-          "평균 순위는 이 실험체를 고른 선수가 속한 팀의 순위를 평균한 값입니다.",
+          `전술 스킬과 핵심 특성 선택률은 선수 기록 ${records.toLocaleString("ko-KR")}개 전체에서 계산했고, 대회별 칸은 그 대회의 선수 기록만으로 따로 구했습니다.`,
+          AVG_NOTE,
         ]}
       >
         {tabs}
@@ -311,12 +317,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
       notes={[
         "칸의 숫자는 그 대회 게임 가운데 한 팀이라도 그 실험체를 고른 게임이 차지하는 비율입니다.",
         `2026 시즌에 등장한 ${rows.length}종 가운데 시즌 게임의 10%인 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`,
-        "평균 순위와 1위 비율은 그 실험체를 고른 선수의 팀 순위로 셉니다.",
+        AVG_NOTE,
       ]}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         {tabs}
-        <KelTabs screen="characters" param="sort" label="정렬" items={SORTS} current={sort} />
+        <KelTabs screen="characters" param="sort" label="정렬" items={SORTS} current={sort} className="sort" />
       </div>
       <section className="panel p-5 max-[760px]:p-4">
         <KelScroll label="대회별 실험체 등장률">

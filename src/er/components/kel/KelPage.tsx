@@ -19,7 +19,7 @@ export const pickTab = <K extends string>(items: readonly Tab<K>[], value?: stri
 
 export { default as KelScroll } from "./KelScroll";
 
-type TabsProps<K extends string> = { label: string; items: readonly Tab<K>[]; current: K } & ({ screen: KelScreen; param: string } | { href: (k: K) => string });
+type TabsProps<K extends string> = { label: string; items: readonly Tab<K>[]; current: K; className?: string } & ({ screen: KelScreen; param: string } | { href: (k: K) => string });
 
 // screen과 param을 주면 첫 탭은 화면 주소, 나머지는 ?param=값
 export function KelTabs<K extends string>(props: TabsProps<K>) {
@@ -30,7 +30,7 @@ export function KelTabs<K extends string>(props: TabsProps<K>) {
     return i === 0 ? path : `${path}?${props.param}=${k}`;
   };
   return (
-    <nav className="tabs" aria-label={label}>
+    <nav className={`tabs ${props.className ?? ""}`} aria-label={label}>
       {items.map(([k, name], i) => (
         <Link key={k} href={href(k, i)} aria-current={k === current ? "page" : undefined}>
           {name}

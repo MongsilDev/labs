@@ -17,7 +17,7 @@ const GROUPS: [string, Tile[]][] = [
   [
     "전투",
     [
-      ["kpr", "KPR", (p) => p.kpr.toFixed(3)],
+      ["kpr", "KPR 평점", (p) => p.kpr.toFixed(3)],
       ["kills", "게임당 킬", (p) => p.kills.toFixed(2)],
       ["deaths", "게임당 데스", (p) => p.deaths.toFixed(2)],
       ["top3", "3위 이내 비율", (p) => pct(p.top3)],
@@ -133,14 +133,15 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
       <div className="grid content-start gap-5">
         {GROUPS.filter(([, tiles]) => p.dakGames > 0 || !tiles.every(([m]) => DAK_METRICS.has(m))).map(([title, tiles]) => (
           <section key={title} aria-label={title}>
-            <h3 className="text-[13px] font-semibold text-fg-3">{title}</h3>
+            <h3 className="text-[13px] font-semibold text-fg-3">
+              {title}
+              {title === GROUPS[0][0] && <span className="ml-2 font-normal">순위는 {MIN_GAMES}게임 이상 출전한 선수 기준</span>}
+            </h3>
             <dl className="mt-2 grid grid-cols-3 gap-3 max-[560px]:grid-cols-2 max-[420px]:gap-2">
-              {tiles.map(([m, label, value, sub], i) => {
+              {tiles.map(([m, label, value, sub]) => {
                 const rank = rankOf(all, p, m);
-                // 3열과 2열 모두 마지막 줄에 한 칸만 남으면 그 칸을 줄 끝까지 늘림
-                const last = i === tiles.length - 1 && tiles.length % 6 === 1;
                 return (
-                  <div key={m} className={`rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3 ${last ? "col-span-full" : ""}`}>
+                  <div key={m} className="rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
                     <dt className="text-[13px] text-fg-3">{label}</dt>
                     <dd className="mt-1 text-[26px] leading-tight font-extrabold max-[420px]:text-[22px]">{value(p)}</dd>
                     {sub && <dd className="mt-0.5 text-[13px] text-fg-3">{sub(p)}</dd>}
@@ -180,7 +181,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
         `순위는 ${MIN_GAMES}게임 이상 출전한 선수끼리 비교해 매겼고, 평균 순위와 게임당 데스는 값이 작을수록 순위가 높습니다.`,
         "KPR은 경기 기록에 적힌 선수 평점의 평균이고, 한 게임 평균은 약 1.0입니다.",
         "가한 피해 비중은 팀 세 명이 가한 피해에서 그 선수가 차지한 비율을 게임마다 구해 평균한 값입니다.",
-        "많이 처치한 상대와 이 선수를 많이 처치한 상대에서는 상대 선수를 알 수 없는 킬을 뺐습니다.",
+        "많이 처치한 상대와 이 선수를 많이 처치한 상대에서는 상대 선수를 알 수 없는 킬을 제외했습니다.",
       ]}
     >
       {picked && <Card p={picked} all={all} pairs={killStats(data).pairs} />}

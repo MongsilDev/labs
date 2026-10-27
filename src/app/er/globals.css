@@ -467,6 +467,19 @@
     font-weight: 700;
     padding: 0 14px;
   }
+  /* 화면을 바꾸는 탭과 구분되는 정렬 선택 */
+  .tabs.sort a {
+    height: 28px;
+    padding: 0 10px;
+    border-color: transparent;
+    font-weight: 500;
+  }
+  .tabs.sort [aria-current="page"] {
+    background: var(--field);
+    color: var(--text);
+    border-color: transparent;
+    font-weight: 700;
+  }
 
   .toast-area {
     position: fixed;
