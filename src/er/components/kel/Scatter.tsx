@@ -44,6 +44,7 @@ export default function Scatter({
   format,
   refX,
   refY,
+  height = 360,
 }: {
   points: Point[];
   xLabel: string;
@@ -51,11 +52,12 @@ export default function Scatter({
   format: "pct" | "num";
   refX?: number;
   refY?: number;
+  height?: number;
 }) {
   const [ref, w, measured] = useWidth<HTMLDivElement>(640);
   const [hover, setHover] = useState<string | null>(null);
   const narrow = w < 560;
-  const h = 360;
+  const h = height;
   const pad = { l: 40, r: 16, t: 26, b: 40 };
   const [x0, x1] = domain(
     points.map((p) => p.x),

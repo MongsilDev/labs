@@ -66,6 +66,8 @@ export default async function Page() {
   const tone = (p: PlayerStat) => (damage.includes(p) ? 0 : taken.includes(p) ? 1 : undefined);
   const order = seasonStandings().map((r) => r.team.key);
   const all = [...players].sort((a, b) => order.indexOf(a.team) - order.indexOf(b.team) || b.games - a.games);
+  let half = Math.ceil(all.length / 2);
+  while (half < all.length && all[half].team === all[half - 1].team) half++;
 
   return (
     <KelPage
@@ -82,9 +84,7 @@ export default async function Page() {
         <Top id="top-damage" title={`가한 피해 비중 상위 ${TOP}명`} rows={damage} value={(p) => p.damageShare} />
         {support && <Top id="top-cc" title={`군중제어 시간 비중 상위 ${TOP}명`} rows={cc} value={(p) => p.ccShare} per={["게임당 시간", (p) => `${p.cc.toFixed(1)}초`]} />}
         {support && <Top id="top-heal" title={`팀원 회복 비중 상위 ${TOP}명`} rows={heal} value={(p) => p.healShare} per={["게임당 회복량", (p) => int(p.heal)]} />}
-      </div>
-      <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)] items-start gap-5 max-[1080px]:grid-cols-1">
-        <section className="panel p-5 max-[760px]:p-4" aria-label="팀이 가한 피해와 받은 피해에서 차지한 비중">
+        <section className="panel col-span-2 p-5 max-[760px]:col-span-1 max-[760px]:p-4" aria-label="팀이 가한 피해와 받은 피해에서 차지한 비중">
           <span className="legend">
             <span>
               <i style={{ background: TONES[1], width: 10, borderRadius: 999 }} />
@@ -114,61 +114,47 @@ export default async function Page() {
               format="pct"
               refX={1 / 3}
               refY={1 / 3}
+              height={420}
             />
           </div>
         </section>
-        <section className="panel p-5 max-[760px]:p-4" aria-labelledby="all-players">
+        <section className="panel col-span-2 p-5 max-[760px]:col-span-1 max-[760px]:p-4" aria-labelledby="all-players">
           <h2 id="all-players" className="text-[17px] font-extrabold">
-            {MIN_GAMES}게임 이상 출전한 선수 {players.length}명
+            {MIN_GAMES}게임 이상 출전한 선수 {players.length}명의 비중
           </h2>
-            <KelScroll label="선수별 비중" className="mt-3 max-h-[560px] overflow-y-auto">
-            <table className="kel-table">
-              <thead>
-                <tr>
-                  <th className="l pin">선수</th>
-                  <th>
-                    가한 피해
-                    <br />
-                    비중
-                  </th>
-                  <th>
-                    받은 피해
-                    <br />
-                    비중
-                  </th>
-                  {support && (
-                    <th>
-                      군중제어 시간
-                      <br />
-                      비중
-                    </th>
-                  )}
-                  {support && (
-                    <th>
-                      팀원 회복
-                      <br />
-                      비중
-                    </th>
-                  )}
-                  <th>게임</th>
-                </tr>
-              </thead>
-              <tbody>
-                {all.map((p) => (
-                  <tr key={p.name}>
-                    <td className="l pin max-w-[180px]">
-                      <PlayerName name={p.name} team={TEAM.get(p.team)} />
-                    </td>
-                    <td>{pct(p.damageShare)}</td>
-                    <td>{pct(p.takenShare)}</td>
-                    {support && <td>{pct(p.ccShare)}</td>}
-                    {support && <td>{pct(p.healShare)}</td>}
-                    <td className="text-fg-3">{p.games}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </KelScroll>
+          {/* 팀 순서 목록이라 팀이 두 열에 나뉘지 않는 자리에서 자름 */}
+          <div className="mt-3 grid grid-cols-2 gap-x-8 max-[1080px]:grid-cols-1">
+            {[all.slice(0, half), all.slice(half)].map((part, i) => (
+              <KelScroll key={i} label={`선수별 비중 ${i + 1}`}>
+                <table className={`kel-table ${i > 0 ? "max-[1080px]:[&_thead]:hidden" : ""}`}>
+                  <thead>
+                    <tr>
+                      <th className="l">선수</th>
+                      <th>가한 피해</th>
+                      <th>받은 피해</th>
+                      {support && <th className="wide">군중제어 시간</th>}
+                      {support && <th className="wide">팀원 회복</th>}
+                      <th>게임</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {part.map((p) => (
+                      <tr key={p.name}>
+                        <td className="l max-w-[180px]">
+                          <PlayerName name={p.name} team={TEAM.get(p.team)} />
+                        </td>
+                        <td>{pct(p.damageShare)}</td>
+                        <td>{pct(p.takenShare)}</td>
+                        {support && <td className="wide">{pct(p.ccShare)}</td>}
+                        {support && <td className="wide">{pct(p.healShare)}</td>}
+                        <td className="text-fg-3">{p.games}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </KelScroll>
+            ))}
+          </div>
         </section>
       </div>
     </KelPage>

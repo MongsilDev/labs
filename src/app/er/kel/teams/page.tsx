@@ -35,8 +35,8 @@ function href(scope: StyleScope, view: (typeof VIEWS)[number][0]) {
 
 function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-5 max-[1280px]:grid-cols-1">
-      <section className="panel p-5 max-[760px]:p-4 min-[1281px]:sticky min-[1281px]:top-6" aria-label="게임당 순위 점수와 킬 점수">
+    <>
+      <section className="panel p-5 max-[760px]:p-4" aria-label="게임당 순위 점수와 킬 점수">
         <Scatter
           key={scope}
           points={rows.map((r) => ({
@@ -50,6 +50,7 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
           xLabel="게임당 순위 점수"
           yLabel="게임당 킬 점수"
           format="num"
+          height={440}
         />
       </section>
       <section className="panel p-5 max-[760px]:p-4">
@@ -63,8 +64,8 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
                 <th>8위</th>
                 <th className="wide">3위 이내</th>
                 <th>
-                  킬 점수
-                  <br />
+                  킬 점수{" "}
+                  <br className="min-[761px]:hidden" />
                   비중
                 </th>
                 <th className="wide">순위 점수</th>
@@ -92,7 +93,7 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
           </table>
         </KelScroll>
       </section>
-    </div>
+    </>
   );
 }
 
