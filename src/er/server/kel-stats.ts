@@ -38,7 +38,7 @@ export type StyleScope = "season" | "finals" | KelEvent;
 
 export type TeamStyle = { team: string; games: number; wins: number; eighth: number; top3: number; rankPerGame: number; killPerGame: number; killShare: number; perGame: number };
 
-const inScope = (scope: StyleScope) => (g: { event: KelEvent; stage: string }) => (scope === "season" ? true : scope === "finals" ? g.stage === "결승" : g.event === scope);
+export const inScope = (scope: StyleScope) => (g: { event: KelEvent; stage: string }) => (scope === "season" ? true : scope === "finals" ? g.stage === "결승" : g.event === scope);
 
 export function teamStyles(data: Kel, scope: StyleScope): TeamStyle[] {
   const games = data.games.filter(inScope(scope));

@@ -4,7 +4,7 @@ import { TeamName } from "@/er/components/kel/Team";
 import { duration, pct } from "@/er/lib/format";
 import { KEL_EVENTS, KEL_SCREENS, seasonStandings, TEAM, TONES } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata } from "@/er/server/kel";
-import { teamOps, teamStyles, type StyleScope, type TeamOps, type TeamStyle } from "@/er/server/kel-stats";
+import { inScope, teamOps, teamStyles, type StyleScope, type TeamOps, type TeamStyle } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("teams");
@@ -182,14 +182,16 @@ function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
 export default async function Page({ searchParams }: { searchParams: Promise<{ s?: string; v?: string }> }) {
   const { user, owner } = await kelGate("teams");
   const q = await searchParams;
-  const scope = pickTab(SCOPES, q.s);
-  const view = pickTab(VIEWS, q.v);
   const data = kelData();
+  // 경기 기록이 없는 대회는 탭에서 뺌
+  const scopes = data ? SCOPES.filter(([s]) => s === "season" || data.games.some(inScope(s))) : SCOPES;
+  const scope = pickTab(scopes, q.s);
+  const view = pickTab(VIEWS, q.v);
   const rows = data ? teamStyles(data, scope) : [];
   if (!data || !rows.length) return <KelPage user={user} owner={owner} screen="teams" lead={NO_DATA} />;
   const tabs = (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <KelTabs label="범위" items={SCOPES} current={scope} href={(s) => href(s, view)} />
+      <KelTabs label="범위" items={scopes} current={scope} href={(s) => href(s, view)} />
       <KelTabs label="보기" items={VIEWS} current={view} href={(v) => href(scope, v)} />
     </div>
   );
