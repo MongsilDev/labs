@@ -287,10 +287,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         screen="characters"
         notes={[
           `카드의 비율은 그 실험체를 고른 기록 가운데 경기 상세가 있는 ${b.records}개로 계산하고, 무기 칸의 장비는 그 무기를 든 기록만 셉니다.`,
-          `마지막 일격 스킬은 한 게임에서 선수마다 세 번까지 남는 사망 기록 가운데 첫 번째만 보고, 이 실험체가 처치한 ${b.deaths}번을 기준으로 셉니다.`,
+          `마지막 일격 스킬은 한 게임에서 선수마다 세 번까지 남는 사망 기록 가운데 첫 번째 기록만 사용하며, 이 실험체가 처치한 ${b.deaths}번을 기준으로 집계합니다.`,
           b.unnamed > 0 && `공식 이름을 찾지 못한 스킬로 처치한 ${b.unnamed}번은 스킬 이름을 dak.gg 원문 그대로 적었습니다.`,
           `전술 스킬과 핵심 특성 선택률은 선수 기록 ${records.toLocaleString("ko-KR")}개 전체에서 구했고, 대회별 칸은 그 대회의 선수 기록에서 따로 구했습니다.`,
-          "평균 순위는 고른 선수가 속한 팀의 순위입니다.",
+          "평균 순위는 이 실험체를 고른 선수가 속한 팀의 순위를 평균한 값입니다.",
         ]}
       >
         {tabs}
@@ -310,7 +310,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
       screen="characters"
       notes={[
         "칸의 숫자는 그 대회 게임 가운데 한 팀이라도 그 실험체를 고른 게임이 차지하는 비율입니다.",
-        `2026 시즌에 등장한 ${rows.length}종 가운데 시즌 게임의 10%인 ${min}게임 이상 등장한 ${shown.length}종만 넣었습니다.`,
+        `2026 시즌에 등장한 ${rows.length}종 가운데 시즌 게임의 10%인 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`,
         "평균 순위와 1위 비율은 그 실험체를 고른 선수의 팀 순위로 셉니다.",
       ]}
     >

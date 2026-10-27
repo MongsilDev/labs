@@ -45,7 +45,7 @@ export default async function Page() {
   const wick = data ? wicklines(data)[0] : undefined;
   const wickTeam = wick && TEAM.get(wick.team)!;
   const { seeds, semi } = championshipTeams();
-  const lead = summary?.first && summary.last ? `${day(summary.first)} 오프닝 위크부터 ${day(summary.last)} 서킷 4 결승까지 ${summary.games}게임의 기록입니다.` : undefined;
+  const lead = summary?.first && summary.last ? `${day(summary.first)} 오프닝 위크부터 ${day(summary.last)} 서킷 4 결승까지 열린 ${summary.games}게임의 기록입니다.` : undefined;
 
   return (
     <KelPage user={user} owner={owner} screen="home" lead={lead}>

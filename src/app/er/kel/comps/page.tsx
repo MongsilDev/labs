@@ -21,7 +21,7 @@ export default async function Page() {
       user={user}
       owner={owner}
       screen="comps"
-      notes={`표에는 ${MIN}번 이상 등장한 ${rows.length}개 조합을 넣었습니다.`}
+      notes={`표에는 ${MIN}번 이상 등장한 ${rows.length}개 조합을 표시했습니다.`}
     >
       <section className="panel p-5 max-[760px]:p-4">
         <KelScroll label="자주 등장한 3인 조합">

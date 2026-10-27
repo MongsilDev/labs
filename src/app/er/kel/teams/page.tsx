@@ -22,7 +22,7 @@ const VIEWS: ["score" | "ops", string][] = [
 
 const OPS_NOTES = [
   "위클라인 처치는 그 팀 선수가 위클라인을 처치해 크레딧을 받은 게임 수입니다.",
-  "평균 생존 시간은 게임마다 팀에서 가장 오래 남은 선수의 생존 시간을 평균한 값입니다.",
+  "평균 생존 시간은 게임마다 팀에서 가장 오래 생존한 선수의 생존 시간을 평균한 값입니다.",
   "게임당 시야 점수와 망원 카메라 설치 수는 팀 세 명의 합계입니다.",
   "탈출은 팀 세 명이 모두 탈출로 기록된 게임 수입니다.",
 ];
@@ -208,7 +208,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
       );
     }
     return (
-      <KelPage user={user} owner={owner} screen="teams" notes={[...OPS_NOTES, ops.some((r) => r.wicklinePlace === null) && "위클라인을 처치한 게임이 없는 팀은 평균 순위를 -로 적었습니다."]}>
+      <KelPage user={user} owner={owner} screen="teams" notes={[...OPS_NOTES, ops.some((r) => r.wicklinePlace === null) && "위클라인을 처치한 게임이 없는 팀은 평균 순위를 -로 표시했습니다."]}>
         {tabs}
         <Ops rows={ops} ranks={ranks} />
       </KelPage>
@@ -216,7 +216,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   }
 
   return (
-    <KelPage user={user} owner={owner} screen="teams" notes="점수는 모두 게임당 평균이고, 감점은 넣지 않았습니다.">
+    <KelPage user={user} owner={owner} screen="teams" notes="점수는 모두 게임당 평균이고, 감점은 반영하지 않았습니다.">
       {tabs}
       <Score rows={rows} scope={scope} />
     </KelPage>

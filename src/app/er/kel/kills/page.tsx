@@ -32,8 +32,8 @@ export default async function Page() {
       owner={owner}
       screen="kills"
       notes={[
-        `상대 선수는 킬 기록의 실험체와 데스 기록으로 찾았고, 찾지 못한 킬을 빼서 ${int(stats.total)}킬 가운데 ${int(stats.counted)}킬을 셌습니다.`,
-        unmet && "같은 게임에 출전한 적이 없는 두 팀은 -로 적었습니다.",
+        `킬마다 상대 선수는 킬 기록에 적힌 실험체와 데스 기록을 맞춰 찾았고, 상대를 찾지 못한 킬은 빼서 전체 ${int(stats.total)}킬 가운데 ${int(stats.counted)}킬만 집계했습니다.`,
+        unmet && "같은 게임에 출전한 적이 없는 두 팀의 칸은 -로 표시했습니다.",
       ]}
     >
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="top-pairs">

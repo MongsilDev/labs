@@ -44,9 +44,9 @@ export default async function Page() {
       owner={owner}
       screen="regions"
       notes={[
-        `시작 지역별 팀 순위에는 ${MIN_STARTS}번 넘게 시작한 지역만 넣었습니다.`,
-        `사망 장소는 선수마다 세 번까지만 기록돼 있어, 사망 ${int(deaths)}번 가운데 ${int(counted)}번만 셌습니다.`,
-        `선수별 표에는 ${MIN_GAMES}게임 이상 출전한 선수만 넣었습니다.`,
+        `시작 지역별 팀 순위에는 ${MIN_STARTS}번 넘게 시작한 지역만 표시했습니다.`,
+        `경기 상세에는 사망 장소가 선수마다 세 번까지만 기록돼 있어, 전체 사망 ${int(deaths)}번 가운데 ${int(counted)}번만 집계했습니다.`,
+        `선수별 표에는 ${MIN_GAMES}게임 이상 출전한 선수만 표시했습니다.`,
       ]}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-5 max-[1080px]:grid-cols-1">

@@ -74,7 +74,7 @@ export default async function Page() {
       screen="roles"
       notes={[
         "비중은 게임마다 팀 세 명의 합계에서 그 선수가 차지한 비율을 평균한 값입니다.",
-        support && "팀원 회복은 팀원에게 준 회복량이고, 자기 보호막이 막은 피해는 넣지 않았습니다.",
+        support && "팀원 회복은 팀원에게 준 회복량이고, 자기 보호막으로 막은 피해는 포함하지 않았습니다.",
       ]}
     >
       <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,5fr)] items-start gap-5 max-[1080px]:grid-cols-1">
