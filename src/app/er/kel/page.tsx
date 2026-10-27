@@ -49,14 +49,14 @@ export default async function Page() {
 
   return (
     <KelPage user={user} owner={owner} screen="home" lead={lead}>
-      <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
-        <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="정규 시즌 5~12위 8팀이 6라운드를 진행합니다. 상위 4팀이 결승에 진출합니다." />
+      <div className="grid grid-cols-2 items-start gap-4 max-[760px]:grid-cols-1">
+        <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="정규 시즌 5~12위 8팀이 6라운드를 치릅니다. 상위 4팀이 결승에 진출합니다." />
         <Event
           date="11월 8일 일요일, 대전이스포츠경기장"
           name="결승"
           teams={seeds}
           slot="준결승 상위 4팀"
-          text="정규 시즌 1~4위는 결승에 바로 진출했습니다. 결승은 순차 체크포인트 방식으로 최대 9라운드를 진행합니다."
+          text={"정규 시즌 1~4위는 결승에 직행했습니다. 결승은 순차 체크포인트 방식으로 최대\u00a09라운드를 치릅니다."}
         />
       </div>
       {rec && (
@@ -67,25 +67,25 @@ export default async function Page() {
           <div className="mt-3 grid grid-cols-3 gap-3 max-[760px]:grid-cols-2">
             <Bests rec={rec} keys={["kills", "damage", "cc", "heal", "camera"]} prefix="한 게임 " href={() => KEL_SCREENS.records.path} />
             {wick && wickTeam && (
-              <Best label="위클라인 최다 처치" value={wick.count} unit="번" href={`${KEL_SCREENS.teams.path}?v=ops`}>
+              <Best label="위클라인 최다 처치" value={wick.count} unit="게임" href={`${KEL_SCREENS.teams.path}?v=ops`}>
                 <div className="mt-1 grid gap-1">
                   <p className="flex items-center gap-1.5 text-[15px] font-bold">
                     <Logo team={wickTeam} size={22} />
                     {wickTeam.name}
                   </p>
-                  <p className="text-[13px] text-fg-3">{wick.games}게임에서</p>
+                  <p className="text-[13px] text-fg-3">{wick.games}게임 가운데</p>
                 </div>
               </Best>
             )}
           </div>
         </section>
       )}
-      <nav className="panel grid px-5 py-2 max-[760px]:px-4" aria-label="KEL 화면">
+      <nav className="panel grid grid-cols-2 gap-x-8 px-5 py-2 max-[1080px]:grid-cols-1 max-[760px]:px-4" aria-label="KEL 화면">
         {KEL_SECTIONS.map((s) => {
           const items = s.items.filter((key) => kelVisible(key, owner));
           if (!items.length) return null;
           return (
-            <div key={s.title} className="grid grid-cols-[160px_minmax(0,1fr)] items-baseline gap-x-5 gap-y-1.5 border-b border-line-soft py-3 last:border-b-0 max-[760px]:grid-cols-1">
+            <div key={s.title} className="grid grid-cols-[120px_minmax(0,1fr)] items-baseline gap-x-5 gap-y-1.5 border-t border-line-soft py-3 min-[1081px]:[&:nth-child(-n+2)]:border-t-0 max-[1080px]:first:border-t-0 max-[760px]:grid-cols-1">
               <h2 className="text-[14px] font-semibold text-fg-3">{s.title}</h2>
               <ul className="flex flex-wrap gap-x-6 gap-y-1.5">
                 {items.map((key) => (

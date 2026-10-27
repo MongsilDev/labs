@@ -12,13 +12,13 @@ export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("rules");
 
 const FLOW = [
-  ...KEL_EVENTS.map((e) => ({ name: e.name, dates: e.dates, points: /^c\d$/.test(e.key) })),
-  { name: "준결승", dates: "11.7", points: false },
-  { name: "결승", dates: "11.8", points: false },
+  ...KEL_EVENTS.map((e) => ({ name: e.name, dates: e.dates })),
+  { name: "준결승", dates: "11.7" },
+  { name: "결승", dates: "11.8" },
 ];
 
 const PENALTIES: [string, string][] = [
-  ["지각", "5점"],
+  ["경기 시작 시간까지 팀원이 음성 채팅에 접속하지 않거나 자리에 앉지 않음", "5점"],
   ["경기 시작 시간까지 게임 로비에 들어오지 않음", "3점"],
   ["실험체를 고르지 않아 로비로 돌아감", "5점"],
   ["교체 마감 뒤 선수 교체", "3점"],
@@ -28,12 +28,12 @@ const PENALTIES: [string, string][] = [
 
 const FAQ: { q: string; a?: string; extra?: React.ReactNode }[] = [
   {
-    q: "서킷에서 우승하면 결승에 바로 진출하나요?",
-    a: "아닙니다. 서킷 1~4에서 받은 서킷 포인트를 더한 순위로 1~4위가 결승에 바로 진출합니다. 5~12위는 11월 7일 준결승에 출전하고, 그중 상위 4팀이 결승에 진출합니다.",
+    q: "서킷에서 우승하면 결승에 직행하나요?",
+    a: "아닙니다. 서킷 1~4에서 받은 서킷 포인트 합계 순위 1~4위 팀이 결승에 직행합니다. 5~12위 팀은 11월 7일 준결승에 출전하고, 그중 상위 4팀이 결승에 진출합니다.",
   },
   {
     q: "순차 체크포인트는 무엇인가요?",
-    a: "오프닝 위크와 서킷, 미드 시즌 컵, 챔피언십의 결승에서 쓰는 방식입니다. 4라운드까지는 각 팀이 점수만 누적하고, 5라운드부터는 직전 라운드까지 누적한 순위에서 상위 팀이 체크포인트를 받습니다. 체크포인트를 받은 팀이 그 라운드에서 마지막까지 살아남으면 우승합니다.",
+    a: "오프닝 위크의 알파, 오메가 그룹 경기와 서킷, 미드 시즌 컵, 챔피언십의 결승에서 쓰는 방식입니다. 4라운드까지는 각 팀이 점수만 누적하고, 5라운드부터는 직전 라운드까지 누적한 순위에서 상위 팀이 체크포인트를 받습니다. 체크포인트를 가진 팀이 그 라운드에서 1위를 차지하면 우승합니다.",
     extra: <Checkpoints />,
   },
   { q: "점수가 가장 높은데 왜 우승이 아닌가요?", a: "체크포인트를 가진 팀이 라운드 1위를 차지하면 그 팀이 점수와 관계없이 우승합니다. 나머지 팀의 순위는 점수로 정합니다." },
@@ -60,7 +60,7 @@ const FAQ: { q: string; a?: string; extra?: React.ReactNode }[] = [
     ),
   },
   {
-    q: "포인트나 점수가 같으면 누가 위인가요?",
+    q: "포인트나 점수가 같으면 어느 팀의 순위가 높나요?",
     a: "서킷 포인트 합계가 같으면 서킷 4 순위가 높은 팀이 정규 시즌 순위에서 앞섭니다. 한 경기 안에서 총점이 같으면 규정집에는 킬 수, 마지막 라운드 순위 순서로 정한다고 적혀 있지만, 공식 순위표는 킬 점수로 순위를 정했습니다. 서킷 1 결승에서는 82점으로 같았던 두 팀 가운데 킬 점수가 1점 많은 GC 부산 스텔라가 3위였고, 킬 수가 더 많았던 경남 스파클은 4위였습니다.",
   },
   {
@@ -69,9 +69,9 @@ const FAQ: { q: string; a?: string; extra?: React.ReactNode }[] = [
   },
   {
     q: "2픽캡은 무엇인가요?",
-    a: "한 팀이 같은 실험체를 매치마다 2번까지만 쓸 수 있는 규칙입니다. 규정집에는 하루에 2번까지라고 적혀 있지만, 경기 기록을 보면 같은 날 열린 패자조와 최종전에서는 실험체 사용 횟수를 경기마다 따로 계산했습니다. 결승도 서킷 2부터 2픽캡 규칙으로 진행했습니다.",
+    a: "한 팀이 같은 실험체를 경기마다 2번까지만 쓸 수 있는 규칙입니다. 규정집에는 하루에 2번까지라고 적혀 있지만, 경기 기록을 보면 같은 날 열린 패자조와 최종전에서는 실험체 사용 횟수를 경기마다 따로 계산했습니다. 결승도 서킷 2부터 2픽캡 규칙으로 진행했습니다.",
   },
-  { q: "선수는 언제 바꿀 수 있나요?", a: "2라운드마다 바꿀 수 있습니다. 팀은 경기가 끝난 뒤 온라인은 5분, 오프라인은 2분 안에 교체 여부를 사무국이 지정한 방법으로 전달해야 합니다. 마감 뒤에 바꾸면 3점을 감점합니다." },
+  { q: "선수는 언제 바꿀 수 있나요?", a: "팀은 2라운드마다 선수를 바꿀 수 있습니다. 교체 여부는 경기가 끝난 뒤 온라인은 5분, 오프라인은 2분 안에 사무국이 지정한 방법으로 전달해야 합니다. 마감 뒤에 선수를 바꾸면 진행 중인 경기 점수에서 3점을 뺍니다." },
 ];
 
 const CUTS: Record<number, string> = { [SEEDS]: "여기까지 결승 직행", [QUALIFY]: "여기까지 준결승" };
@@ -92,7 +92,7 @@ export default async function Page() {
       user={user}
       owner={owner}
       screen="rules"
-      lead="정규 시즌 순위는 서킷 1~4에서 받은 서킷 포인트의 합계로 정합니다."
+      lead="정규 시즌 순위는 서킷 1~4에서 받은 서킷 포인트 합계로 정합니다."
     >
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="flow">
         <h2 id="flow" className="text-[17px] font-extrabold">
@@ -100,7 +100,7 @@ export default async function Page() {
         </h2>
         <ol className="mt-3 grid grid-cols-8 gap-2 max-[1100px]:grid-cols-4 max-[760px]:grid-cols-2">
           {FLOW.map((e) => (
-            <li key={e.name} className={`rounded-md bg-field px-3 py-2 ${e.points ? "ring-1 ring-accent/60 ring-inset" : ""}`}>
+            <li key={e.name} className="rounded-md bg-field px-3 py-2">
               <b className="block text-[14px]">{e.name}</b>
               <span className="text-[12px] text-fg-3">{e.dates}</span>
             </li>
@@ -114,7 +114,7 @@ export default async function Page() {
         </h2>
         <div className="mt-1 columns-2 gap-8 max-[900px]:columns-1">
           {FAQ.map((f) => (
-            <div key={f.q} className="break-inside-avoid border-t border-line-soft py-4 first:border-t-0">
+            <div key={f.q} className="break-inside-avoid border-t border-line-soft py-4">
               <h3 className="text-[15px] font-bold">{f.q}</h3>
               {f.a && (
                 <p className="mt-1.5 text-[14px] text-fg-2">

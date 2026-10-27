@@ -11,8 +11,10 @@ export default function Checkpoints() {
                 <span key={k} className={`size-[9px] rounded-full ${k < n ? "bg-accent" : "bg-line"}`} />
               ))}
             </span>
-            <span className="text-[12px] text-fg-3">
-              {i + 1}R {n >= 8 ? "모든 팀" : `${n}팀`}
+            <span className="text-[12px] leading-snug text-fg-3">
+              {i + 1}라운드
+              <br />
+              {n >= 8 ? "모든 팀" : `${n}팀`}
             </span>
           </li>
         ) : null,

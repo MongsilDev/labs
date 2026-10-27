@@ -24,6 +24,7 @@ function Who({ r }: { r: KelRow }) {
     <div className="mt-1 grid gap-1">
       <p className="text-[15px] font-bold">
         <Char name={r.character} label={r.player} />
+        <span className="ml-1.5 text-[13px] font-normal text-fg-3">{r.character}</span>
       </p>
       <p className="text-[13px] leading-relaxed text-fg-3">
         {TEAM.get(r.team)!.name}
@@ -38,7 +39,7 @@ function Who({ r }: { r: KelRow }) {
 export function Best({ label, value, unit, href, r, className = "", children }: { label: string; value: React.ReactNode; unit?: string; href?: string; r?: KelRow; className?: string; children?: React.ReactNode }) {
   const body = (
     <>
-      <p className="text-[13px] text-fg-3">{label}</p>
+      <p className="text-[13px] text-fg-3 max-[760px]:min-h-[2lh]">{label}</p>
       <p className="text-[28px] leading-none font-extrabold tabular-nums max-[760px]:text-[24px]">
         {value}
         {unit && <span className="ml-0.5 text-[16px]">{unit}</span>}
