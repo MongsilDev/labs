@@ -92,7 +92,8 @@ function rankHtml({ rows, metaText, style, showDelta }) {
   const game = style === "game";
   const cols = [];
   if (f1 || game) cols.push({ key: "placement", head: "순위 점수", w: 90, size: 26, weight: 700, color: C.text2, frac: false });
-  cols.push({ key: "killScore", head: "킬 점수", w: 82, size: 26, weight: 700, color: C.text2, frac: f1 });
+  // F1은 머리글을 정수 자리 위에 두려고 소수 칸만큼 넓힘
+  cols.push({ key: "killScore", head: "킬 점수", w: f1 ? 104 : 82, size: 26, weight: 700, color: C.text2, frac: f1 });
   cols.push({ key: "total", head: "총점", w: 116, size: 33, weight: 800, color: C.text, frac: f1 });
   if (!game) cols.push({ key: "delta", head: showDelta ? "변동" : "", w: 52, size: 22, weight: 700 });
   const fixed = {};
@@ -107,7 +108,7 @@ function rankHtml({ rows, metaText, style, showDelta }) {
     const base = `width:${c.w}px;font-size:${c.size}px;font-weight:${c.weight};color:${c.color}`;
     if (f1) {
       const [int, frac] = num(v).split(".");
-      return `<span class="c tnum" style="${base}"><span class="int">${int}</span>${c.frac ? `<span class="frac">${frac ? `.${frac}` : ""}</span>` : ""}</span>`;
+      return `<span class="c tnum" style="${base}"><span class="int">${int}</span>${c.frac ? `<span class="frac" data-size="${c.size}">${frac ? `.${frac}` : ""}</span>` : ""}</span>`;
     }
     const text = fixed[c.key] ? v.toFixed(1) : num(v);
     return `<span class="c" style="${base}"><span class="int">${text}</span></span>`;
@@ -142,7 +143,7 @@ body{background:${C.bg}}
     <span style="font-size:24px;font-weight:500;color:${C.text2};margin-top:8px">${metaText}</span>
   </div>
   <div style="display:flex;flex-direction:column">
-    <div class="colhead"><span style="flex:1"></span>${cols.map((c) => `<span class="c" style="width:${c.w}px">${c.head}</span>`).join("")}</div>
+    <div class="colhead"><span style="flex:1"></span>${cols.map((c) => `<span class="c" style="width:${c.w}px">${c.head}${c.frac ? `<span class="frac" data-size="${c.size}"></span>` : ""}</span>`).join("")}</div>
     ${body}
   </div>
 </div>`;
@@ -370,15 +371,16 @@ async function shotRank(html, name) {
   const page = await open(html, name, { width: 720, height: 1200 }, 1.5);
   // F1의 소수 칸은 열마다 ".5"가 들어갈 폭으로 맞춤
   const check = await page.evaluate(() => {
-    for (const col of new Set([...document.querySelectorAll(".frac")].map((f) => f.parentElement.style.fontSize))) {
+    // 머리글도 같은 폭을 비워 정수 자리 위에 놓음
+    for (const size of new Set([...document.querySelectorAll(".frac")].map((f) => f.dataset.size))) {
       const probe = document.createElement("span");
       probe.className = "tnum";
-      probe.style.cssText = `font-family:Pretendard;font-size:${col};font-weight:800;position:absolute;visibility:hidden`;
+      probe.style.cssText = `font-family:Pretendard;font-size:${size}px;font-weight:800;position:absolute;visibility:hidden`;
       probe.textContent = ".5";
       document.body.append(probe);
       const w = Math.ceil(probe.getBoundingClientRect().width);
       probe.remove();
-      document.querySelectorAll(".frac").forEach((f) => f.parentElement.style.fontSize === col && (f.style.width = `${w}px`));
+      document.querySelectorAll(`.frac[data-size="${size}"]`).forEach((f) => (f.style.width = `${w}px`));
     }
     // 열마다 정수 자리 오른쪽 끝의 위치가 몇 가지인지 셈
     const rows = [...document.querySelectorAll(".row")];
