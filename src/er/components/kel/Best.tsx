@@ -23,9 +23,9 @@ const TILES = {
 function Who({ r }: { r: KelRow }) {
   return (
     <div className="mt-1 grid gap-1">
-      <p className="text-[15px] font-bold">
+      <p className="flex flex-wrap items-baseline gap-x-1.5 text-[15px] font-bold">
         <Char name={r.character} label={r.player} />
-        <span className="ml-1.5 text-[13px] font-normal text-fg-3">{characterName(r.character)}</span>
+        <span className="text-[13px] font-normal text-fg-3">{characterName(r.character)}</span>
       </p>
       <p className="text-[13px] leading-relaxed text-fg-3">
         {TEAM.get(r.team)!.name}

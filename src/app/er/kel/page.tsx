@@ -28,7 +28,7 @@ function Event({ date, name, teams, slot, text }: { date: string; name: string; 
             <TeamName team={t} size={28} />
           </li>
         ))}
-        {slot && <li className="col-span-2 rounded-md border border-dashed border-line-strong px-3 py-1.5 text-fg-3">{slot}</li>}
+        {slot && <li className="col-span-2 flex min-h-16 items-center rounded-md border border-dashed border-line-strong px-3 text-fg-3">{slot}</li>}
       </ul>
       <p className="text-[14px] text-fg-2">
         <Lines text={text} />
@@ -49,7 +49,7 @@ export default async function Page() {
 
   return (
     <KelPage user={user} owner={owner} screen="home" lead={lead}>
-      <div className="grid grid-cols-2 items-start gap-4 max-[760px]:grid-cols-1">
+      <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
         <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="준결승에는 정규 시즌 5~12위 8팀이 출전해 6라운드를 진행합니다. 상위 4팀이 결승에 진출합니다." />
         <Event
           date="11월 8일 일요일, 대전이스포츠경기장"

@@ -27,20 +27,19 @@ export default async function Page() {
                 <th rowSpan={2} className="l w-10">
                   <span className="sr-only">시즌 순위</span>
                 </th>
-                <th rowSpan={2} className="l">
+                <th rowSpan={2} className="l min-[761px]:w-[240px]">
                   팀
                 </th>
                 <th colSpan={CIRCUITS.length} className="text-center">
                   서킷
                 </th>
-                <th rowSpan={2} className="max-[760px]:w-12 max-[760px]:whitespace-normal">
+                <th rowSpan={2} className="text-center max-[760px]:w-12 max-[760px]:whitespace-normal">
                   서킷 포인트 합계
                 </th>
-                <th rowSpan={2} className="w-full max-[760px]:hidden" aria-hidden="true" />
               </tr>
               <tr>
                 {CIRCUITS.map((c, i) => (
-                  <th key={c} aria-label={c}>
+                  <th key={c} aria-label={c} className="text-center">
                     {i + 1}
                   </th>
                 ))}
@@ -57,17 +56,16 @@ export default async function Page() {
                     <TeamName team={r.team} />
                   </td>
                   {r.team.circuits.map((c, i) => (
-                    <td key={i} className={c === 1 ? "font-bold" : undefined}>
+                    <td key={i} className={c === 1 ? "text-center font-bold" : "text-center"}>
                       {c}
                       <span className="wide">위</span>
                     </td>
                   ))}
-                  <td className="font-semibold">{r.total.toLocaleString("ko-KR")}</td>
-                  <td className="max-[760px]:hidden" aria-hidden="true" />
+                  <td className="text-center font-semibold">{r.total.toLocaleString("ko-KR")}</td>
                 </tr>
                 {CUTS[r.rank] && (
                   <tr aria-hidden="true">
-                    <td colSpan={CIRCUITS.length + 4} className="border-t border-dashed border-t-line-strong py-0.5 text-right text-[12px] text-fg-3">
+                    <td colSpan={CIRCUITS.length + 3} className="border-t border-dashed border-t-line-strong py-0.5 text-right text-[12px] text-fg-3">
                       {CUTS[r.rank]}
                     </td>
                   </tr>

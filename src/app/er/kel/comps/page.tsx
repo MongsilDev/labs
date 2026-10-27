@@ -29,11 +29,10 @@ export default async function Page() {
             <thead>
               <tr>
                 <th className="l">조합</th>
-                <th>횟수</th>
-                <th>평균 순위</th>
-                <th>1위 횟수</th>
+                <th className="w-px">횟수</th>
+                <th className="w-px">평균 순위</th>
+                <th className="w-px">1위 횟수</th>
                 <th className="l wide">많이 고른 팀</th>
-                <th className="w-full max-[760px]:hidden" aria-hidden="true" />
               </tr>
             </thead>
             <tbody>
@@ -65,7 +64,6 @@ export default async function Page() {
                       ))}
                     </span>
                   </td>
-                  <td className="max-[760px]:hidden" aria-hidden="true" />
                 </tr>
               ))}
             </tbody>

@@ -32,7 +32,7 @@ export default async function Page() {
       owner={owner}
       screen="kills"
       notes={[
-        `처치마다 처치 기록에 적힌 실험체를 사망 기록과 대조해 상대 선수를 찾았고, 상대를 찾지 못한 처치는 빼서 전체 처치 ${int(stats.total)}번 가운데 ${int(stats.counted)}번만 집계했습니다.`,
+        `처치마다 처치 기록에 적힌 실험체를 사망 기록과 대조해 상대 선수를 찾았고, 상대를 찾지 못한 처치는 제외해 전체 처치 ${int(stats.total)}번 가운데 ${int(stats.counted)}번만 집계했습니다.`,
         unmet && "같은 게임에 출전한 적이 없는 두 팀의 칸은 -로 표시했습니다.",
       ]}
     >
@@ -51,8 +51,7 @@ export default async function Page() {
                 <th className="l wide">처치한 팀</th>
                 <th className="l">처치당한 선수</th>
                 <th className="l wide">처치당한 팀</th>
-                <th>횟수</th>
-                <th className="w-full max-[760px]:hidden" aria-hidden="true" />
+                <th className="w-px">횟수</th>
               </tr>
             </thead>
             <tbody>
@@ -77,7 +76,6 @@ export default async function Page() {
                     <TeamName team={TEAM.get(r.victim.team)!} size={22} />
                   </td>
                   <td className="font-bold">{r.count}번</td>
-                  <td className="max-[760px]:hidden" aria-hidden="true" />
                 </tr>
               ))}
             </tbody>

@@ -60,10 +60,9 @@ function Ranking({ id, title, rows, label, value }: { id: string; title: string;
               <th className="l">선수</th>
               <th className="l wide">실험체</th>
               <th className="l wide">경기</th>
-              <th>팀 순위</th>
-              <th className="wide">킬</th>
-              <th>{label}</th>
-              <th className="w-full max-[760px]:hidden" aria-hidden="true" />
+              <th className="w-px">팀 순위</th>
+              <th className="wide w-px">킬</th>
+              <th className="w-px">{label}</th>
             </tr>
           </thead>
           <tbody>
@@ -83,7 +82,6 @@ function Ranking({ id, title, rows, label, value }: { id: string; title: string;
                 <td>{r.placement}위</td>
                 <td className="wide">{r.kills}</td>
                 <td className="font-bold">{value(r)}</td>
-                <td className="max-[760px]:hidden" aria-hidden="true" />
               </tr>
             ))}
           </tbody>
