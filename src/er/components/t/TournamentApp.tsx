@@ -71,7 +71,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
       try {
         const next = await api.view(view.code, force ? undefined : versionRef.current);
         if (!next || next.version < versionRef.current) return;
-        if (roleRef.current && !next.role) toast({ text: "운영자 권한이 해제되어 참가자 화면으로 전환했습니다.", bad: true }, 8000);
+        if (roleRef.current && !next.role) toast({ text: "운영자 권한이 해제돼 참가자 화면으로 바뀌었습니다.", bad: true }, 8000);
         roleRef.current = next.role;
         versionRef.current = next.version;
         setView(next);

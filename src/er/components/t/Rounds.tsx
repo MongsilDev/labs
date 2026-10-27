@@ -182,7 +182,7 @@ export default function Rounds({ group, result, mode, planned, multi, editable, 
         </section>
       )}
 
-      {!next && !ended && played >= planned && <p className="text-fg-3">정한 라운드를 모두 치렀습니다.</p>}
+      {!next && !ended && played >= planned && <p className="text-fg-3">정한 라운드가 모두 끝났습니다.</p>}
     </div>
   );
 }

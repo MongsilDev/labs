@@ -520,7 +520,7 @@ function Confirm({
       : confirm.kind === "transfer" ? `${confirm.user.name}님에게 개최자를 넘길까요?` : `${confirm.user.name}님을 운영자에서 뺄까요?`;
   const body =
     confirm.kind === "delete"
-      ? "순위, CSV, 변경 기록이 모두 지워지고 되돌릴 수 없습니다.\n확인을 위해 대회 이름을 입력해주세요."
+      ? "순위, CSV, 변경 기록이 모두 지워지고 되돌릴 수 없습니다.\n삭제하려면 대회 이름을 입력해주세요."
       : confirm.kind === "transfer"
         ? "넘기면 본인은 운영자가 되고, 설정과 운영자 관리는 새 개최자만 할 수 있습니다."
         : "다시 운영을 맡기려면 새 초대 링크를 보내야 합니다.";
