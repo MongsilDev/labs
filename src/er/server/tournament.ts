@@ -34,7 +34,8 @@ import {
 } from "@/er/lib/view";
 import type { User } from "./auth";
 import { hash, token } from "./auth";
-import { db, now, tx } from "./db";
+import { botChannels, notifyChanged, type BotGuild } from "./bot";
+import { afterCommit, db, now, tx } from "./db";
 
 const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 const MODES: Mode[] = ["points", "checkpoint", "double"];
@@ -101,11 +102,15 @@ function rulesOf(t: TRow): Rules {
   return clampRules(parsed, parsed.preset);
 }
 
-function bump(t: TRow, user: User, text: string) {
+// 변경 기록에 남길 이름. 디스코드에서 올린 결과는 labs 사용자가 아니어도 디스코드 표시 이름으로 남김
+type Actor = { name: string };
+
+function bump(t: TRow, actor: Actor, text: string) {
   const conn = db();
   const at = now();
   conn.prepare("UPDATE tournaments SET version = version + 1, updated_at = ? WHERE id = ?").run(at, t.id);
-  conn.prepare("INSERT INTO logs(tournament_id, user_name, text, created_at) VALUES (?, ?, ?, ?)").run(t.id, user.name, text, at);
+  conn.prepare("INSERT INTO logs(tournament_id, user_name, text, created_at) VALUES (?, ?, ?, ?)").run(t.id, actor.name, text, at);
+  afterCommit(`changed:${t.code}`, () => notifyChanged(t.code));
 }
 
 function versionOf(id: number): number {
@@ -203,6 +208,16 @@ export function loadView(code: string, user: User | null): TournamentView | null
     role,
     groups,
     logs,
+    ...(role
+      ? {
+          discord: (
+            conn.prepare("SELECT group_idx, channel FROM discord_links WHERE tournament_id = ? AND group_idx < ? ORDER BY group_idx").all(t.id, t.group_count) as {
+              group_idx: number;
+              channel: string;
+            }[]
+          ).map((d) => ({ group: d.group_idx, channel: d.channel })),
+        }
+      : {}),
   };
 }
 
@@ -240,8 +255,8 @@ export function applyOp(code: string, user: User, op: Op): OpResult {
   return tx(() => runOp(t, role, user, op));
 }
 
-// 트랜잭션은 부르는 쪽이 엶. via는 변경 기록 끝에 붙는 표시
-function runOp(t: TRow, role: "owner" | "operator", user: User, op: Op, via = ""): OpResult {
+// 트랜잭션은 부르는 쪽이 엶. via는 변경 기록 끝에 붙는 표시. 디스코드 전달은 역할 없이 add_csv만 부름
+function runOp(t: TRow, role: Role, user: Actor, op: Op, via = ""): OpResult {
   const notices: string[] = [];
   const errors: string[] = [];
   let undo: OpResult["undo"];
@@ -754,7 +769,7 @@ export type UploadResult = { status: "gone" | RelayStatus; message: string };
 type Landed = { status: RelayStatus; message: string; round: number | null; id?: number };
 
 // 업로드 키와 디스코드 전달이 함께 쓰는 판정. 트랜잭션은 부르는 쪽이 엶
-function landCsv(t: TRow, g: number, role: "owner" | "operator", user: User, file: { name: string; text: string }, via: string): Landed {
+function landCsv(t: TRow, g: number, role: Role, user: Actor, file: { name: string; text: string }, via: string): Landed {
   // 마지막 라운드 응답을 받지 못하고 다시 보내면 끝난 조가 아니라 이미 올린 경기로 알림
   const parsed = parseRoundCsv(file.text);
   if (parsed.ok) {
@@ -763,7 +778,7 @@ function landCsv(t: TRow, g: number, role: "owner" | "operator", user: User, fil
       .get(t.id, parsed.round.gameId) as { group_idx: number; round_no: number } | undefined;
     if (dup) return { status: "duplicate", message: `이미 ${prefix(t, dup.group_idx)}${dup.round_no}라운드에 올린 경기입니다.`, round: dup.group_idx === g ? dup.round_no : null };
   }
-  if (groupResult(loadView(t.code, null)!, g).ended) return { status: "ended", message: t.group_count > 1 ? `${groupLabel(g)}조 경기가 끝났습니다.` : "끝난 대회입니다.", round: null };
+  if (groupResult(loadView(t.code, null)!, g).ended) return { status: "ended", message: t.group_count > 1 ? `${groupLabel(g)}조 경기가 끝났습니다.` : "대회가 끝났습니다.", round: null };
   const r = runOp(t, role, user, { op: "add_csv", group: g, files: [file] }, via);
   if (!r.ok || !parsed.ok) return { status: "invalid", message: r.errors.join("\n").replace(/^[^:\n]*: /gm, ""), round: null };
   const row = db().prepare("SELECT id, round_no FROM rounds WHERE tournament_id = ? AND game_id = ? AND deleted_at IS NULL").get(t.id, parsed.round.gameId) as {
@@ -794,7 +809,37 @@ const live = (t: TRow) => t.updated_at + RETENTION_MS > now();
 
 export type LinkResult = { status: "gone" | "forbidden" | "invalid" } | { status: "ok"; links: { group: string; channelId: string }[] };
 
-// 채널 하나는 한 대회의 한 조에만, 조 하나에는 채널 하나만 연결함. 본문에 없는 조는 그대로 둠
+type LinkWant = { g: number; channelId: string | null; guild: string; channel: string };
+
+// 채널 하나는 한 대회의 한 조에만, 조 하나에는 채널 하나만 연결함. 트랜잭션은 부르는 쪽이 엶
+function writeLinks(t: TRow, actor: Actor, want: LinkWant[]) {
+  const conn = db();
+  let changed = 0;
+  for (const w of want) {
+    if (w.channelId === null) {
+      changed += Number(conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx = ?").run(t.id, w.g).changes);
+      continue;
+    }
+    // 같은 조에 같은 채널을 다시 보내면 이름만 갱신하고 마지막 결과는 유지
+    const same = conn
+      .prepare("UPDATE discord_links SET guild = ?, channel = ? WHERE channel_id = ? AND tournament_id = ? AND group_idx = ?")
+      .run(w.guild, w.channel, w.channelId, t.id, w.g);
+    if (Number(same.changes)) continue;
+    const old = conn.prepare("SELECT DISTINCT t.code FROM discord_links l JOIN tournaments t ON t.id = l.tournament_id WHERE l.channel_id = ? AND l.tournament_id != ?").all(w.channelId, t.id) as {
+      code: string;
+    }[];
+    conn.prepare("DELETE FROM discord_links WHERE channel_id = ? OR (tournament_id = ? AND group_idx = ?)").run(w.channelId, t.id, w.g);
+    conn
+      .prepare("INSERT INTO discord_links(channel_id, tournament_id, group_idx, guild, channel, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(w.channelId, t.id, w.g, w.guild, w.channel, now());
+    // 다른 대회에서 풀린 연결도 봇 사본에서 지워지게 그 대회에도 알림
+    for (const o of old) afterCommit(`changed:${o.code}`, () => notifyChanged(o.code));
+    changed++;
+  }
+  if (changed) bump(t, actor, "디스코드 연결 변경");
+}
+
+// 본문에 없는 조는 그대로 둠
 export function setDiscordLinks(code: string, actor: unknown, links: unknown): LinkResult {
   const t = typeof code === "string" ? find(code) : undefined;
   if (!t || !live(t)) return { status: "gone" };
@@ -802,7 +847,7 @@ export function setDiscordLinks(code: string, actor: unknown, links: unknown): L
   const role = user ? roleOf(t, user) : null;
   if (!user || !role) return { status: "forbidden" };
   if (!Array.isArray(links) || links.length > LIMITS.groups) return { status: "invalid" };
-  const want: { g: number; channelId: string | null; guild: string; channel: string }[] = [];
+  const want: LinkWant[] = [];
   for (const l of links as { group?: unknown; channelId?: unknown; guild?: unknown; channel?: unknown }[]) {
     const g = typeof l?.group === "string" ? Array.from({ length: t.group_count }, (_, i) => groupLabel(i)).indexOf(l.group.trim().toUpperCase()) : -1;
     const channelId = l?.channelId ?? null;
@@ -810,37 +855,89 @@ export function setDiscordLinks(code: string, actor: unknown, links: unknown): L
     want.push({ g, channelId, guild: clean(l.guild, 100), channel: clean(l.channel, 100) });
   }
   return tx(() => {
-    const conn = db();
-    let changed = 0;
-    for (const w of want) {
-      if (w.channelId === null) {
-        changed += Number(conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx = ?").run(t.id, w.g).changes);
-        continue;
-      }
-      // 같은 조에 같은 채널을 다시 보내면 이름만 갱신하고 마지막 결과는 유지
-      const same = conn
-        .prepare("UPDATE discord_links SET guild = ?, channel = ? WHERE channel_id = ? AND tournament_id = ? AND group_idx = ?")
-        .run(w.guild, w.channel, w.channelId, t.id, w.g);
-      if (Number(same.changes)) continue;
-      conn.prepare("DELETE FROM discord_links WHERE channel_id = ? OR (tournament_id = ? AND group_idx = ?)").run(w.channelId, t.id, w.g);
-      conn
-        .prepare("INSERT INTO discord_links(channel_id, tournament_id, group_idx, guild, channel, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-        .run(w.channelId, t.id, w.g, w.guild, w.channel, now());
-      changed++;
-    }
-    if (changed) bump(t, user, "디스코드 연결 변경");
-    const rows = conn.prepare("SELECT channel_id, group_idx FROM discord_links WHERE tournament_id = ? ORDER BY group_idx").all(t.id) as { channel_id: string; group_idx: number }[];
+    writeLinks(t, user, want);
+    const rows = db().prepare("SELECT channel_id, group_idx FROM discord_links WHERE tournament_id = ? ORDER BY group_idx").all(t.id) as { channel_id: string; group_idx: number }[];
     return { status: "ok", links: rows.map((r) => ({ group: groupLabel(r.group_idx), channelId: r.channel_id })) };
   });
+}
+
+// 관리 화면에서 고른 채널. 봇의 채널 목록을 다시 받아 그 안에 있을 때만 연결함
+export async function linkDiscord(code: string, user: User, group: unknown, channelId: unknown): Promise<OpResult> {
+  const { t } = findRole(code, user);
+  const g = assertGroup(t, group);
+  if (typeof channelId !== "string" || !DISCORD_ID.test(channelId)) throw new OpError("이 채널은 연결할 수 없습니다.\n목록에 있는 채널을 골라주세요.");
+  const guilds = await botChannels(user.id);
+  if (!guilds) throw new OpError("연결하지 못했습니다.\n잠시 후 다시 시도해주세요.");
+  const guild = guilds.find((x) => x.channels.some((c) => c.id === channelId));
+  const channel = guild?.channels.find((c) => c.id === channelId);
+  if (!guild || !channel) throw new OpError("이 채널은 연결할 수 없습니다.\n목록에 있는 채널을 골라주세요.");
+  // 봇을 기다리는 사이 권한이나 조 수가 바뀌었을 수 있어 다시 확인
+  const { t: cur } = findRole(code, user);
+  assertGroup(cur, g);
+  return tx(() => {
+    writeLinks(cur, user, [{ g, channelId, guild: clean(guild.name, 100), channel: clean(channel.name, 100) }]);
+    return { ok: true, version: versionOf(cur.id), notices: [], errors: [] };
+  });
+}
+
+// 관리 화면의 채널 선택 상자에 넣을 목록. 개최자와 운영자만 받음
+export async function discordChannels(code: string, user: User): Promise<BotGuild[] | null> {
+  findRole(code, user);
+  return botChannels(user.id);
+}
+
+// 봇이 사본을 맞출 때 읽는 한 대회의 연결
+export function botLinks(code: string): { status: "gone" } | { status: "ok"; links: { group: string; channelId: string; guild: string; channel: string }[] } {
+  const t = typeof code === "string" ? find(code) : undefined;
+  if (!t || !live(t)) return { status: "gone" };
+  const rows = db().prepare("SELECT * FROM discord_links WHERE tournament_id = ? AND group_idx < ? ORDER BY group_idx").all(t.id, t.group_count) as {
+    channel_id: string;
+    group_idx: number;
+    guild: string;
+    channel: string;
+  }[];
+  return { status: "ok", links: rows.map((r) => ({ group: groupLabel(r.group_idx), channelId: r.channel_id, guild: r.guild, channel: r.channel })) };
+}
+
+// 봇이 켤 때 받는 연결 전체. 보관 기간이 지났거나 모든 조의 경기가 끝난 대회는 뺌
+export function allBotLinks(): { channelId: string; code: string; group: string }[] {
+  const rows = db()
+    .prepare("SELECT l.channel_id, l.group_idx, t.* FROM discord_links l JOIN tournaments t ON t.id = l.tournament_id WHERE l.group_idx < t.group_count AND t.updated_at > ? ORDER BY t.id, l.group_idx")
+    .all(now() - RETENTION_MS) as (TRow & { channel_id: string; group_idx: number })[];
+  const ended = new Map<number, boolean>();
+  return rows.flatMap((r) => {
+    if (!ended.has(r.id)) {
+      const view = loadView(r.code, null)!;
+      ended.set(r.id, view.groups.every((_, i) => groupResult(view, i).ended));
+    }
+    return ended.get(r.id) ? [] : [{ channelId: r.channel_id, code: r.code, group: groupLabel(r.group_idx) }];
+  });
+}
+
+export function linkedChannel(code: string, group: number): string | null {
+  const row = db()
+    .prepare("SELECT l.channel_id FROM discord_links l JOIN tournaments t ON t.id = l.tournament_id WHERE t.code = ? AND l.group_idx = ?")
+    .get(normalizeCode(code), group) as { channel_id: string } | undefined;
+  return row?.channel_id ?? null;
 }
 
 export function discordLinks(code: string, user: User): DiscordLinkRow[] {
   const { t } = findRole(code, user);
   const rows = db()
     .prepare("SELECT * FROM discord_links WHERE tournament_id = ? AND group_idx < ? ORDER BY group_idx")
-    .all(t.id, t.group_count) as { group_idx: number; guild: string; channel: string; last_at: number | null; last_status: RelayStatus | null; last_round: number | null; last_user: string | null }[];
+    .all(t.id, t.group_count) as {
+    channel_id: string;
+    group_idx: number;
+    guild: string;
+    channel: string;
+    last_at: number | null;
+    last_status: RelayStatus | null;
+    last_round: number | null;
+    last_user: string | null;
+  }[];
   return rows.map((r) => ({
     group: r.group_idx,
+    channelId: r.channel_id,
     guild: r.guild,
     channel: r.channel,
     last: r.last_at && r.last_status ? { at: r.last_at, status: r.last_status, round: r.last_round, user: r.last_user ?? "" } : null,
@@ -849,10 +946,10 @@ export function discordLinks(code: string, user: User): DiscordLinkRow[] {
 
 export type Relay =
   | { status: "unlinked" }
-  | { status: "forbidden" | RelayStatus; message: string; code: string; name: string; group: number; groupCount: number; round: number | null };
+  | { status: RelayStatus; message: string; code: string; name: string; group: number; groupCount: number; round: number | null };
 
-// 연결된 채널에 올라온 결과 파일을 그 조에 넣음. 올린 사람의 권한으로 넣고, 연결과 권한이 맞으면 결과를 연결 행에 남김
-export function relayDiscord(channelId: unknown, actor: unknown, file: { name: string; bytes: Uint8Array }): Relay {
+// 연결된 채널에 올라온 결과 파일은 누가 올렸든 그 조에 넣고 결과를 연결 행에 남김. labs 사용자가 아니면 디스코드 표시 이름으로 기록
+export function relayDiscord(channelId: unknown, actor: unknown, actorName: unknown, file: { name: string; bytes: Uint8Array }): Relay {
   if (typeof channelId !== "string" || !DISCORD_ID.test(channelId)) return { status: "unlinked" };
   return tx(() => {
     const conn = db();
@@ -865,16 +962,16 @@ export function relayDiscord(channelId: unknown, actor: unknown, file: { name: s
     const base = { code: t.code, name: t.name, group: g, groupCount: t.group_count };
     const user = userById(actor);
     const role = user ? roleOf(t, user) : null;
-    if (!user || !role) return { ...base, status: "forbidden", message: "이 대회의 개최자나 운영자만 결과를 올릴 수 있습니다.", round: null };
+    const who: Actor = { name: user?.name || clean(actorName, 32) || "디스코드 사용자" };
     const name = clean(file.name, 120) || "GameResult_.csv";
     const r: Landed =
       file.bytes.length > LIMITS.csvBytes
         ? { status: "invalid", message: "200KB가 넘는 파일은 올릴 수 없습니다.", round: null }
-        : landCsv(t, g, role, user, { name, text: decodeCsv(file.bytes) }, " (디스코드)");
+        : landCsv(t, g, role, who, { name, text: decodeCsv(file.bytes) }, " (디스코드)");
     if (r.id) conn.prepare("UPDATE rounds SET discord = 1 WHERE id = ?").run(r.id);
     conn
       .prepare("UPDATE discord_links SET last_at = ?, last_status = ?, last_round = ?, last_user = ? WHERE channel_id = ?")
-      .run(now(), r.status, r.round, user.name, channelId);
+      .run(now(), r.status, r.round, who.name, channelId);
     return { ...base, status: r.status, message: r.message, round: r.round };
   });
 }
@@ -883,6 +980,7 @@ export function deleteTournament(code: string, user: User, confirmName: string) 
   const t = requireOwner(code, user);
   if (clean(confirmName, LIMITS.nameLength) !== t.name) throw new OpError("대회 이름이 일치하지 않습니다. 대회 이름을 다시 확인해주세요.");
   db().prepare("DELETE FROM tournaments WHERE id = ?").run(t.id);
+  notifyChanged(t.code);
 }
 
 export function cleanup(): { tournaments: number; sessions: number; users: number } {

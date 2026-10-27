@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { currentUser } from "@/er/server/auth";
 import { allow, blocked, clientIp, miss } from "@/limits";
-import { applyOp, deleteTournament, loadView, tournamentVersion } from "@/er/server/tournament";
+import { applyOp, deleteTournament, linkDiscord, loadView, tournamentVersion } from "@/er/server/tournament";
 import { fail, guardWrite, handle, json, readJson } from "@/er/server/http";
 import type { Op } from "@/er/lib/view";
 
@@ -37,6 +37,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     if ("error" in g) return g.error;
     const { code } = await ctx.params;
     const op = await readJson<Op>(req);
+    // 채널 연결은 몽실봇의 채널 목록을 확인해야 해서 따로 처리
+    if (op.op === "link_discord") return json(await linkDiscord(code, g.user, op.group, op.channelId));
     return json(applyOp(code, g.user, op));
   });
 }

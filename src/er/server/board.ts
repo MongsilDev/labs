@@ -7,7 +7,7 @@ import type { Mode, Tiebreak } from "@/er/lib/rules";
 import type { Role, TournamentView } from "@/er/lib/view";
 import { BASE_URL } from "./auth";
 import { groupLabel } from "@/er/lib/rules";
-import { loadView, myTournaments, relayDiscord, tournamentVersion } from "./tournament";
+import { linkedChannel, loadView, myTournaments, relayDiscord, tournamentVersion } from "./tournament";
 
 export const EXAMPLE_CODE = "EXAMPLE";
 
@@ -40,6 +40,8 @@ export type Board = {
   updatedAt: number;
   url: string;
   role: Role;
+  /** 이 조에 연결된 디스코드 채널 */
+  channelId: string | null;
   standings: BoardRow[];
   next: { roundNo: number; main: string; sub: string | null; bans: string[] } | null;
 };
@@ -84,6 +86,7 @@ export function botBoard(code: string, group: string | null, userId: string | nu
     updatedAt: view.updatedAt,
     url: example ? `${BASE_URL}/er/example/${label.toLowerCase()}` : `${BASE_URL}/er/t/${view.code}/${label.toLowerCase()}`,
     role: example ? null : view.role,
+    channelId: example ? null : linkedChannel(view.code, idx),
     standings: res.standings.map((s) => ({
       rank: s.rank,
       delta: s.delta,
@@ -111,7 +114,7 @@ export function botTournaments(userId: string): BotTournament[] {
 export type RelayReply =
   | { status: "unlinked" }
   | {
-      status: "forbidden" | "duplicate" | "ended" | "invalid" | "added";
+      status: "duplicate" | "ended" | "invalid" | "added";
       message: string;
       code: string;
       name: string;
@@ -123,9 +126,9 @@ export type RelayReply =
     };
 
 // 디스코드 채널에 올라온 결과 파일을 연결된 조에 넣고, 넣은 라운드의 순위를 대회 화면과 같은 계산으로 돌려줌
-export function botRelay(channelId: unknown, actor: unknown, fileName: unknown, data: unknown): RelayReply {
+export function botRelay(channelId: unknown, actor: unknown, actorName: unknown, fileName: unknown, data: unknown): RelayReply {
   const bytes = typeof data === "string" ? Buffer.from(data, "base64") : Buffer.alloc(0);
-  const r = relayDiscord(channelId, actor, { name: typeof fileName === "string" ? fileName : "", bytes });
+  const r = relayDiscord(channelId, actor, actorName, { name: typeof fileName === "string" ? fileName : "", bytes });
   if (r.status === "unlinked") return r;
   const label = groupLabel(r.group);
   const out = { status: r.status, message: r.message, code: r.code, name: r.name, group: label, groupCount: r.groupCount, url: `${BASE_URL}/er/t/${r.code}/${label.toLowerCase()}` };

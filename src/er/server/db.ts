@@ -162,14 +162,27 @@ export function db(): DatabaseSync {
   return g.__erDb;
 }
 
+// 트랜잭션 안에서 등록한 일은 커밋한 뒤 키마다 한 번만 실행하고, 되돌리면 버림. 트랜잭션 밖에서는 바로 실행
+let pending: Map<string, () => void> | null = null;
+
+export function afterCommit(key: string, fn: () => void) {
+  if (pending) pending.set(key, fn);
+  else fn();
+}
+
 export function tx<T>(fn: () => T): T {
   const conn = db();
   conn.exec("BEGIN IMMEDIATE");
+  pending = new Map();
+  const jobs = pending;
   try {
     const out = fn();
     conn.exec("COMMIT");
+    pending = null;
+    for (const job of jobs.values()) job();
     return out;
   } catch (e) {
+    pending = null;
     conn.exec("ROLLBACK");
     throw e;
   }
