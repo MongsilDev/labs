@@ -123,7 +123,7 @@ export default async function Page() {
                     if (!met) return <HeatCell key={b.key} v={null} />;
                     return (
                       <HeatCell key={b.key} v={max ? n / max : 0}>
-                        <span title={`${josa(a.name, "이", "가")} ${josa(b.name, "을", "를")} ${n}번 잡음, 같은 게임 ${met}번`}>
+                        <span title={`${josa(a.name, "이", "가")} ${josa(b.name, "을", "를")} ${n}번 처치, 같은 게임 ${met}번`}>
                           {n}
                           <span className="block text-[11px] font-normal">{met}</span>
                         </span>
