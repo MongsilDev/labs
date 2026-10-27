@@ -32,7 +32,7 @@ export default async function Page() {
       owner={owner}
       screen="kills"
       notes={[
-        `처치마다 상대 선수는 처치 기록에 적힌 실험체와 사망 기록을 맞춰 찾았고, 상대를 찾지 못한 처치는 빼서 전체 처치 ${int(stats.total)}번 가운데 ${int(stats.counted)}번만 집계했습니다.`,
+        `처치마다 처치 기록에 적힌 실험체를 사망 기록과 대조해 상대 선수를 찾았고, 상대를 찾지 못한 처치는 빼서 전체 처치 ${int(stats.total)}번 가운데 ${int(stats.counted)}번만 집계했습니다.`,
         unmet && "같은 게임에 출전한 적이 없는 두 팀의 칸은 -로 표시했습니다.",
       ]}
     >
