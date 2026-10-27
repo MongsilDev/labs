@@ -28,7 +28,11 @@ export default async function Page() {
           <table className="kel-table">
             <thead>
               <tr>
-                <th className="l min-[761px]:w-[300px]">조합</th>
+                <th className="l min-[761px]:w-[300px]">
+                  조합
+                  {/* 휴대폰은 많이 고른 팀을 조합 칸 아래 줄에 둠 */}
+                  <span className="narrow">많이 고른 팀</span>
+                </th>
                 <th className="w-px min-[761px]:w-[10%]">횟수</th>
                 <th className="w-px min-[761px]:w-[10%]">평균 순위</th>
                 <th className="w-px min-[761px]:w-[10%]">1위 횟수</th>

@@ -26,7 +26,8 @@ function Areas({ areas }: { areas: [string, number][] }) {
           {areas[i] && area(areas[i])}
         </td>
       ))}
-      <td className="l narrow">
+      {/* 고정 칸 뒤에 숨은 wide 칸이 있어 고정 칸 옆 여백 규칙이 닿지 않음 */}
+      <td className="l narrow pl-2">
         {areas.slice(0, RANKS.length).map((a) => (
           <span key={a[0]} className="block">
             {area(a)}
@@ -44,7 +45,7 @@ const AreaHeads = () => (
         {k}
       </th>
     ))}
-    <th className="l narrow">많이 시작한 지역</th>
+    <th className="l narrow pl-2">지역</th>
   </>
 );
 
@@ -152,7 +153,7 @@ export default async function Page() {
               <thead>
                 <tr>
                   <th className="l pin min-[761px]:w-[220px]">선수</th>
-                  <th className="min-[761px]:w-24">게임</th>
+                  <th className="wide min-[761px]:w-24">게임</th>
                   <AreaHeads />
                 </tr>
               </thead>
@@ -161,8 +162,9 @@ export default async function Page() {
                   <tr key={p.name}>
                     <td className="l pin max-w-[160px]">
                       <PlayerName name={p.name} team={TEAM.get(p.team)} />
+                      <span className="narrow mt-0.5 text-[12px] text-fg-3">{p.games}게임</span>
                     </td>
-                    <td className="text-fg-3">{p.games}</td>
+                    <td className="wide text-fg-3">{p.games}</td>
                     <Areas areas={p.areas} />
                   </tr>
                 ))}

@@ -2,6 +2,9 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 
+// 오른쪽 끝에 남기는 폭. 다음 열의 왼쪽 여백만 보여 그림자가 글자에 걸리지 않음
+const PEEK = 4;
+
 // 넘치는 표는 고정 칸을 남는 폭만큼 넓혀 처음 화면의 오른쪽 끝이 열 경계에 오게 함
 function fit(el: HTMLDivElement) {
   const row = el.querySelector("tbody tr") as HTMLTableRowElement | null;
@@ -19,9 +22,9 @@ function fit(el: HTMLDivElement) {
   const pinEnd = () => (last ? last.getBoundingClientRect().right - (sticky(last) ? el.getBoundingClientRect().left : left) : 0);
   // 고정 칸을 넓히면 다른 열 폭도 다시 나뉘어서 몇 번 되풀이해 맞춤
   for (let n = 0; last && n < 6; n++) {
-    const edges = cells.filter((c) => !sticky(c)).map((c) => c.getBoundingClientRect().right - left).filter((x) => x > pinEnd() + 1 && x <= el.clientWidth + 0.5);
+    const edges = cells.filter((c) => !sticky(c)).map((c) => c.getBoundingClientRect().right - left).filter((x) => x > pinEnd() + 1 && x <= el.clientWidth - PEEK + 0.5);
     if (!edges.length) break;
-    const rest = el.clientWidth - Math.max(...edges);
+    const rest = el.clientWidth - PEEK - Math.max(...edges);
     if (rest < 0.5) {
       el.setAttribute("data-fit", "");
       break;
@@ -36,12 +39,15 @@ function fit(el: HTMLDivElement) {
 export default function KelScroll({ label, className = "", children }: { label: string; className?: string; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [scrolls, setScrolls] = useState(true);
+  const [more, setMore] = useState(false);
+  const check = (el: HTMLDivElement) => setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const ro = new ResizeObserver(() => {
       fit(el);
       setScrolls(el.scrollWidth > el.clientWidth || el === document.activeElement);
+      check(el);
     });
     ro.observe(el);
     if (el.parentElement) ro.observe(el.parentElement);
@@ -49,15 +55,19 @@ export default function KelScroll({ label, className = "", children }: { label: 
     return () => ro.disconnect();
   }, []);
   return (
-    <div
-      ref={ref}
-      className={`kel-scroll scroll-fade overflow-x-auto ${className}`}
-      onBlur={(e) => setScrolls(e.currentTarget.scrollWidth > e.currentTarget.clientWidth)}
-      role="region"
-      aria-label={`${label} 표`}
-      tabIndex={scrolls ? 0 : undefined}
-    >
-      {children}
+    <div className={`relative ${className}`}>
+      <div
+        ref={ref}
+        className="kel-scroll overflow-x-auto"
+        onBlur={(e) => setScrolls(e.currentTarget.scrollWidth > e.currentTarget.clientWidth)}
+        onScroll={(e) => check(e.currentTarget)}
+        role="region"
+        aria-label={`${label} 표`}
+        tabIndex={scrolls ? 0 : undefined}
+      >
+        {children}
+      </div>
+      {more && <span className="kel-more" aria-hidden="true" />}
     </div>
   );
 }
