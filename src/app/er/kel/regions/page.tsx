@@ -44,8 +44,8 @@ export default async function Page() {
       owner={owner}
       screen="regions"
       notes={[
-        `시작 지역별 팀 순위에는 ${MIN_STARTS}번 넘게 시작한 지역만 표시했습니다.`,
-        `경기 상세에는 사망 장소가 선수마다 세 번까지만 기록돼 있어, 전체 사망 ${int(deaths)}번 가운데 ${int(counted)}번만 집계했습니다.`,
+        `시작 지역별 팀 순위 표에는 시작 횟수가 ${MIN_STARTS}번을 넘는 지역만 표시했습니다.`,
+        `경기 상세에는 게임마다 선수 한 명당 사망 장소가 세 번까지만 기록돼 있어, 전체 사망 ${int(deaths)}번 가운데 ${int(counted)}번만 집계했습니다.`,
         `선수별 표에는 ${MIN_GAMES}게임 이상 출전한 선수만 표시했습니다.`,
       ]}
     >
