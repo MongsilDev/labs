@@ -214,7 +214,7 @@ export default async function Hub() {
               <br />
               {indexed && (
                 <>
-                  이름 목록 {date(indexed)} 기준.
+                  이름 목록은 {date(indexed)} 기준입니다.
                   <br />
                 </>
               )}
