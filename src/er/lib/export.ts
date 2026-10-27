@@ -1,6 +1,6 @@
 import { toCsv } from "./csv";
 import { barTotal, type GroupResult } from "./engine";
-import { dateKo, fmt, fmt1, rampDarkText } from "./format";
+import { dateKo, fmt, num, rampDarkText } from "./format";
 import { MODE_LABEL, PRESET_LABEL, type Mode, type Rules } from "./rules";
 
 const FONT = '"Pretendard Variable", Pretendard, system-ui, sans-serif';
@@ -16,6 +16,8 @@ const C = {
   gold: "#ffd621",
   cyan: "#26f1f6",
   minus: "#ff6b6b",
+  // 순위 상승. 라운드 막대의 청록과 구분되는 초록, 웹 어두운 테마와 몽실봇 순위 이미지와 같은 값
+  up: "#4ade80",
 };
 
 type Ctx = CanvasRenderingContext2D;
@@ -53,12 +55,15 @@ function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: numb
 }
 
 function numWithSmallDecimal(ctx: Ctx, value: number, right: number, baseline: number, size: number, weight: number, color: string) {
-  const [int, dec] = fmt1(value).split(".");
-  font(ctx, weight, size * 0.62);
-  const dw = ctx.measureText(`.${dec}`).width;
+  const [int, dec] = num(value).split(".");
   ctx.fillStyle = color;
   ctx.textAlign = "right";
-  ctx.fillText(`.${dec}`, right, baseline);
+  let dw = 0;
+  if (dec) {
+    font(ctx, weight, size * 0.62);
+    dw = ctx.measureText(`.${dec}`).width;
+    ctx.fillText(`.${dec}`, right, baseline);
+  }
   font(ctx, weight, size);
   ctx.fillText(int, right - dw, baseline);
 }
@@ -87,7 +92,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
   const metaLine = `${MODE_LABEL[meta.mode]}, ${meta.rules.preset === "custom" ? "직접 정한 순위 점수" : PRESET_LABEL.masters}`;
   const date = dateKo(Date.now());
   const killLabel = meta.rules.tiebreak === "kills" ? "킬" : "킬 점수";
-  await fonts([title, event, metaLine, date, killLabel, "순위팀라운드별점수총점체크포인트위확정상위팀진출감점처치자불명사망회킬점1위labs.mongsil.dev/er0123456789.R=-", ...standings.map((s) => s.name)]);
+  await fonts([title, event, metaLine, date, killLabel, "순위팀라운드별점수총점체크포인트위확정상위팀진출감점처치자불명사망회킬점1위0123456789.R=-", ...standings.map((s) => s.name)]);
 
   const L = 96;
   const R = W - 96;
@@ -124,7 +129,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
   const top = 206;
   if (compact) {
     drawCompact(ctx, result, meta, L, R, top, H - 120);
-    drawFooter(ctx, meta, L, R, H - 120, n);
+    drawFooter(ctx, meta, L, H - 120, n);
     return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error("이미지를 만들지 못했습니다."))), "image/png"));
   }
   const colRank = L + 24;
@@ -169,7 +174,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
     ctx.fillText(String(s.rank), colRank + box / 2, mid + 11 * scale);
     if (s.delta) {
       font(ctx, 700, 17 * scale);
-      ctx.fillStyle = s.delta > 0 ? C.cyan : C.minus;
+      ctx.fillStyle = s.delta > 0 ? C.up : C.minus;
       ctx.textAlign = "left";
       ctx.fillText(`${s.delta > 0 ? "▲" : "▼"}${Math.abs(s.delta)}`, colRank + box + 10, mid + 6 * scale);
     }
@@ -208,7 +213,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
         font(ctx, 700, 15 * scale);
         ctx.fillStyle = rampDarkText(j, played, "dark") ? "#000" : "#fff";
         ctx.textAlign = "center";
-        ctx.fillText(fmt(r.score), x + w / 2 - 1, mid + 5 * scale);
+        ctx.fillText(num(r.score), x + w / 2 - 1, mid + 5 * scale);
       }
       x += w;
     });
@@ -259,11 +264,11 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
     }
   });
 
-  drawFooter(ctx, meta, L, R, footerTop, n);
+  drawFooter(ctx, meta, L, footerTop, n);
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error("이미지를 만들지 못했습니다."))), "image/png"));
 }
 
-function drawFooter(ctx: Ctx, meta: BoardMeta, L: number, R: number, footerTop: number, n: number) {
+function drawFooter(ctx: Ctx, meta: BoardMeta, L: number, footerTop: number, n: number) {
   const pts = meta.rules.placementPoints.slice(0, Math.min(8, Math.max(8, n)));
   let mx = L;
   pts.forEach((p, i) => {
@@ -286,11 +291,6 @@ function drawFooter(ctx: Ctx, meta: BoardMeta, L: number, R: number, footerTop: 
   const lines = [`킬 점수 1 = ${fmt(meta.rules.scoreSource === "table" ? meta.rules.killMultiplier : 1)}점`];
   if (meta.rules.deathPenalty) lines.push("처치자 불명 사망 1회 = -1점");
   lines.forEach((t, i) => ctx.fillText(t, mx + 18, footerTop + 56 + i * 28));
-  font(ctx, 700, 19);
-  ctx.fillStyle = C.text2;
-  ctx.textAlign = "right";
-  ctx.fillText("labs.mongsil.dev/er", R, footerTop + 84);
-
 }
 
 function drawCompact(ctx: Ctx, result: GroupResult, meta: BoardMeta, L: number, R: number, top: number, bottom: number) {
@@ -328,7 +328,7 @@ function drawCompact(ctx: Ctx, result: GroupResult, meta: BoardMeta, L: number, 
       ctx.fillText(String(t.rank), x0 + 12 + box / 2, mid + 8 * s);
       if (t.delta) {
         font(ctx, 700, 14 * s);
-        ctx.fillStyle = t.delta > 0 ? C.cyan : C.minus;
+        ctx.fillStyle = t.delta > 0 ? C.up : C.minus;
         ctx.textAlign = "left";
         ctx.fillText(`${t.delta > 0 ? "▲" : "▼"}${Math.abs(t.delta)}`, x0 + 12 + box + 6, mid + 5 * s);
       }
@@ -374,7 +374,7 @@ export async function playersImage(result: GroupResult, meta: BoardMeta): Promis
   const { c, ctx } = canvas(W, H);
   const event = `${meta.group ? `${meta.name} ${meta.group}조` : meta.name}, ${result.played}라운드`;
   const list = result.players.slice(0, 10);
-  await fonts([event, "선수 기록라운드당 킬공동", ...list.map((p) => p.nickname + p.team), dateKo(Date.now()), "labs.mongsil.dev/er0123456789."]);
+  await fonts([event, "선수 기록라운드당 킬공동", ...list.map((p) => p.nickname + p.team), dateKo(Date.now()), "0123456789."]);
   const L = 72;
   font(ctx, 600, 24);
   ctx.fillStyle = C.muted;
@@ -427,10 +427,6 @@ export async function playersImage(result: GroupResult, meta: BoardMeta): Promis
   font(ctx, 500, 18);
   ctx.fillStyle = C.text3;
   ctx.fillText(dateKo(Date.now()), L, H - 62);
-  font(ctx, 700, 18);
-  ctx.fillStyle = C.text2;
-  ctx.textAlign = "right";
-  ctx.fillText("labs.mongsil.dev/er", W - L, H - 62);
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error("이미지를 만들지 못했습니다."))), "image/png"));
 }
 

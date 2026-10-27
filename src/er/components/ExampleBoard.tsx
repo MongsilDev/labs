@@ -2,6 +2,7 @@ import Link from "next/link";
 import Bar from "@/er/components/t/Bar";
 import { barTotal, computeGroup } from "@/er/lib/engine";
 import { exampleView } from "@/er/lib/example";
+import { num } from "@/er/lib/format";
 
 function exampleResult() {
   const ex = exampleView();
@@ -41,7 +42,7 @@ export default function ExampleBoard({ rows = 4, bare }: { rows?: number; bare?:
             <div className="mb-[5px] min-w-0 truncate text-[14px] font-bold">{s.name}</div>
             <Bar s={s} max={max} rounds={res.played} height={10} labels={false} />
           </div>
-          <span className="text-right text-[18px] font-extrabold tabular-nums">{s.total.toFixed(1)}</span>
+          <span className="text-right text-[18px] font-extrabold tabular-nums">{num(s.total)}</span>
         </div>
       ))}
       {!bare && (
