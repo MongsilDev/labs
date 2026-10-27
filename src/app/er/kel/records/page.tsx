@@ -104,7 +104,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
             <Best label="팀 최다 킬" value={rec.teamKills.kills} unit="킬" className="col-span-2 max-[1080px]:col-span-1">
               <TeamWho g={rec.teamKills} />
             </Best>
-            <Best label="팀 최다 게임 점수" value={fmt(rec.teamScore.value)} unit="점" className="col-span-2 max-[1080px]:col-span-1">
+            <Best label="팀 최고 게임 점수" value={fmt(rec.teamScore.value)} unit="점" className="col-span-2 max-[1080px]:col-span-1">
               {rec.teamScore.games.map((s) => (
                 <TeamWho key={`${s.gameId}-${s.team}`} g={s} detail={`순위\u00a0점수\u00a0${placementPoints(s.placement)} + 킬\u00a0점수\u00a0${fmt(s.killScore)}`} />
               ))}
@@ -115,7 +115,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
       )}
       {low && (
         <>
-          <Ranking id="low-damage" title="최저 가한 피해" rows={low.damage} label="가한 피해" value={(r) => int(r.damage)} />
+          <Ranking id="low-damage" title="가장 적게 가한 피해" rows={low.damage} label="가한 피해" value={(r) => int(r.damage)} />
           <Ranking id="most-deaths" title="최다 데스" rows={low.deaths} label="데스" value={(r) => r.deaths} />
         </>
       )}
@@ -127,7 +127,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
                 <tr>
                   <th className="l">실험체</th>
                   <th>최다 킬</th>
-                  <th>최다 가한 피해</th>
+                  <th>가장 많이 가한 피해</th>
                 </tr>
               </thead>
               <tbody>

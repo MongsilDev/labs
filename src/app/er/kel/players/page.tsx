@@ -180,7 +180,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
         `순위는 ${MIN_GAMES}게임 이상 출전한 선수끼리 비교했고, 평균 순위와 게임당 데스는 작을수록 높은 순위입니다.`,
         "KPR은 경기 기록에 적힌 선수 평점의 평균이고, 한 게임 평균은 약 1.0입니다.",
         "가한 피해 비중은 팀 세 명이 가한 피해에서 그 선수가 차지한 비율을 게임마다 구해 평균한 값입니다.",
-        "처치한 상대와 이 선수를 처치한 상대에서는 상대 선수를 알 수 없는 킬을 뺐습니다.",
+        "많이 처치한 상대와 이 선수를 많이 처치한 상대에서는 상대 선수를 알 수 없는 킬을 뺐습니다.",
       ]}
     >
       {picked && <Card p={picked} all={all} pairs={killStats(data).pairs} />}

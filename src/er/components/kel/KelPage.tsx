@@ -10,8 +10,8 @@ type Tab<K extends string> = readonly [K, React.ReactNode];
 
 const join = (t?: Text) => (Array.isArray(t) ? t.filter(Boolean).join(" ") : (t ?? ""));
 
-export const NO_DATA = "경기 기록 CSV를 찾지 못했습니다. 서버 데이터 폴더의 kel 폴더에 넣어주세요.";
-export const NO_DAK = "dak.gg 경기 상세를 찾지 못했습니다. 서버 데이터 폴더의 kel/dakgg 폴더에 넣어주세요.";
+export const NO_DATA = "경기 기록 CSV를 찾지 못했습니다. CSV를 서버 데이터 폴더의 kel 폴더에 넣어주세요.";
+export const NO_DAK = "dak.gg 경기 상세를 찾지 못했습니다. 경기 상세 파일을 서버 데이터 폴더의 kel/dakgg 폴더에 넣어주세요.";
 
 export const pickTab = <K extends string>(items: readonly Tab<K>[], value?: string): K => (items.find(([k]) => k === value) ?? items[0])[0];
 
