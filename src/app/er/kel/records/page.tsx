@@ -18,6 +18,11 @@ const VIEWS: ["season" | "characters" | "low", string][] = [
   ["low", "낮은 기록"],
 ];
 
+const chunks = <T,>(list: T[], n: number) => {
+  const size = Math.ceil(list.length / n);
+  return Array.from({ length: n }, (_, i) => list.slice(i * size, (i + 1) * size)).filter((x) => x.length);
+};
+
 function TeamWho({ g, detail }: { g: TeamGame; detail?: string }) {
   const team = TEAM.get(g.team)!;
   return (
@@ -120,39 +125,42 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </>
       )}
       {view === "characters" && (
-        <section className="panel max-w-[560px] p-5 max-[760px]:p-4">
-          <KelScroll label="실험체별 한 게임 최고 기록">
-            <table className="kel-table">
-              <thead>
-                <tr>
-                  <th className="l">실험체</th>
-                  <th>최다 킬</th>
-                  <th>최다 가한 피해</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rec.characters.map((c) => (
-                  <tr key={c.key}>
-                    <td className="l">
-                      <Char name={c.key} />
-                    </td>
-                    <td>
-                      <span className="grid justify-items-end">
-                        <b>{c.kills.kills}킬</b>
-                        <PlayerName name={c.kills.player} />
-                      </span>
-                    </td>
-                    <td>
-                      <span className="grid justify-items-end">
-                        <b>{int(c.damage.damage)}</b>
-                        <PlayerName name={c.damage.player} />
-                      </span>
-                    </td>
+        // 이름순 목록이라 세로로 나눠 열마다 위에서 아래로 읽힘
+        <section className="panel grid grid-cols-3 gap-x-8 p-5 max-[1080px]:grid-cols-1 max-[760px]:p-4">
+          {chunks(rec.characters, 3).map((part, i) => (
+            <KelScroll key={i} label={`실험체별 한 게임 최고 기록 ${i + 1}`}>
+              <table className={`kel-table ${i > 0 ? "max-[1080px]:[&_thead]:hidden" : ""}`}>
+                <thead>
+                  <tr>
+                    <th className="l">실험체</th>
+                    <th>최다 킬</th>
+                    <th>최다 가한 피해</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </KelScroll>
+                </thead>
+                <tbody>
+                  {part.map((c) => (
+                    <tr key={c.key}>
+                      <td className="l">
+                        <Char name={c.key} />
+                      </td>
+                      <td>
+                        <span className="grid justify-items-end">
+                          <b>{c.kills.kills}킬</b>
+                          <PlayerName name={c.kills.player} />
+                        </span>
+                      </td>
+                      <td>
+                        <span className="grid justify-items-end">
+                          <b>{int(c.damage.damage)}</b>
+                          <PlayerName name={c.damage.player} />
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </KelScroll>
+          ))}
         </section>
       )}
     </KelPage>
