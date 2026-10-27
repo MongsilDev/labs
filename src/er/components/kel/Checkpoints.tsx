@@ -6,7 +6,7 @@ export default function Checkpoints() {
       {CHECKPOINT_SEQUENCE.map((n, i) =>
         n > 0 ? (
           <li key={i} className="grid justify-items-center gap-1.5 text-center">
-            <span className="flex max-w-[64px] flex-wrap justify-center gap-[3px]" aria-hidden="true">
+            <span className="grid grid-cols-4 gap-[3px]" aria-hidden="true">
               {Array.from({ length: 8 }, (_, k) => (
                 <span key={k} className={`size-[9px] rounded-full ${k < n ? "bg-accent" : "bg-line"}`} />
               ))}
