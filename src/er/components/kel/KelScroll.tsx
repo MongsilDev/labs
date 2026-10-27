@@ -6,11 +6,11 @@ import { useLayoutEffect, useRef, useState } from "react";
 function fit(el: HTMLDivElement) {
   const row = el.querySelector("tbody tr") as HTMLTableRowElement | null;
   if (!row) return;
+  for (const c of row.cells) c.style.minWidth = "";
   const cells = [...row.cells].filter((c) => c.offsetWidth);
   const sticky = (c: HTMLTableCellElement) => getComputedStyle(c).position === "sticky";
   // 고정 칸이 없는 표는 가장 넓은 왼쪽 정렬 칸을 넓힘
   const last = cells.filter(sticky).at(-1) ?? cells.filter((c) => c.classList.contains("l")).sort((a, b) => b.offsetWidth - a.offsetWidth)[0];
-  if (last) last.style.minWidth = "";
   el.removeAttribute("data-fit");
   if (el.scrollWidth <= el.clientWidth) return;
   // sticky 칸은 offsetParent가 표가 아니라서 화면 좌표로 계산

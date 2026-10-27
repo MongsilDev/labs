@@ -1128,7 +1128,8 @@
     .kel-table .pin:not(:has(+ .pin)) {
       padding-right: 8px;
     }
-    .kel-table .pin + :not(.pin) {
+    .kel-table .pin + :not(.pin),
+    .kel-table .pin + .wide + .wide + .wide + .narrow {
       padding-left: 8px;
     }
   }

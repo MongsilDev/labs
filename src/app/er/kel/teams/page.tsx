@@ -106,7 +106,7 @@ function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
           <span className="text-[14px] font-semibold text-fg-3">정규 시즌 순위 순서</span>
         </h2>
         <KelScroll label="팀별 기록" className="mt-3">
-          <table className="kel-table min-[1100px]:table-fixed">
+          <table className="kel-table">
             <thead>
               <tr>
                 <th className="l pin min-[761px]:w-[220px]">팀</th>
