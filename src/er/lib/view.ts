@@ -43,6 +43,8 @@ export type TournamentView = {
   source?: { name: string; url: string };
   groups: GroupView[];
   logs: LogRow[] | null;
+  /** 개최자와 운영자에게만 보내는 조별 디스코드 연결 */
+  discord?: { group: number; channel: string }[];
 };
 
 export type CreateInput = {
@@ -66,7 +68,8 @@ export type Op =
   | { op: "rename_team"; group: number; from: string; to: string; also?: string[] }
   | { op: "set_checkpoint"; group: number; round: number; team: string; state: boolean | null }
   | { op: "update_settings"; name?: string; mode?: Mode; preset?: Preset; rules?: Partial<Rules>; plannedRounds?: number; groupCount?: number }
-  | { op: "unlink_discord"; group: number };
+  | { op: "unlink_discord"; group: number }
+  | { op: "link_discord"; group: number; channelId: string };
 
 export type OpResult = { ok: boolean; version: number; notices: string[]; errors: string[]; undo?: { op: Op; label: string } };
 
@@ -75,6 +78,7 @@ export type UploadKeyRow = { group: number; createdBy: string; createdAt: number
 export type RelayStatus = "duplicate" | "ended" | "invalid" | "added";
 export type DiscordLinkRow = {
   group: number;
+  channelId: string;
   guild: string;
   channel: string;
   last: { at: number; status: RelayStatus; round: number | null; user: string } | null;

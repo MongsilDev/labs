@@ -120,7 +120,7 @@ describe("업로드 API", () => {
     const done = setup(1, 1);
     expect((await upload(done.code, "a", done.key, csv(7401, teams(["가"])))).status).toBe(200);
     expect((await upload(done.code, "a", done.key, csv(7401, teams(["가"])))).status).toBe(409);
-    expect(await upload(done.code, "a", done.key, csv(7402, teams(["가"])))).toMatchObject({ status: 410, body: { status: "ended", message: "끝난 대회입니다." } });
+    expect(await upload(done.code, "a", done.key, csv(7402, teams(["가"])))).toMatchObject({ status: 410, body: { status: "ended", message: "대회가 끝났습니다." } });
 
     const old = setup();
     db.db().prepare("UPDATE tournaments SET updated_at = ? WHERE code = ?").run(Date.now() - 25 * 3600_000, old.code);
