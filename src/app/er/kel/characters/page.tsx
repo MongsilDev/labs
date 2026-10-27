@@ -237,7 +237,7 @@ function Build({ data, b }: { data: Kel; b: CharacterBuild }) {
           ))}
         </ul>
       </section>
-      <div className="grid grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)] gap-5 max-[1280px]:grid-cols-1">
+      <div className="grid grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)] items-start gap-5 max-[1280px]:grid-cols-1">
         <RateTable title="전술 스킬 대회별 선택률" rows={season.tactical} events={events} />
         <section className="panel min-w-0 p-5 max-[760px]:p-4" aria-labelledby="traits">
           <h2 id="traits" className="text-[17px] font-extrabold">

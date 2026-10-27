@@ -173,7 +173,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
               <tr>
                 {CIRCUITS.flatMap((c) =>
                   CIRCUIT_STAGES.map((s, i) => (
-                    <th key={`${c}-${s}`} aria-label={`${s} 뒤`} className={["text-center", c !== circuit && "wide", c === circuit && i + 1 === done && "on"].filter(Boolean).join(" ")}>
+                    <th key={`${c}-${s}`} aria-label={`${s} 뒤`} className={["px-0.5 text-center text-[12px]", c !== circuit && "wide", c === circuit && i + 1 === done && "on"].filter(Boolean).join(" ")}>
                       {s}
                     </th>
                   )),

@@ -44,13 +44,9 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
                 <th className="l pin">팀</th>
                 <th>게임</th>
                 <th>1위</th>
-                <th>8위</th>
+                <th className="wide">8위</th>
                 <th className="wide">3위 이내</th>
-                <th>
-                  킬 점수{" "}
-                  <br className="min-[761px]:hidden" />
-                  비중
-                </th>
+                <th className="wide">킬 점수 비중</th>
                 <th>순위 점수</th>
                 <th>킬 점수</th>
                 <th>합계</th>
@@ -64,9 +60,9 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
                   </td>
                   <td>{r.games}</td>
                   <td>{r.wins}</td>
-                  <td>{r.eighth}</td>
+                  <td className="wide">{r.eighth}</td>
                   <td className="wide">{pct(r.top3)}</td>
-                  <td>{pct(r.killShare)}</td>
+                  <td className="wide">{pct(r.killShare)}</td>
                   <td>{r.rankPerGame.toFixed(2)}</td>
                   <td>{r.killPerGame.toFixed(2)}</td>
                   <td className="font-bold">{r.perGame.toFixed(2)}</td>
