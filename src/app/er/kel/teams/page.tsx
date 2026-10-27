@@ -38,10 +38,10 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
     <>
       <section className="panel p-5 max-[760px]:p-4">
         <KelScroll label="팀별 기록">
-          <table className="kel-table">
+          <table className="kel-table min-[1100px]:table-fixed">
             <thead>
               <tr>
-                <th className="l pin">팀</th>
+                <th className="l pin min-[761px]:w-[220px]">팀</th>
                 <th>게임</th>
                 <th>1위</th>
                 <th className="wide">8위</th>
@@ -106,10 +106,10 @@ function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
           <span className="text-[14px] font-semibold text-fg-3">정규 시즌 순위 순서</span>
         </h2>
         <KelScroll label="팀별 기록" className="mt-3">
-          <table className="kel-table">
+          <table className="kel-table min-[1100px]:table-fixed">
             <thead>
               <tr>
-                <th className="l pin">팀</th>
+                <th className="l pin min-[761px]:w-[220px]">팀</th>
                 <th>게임</th>
                 <th>
                   위클라인

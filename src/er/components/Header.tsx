@@ -26,7 +26,7 @@ export default function Header({
       {user ? (
         <UserMenu name={user.name} avatar={avatarUrl(user)} />
       ) : login ? (
-        <a className="btn sm" href={`/auth/login?next=${encodeURIComponent(next ?? "/er/score")}`}>
+        <a className="btn sm h-9" href={`/auth/login?next=${encodeURIComponent(next ?? "/er/score")}`}>
           로그인
         </a>
       ) : null}

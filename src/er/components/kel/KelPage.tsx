@@ -86,7 +86,7 @@ export default function KelPage({
         {screen === "home" && (
           <p className="text-[13px] leading-relaxed text-fg-3">
             출처: 님블뉴런 이스포츠 팀 제공 경기 기록,{" "}
-            <a className="decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={DAKGG}>
+            <a className="whitespace-nowrap decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={DAKGG}>
               dak.gg e스포츠 경기 기록
             </a>
             , bori.wiki 대회 결과, 2026 KEL 경기 규정 10월 12일 시행판

@@ -1124,9 +1124,12 @@
     .kel-table .pin:has(+ .pin) {
       box-shadow: none;
     }
-    /* 고정 칸 글자가 오른쪽 구분선에 닿지 않게 */
+    /* 고정 칸 양옆 글자가 구분선에 닿지 않게 */
     .kel-table .pin:not(:has(+ .pin)) {
       padding-right: 8px;
+    }
+    .kel-table .pin + :not(.pin) {
+      padding-left: 8px;
     }
   }
   .kel-heat td.h {
@@ -1312,6 +1315,10 @@
 .scroll-fade:focus-visible {
   mask-image: none;
   outline-offset: -2px;
+}
+/* 열 경계에 맞춘 표는 흐림이 마지막 열 글자를 가리므로 끔 */
+.kel-scroll[data-fit] {
+  mask-image: none;
 }
 /* KEL 표는 고정 칸이 안쪽 테두리 위에 그려져서 바깥에 그림 */
 .kel-scroll:focus-visible {

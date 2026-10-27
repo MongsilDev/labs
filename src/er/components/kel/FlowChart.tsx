@@ -81,7 +81,12 @@ export default function FlowChart({ cum, order, focus, holders }: { cum: Record<
           <path key={k} d={path(k)} fill="none" stroke={color(k)} strokeWidth={toneOf(k) >= 0 ? 2.5 : 2} strokeLinejoin="round" strokeLinecap="round" />
         ))}
         {holders.flatMap((list, r) =>
-          list.filter((k) => drawn.includes(k)).map((k) => <circle key={`${k}-${r}`} cx={x(r + 1)} cy={y(cum[k][r + 1])} r={4.5} fill="var(--surface)" stroke={color(k)} strokeWidth={2} />),
+          // 같은 라운드에서 거의 같은 높이인 고리는 먼저 그리는 쪽을 크게 해 겹쳐도 둘 다 보이게 함
+          list.filter((k) => drawn.includes(k)).map((k, i, ks) => {
+            const cy = y(cum[k][r + 1]);
+            const inner = ks.slice(i + 1).filter((o) => Math.abs(y(cum[o][r + 1]) - cy) < 9).length;
+            return <circle key={`${k}-${r}`} cx={x(r + 1)} cy={cy} r={4.5 + inner * 3.5} fill="var(--surface)" stroke={color(k)} strokeWidth={2} />;
+          }),
         )}
         {ends.map((e) => (Math.abs(e.at - e.y) > 1 ? <line key={e.k} x1={x(rounds) + 3} x2={x(rounds) + 10} y1={e.y} y2={e.at} stroke="var(--line-strong)" /> : null))}
       </svg>

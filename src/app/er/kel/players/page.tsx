@@ -11,7 +11,7 @@ import { DAK_METRICS, gameLabel, killStats, MIN_GAMES, playerStats, rankOf, rank
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("players");
 
-type Tile = [Metric, string, (p: PlayerStat) => string, ((p: PlayerStat) => string)?];
+type Tile = [Metric, string, (p: PlayerStat) => string];
 
 const GROUPS: [string, Tile[]][] = [
   [
@@ -32,9 +32,11 @@ const GROUPS: [string, Tile[]][] = [
       ["cc", "게임당 군중제어 시간", (p) => `${p.cc.toFixed(1)}초`],
       ["heal", "게임당 팀원 회복", (p) => int(p.heal)],
       ["vision", "게임당 시야 점수", (p) => p.vision.toFixed(1)],
-      ["camera", "게임당 망원 카메라", (p) => `${p.camera.toFixed(1)}개`, (p) => `파괴 ${p.cameraOff.toFixed(1)}개`],
+      ["camera", "게임당 망원 카메라", (p) => `${p.camera.toFixed(1)}개`],
       ["revive", "게임당 동료 부활", (p) => `${p.revive.toFixed(2)}번`],
       ["time", "평균 생존 시간", (p) => duration(p.time)],
+      // 제목이 두 줄이 되는 폭에서도 같은 줄에 다른 칸이 없게 마지막에 둠
+      ["cameraOff", "게임당 망원 카메라 파괴", (p) => `${p.cameraOff.toFixed(1)}개`],
     ],
   ],
 ];
@@ -117,7 +119,7 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
                   <span className="text-fg-3">{label}</span>
                   <b className="text-right tabular-nums">{value(r)}</b>
                   <Char name={r.character} />
-                  <span className="text-right text-[13px] text-fg-3 @max-[480px]:col-span-2 @max-[480px]:col-start-2 @max-[480px]:text-left">{gameLabel(r)}</span>
+                  <span className="text-right text-[13px] text-fg-3 @max-[480px]:col-start-3 @max-[480px]:text-left">{gameLabel(r)}</span>
                 </li>
               )
             );
@@ -137,7 +139,7 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
               {title}
             </h3>
             <dl className="mt-2 grid grid-cols-3 gap-3 max-[560px]:grid-cols-2 max-[420px]:gap-2">
-              {tiles.map(([m, label, value, sub]) => {
+              {tiles.map(([m, label, value]) => {
                 const rank = rankOf(all, p, m);
                 return (
                   <div key={m} className="rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
@@ -148,7 +150,6 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
                         {rankPool(all, m)}명 중 {rank}위
                       </dd>
                     )}
-                    {sub && <dd className="mt-0.5 text-[13px] text-fg-3">{sub(p)}</dd>}
                   </div>
                 );
               })}

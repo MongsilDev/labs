@@ -106,7 +106,7 @@ export default async function Page() {
             <h2 id="deaths" className="text-[17px] font-extrabold">
               사망이 많았던 지역
             </h2>
-            <p className="mt-1 text-[13px] text-fg-3">굵은 숫자는 사망 수이고, 오른쪽 숫자는 그 지역에서 시작한 횟수입니다.</p>
+            <p className="mt-1 text-[13px] text-fg-3">굵은 숫자는 사망 수입니다.</p>
             <ul className="mt-4 grid grid-cols-[88px_minmax(0,1fr)_auto_auto] gap-x-3 gap-y-2.5 text-[14px]">
               {reg.deaths.map((x) => (
                 <li key={x.area} className="col-span-4 grid grid-cols-subgrid items-center">

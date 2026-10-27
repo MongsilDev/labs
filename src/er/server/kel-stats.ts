@@ -147,12 +147,12 @@ export const playerStats = memo((data): PlayerStat[] => {
   });
 });
 
-export type Metric = "kpr" | "kills" | "deaths" | "top3" | "avgPlace" | "damage" | "damageShare" | "cc" | "heal" | "vision" | "camera" | "revive" | "time";
+export type Metric = "kpr" | "kills" | "deaths" | "top3" | "avgPlace" | "damage" | "damageShare" | "cc" | "heal" | "vision" | "camera" | "cameraOff" | "revive" | "time";
 
 // 평균 순위와 데스는 작을수록 위
 const LOWER = new Set<Metric>(["avgPlace", "deaths"]);
 // 경기 상세가 하나도 없는 선수는 이 지표의 순위에서 뺌
-export const DAK_METRICS = new Set<Metric>(["cc", "heal", "vision", "camera", "revive", "time"]);
+export const DAK_METRICS = new Set<Metric>(["cc", "heal", "vision", "camera", "cameraOff", "revive", "time"]);
 
 const comparable = (x: PlayerStat, metric: Metric) => x.games >= MIN_GAMES && (!DAK_METRICS.has(metric) || x.dakGames > 0);
 

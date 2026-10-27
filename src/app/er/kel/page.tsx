@@ -17,7 +17,7 @@ const day = (date: string) => {
 
 function Event({ date, name, teams, slot, text }: { date: string; name: string; teams: KelTeam[]; slot?: string; text: string }) {
   return (
-    <section className="panel grid content-start gap-3 p-5 max-[760px]:p-4" aria-label={name}>
+    <section className="panel flex flex-col gap-3 p-5 max-[760px]:p-4" aria-label={name}>
       <div>
         <p className="text-[13px] text-fg-3">{date}</p>
         <h2 className="text-[22px] font-extrabold tracking-[-0.3px]">{name}</h2>
@@ -30,7 +30,7 @@ function Event({ date, name, teams, slot, text }: { date: string; name: string; 
         ))}
         {slot && <li className="col-span-2 flex min-h-16 items-center rounded-md border border-dashed border-line-strong px-3 text-fg-3">{slot}</li>}
       </ul>
-      <p className="text-[14px] text-fg-2">
+      <p className="mt-auto text-[14px] text-fg-2">
         <Lines text={text} />
       </p>
     </section>

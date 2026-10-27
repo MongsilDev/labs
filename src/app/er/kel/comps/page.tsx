@@ -28,10 +28,10 @@ export default async function Page() {
           <table className="kel-table">
             <thead>
               <tr>
-                <th className="l">조합</th>
-                <th className="w-px">횟수</th>
-                <th className="w-px">평균 순위</th>
-                <th className="w-px">1위 횟수</th>
+                <th className="l min-[761px]:w-[300px]">조합</th>
+                <th className="w-px min-[761px]:w-[10%]">횟수</th>
+                <th className="w-px min-[761px]:w-[10%]">평균 순위</th>
+                <th className="w-px min-[761px]:w-[10%]">1위 횟수</th>
                 <th className="l wide">많이 고른 팀</th>
               </tr>
             </thead>

@@ -52,10 +52,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         href={(k) => (k === list.at(-1)!.event ? KEL_SCREENS.finals.path : `${KEL_SCREENS.finals.path}?f=${k}`)}
       />
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="round-scores">
-        <h2 id="round-scores" className="text-[17px] font-extrabold">
+        {/* 페이지 제목과 같은 말이라 화면에서는 숨김 */}
+        <h2 id="round-scores" className="sr-only">
           라운드별 점수
         </h2>
-        <p className="mt-1 text-[13px] text-fg-3">
+        <p className="text-[13px] text-fg-3">
           굵은 숫자는 그 라운드에서 1위를 차지한 팀의 점수입니다.
           <br />
           숫자 앞 고리는 그 팀이 체크포인트를 가진 라운드를 표시합니다.

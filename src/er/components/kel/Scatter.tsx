@@ -13,6 +13,7 @@ type Point = { key: string; x: number; y: number; name: string; team?: string; t
 type Box = { x: number; y: number; w: number; h: number };
 
 const label = (v: number, format: "pct" | "num") => (format === "pct" ? pct(v, 0) : fmt(v));
+const gap = (b: Box, [px, py]: [number, number]) => Math.hypot(Math.max(b.x - px, 0, px - b.x - b.w), Math.max(b.y - py, 0, py - b.y - b.h));
 const area = (a: Box, b: Box) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
 const textWidth = (s: string, size: number) => [...s].reduce((n, c) => n + (c.charCodeAt(0) > 0x2e80 ? size : size * 0.62), 0);
 
@@ -26,6 +27,10 @@ const SPOTS = [
   [-6, -13, "end"],
   [6, 13, "start"],
   [-6, 13, "end"],
+  [8, -9, "start"],
+  [-8, -9, "end"],
+  [8, 9, "start"],
+  [-8, 9, "end"],
 ] as const;
 const SHIFT = { start: 0, middle: 0.5, end: 1 } as const;
 
@@ -113,12 +118,27 @@ export default function Scatter({
     const [cx, cy] = at.get(p.key)!;
     const tw = textWidth(p.name, 11);
     const options = SPOTS.map(([dx, dy, anchor]) => ({ box: { x: cx + dx - tw * SHIFT[anchor], y: cy + dy - 7, w: tw, h: 14 }, tx: cx + dx, ty: cy + dy, anchor }));
-    // 글자 기준점이 다른 강조 점에 더 가까우면 그 점의 이름표로 읽힘
-    const near = (o: (typeof options)[number]) => named.filter((q) => q !== p && Math.hypot(at.get(q.key)![0] - o.tx, at.get(q.key)![1] - o.ty) < Math.hypot(cx - o.tx, cy - o.ty)).length * 400;
-    const cost = (b: Box) => placed.reduce((n, o) => n + area(b, o) * 3, 0) + dots.reduce((n, d) => n + area(b, d.box) * d.weight, 0) + (b.w * b.h - area(b, frame)) * 4;
+    // 이름표 가장자리나 글자 기준점이 자기 점보다 다른 점에 더 가까우면 그 점의 이름표로 읽힘
+    const near = (o: (typeof options)[number]) => {
+      const mid = (q: [number, number]) => Math.hypot(o.tx - q[0], o.ty - q[1]);
+      const own = gap(o.box, [cx, cy]);
+      const ownMid = mid([cx, cy]);
+      return points.reduce((n, q) => {
+        const c = at.get(q.key)!;
+        return q !== p && (gap(o.box, c) < own || mid(c) < ownMid) ? Math.max(n, q.tone === undefined ? 1500 : 3000) : n;
+      }, 0);
+    };
+    // 이름표끼리 겹치거나 그래프 밖으로 나가는 자리는 다른 비용보다 크게 피함
+    const cost = (b: Box) => placed.reduce((n, o) => n + area(b, o) * 100, 0) + dots.reduce((n, d) => n + area(b, d.box) * d.weight, 0) + (b.w * b.h - area(b, frame)) * 20;
     const best = options.map((o) => ({ ...o, cost: cost(o.box) + near(o) })).reduce((a, o) => (o.cost < a.cost ? o : a));
     placed.push(best.box);
-    return { key: p.key, name: p.name, ...best };
+    // 점이 몰린 곳에서도 어느 점의 이름표인지 보이게 점 가장자리와 이름표를 선으로 이음
+    const b = best.box;
+    const ex = Math.min(Math.max(cx, b.x), b.x + b.w);
+    const ey = Math.min(Math.max(cy, b.y), b.y + b.h);
+    const d = Math.hypot(ex - cx, ey - cy);
+    const link = d > 8 ? { x1: cx + ((ex - cx) / d) * 6, y1: cy + ((ey - cy) / d) * 6, x2: ex, y2: ey } : null;
+    return { key: p.key, name: p.name, link, ...best };
   });
 
   return (
@@ -173,6 +193,7 @@ export default function Scatter({
           );
         })}
         {/* 이름표가 격자선과 다른 점 위에 놓여도 읽히게 바탕을 깔고 점보다 나중에 그림 */}
+        {tags.map((t) => t.link && <line key={`ln-${t.key}`} {...t.link} stroke="var(--text-3)" strokeWidth={1} pointerEvents="none" />)}
         {tags.map((t) => (
           <rect key={`bg-${t.key}`} x={t.box.x - 2} y={t.box.y} width={t.box.w + 4} height={t.box.h} rx={3} fill="var(--surface)" fillOpacity={0.85} pointerEvents="none" />
         ))}
