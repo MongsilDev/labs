@@ -26,7 +26,8 @@ export default function FlowChart({ cum, order, focus, holders }: { cum: Record<
   const path = (k: string) => cum[k].map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
   // 강조한 선은 회색 선 위에, 우승 팀 선이 맨 위
   const layer = (k: string) => (toneOf(k) < 0 ? -99 : -toneOf(k));
-  const drawn = [...teams].sort((a, b) => layer(a) - layer(b));
+  // 좁은 화면은 이름표가 없어 회색 선을 빼고 범례에 있는 선만 그림
+  const drawn = (labeled ? [...teams] : teams.filter((k) => toneOf(k) >= 0)).sort((a, b) => layer(a) - layer(b));
   const color = (k: string) => (toneOf(k) >= 0 ? TONES[toneOf(k)] : "var(--kel-0)");
 
   // 끝 이름표가 겹치면 18px씩 띄우고 지시선으로 잇기

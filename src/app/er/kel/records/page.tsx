@@ -63,6 +63,7 @@ function Ranking({ id, title, rows, label, value }: { id: string; title: string;
               <th>팀 순위</th>
               <th className="wide">킬</th>
               <th>{label}</th>
+              <th className="w-full max-[760px]:hidden" aria-hidden="true" />
             </tr>
           </thead>
           <tbody>
@@ -82,6 +83,7 @@ function Ranking({ id, title, rows, label, value }: { id: string; title: string;
                 <td>{r.placement}위</td>
                 <td className="wide">{r.kills}</td>
                 <td className="font-bold">{value(r)}</td>
+                <td className="max-[760px]:hidden" aria-hidden="true" />
               </tr>
             ))}
           </tbody>
@@ -100,16 +102,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   const low = view === "low" ? lows(data) : null;
 
   return (
-    <KelPage user={user} owner={owner} screen="records">
+    <KelPage user={user} owner={owner} screen="records" notes={low ? "같은 값은 같은 순위로 묶고, 같은 순위 안에서는 경기가 열린 순서대로 표시했습니다." : undefined}>
       <KelTabs screen="records" param="view" label="보기" items={VIEWS} current={view} />
       {view === "season" && (
         <>
-          <section className="grid grid-cols-4 gap-3 max-[1080px]:grid-cols-2" aria-label="한 게임 최고 기록">
+          <section className="grid grid-cols-5 gap-3 max-[1280px]:grid-cols-2" aria-label="한 게임 최고 기록">
             <Bests rec={rec} keys={["kills", "damage", "taken", "lowTeamDamage", "cc", "heal", "camera", "vision"]} href={(r) => playerPath(r.player)} />
-            <Best label="팀 최다 킬" value={rec.teamKills.kills} unit="킬" className="col-span-2 max-[1080px]:col-span-1">
+            <Best label="팀 최다 킬" value={rec.teamKills.kills} unit="킬">
               <TeamWho g={rec.teamKills} />
             </Best>
-            <Best label="팀 최고 게임 점수" value={fmt(rec.teamScore.value)} unit="점" className="col-span-2 max-[1080px]:col-span-1">
+            <Best label="팀 최고 게임 점수" value={fmt(rec.teamScore.value)} unit="점">
               {rec.teamScore.games.map((s) => (
                 <TeamWho key={`${s.gameId}-${s.team}`} g={s} detail={`순위\u00a0점수\u00a0${placementPoints(s.placement)} + 킬\u00a0점수\u00a0${fmt(s.killScore)}`} />
               ))}

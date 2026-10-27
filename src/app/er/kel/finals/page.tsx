@@ -40,7 +40,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
       owner={owner}
       screen="finals"
       notes={[
-        state.rows.some((r) => r.penalty > 0) && "감점은 bori.wiki 결과 표 점수와 경기 기록 점수의 차이입니다.",
+        state.rows.some((r) => r.penalty > 0) && "감점 열은 경기 기록으로 계산한 점수에서 bori.wiki 결과 표의 점수를 뺀 값입니다.",
         f.weather.some(Boolean) && "라운드 번호 아래 글자는 그 라운드의 메인 날씨입니다.",
         NOTES[f.event],
       ]}
@@ -51,6 +51,64 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         current={f.event}
         href={(k) => (k === list.at(-1)!.event ? KEL_SCREENS.finals.path : `${KEL_SCREENS.finals.path}?f=${k}`)}
       />
+      <section className="panel p-5 max-[760px]:p-4" aria-labelledby="round-scores">
+        <h2 id="round-scores" className="text-[17px] font-extrabold">
+          라운드별 점수
+        </h2>
+        <p className="mt-1 text-[13px] text-fg-3">
+          굵은 숫자는 그 라운드에서 1위를 차지한 팀의 점수입니다.
+          <br />
+          숫자 앞 고리는 그 팀이 체크포인트를 가진 라운드를 표시합니다.
+        </p>
+        <KelScroll label="라운드별 점수" className="mt-3">
+          <table className="kel-table">
+            <thead>
+              <tr>
+                <th className="l pin w-10 min-w-[40px]">
+                  <span className="sr-only">순위</span>
+                </th>
+                <th className="l pin w-[240px]">팀</th>
+                <th className="narrow">합계</th>
+                <th>킬 점수</th>
+                {Array.from({ length: played }, (_, r) => (
+                  <th key={r}>
+                    {r + 1}R{f.weather[r] && <span className="block text-[12px] font-normal">{f.weather[r]}</span>}
+                  </th>
+                ))}
+                <th>감점</th>
+                <th className="wide">합계</th>
+              </tr>
+            </thead>
+            <tbody>
+              {state.rows.map((row, i) => (
+                <tr key={row.key}>
+                  <td className="l pin">
+                    <span className={champ?.key === row.key ? "rk first" : "rk"}>{i + 1}</span>
+                  </td>
+                  <td className="l pin max-w-[260px] max-[760px]:max-w-[132px]">
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <TeamName team={TEAM.get(row.key)!} />
+                      {champ?.key === row.key && <span className="cp">체크포인트 우승</span>}
+                    </span>
+                  </td>
+                  <td className="narrow font-bold">{fmt(row.total)}</td>
+                  <td className="text-fg-2">{fmt(row.killScore)}</td>
+                  {Array.from({ length: played }, (_, r) => (
+                    <td key={r} className={rounds[r]?.[row.key]?.placement === 1 ? "font-bold" : "text-fg-2"}>
+                      <span className="inline-flex items-center justify-end gap-1">
+                        {held(row.key, r) && <Ring color="var(--text-3)" />}
+                        {rounds[r]?.[row.key] ? fmt(gameScore(rounds[r][row.key])) : ""}
+                      </span>
+                    </td>
+                  ))}
+                  <td>{row.penalty ? <span className="text-minus">-{fmt(row.penalty)}</span> : ""}</td>
+                  <td className="wide font-bold">{fmt(row.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </KelScroll>
+      </section>
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="flow">
         <h2 id="flow" className="text-[17px] font-extrabold">
           {EVENT_NAME[f.event]} 결승 누적 점수
@@ -70,60 +128,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         <div className="mt-3">
           <FlowChart key={f.event} cum={cum} order={order} focus={focus} holders={state.holders} />
         </div>
-      </section>
-      <section className="panel p-5 max-[760px]:p-4" aria-labelledby="round-scores">
-        <h2 id="round-scores" className="text-[17px] font-extrabold">
-          라운드별 점수
-        </h2>
-        <p className="mt-1 text-[13px] text-fg-3">굵은 숫자는 그 라운드에서 1위를 한 팀의 점수입니다.</p>
-        <KelScroll label="라운드별 점수" className="mt-3">
-          <table className="kel-table">
-            <thead>
-              <tr>
-                <th className="l pin w-10 min-w-[40px]">
-                  <span className="sr-only">순위</span>
-                </th>
-                <th className="l pin">팀</th>
-                <th className="narrow">합계</th>
-                {Array.from({ length: played }, (_, r) => (
-                  <th key={r}>
-                    {r + 1}R{f.weather[r] && <span className="block text-[12px] font-normal">{f.weather[r]}</span>}
-                  </th>
-                ))}
-                <th>킬 점수</th>
-                <th>감점</th>
-                <th className="wide">합계</th>
-              </tr>
-            </thead>
-            <tbody>
-              {state.rows.map((row, i) => (
-                <tr key={row.key}>
-                  <td className="l pin">
-                    <span className={champ?.key === row.key ? "rk first" : "rk"}>{i + 1}</span>
-                  </td>
-                  <td className="l pin max-w-[260px] max-[760px]:max-w-[132px]">
-                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <TeamName team={TEAM.get(row.key)!} />
-                      {champ?.key === row.key && <span className="cp">체크포인트 우승</span>}
-                    </span>
-                  </td>
-                  <td className="narrow font-bold">{fmt(row.total)}</td>
-                  {Array.from({ length: played }, (_, r) => (
-                    <td key={r} className={rounds[r]?.[row.key]?.placement === 1 ? "font-bold" : "text-fg-2"}>
-                      <span className="inline-flex items-center justify-end gap-1">
-                        {held(row.key, r) && <Ring color="var(--text-3)" />}
-                        {rounds[r]?.[row.key] ? fmt(gameScore(rounds[r][row.key])) : ""}
-                      </span>
-                    </td>
-                  ))}
-                  <td className="text-fg-2">{fmt(row.killScore)}</td>
-                  <td>{row.penalty ? <span className="text-minus">-{fmt(row.penalty)}</span> : ""}</td>
-                  <td className="wide font-bold">{fmt(row.total)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </KelScroll>
       </section>
     </KelPage>
   );

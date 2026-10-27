@@ -52,6 +52,7 @@ export default async function Page() {
                 <th className="l">처치당한 선수</th>
                 <th className="l wide">처치당한 팀</th>
                 <th>횟수</th>
+                <th className="w-full max-[760px]:hidden" aria-hidden="true" />
               </tr>
             </thead>
             <tbody>
@@ -76,6 +77,7 @@ export default async function Page() {
                     <TeamName team={TEAM.get(r.victim.team)!} size={22} />
                   </td>
                   <td className="font-bold">{r.count}번</td>
+                  <td className="max-[760px]:hidden" aria-hidden="true" />
                 </tr>
               ))}
             </tbody>
@@ -87,8 +89,9 @@ export default async function Page() {
           팀끼리 처치한 횟수
         </h2>
         <p className="mt-1 text-[14px] text-fg-2">
-          가로줄은 처치한 팀이고, 세로줄은 처치당한 팀입니다.
+          행은 처치한 팀이고, 열은 처치당한 팀입니다.
           <br />칸 위쪽 숫자는 처치한 횟수이고, 아래쪽 숫자는 두 팀이 같은 게임에 출전한 횟수입니다.
+          <br />칸 색이 진할수록 처치 횟수가 많습니다.
         </p>
         <KelScroll label="팀끼리 처치한 횟수" className="mt-3">
           <table className="kel-table kel-heat">

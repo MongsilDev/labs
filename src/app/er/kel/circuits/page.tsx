@@ -1,7 +1,8 @@
+import { Fragment } from "react";
 import BumpChart from "@/er/components/kel/BumpChart";
 import KelPage, { KelScroll } from "@/er/components/kel/KelPage";
 import { TeamName } from "@/er/components/kel/Team";
-import { KEL_EVENTS, KEL_TEAMS, SEEDS, seasonStandings } from "@/er/lib/kel";
+import { KEL_EVENTS, KEL_TEAMS, QUALIFY, SEEDS, seasonStandings } from "@/er/lib/kel";
 import { kelGate, kelMetadata } from "@/er/server/kel";
 import { top } from "@/er/server/kel-stats";
 
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("circuits");
 
 const CIRCUITS = KEL_EVENTS.filter((e) => /^c\d$/.test(e.key)).map((e) => e.name);
+const CUTS: Record<number, string> = { [SEEDS]: "여기까지 결승 직행", [QUALIFY]: "여기까지 준결승" };
 
 export default async function Page() {
   const { user, owner } = await kelGate("circuits");
@@ -16,8 +18,9 @@ export default async function Page() {
   const riser = top(KEL_TEAMS, (t) => t.circuits[0] - t.circuits[3]);
 
   return (
-    <KelPage user={user} owner={owner} screen="circuits">
+    <KelPage user={user} owner={owner} screen="circuits" lead="서킷마다 받은 순위와 서킷 포인트 합계입니다.">
       <section className="panel p-5 max-[760px]:p-4" aria-label="서킷별 순위 변화">
+        <p className="mb-3 text-[13px] text-fg-3">처음 강조한 선은 서킷 1부터 서킷 4까지 순위가 가장 많이 오른 {riser.name}입니다.</p>
         <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: [...r.team.circuits] }))} labels={CIRCUITS} initial={[riser.key]} />
       </section>
       <section className="panel p-5 max-[760px]:p-4">
@@ -35,8 +38,9 @@ export default async function Page() {
                   서킷
                 </th>
                 <th rowSpan={2} className="max-[760px]:w-12 max-[760px]:whitespace-normal">
-                  시즌 포인트
+                  서킷 포인트 합계
                 </th>
+                <th rowSpan={2} className="w-full max-[760px]:hidden" aria-hidden="true" />
               </tr>
               <tr>
                 {CIRCUITS.map((c, i) => (
@@ -48,7 +52,8 @@ export default async function Page() {
             </thead>
             <tbody>
               {season.map((r) => (
-                <tr key={r.team.key}>
+                <Fragment key={r.team.key}>
+                <tr className={CUTS[r.rank] ? "[&>td]:border-b-0" : undefined}>
                   <td className="l">
                     <span className={r.rank <= SEEDS ? "rk adv" : "rk"}>{r.rank}</span>
                   </td>
@@ -62,7 +67,16 @@ export default async function Page() {
                     </td>
                   ))}
                   <td className="font-semibold">{r.total.toLocaleString("ko-KR")}</td>
+                  <td className="max-[760px]:hidden" aria-hidden="true" />
                 </tr>
+                {CUTS[r.rank] && (
+                  <tr aria-hidden="true">
+                    <td colSpan={CIRCUITS.length + 4} className="border-t border-dashed border-t-line-strong py-0.5 text-right text-[12px] text-fg-3">
+                      {CUTS[r.rank]}
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

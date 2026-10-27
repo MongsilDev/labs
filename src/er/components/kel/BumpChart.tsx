@@ -20,7 +20,7 @@ export default function BumpChart({ rows, labels, initial }: { rows: Row[]; labe
   const [picked, setPicked] = useState(() => initial.slice(0, TONES.length).map((key, tone) => ({ key, tone })));
   const narrow = w < 560;
   const step = 26;
-  const pad = { l: narrow ? 32 : 40, r: narrow ? 144 : 176, t: 12, b: 30 };
+  const pad = { l: narrow ? 32 : 40, r: narrow ? 144 : 176, t: 32, b: 30 };
   const h = pad.t + step * (rows.length - 1) + pad.b;
   const x = (i: number) => pad.l + 8 + (i * (w - pad.l - pad.r - 16)) / (labels.length - 1);
   const y = (rank: number) => pad.t + (rank - 1) * step;
@@ -42,6 +42,9 @@ export default function BumpChart({ rows, labels, initial }: { rows: Row[]; labe
             </text>
           </g>
         ))}
+        <text x={x(last) + 12} y={14} fontSize={12} fill="var(--text-3)">
+          {labels[last]} 순위
+        </text>
         {ticksY.map((r) => (
           <text key={r} x={pad.l - 4} y={y(r)} dy="0.32em" textAnchor="end" fontSize={11} fill="var(--text-3)">
             {r}위
