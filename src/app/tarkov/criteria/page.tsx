@@ -169,7 +169,7 @@ export default function Criteria() {
         <p>비교군 계정 100명 가운데 배지마다 몇 명인지 한 칸에 한 명씩 표시합니다.</p>
         <Rates rates={rates} />
         <p className="doc-note">
-          {day.format(rates.at)} 비교군 계정 전체에 이 기준을 적용한 결과이며, 하루 한 번 다시 계산합니다.
+          이 비율은 {day.format(rates.at)} 비교군 계정 전체에 이 기준을 적용한 결과이며, 하루 한 번 다시 계산합니다.
           <br />
           {VERDICT_LABEL.none}인 계정은 빼고 셌습니다.
         </p>

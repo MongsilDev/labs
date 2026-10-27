@@ -27,7 +27,7 @@ export default async function Players({ searchParams }: { searchParams: Promise<
         <p className="sub note">
           tarkov.dev에서 한 번 이상 조회된 계정만 찾을 수 있습니다.
           <br />
-          {indexed ? `이름 목록 ${int(count)}명, ${date(indexed)} 기준.` : "이름 목록을 준비하고 있습니다."}
+          {indexed ? `이름 목록에는 ${int(count)}명이 있고, ${date(indexed)} 기준입니다.` : "이름 목록을 준비하고 있습니다."}
           <br />
           <Link className="link" href="/tarkov/criteria">
             판정 기준
