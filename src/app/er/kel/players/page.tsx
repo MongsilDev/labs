@@ -108,16 +108,16 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
           ))}
         </ul>
         <h3 className="mt-5 border-t border-line-soft pt-4 text-[13px] font-semibold text-fg-3">개인 최고 기록</h3>
-        <ul className="mt-2 grid gap-2 text-[14px]">
+        <ul className="@container mt-2 grid gap-2 text-[14px]">
           {BESTS.map(([label, row, value]) => {
             const r = row(p);
             return (
               r && (
-                <li key={label} className="grid grid-cols-[6rem_4.5rem_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5 max-[560px]:grid-cols-[6rem_4.5rem_minmax(0,1fr)]">
+                <li key={label} className="grid grid-cols-[6rem_4.5rem_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5 @max-[480px]:grid-cols-[6rem_4.5rem_minmax(0,1fr)]">
                   <span className="text-fg-3">{label}</span>
                   <b className="text-right tabular-nums">{value(r)}</b>
                   <Char name={r.character} />
-                  <span className="text-right text-[13px] text-fg-3 max-[560px]:col-span-2 max-[560px]:col-start-2 max-[560px]:text-left">{gameLabel(r)}</span>
+                  <span className="text-right text-[13px] text-fg-3 @max-[480px]:col-span-2 @max-[480px]:col-start-2 @max-[480px]:text-left">{gameLabel(r)}</span>
                 </li>
               )
             );
