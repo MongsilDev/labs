@@ -310,8 +310,8 @@ export function wicklines(data: Kel): { team: string; count: number; games: numb
     .sort((a, b) => b.count - a.count || a.games - b.games);
 }
 
-// 오프닝 위크는 결승이 없어 빠짐
-const FINAL_ORDER = [...KEL_EVENTS].reverse().map((e) => e.key);
+// 오프닝 위크는 결승이 없어 빠짐, 탭은 시간 순서
+const FINAL_ORDER = KEL_EVENTS.map((e) => e.key);
 
 // weather는 라운드별 메인 날씨, 경기 상세가 없는 라운드는 빈 문자열
 export type Final = { event: KelEvent; teams: string[]; rounds: Round[]; state: FinalState; weather: string[] };

@@ -152,7 +152,7 @@ describe("KEL 자료", () => {
   it("dak.gg 경기 상세로 결승 날씨, 팀 운영 기록, 시작 지역과 사망 장소를 모은다", () => {
     kelFixture(process.env.DATA_DIR!);
     const data = kelData()!;
-    const f = finals(data)[0];
+    const f = finals(data).at(-1)!;
     expect(f.weather).toHaveLength(f.rounds.length);
     expect(f.weather.every(Boolean)).toBe(true);
     const games = new Set(data.rows.map((r) => r.gameId)).size;
