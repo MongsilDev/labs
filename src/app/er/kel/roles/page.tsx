@@ -124,7 +124,7 @@ export default async function Page() {
           </h2>
           {/* 팀 순서 목록이라 팀이 두 열에 나뉘지 않는 자리에서 자름 */}
           <div className="mt-3 grid grid-cols-2 gap-x-8 max-[1080px]:grid-cols-1">
-            {[all.slice(0, half), all.slice(half)].map((part, i) => (
+            {[all.slice(0, half), all.slice(half)].filter((part) => part.length).map((part, i) => (
               <KelScroll key={i} label={`선수별 비중 ${i + 1}`}>
                 <table className={`kel-table ${i > 0 ? "max-[1080px]:[&_thead]:hidden" : ""}`}>
                   <thead>
