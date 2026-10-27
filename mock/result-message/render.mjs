@@ -72,6 +72,8 @@ const C = {
   up: "#4ade80",
   down: "#ff6b6b",
 };
+// 순위 이미지의 기준 폭. roundImage의 720보다 좁혀 휴대폰에서 글자가 크게 보이게 함. 560에서는 A안 팀 이름 칸에 여덟 글자 이름이 들어가지 않아 600으로 둠
+const W = 600;
 const ROW = 60;
 const PAD = 32;
 const HEAD = 100;
@@ -86,16 +88,17 @@ const fontFace = ["Medium", "Bold", "ExtraBold"]
   .map((w, i) => `@font-face{font-family:Pretendard;font-weight:${[500, 700, 800][i]};src:url("${pathToFileURL(join(ROOT, `assets/fonts/Pretendard-${w}.otf`))}")}`)
   .join("");
 
-// style: f3 지금 그대로, f2 0.5가 있는 열은 소수 한 자리, f1 순위 점수 열과 정수 자리 맞춤, game 한 라운드 게임 순위
-function rankHtml({ rows, metaText, style, showDelta }) {
+// style: f3 지금 그대로, f2 0.5가 있는 열은 소수 한 자리, f1 정수 자리 맞춤, game 한 라운드 게임 순위
+// placement: 순위 점수 열. A안 이미지는 f1 표기에서 이 열을 뺌
+function rankHtml({ rows, metaText, style, showDelta, placement = style !== "f3" && style !== "f2" }) {
   const f1 = style === "f1";
   const game = style === "game";
   const cols = [];
-  if (f1 || game) cols.push({ key: "placement", head: "순위 점수", w: 90, size: 26, weight: 700, color: C.text2, frac: false });
-  // F1은 머리글을 정수 자리 위에 두려고 소수 칸만큼 넓힘
+  if (placement) cols.push({ key: "placement", head: "순위 점수", w: 90, size: 26, weight: 700, color: C.text2, frac: false });
+  // F1은 정수 오른쪽에 소수 칸을 두고, 머리글은 소수 칸의 오른쪽 끝에 맞춤
   cols.push({ key: "killScore", head: "킬 점수", w: f1 ? 104 : 82, size: 26, weight: 700, color: C.text2, frac: f1 });
   cols.push({ key: "total", head: "총점", w: 116, size: 33, weight: 800, color: C.text, frac: f1 });
-  if (!game) cols.push({ key: "delta", head: showDelta ? "변동" : "", w: 52, size: 22, weight: 700 });
+  if (!game) cols.push({ key: "delta", head: showDelta ? "변동" : "", w: 48, size: 22, weight: 700 });
   const fixed = {};
   if (style === "f2") for (const c of cols) fixed[c.key] = rows.some((r) => !Number.isInteger(r[c.key]));
 
@@ -108,7 +111,7 @@ function rankHtml({ rows, metaText, style, showDelta }) {
     const base = `width:${c.w}px;font-size:${c.size}px;font-weight:${c.weight};color:${c.color}`;
     if (f1) {
       const [int, frac] = num(v).split(".");
-      return `<span class="c tnum" style="${base}"><span class="int">${int}</span>${c.frac ? `<span class="frac" data-size="${c.size}">${frac ? `.${frac}` : ""}</span>` : ""}</span>`;
+      return `<span class="c tnum" style="${base}"><span class="int">${int}</span>${c.frac ? `<span class="frac" data-size="${c.size}" data-weight="${c.weight}">${frac ? `.${frac}` : ""}</span>` : ""}</span>`;
     }
     const text = fixed[c.key] ? v.toFixed(1) : num(v);
     return `<span class="c" style="${base}"><span class="int">${text}</span></span>`;
@@ -128,7 +131,7 @@ function rankHtml({ rows, metaText, style, showDelta }) {
   return `<!doctype html><meta charset="utf-8"><style>${fontFace}
 *{box-sizing:border-box;margin:0}
 body{background:${C.bg}}
-#img{display:flex;flex-direction:column;width:720px;height:${height}px;padding:${PAD}px;background:${C.bg};color:${C.text};font-family:Pretendard}
+#img{display:flex;flex-direction:column;width:${W}px;height:${height}px;padding:${PAD}px;background:${C.bg};color:${C.text};font-family:Pretendard}
 .row{display:flex;align-items:center;height:${ROW}px;border-bottom:1px solid ${C.line}}
 .colhead{display:flex;align-items:flex-end;height:${COL_HEAD}px;padding-bottom:6px;font-size:21px;font-weight:700;color:${C.text3};border-bottom:1px solid ${C.line}}
 .c{display:flex;justify-content:flex-end;white-space:nowrap}
@@ -143,13 +146,13 @@ body{background:${C.bg}}
     <span style="font-size:24px;font-weight:500;color:${C.text2};margin-top:8px">${metaText}</span>
   </div>
   <div style="display:flex;flex-direction:column">
-    <div class="colhead"><span style="flex:1"></span>${cols.map((c) => `<span class="c" style="width:${c.w}px">${c.head}${c.frac ? `<span class="frac" data-size="${c.size}"></span>` : ""}</span>`).join("")}</div>
+    <div class="colhead"><span style="flex:1"></span>${cols.map((c) => `<span class="c" style="width:${c.w}px">${c.head}</span>`).join("")}</div>
     ${body}
   </div>
 </div>`;
 }
 
-const cumulative = (played, style = "f3") => rankHtml({ rows: standings(played), metaText: meta(played), style, showDelta: played > 1 });
+const cumulative = (played, style = "f3", placement) => rankHtml({ rows: standings(played), metaText: meta(played), style, placement, showDelta: played > 1 });
 const gameImage = (n) => rankHtml({ rows: roundGame(n), metaText: `${n}라운드 게임 순위`, style: "game", showDelta: false });
 
 // ---------- 디스코드 화면 ----------
@@ -319,7 +322,7 @@ const TIME = { 1: "오늘 오후 8:24", 2: "오늘 오후 8:51", 3: "오늘 오�
 
 function planA(played, img, open = false) {
   const options = ["누적 순위", ...Array.from({ length: played }, (_, i) => `${i + 1}라운드`)];
-  const parts = [text(md.h3(NAME), md.sub(meta(played))), gallery([img.cum[played]])];
+  const parts = [gallery([img.a[played]])];
   if (played < PLANNED) parts.push(text(...nextLines(played)));
   // 라운드마다 이전 메시지를 지우고 새로 올려 봇 메시지는 맨 아래 하나만 남음
   const uploads = Array.from({ length: played }, (_, i) => upload(i + 1, UPLOAD[i + 1]));
@@ -368,19 +371,19 @@ async function open(html, name, viewport, scale = 1) {
 }
 
 async function shotRank(html, name) {
-  const page = await open(html, name, { width: 720, height: 1200 }, 1.5);
+  const page = await open(html, name, { width: W, height: 1200 }, 1.5);
   // F1의 소수 칸은 열마다 ".5"가 들어갈 폭으로 맞춤
   const check = await page.evaluate(() => {
-    // 머리글도 같은 폭을 비워 정수 자리 위에 놓음
-    for (const size of new Set([...document.querySelectorAll(".frac")].map((f) => f.dataset.size))) {
+    for (const key of new Set([...document.querySelectorAll(".frac")].map((f) => `${f.dataset.size}/${f.dataset.weight}`))) {
+      const [size, weight] = key.split("/");
       const probe = document.createElement("span");
       probe.className = "tnum";
-      probe.style.cssText = `font-family:Pretendard;font-size:${size}px;font-weight:800;position:absolute;visibility:hidden`;
+      probe.style.cssText = `font-family:Pretendard;font-size:${size}px;font-weight:${weight};position:absolute;visibility:hidden`;
       probe.textContent = ".5";
       document.body.append(probe);
       const w = Math.ceil(probe.getBoundingClientRect().width);
       probe.remove();
-      document.querySelectorAll(`.frac[data-size="${size}"]`).forEach((f) => (f.style.width = `${w}px`));
+      document.querySelectorAll(`.frac[data-size="${size}"][data-weight="${weight}"]`).forEach((f) => (f.style.width = `${w}px`));
     }
     // 열마다 정수 자리 오른쪽 끝의 위치가 몇 가지인지 셈
     const rows = [...document.querySelectorAll(".row")];
@@ -411,7 +414,18 @@ async function shotRank(html, name) {
     const tnum = t1.getBoundingClientRect().width === t0.getBoundingClientRect().width;
     t1.remove();
     t0.remove();
-    return { edges, tnum };
+    // 팀 이름 칸에 여덟 글자 이름이 말줄임 없이 들어가는지 잼
+    const name = document.querySelector(".row .name");
+    const long = name.cloneNode();
+    long.style.cssText = "position:absolute;flex:none;overflow:visible";
+    long.textContent = "팀 이름이 긴 팀";
+    document.body.append(long);
+    const longW = long.getBoundingClientRect().width;
+    long.remove();
+    // 머리글 오른쪽 끝과 숫자 열 오른쪽 끝
+    const heads = [...document.querySelectorAll(".colhead .c")].map((c) => Math.round(c.getBoundingClientRect().right * 10) / 10);
+    const cells = [...document.querySelector(".row").querySelectorAll(".c")].map((c) => Math.round(c.getBoundingClientRect().right * 10) / 10);
+    return { edges, tnum, nameCell: name.clientWidth, longName: Math.round(longW * 10) / 10, heads, cells };
   });
   const buf = await page.locator("#img").screenshot();
   await page.close();
@@ -451,9 +465,12 @@ async function measure(page) {
       });
       const whole = visible.filter((m) => m.getBoundingClientRect().top >= view.top).length;
       let rows = 0;
+      // 화면에 그려진 이미지 폭. 두 장을 나란히 둔 C안은 칸을 채우도록 늘린 폭
+      const shown = [];
       for (const img of document.querySelectorAll("img.rank")) {
         const r = img.getBoundingClientRect();
         const s = Math.max(r.width / img.naturalWidth, r.height / img.naturalHeight);
+        shown.push(Math.round(img.naturalWidth * s * 10) / 10);
         const off = (r.height - img.naturalHeight * s) / 2;
         for (let i = 0; i < 8; i++) {
           const top = r.top + off + (PAD + HEAD + COL_HEAD + i * ROW) * 1.5 * s;
@@ -461,7 +478,7 @@ async function measure(page) {
           if (top >= Math.max(view.top, r.top) && bottom <= Math.min(view.bottom, r.bottom)) rows++;
         }
       }
-      return { messages: visible.length, whole, rows };
+      return { messages: visible.length, whole, rows, shown: [...new Set(shown)] };
     },
     { PAD, HEAD, COL_HEAD, ROW },
   );
@@ -484,11 +501,16 @@ for (const [name, style] of [["F1", "f1"], ["F2", "f2"], ["F3", "f3"]]) {
   report[name] = check;
 }
 
-// 메시지 시안에 넣는 이미지는 지금 표기(F3)로 그림
-const img = { cum: {}, game: {} };
+// B, C안 이미지는 지금 표기(F3), A안 이미지는 순위 점수 열을 뺀 F1 표기로 그림
+const img = { cum: {}, game: {}, a: {} };
 for (let n = 1; n <= PLANNED; n++) {
   img.cum[n] = await box((await shotRank(cumulative(n), "")).buf);
-  img.game[n] = await box((await shotRank(gameImage(n), "")).buf);
+  const a = await shotRank(cumulative(n, "f1", false), "");
+  img.a[n] = await box(a.buf);
+  report[`A-image-${n}`] = a.check;
+  const g = await shotRank(gameImage(n), "");
+  img.game[n] = await box(g.buf);
+  report[`game-${n}`] = g.check;
 }
 
 // 데스크톱은 4라운드가 끝난 상태, 휴대폰은 2라운드가 끝난 상태
