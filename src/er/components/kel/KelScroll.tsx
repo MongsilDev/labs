@@ -2,6 +2,17 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 
+// 넘치는 표는 오른쪽 끝이 열 경계에 오도록 폭을 줄여 반쯤 잘린 칸이 보이지 않게 함
+function fit(el: HTMLDivElement) {
+  el.style.maxWidth = "";
+  const row = el.querySelector("tbody tr") as HTMLTableRowElement | null;
+  if (!row || el.scrollWidth <= el.clientWidth) return;
+  const pin = [...row.cells].filter((c) => getComputedStyle(c).position === "sticky").reduce((n, c) => n + c.offsetWidth, 0);
+  const edges = [...row.cells].map((c) => c.offsetLeft + c.offsetWidth).filter((x) => x > pin && x <= el.clientWidth);
+  if (edges.length) el.style.maxWidth = `${Math.max(...edges)}px`;
+  el.style.scrollPaddingInlineStart = `${pin}px`;
+}
+
 // 표를 감싼 구역과 이름이 겹치지 않게 뒤에 '표'를 붙임. 폭을 넘는 표만 키보드 초점을 받고, 초점이 있는 동안은 그대로 둠
 export default function KelScroll({ label, className = "", children }: { label: string; className?: string; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -9,8 +20,12 @@ export default function KelScroll({ label, className = "", children }: { label: 
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setScrolls(el.scrollWidth > el.clientWidth || el === document.activeElement));
+    const ro = new ResizeObserver(() => {
+      fit(el);
+      setScrolls(el.scrollWidth > el.clientWidth || el === document.activeElement);
+    });
     ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
     if (el.firstElementChild) ro.observe(el.firstElementChild);
     return () => ro.disconnect();
   }, []);

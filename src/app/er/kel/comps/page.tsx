@@ -39,7 +39,7 @@ export default async function Page() {
               {rows.map((r) => (
                 <tr key={r.characters.join("|")}>
                   <td className="l">
-                    <span className="flex flex-wrap gap-x-3 gap-y-1">
+                    <span className="flex flex-wrap gap-x-3 gap-y-1 max-[760px]:grid">
                       {r.characters.map((c) => (
                         <Char key={c} name={c} />
                       ))}
@@ -51,9 +51,9 @@ export default async function Page() {
                       </span>
                     </span>
                   </td>
-                  <td>{r.count}</td>
-                  <td className="font-bold">{r.avgPlace.toFixed(2)}위</td>
-                  <td>{r.wins}</td>
+                  <td className="max-[760px]:align-top">{r.count}</td>
+                  <td className="font-bold max-[760px]:align-top">{r.avgPlace.toFixed(2)}위</td>
+                  <td className="max-[760px]:align-top">{r.wins}</td>
                   <td className="l wide">
                     <span className="flex gap-3">
                       {r.teams.filter(([, n], i) => i < 3 || n === r.teams[2][1]).map(([k, n]) => (

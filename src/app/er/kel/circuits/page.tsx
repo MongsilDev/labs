@@ -33,13 +33,14 @@ export default async function Page() {
                 <th colSpan={CIRCUITS.length} className="text-center">
                   서킷
                 </th>
-                <th rowSpan={2} className="max-[760px]:w-12 max-[760px]:whitespace-normal">
-                  서킷 포인트 합계
+                <th rowSpan={2} className="min-[761px]:w-[16%]">
+                  <span className="wide">서킷 포인트 합계</span>
+                  <span className="narrow">포인트</span>
                 </th>
               </tr>
               <tr>
                 {CIRCUITS.map((c, i) => (
-                  <th key={c} aria-label={c}>
+                  <th key={c} aria-label={c} className="min-[761px]:w-[16%]">
                     {i + 1}
                   </th>
                 ))}
@@ -77,7 +78,7 @@ export default async function Page() {
         </KelScroll>
       </section>
       <section className="panel p-5 max-[760px]:p-4" aria-label="서킷별 순위 변화">
-        <p className="mb-3 text-[13px] text-fg-3">처음 강조한 선은 서킷 1부터 서킷 4까지 순위가 가장 많이 오른 {riser.name}입니다.</p>
+        <p className="mb-3 text-[13px] text-fg-3">서킷 1부터 서킷 4까지 순위가 가장 많이 오른 {riser.name}의 선을 강조했습니다.</p>
         <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: [...r.team.circuits] }))} labels={CIRCUITS} initial={[riser.key]} />
       </section>
     </KelPage>

@@ -69,18 +69,23 @@ export default async function Page() {
             <Bests rec={rec} keys={["kills", "damage", "cc", "heal", "camera"]} prefix="한 게임 " href={() => KEL_SCREENS.records.path} />
             {wick && wickTeam && (
               <Best label="위클라인 최다 처치" value={wick.count} unit="게임" href={`${KEL_SCREENS.teams.path}?v=ops`}>
-                <div className="mt-1 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
+                {/* 카드가 좁아 전체 이름이 잘리는 폭에서는 제목과 아래 줄 모두 지역명으로 */}
+                <div className="@container mt-1 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
                   <div className="flex items-center gap-2">
                     <Logo team={wickTeam} size={34} />
                     <p className="grid min-w-0 leading-snug">
-                      <span className="truncate text-[15px] font-bold">{wickTeam.name}</span>
+                      <span className="truncate text-[15px] font-bold">
+                        <span className="@max-[136px]:hidden">{wickTeam.name}</span>
+                        <span className="hidden @max-[136px]:inline">{wickTeam.short}</span>
+                      </span>
                       <span className="truncate text-[13px] text-fg-3">{wick.games}게임 가운데</span>
                     </p>
                   </div>
                   <p className="text-[13px] leading-relaxed text-fg-3">
                     {wicks.slice(1, 3).map((w) => (
                       <span key={w.team} className="block truncate">
-                        {1 + wicks.filter((x) => x.count > w.count).length}위 {TEAM.get(w.team)!.short} {w.count}게임
+                        {1 + wicks.filter((x) => x.count > w.count).length}위 <span className="@max-[136px]:hidden">{TEAM.get(w.team)!.name}</span>
+                        <span className="hidden @max-[136px]:inline">{TEAM.get(w.team)!.short}</span> {w.count}게임
                       </span>
                     ))}
                   </p>

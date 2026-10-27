@@ -19,7 +19,7 @@ const FLOW = [
 
 const PENALTIES: [string, string][] = [
   ["경기 시작 시간까지 팀원이 음성 채팅에 접속하지 않거나 자리에 앉지 않음", "5점"],
-  ["경기 시작 시간까지 게임 로비에 들어오지 않음", "3점"],
+  ["경기 시작 시간까지 게임 로비에 들어오지\u00a0않음", "3점"],
   ["실험체를 고르지 않아 로비로 돌아감", "5점"],
   ["교체 마감 뒤 선수 교체", "3점"],
   ["금지구역, 야생 동물처럼 처치한 선수가 없는 사망", "1점"],
@@ -175,12 +175,33 @@ export default async function Page() {
         </ol>
       </section>
 
-      <div className="grid grid-cols-2 gap-4 max-[1280px]:grid-cols-1">
+      <div className="grid gap-4">
         <section className="panel p-5 max-[760px]:p-4" aria-labelledby="circuit-points">
           <h2 id="circuit-points" className="text-[17px] font-extrabold">
             서킷 포인트
           </h2>
-          <KelScroll label="서킷 포인트" className="mt-2">
+          {/* 휴대폰은 순위를 행으로 세움 */}
+          <table className="kel-table mt-2 min-[761px]:hidden">
+            <thead>
+              <tr>
+                <th className="l">순위</th>
+                {POINT_ROWS.map(([name]) => (
+                  <th key={name}>{name}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ranks.map((label, i) => (
+                <tr key={label}>
+                  <td className="l">{label}</td>
+                  {POINT_ROWS.map(([name, points]) => (
+                    <td key={name}>{(points[i] ?? 0).toLocaleString("ko-KR")}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <KelScroll label="서킷 포인트" className="mt-2 max-[760px]:hidden">
             <table className="kel-table">
               <thead>
                 <tr>
@@ -210,7 +231,7 @@ export default async function Page() {
             게임 점수
           </h2>
           <p className="mt-1 text-[14px] text-fg-2">게임 점수는 순위 점수에 킬 점수를 더한 값입니다.</p>
-          <ol className="mt-3 grid grid-cols-4 gap-1.5" aria-label="게임 순위별 순위 점수">
+          <ol className="mt-3 grid grid-cols-8 gap-1.5 max-[760px]:grid-cols-4" aria-label="게임 순위별 순위 점수">
             {PLACEMENT_POINTS.map((p, i) => (
               <li key={i} className="rounded-md bg-field px-3 py-2">
                 <span className="block text-[12px] text-fg-3">{i + 1}위</span>

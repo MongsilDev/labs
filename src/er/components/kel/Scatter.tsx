@@ -37,6 +37,34 @@ function domain(values: number[], extra?: number): [number, number] {
   return [lo - m, hi + m];
 }
 
+// 로고 점은 서로 겹치면 가려지므로 겹친 만큼만 밀어냄, 다른 점은 제자리
+function spread(points: Point[], x: (v: number) => number, y: (v: number) => number, gap: number, pad: { l: number; r: number; t: number; b: number }, w: number, h: number) {
+  const at = new Map(points.map((p) => [p.key, [x(p.x), y(p.y)] as [number, number]]));
+  const logos = points.filter((p) => p.team).map((p) => at.get(p.key)!);
+  for (let n = 0; n < 50; n++) {
+    let moved = false;
+    for (let i = 0; i < logos.length; i++)
+      for (let j = i + 1; j < logos.length; j++) {
+        const [a, b] = [logos[i], logos[j]];
+        const ox = gap - Math.abs(b[0] - a[0]);
+        const oy = gap - Math.abs(b[1] - a[1]);
+        if (ox <= 0 || oy <= 0) continue;
+        moved = true;
+        const k = ox < oy ? 0 : 1;
+        const d = (k ? oy : ox) / 2;
+        const s = b[k] > a[k] || (b[k] === a[k] && j > i) ? 1 : -1;
+        a[k] -= s * d;
+        b[k] += s * d;
+      }
+    for (const c of logos) {
+      c[0] = Math.min(Math.max(c[0], pad.l), w - pad.r);
+      c[1] = Math.min(Math.max(c[1], pad.t), h - pad.b);
+    }
+    if (!moved) break;
+  }
+  return at;
+}
+
 export default function Scatter({
   points,
   xLabel,
@@ -73,11 +101,12 @@ export default function Scatter({
   const y = (v: number) => pad.t + (1 - (v - y0) / (y1 - y0)) * (h - pad.t - pad.b);
   const size = narrow ? 22 : 28;
   const shown = points.find((p) => p.key === hover);
+  const at = spread(points, x, y, size + 2, pad, w, h);
   const ordered = [...points].sort((a, b) => (a.tone ?? -1) - (b.tone ?? -1));
 
   // 강조한 점의 이름표는 오른쪽, 왼쪽, 위, 아래, 대각선 네 곳 가운데 겹침이 가장 적은 자리에 둠
   const named = points.filter((p) => p.tone !== undefined);
-  const dots = named.length ? points.map((p) => ({ box: { x: x(p.x) - 6, y: y(p.y) - 6, w: 12, h: 12 }, weight: p.tone === undefined ? 1 : 3 })) : [];
+  const dots = named.length ? points.map((p) => ({ box: { x: x(p.x) - 6, y: y(p.y) - 6, w: 12, h: 12 }, weight: p.tone === undefined ? 2 : 4 })) : [];
   const frame: Box = { x: pad.l, y: pad.t, w: w - pad.l - pad.r, h: h - pad.t - pad.b };
   const placed: Box[] = [];
   const tags = named.map((p) => {
@@ -128,8 +157,7 @@ export default function Scatter({
           {xLabel}
         </text>
         {ordered.map((p) => {
-          const cx = x(p.x);
-          const cy = y(p.y);
+          const [cx, cy] = at.get(p.key)!;
           const team = p.team ? TEAM.get(p.team) : undefined;
           return (
             <g key={p.key} data-point onPointerEnter={() => setHover(p.key)} onPointerLeave={(e) => e.pointerType !== "touch" && setHover(null)}>
@@ -145,7 +173,10 @@ export default function Scatter({
             </g>
           );
         })}
-        {/* 이름표가 다른 점 위에 놓여도 읽히게 바탕색 테두리를 두르고 점보다 나중에 그림 */}
+        {/* 이름표가 격자선과 다른 점 위에 놓여도 읽히게 바탕을 깔고 점보다 나중에 그림 */}
+        {tags.map((t) => (
+          <rect key={`bg-${t.key}`} x={t.box.x - 2} y={t.box.y} width={t.box.w + 4} height={t.box.h} rx={3} fill="var(--surface)" fillOpacity={0.85} pointerEvents="none" />
+        ))}
         {tags.map((t) => (
           <text
             key={t.key}
@@ -165,7 +196,7 @@ export default function Scatter({
         ))}
       </svg>
       {shown && (
-        <div className="kel-tip" style={{ ...tipSide(x(shown.x), w, 16), top: Math.max(0, y(shown.y) - 12) }} role="status">
+        <div className="kel-tip" style={{ ...tipSide(at.get(shown.key)![0], w, 16), top: Math.max(0, at.get(shown.key)![1] - 12) }} role="status">
           <b className="block text-[13px]">{shown.name}</b>
           {shown.info.map((t) => (
             <span key={t} className="block text-fg-2">

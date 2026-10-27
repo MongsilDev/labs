@@ -1081,6 +1081,13 @@
   .kel-table td .inline-flex {
     vertical-align: top;
   }
+  /* 가로 스크롤은 열 경계에서 멈춤, 고정 칸 폭은 KelScroll이 scroll-padding으로 줌 */
+  .kel-scroll {
+    scroll-snap-type: x proximity;
+  }
+  .kel-scroll td:not(.pin) {
+    scroll-snap-align: start;
+  }
   .kel-table tbody tr:last-child td {
     border-bottom: 0;
   }
@@ -1116,6 +1123,10 @@
     }
     .kel-table .pin:has(+ .pin) {
       box-shadow: none;
+    }
+    /* 고정 칸 글자가 오른쪽 구분선에 닿지 않게 */
+    .kel-table .pin:not(:has(+ .pin)) {
+      padding-right: 8px;
     }
   }
   .kel-heat td.h {

@@ -14,7 +14,7 @@ export function Logo({ team, size = 24, label = false, className = "" }: { team:
 
 export function TeamName({ team, size = 24 }: { team: KelTeam; size?: number }) {
   return (
-    <span className="inline-flex min-w-0 items-center gap-2">
+    <span className="inline-flex min-w-0 items-center gap-2 max-[760px]:gap-1.5">
       <Logo team={team} size={size} />
       <a className="truncate decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={wikiUrl(team.wiki)}>
         {team.name}

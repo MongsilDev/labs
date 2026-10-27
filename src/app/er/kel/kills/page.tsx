@@ -89,7 +89,7 @@ export default async function Page() {
         <p className="mt-1 text-[14px] text-fg-2">
           행은 처치한 팀이고, 열은 처치당한 팀입니다.
           <br />칸 위쪽 숫자는 처치한 횟수이고, 아래쪽 숫자는 두 팀이 같은 게임에 출전한 횟수입니다.
-          <br />칸 색이 진할수록 처치 횟수가 많습니다.
+          <br />칸 색이 바탕색과 대비가 클수록 처치 횟수가 많습니다.
         </p>
         <KelScroll label="팀끼리 처치한 횟수" className="mt-3">
           <table className="kel-table kel-heat">

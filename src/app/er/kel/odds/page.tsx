@@ -63,7 +63,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
       notes={[
         "확률은 남은 경기에서 각 팀이 오를 수 있는 순위를 모두 같은 확률로 얻는다고 보고 계산했습니다.",
         "표의 -는 남은 경기 결과와 관계없이 일어날 수 없는 경우입니다.",
-        "포인트 열은 그 단계까지 확보한 서킷 포인트이고, 진행 중인 서킷의 포인트는 팀이 진출한 단계에서 받을 수 있는 가장 낮은 포인트로 계산했습니다.",
+        "포인트는 그 단계까지 확보한 서킷 포인트이고, 진행 중인 서킷의 포인트는 팀이 진출한 단계에서 받을 수 있는 가장 낮은 포인트로 계산했습니다.",
       ]}
     >
       <div className="grid gap-2">
@@ -144,7 +144,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
                 <p className="mt-1.5 text-[14px] text-fg-2">
                   {odds.cases.get(r.t)!.map((line) => (
                     <span key={line} className="block">
-                      {line}
+                      {line.replaceAll(" 수 ", "\u00a0수 ")}
                     </span>
                   ))}
                 </p>

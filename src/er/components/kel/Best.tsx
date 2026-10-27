@@ -43,7 +43,7 @@ function Who({ r }: { r: KelRow }) {
 export function Best({ label, value, unit, href, r, className = "", children }: { label: string; value: React.ReactNode; unit?: string; href?: string; r?: KelRow; className?: string; children?: React.ReactNode }) {
   const body = (
     <>
-      <p className="text-[13px] text-fg-3 max-[760px]:min-h-[2lh]">{label}</p>
+      <p className="text-[13px] text-fg-3">{label}</p>
       <p className="text-[28px] leading-none font-extrabold tabular-nums max-[760px]:text-[24px]">
         {value}
         {unit && <span className="ml-0.5 text-[16px]">{unit}</span>}
@@ -52,7 +52,8 @@ export function Best({ label, value, unit, href, r, className = "", children }: 
       {children}
     </>
   );
-  const box = `panel grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-2 p-5 max-[760px]:p-4 ${className}`;
+  // 같은 줄 칸끼리 제목, 숫자, 아래 내용의 높이를 맞추려고 부모 격자의 행을 나눠 씀
+  const box = `panel row-span-3 grid min-w-0 grid-cols-[minmax(0,1fr)] grid-rows-subgrid gap-2 p-5 max-[760px]:p-4 ${className}`;
   return href ? (
     <Link className={`${box} no-underline hover:border-line-strong`} href={href}>
       {body}

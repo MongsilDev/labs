@@ -11,17 +11,42 @@ export const generateMetadata = () => kelMetadata("regions");
 
 const RANKS = ["1순위", "2순위", "3순위"];
 
+const area = (a: [string, number]) => (
+  <>
+    {a[0]} <span className="text-fg-3">{pct(a[1], 0)}</span>
+  </>
+);
+
+// 휴대폰은 1~3순위를 한 칸에 세 줄로 쌓음
 function Areas({ areas }: { areas: [string, number][] }) {
-  return RANKS.map((k, i) => (
-    <td key={k} className="l">
-      {areas[i] && (
-        <>
-          {areas[i][0]} <span className="text-fg-3">{pct(areas[i][1], 0)}</span>
-        </>
-      )}
-    </td>
-  ));
+  return (
+    <>
+      {RANKS.map((k, i) => (
+        <td key={k} className="l wide">
+          {areas[i] && area(areas[i])}
+        </td>
+      ))}
+      <td className="l narrow">
+        {areas.slice(0, RANKS.length).map((a) => (
+          <span key={a[0]} className="block">
+            {area(a)}
+          </span>
+        ))}
+      </td>
+    </>
+  );
 }
+
+const AreaHeads = () => (
+  <>
+    {RANKS.map((k) => (
+      <th key={k} className="l wide">
+        {k}
+      </th>
+    ))}
+    <th className="l narrow">많이 시작한 지역</th>
+  </>
+);
 
 export default async function Page() {
   const { user, owner } = await kelGate("regions");
@@ -101,12 +126,8 @@ export default async function Page() {
               <table className="kel-table">
                 <thead>
                   <tr>
-                    <th className="l pin">팀</th>
-                    {RANKS.map((k) => (
-                      <th key={k} className="l">
-                        {k}
-                      </th>
-                    ))}
+                    <th className="l pin min-[761px]:w-[220px]">팀</th>
+                    <AreaHeads />
                   </tr>
                 </thead>
                 <tbody>
@@ -130,13 +151,9 @@ export default async function Page() {
             <table className="kel-table">
               <thead>
                 <tr>
-                  <th className="l pin">선수</th>
-                  <th>게임</th>
-                  {RANKS.map((k) => (
-                    <th key={k} className="l">
-                      {k}
-                    </th>
-                  ))}
+                  <th className="l pin min-[761px]:w-[220px]">선수</th>
+                  <th className="min-[761px]:w-24">게임</th>
+                  <AreaHeads />
                 </tr>
               </thead>
               <tbody>
