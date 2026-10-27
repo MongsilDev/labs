@@ -1077,6 +1077,10 @@
   .kel-table .l {
     text-align: left;
   }
+  /* 로고나 아바타가 붙은 이름도 옆 칸 글자와 같은 높이에 */
+  .kel-table td .inline-flex {
+    vertical-align: top;
+  }
   .kel-table tbody tr:last-child td {
     border-bottom: 0;
   }

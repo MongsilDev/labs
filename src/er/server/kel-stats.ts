@@ -31,7 +31,9 @@ export function top<T>(list: T[], value: (x: T) => number, tie: (x: T) => number
 }
 
 
-export const gameLabel = (g: { event: KelEvent; stage: string; round: number }) => `${EVENT_NAME[g.event]} ${g.stage} ${g.round}R`;
+// 줄바꿈은 대회 이름과 단계 사이에서만
+const keep = (s: string) => s.replaceAll(" ", "\u00a0");
+export const gameLabel = (g: { event: KelEvent; stage: string; round: number }) => `${keep(EVENT_NAME[g.event])} ${keep(`${g.stage} ${g.round}R`)}`;
 
 // finals는 모든 대회의 결승 단계를 합친 범위
 export type StyleScope = "season" | "finals" | KelEvent;

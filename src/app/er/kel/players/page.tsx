@@ -113,11 +113,11 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
             const r = row(p);
             return (
               r && (
-                <li key={label} className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                  <span className="w-24 text-fg-3">{label}</span>
-                  <b className="tabular-nums">{value(r)}</b>
+                <li key={label} className="grid grid-cols-[6rem_4.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 max-[560px]:grid-cols-[6rem_4.5rem_minmax(0,1fr)]">
+                  <span className="text-fg-3">{label}</span>
+                  <b className="text-right tabular-nums">{value(r)}</b>
                   <Char name={r.character} />
-                  <span className="ml-auto text-[13px] text-fg-3">{gameLabel(r)}</span>
+                  <span className="text-right text-[13px] text-fg-3 max-[560px]:col-span-2 max-[560px]:col-start-2 max-[560px]:text-left">{gameLabel(r)}</span>
                 </li>
               )
             );
@@ -144,12 +144,12 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
                   <div key={m} className="rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
                     <dt className="text-[13px] text-fg-3">{label}</dt>
                     <dd className="mt-1 text-[26px] leading-tight font-extrabold max-[420px]:text-[22px]">{value(p)}</dd>
-                    {sub && <dd className="mt-0.5 text-[13px] text-fg-3">{sub(p)}</dd>}
                     {rank !== null && (
                       <dd className="mt-0.5 text-[13px] font-semibold text-accent-text">
                         {rankPool(all, m)}명 중 {rank}위
                       </dd>
                     )}
+                    {sub && <dd className="mt-0.5 text-[13px] text-fg-3">{sub(p)}</dd>}
                   </div>
                 );
               })}

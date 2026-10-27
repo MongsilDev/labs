@@ -85,8 +85,10 @@ export default function Scatter({
     const cy = y(p.y);
     const tw = textWidth(p.name, 11);
     const options = SPOTS.map(([dx, dy, anchor]) => ({ box: { x: cx + dx - tw * SHIFT[anchor], y: cy + dy - 7, w: tw, h: 14 }, tx: cx + dx, ty: cy + dy, anchor }));
+    // 글자 기준점이 다른 강조 점에 더 가까우면 그 점의 이름표로 읽힘
+    const near = (o: (typeof options)[number]) => named.filter((q) => q !== p && Math.hypot(x(q.x) - o.tx, y(q.y) - o.ty) < Math.hypot(cx - o.tx, cy - o.ty)).length * 400;
     const cost = (b: Box) => placed.reduce((n, o) => n + area(b, o) * 3, 0) + dots.reduce((n, d) => n + area(b, d.box) * d.weight, 0) + (b.w * b.h - area(b, frame)) * 4;
-    const best = options.map((o) => ({ ...o, cost: cost(o.box) })).reduce((a, o) => (o.cost < a.cost ? o : a));
+    const best = options.map((o) => ({ ...o, cost: cost(o.box) + near(o) })).reduce((a, o) => (o.cost < a.cost ? o : a));
     placed.push(best.box);
     return { key: p.key, name: p.name, ...best };
   });

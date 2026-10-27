@@ -26,9 +26,9 @@ function Top({ id, title, rows, value, per }: { id: string; title: string; rows:
             <tr>
               <th className="l">선수</th>
               <th className="l wide">많이 고른 실험체</th>
-              <th>비중</th>
+              <th className="w-[4.5rem]">비중</th>
               {per && <th className="wide">{per[0]}</th>}
-              <th>게임</th>
+              <th className="w-12">게임</th>
             </tr>
           </thead>
           <tbody>
@@ -42,7 +42,7 @@ function Top({ id, title, rows, value, per }: { id: string; title: string; rows:
                 </td>
                 <td className="font-bold">{pct(value(p))}</td>
                 {per && <td className="wide">{per[1](p)}</td>}
-                <td className="text-fg-3">{p.games}</td>
+                <td className="w-12 text-fg-3">{p.games}</td>
               </tr>
             ))}
           </tbody>
@@ -130,11 +130,11 @@ export default async function Page() {
                   <thead>
                     <tr>
                       <th className="l">선수</th>
-                      <th>가한 피해</th>
-                      <th>받은 피해</th>
-                      {support && <th className="wide">군중제어 시간</th>}
-                      {support && <th className="wide">팀원 회복</th>}
-                      <th>게임</th>
+                      <th className="w-[4.5rem]">가한 피해</th>
+                      <th className="w-[4.5rem]">받은 피해</th>
+                      {support && <th className="wide w-[6.5rem]">군중제어 시간</th>}
+                      {support && <th className="wide w-[6.5rem]">팀원 회복</th>}
+                      <th className="w-12">게임</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -143,11 +143,11 @@ export default async function Page() {
                         <td className="l max-w-[180px]">
                           <PlayerName name={p.name} team={TEAM.get(p.team)} />
                         </td>
-                        <td>{pct(p.damageShare)}</td>
-                        <td>{pct(p.takenShare)}</td>
-                        {support && <td className="wide">{pct(p.ccShare)}</td>}
-                        {support && <td className="wide">{pct(p.healShare)}</td>}
-                        <td className="text-fg-3">{p.games}</td>
+                        <td className="w-[4.5rem]">{pct(p.damageShare)}</td>
+                        <td className="w-[4.5rem]">{pct(p.takenShare)}</td>
+                        {support && <td className="wide w-[6.5rem]">{pct(p.ccShare)}</td>}
+                        {support && <td className="wide w-[6.5rem]">{pct(p.healShare)}</td>}
+                        <td className="w-12 text-fg-3">{p.games}</td>
                       </tr>
                     ))}
                   </tbody>

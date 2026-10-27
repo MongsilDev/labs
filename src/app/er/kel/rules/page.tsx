@@ -175,7 +175,7 @@ export default async function Page() {
         </ol>
       </section>
 
-      <div className="grid grid-cols-2 items-start gap-4 max-[1280px]:grid-cols-1">
+      <div className="grid grid-cols-2 gap-4 max-[1280px]:grid-cols-1">
         <section className="panel p-5 max-[760px]:p-4" aria-labelledby="circuit-points">
           <h2 id="circuit-points" className="text-[17px] font-extrabold">
             서킷 포인트

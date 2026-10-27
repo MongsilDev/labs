@@ -49,7 +49,7 @@ export default async function Page() {
         `선수별 표에는 ${MIN_GAMES}게임 이상 출전한 선수만 표시했습니다.`,
       ]}
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-5 max-[1080px]:grid-cols-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-5 max-[1080px]:grid-cols-1">
           <section className="panel p-5 max-[760px]:p-4" aria-labelledby="start-rank">
             <h2 id="start-rank" className="text-[17px] font-extrabold">
               시작 지역별 팀 순위

@@ -33,13 +33,13 @@ export default async function Page() {
                 <th colSpan={CIRCUITS.length} className="text-center">
                   서킷
                 </th>
-                <th rowSpan={2} className="text-center max-[760px]:w-12 max-[760px]:whitespace-normal">
+                <th rowSpan={2} className="max-[760px]:w-12 max-[760px]:whitespace-normal">
                   서킷 포인트 합계
                 </th>
               </tr>
               <tr>
                 {CIRCUITS.map((c, i) => (
-                  <th key={c} aria-label={c} className="text-center">
+                  <th key={c} aria-label={c}>
                     {i + 1}
                   </th>
                 ))}
@@ -56,12 +56,12 @@ export default async function Page() {
                     <TeamName team={r.team} />
                   </td>
                   {r.team.circuits.map((c, i) => (
-                    <td key={i} className={c === 1 ? "text-center font-bold" : "text-center"}>
+                    <td key={i} className={c === 1 ? "font-bold" : undefined}>
                       {c}
                       <span className="wide">위</span>
                     </td>
                   ))}
-                  <td className="text-center font-semibold">{r.total.toLocaleString("ko-KR")}</td>
+                  <td className="font-semibold">{r.total.toLocaleString("ko-KR")}</td>
                 </tr>
                 {CUTS[r.rank] && (
                   <tr aria-hidden="true">
