@@ -73,6 +73,18 @@ const TagBox = ({ t, size }: { t: Tag; size: number }) => (
 const ROW = 60;
 const COL = { rank: 54, kill: 82, total: 116, delta: 52 };
 
+// 방송 순위표처럼 소수 첫째 자리까지 쓰고 소수 부분은 작게. satori는 tabular-nums를 무시해 숫자마다 폭을 고정
+function digits(text: string, size: number, key: string) {
+  return [...text].map((c, i) => (
+    <span key={`${key}${i}`} style={{ display: "flex", justifyContent: "center", width: c === "." ? size * 0.28 : c === "-" ? size * 0.4 : size * 0.6, fontSize: size }}>{c}</span>
+  ));
+}
+
+function score(v: number, size: number) {
+  const [whole, frac] = (Math.round(v * 10) / 10).toFixed(1).split(".");
+  return [...digits(whole, size, "w"), ...digits(`.${frac}`, Math.round(size * 0.6), "f")];
+}
+
 export async function roundImage(b: Board) {
   const [medium, bold, extra] = await fonts;
   const shown = await covered;
@@ -127,8 +139,8 @@ export async function roundImage(b: Board) {
             <TagBox key={t.text} t={t} size={z(20)} />
           ))}
         </div>
-        <span style={{ ...right, width: z(COL.kill), fontSize: z(26), fontWeight: 700, color: C.text2 }}>{num(s.killScore)}</span>
-        <span style={{ ...right, width: z(COL.total), fontSize: z(33), fontWeight: 800 }}>{num(s.total)}</span>
+        <span style={{ ...right, alignItems: "baseline", width: z(COL.kill), fontSize: z(26), fontWeight: 700, color: C.text2 }}>{score(s.killScore, z(26))}</span>
+        <span style={{ ...right, alignItems: "baseline", width: z(COL.total), fontSize: z(33), fontWeight: 800 }}>{score(s.total, z(33))}</span>
         <span style={{ ...right, width: z(COL.delta), fontSize: z(22), fontWeight: 700, color: d > 0 ? C.up : C.down }}>{d > 0 ? `▲${d}` : d < 0 ? `▼${-d}` : ""}</span>
       </div>,
     );
