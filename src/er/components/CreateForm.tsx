@@ -33,7 +33,7 @@ export default function CreateForm({ loggedIn, autoCreate }: { loggedIn: boolean
       sessionStorage.removeItem(DRAFT);
       router.push(`/er/t/${code}/a?created=1`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "대회를 만들지 못했습니다.");
+      setError(e instanceof Error ? e.message : "대회를 만들지 못했습니다.\n잠시 후 다시 시도해주세요.");
       setBusy(false);
     }
   };

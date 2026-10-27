@@ -83,6 +83,7 @@ export type DiscordLinkRow = {
   channel: string;
   last: { at: number; status: RelayStatus; round: number | null; user: string } | null;
 };
+export type DiscordGuild = { id: string; name: string; channels: { id: string; name: string }[] };
 export type InviteRow = { token: string; createdAt: number; usesLeft: number };
 export type MyTournament = {
   code: string;

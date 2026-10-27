@@ -40,7 +40,7 @@ export default function OpenCode({ mine }: { mine: MyTournament[] }) {
                     <span className="chip ml-auto flex-none">{m.role === "owner" ? "개최자" : "운영자"}</span>
                   </span>
                   <span className="text-[13px] text-fg-2">
-                    {MODE_LABEL[m.mode]}, {m.groupCount > 1 ? `${m.groupCount}개 조` : m.played ? `${m.played}라운드 진행` : "시작 전"}, {m.code}
+                    {MODE_LABEL[m.mode]}, {m.groupCount > 1 ? `${m.groupCount}개 조` : m.played ? `${m.played}라운드 진행` : "경기 전"}, {m.code}
                     {now !== null && `, ${remaining(m.expiresAt, now)}`}
                   </span>
                 </Link>
@@ -57,7 +57,7 @@ export default function OpenCode({ mine }: { mine: MyTournament[] }) {
           onSubmit={(e) => {
             e.preventDefault();
             const c = code.trim().toUpperCase();
-            if (!/^[A-Z0-9]{6}$/.test(c)) return setError("대회 코드는 영문과 숫자 6자입니다. 받은 코드를 다시 확인해주세요.");
+            if (!/^[A-Z0-9]{6}$/.test(c)) return setError("대회 코드는 영문과 숫자 6자리입니다.\n받은 코드를 다시 확인해주세요.");
             router.push(`/er/t/${c}/a`);
           }}
         >

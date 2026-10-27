@@ -33,7 +33,7 @@ export default function InviteAccept({ token, loggedIn }: { token: string; logge
             const r = await api.accept(token);
             router.push(`/er/t/${r.code}/a`);
           } catch (e) {
-            setError(e instanceof Error ? e.message : "수락하지 못했습니다.");
+            setError(e instanceof Error ? e.message : "수락하지 못했습니다.\n잠시 후 다시 시도해주세요.");
             setBusy(false);
           }
         }}

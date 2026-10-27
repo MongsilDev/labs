@@ -26,8 +26,9 @@
 - 순위표 이미지, 선수 기록 이미지, 순위 CSV로 내보낼 수 있고, OBS 브라우저 소스용 방송 화면 주소가 있습니다.\
   방송 화면 주소 뒤에 `?top=8&scale=1.5&side=left`처럼 붙이면 표시할 팀 수, 크기, 위치를 바꿀 수 있습니다.
 - 대회는 마지막으로 수정한 지 24시간이 지나면 자동으로 삭제합니다.
-- 디스코드에서 몽실봇의 `/대회`에 대회 코드를 넣으면 채널에 순위 카드를 올릴 수 있습니다.\
-  개최자와 운영자는 카드가 30초마다 저절로 바뀌도록 자동 갱신을 켤 수 있습니다.
+- 몽실봇의 `/대회 <코드>` 명령은 디스코드 채널에 순위 카드를 보냅니다.\
+  개최자나 운영자가 `/대회 <코드> <조>`를 입력하면 그 채널이 그 조에 연결되고, 그 뒤로는 라운드가 바뀔 때마다 봇이 그 채널에 새 순위 이미지를 올립니다.\
+  관리 화면에서도 조마다 채널을 고를 수 있고, 연결된 채널에 올라온 결과 CSV는 누가 올렸든 순위에 반영됩니다.
 
 ### 이터컷 예측
 
@@ -108,7 +109,8 @@ pnpm build
 | `PLAYERS_BASE` | Tarkov 프로필 JSON을 받을 주소.<br>기본값은 `https://players.tarkov.dev` |
 | `JOBS` | `0`이면 Tarkov 이름 목록 적재와 비교군 수집을 하지 않습니다 |
 | `CUT_API` | 이터컷 예측 데이터를 받을 주소.<br>기본값은 `https://bot.mongsil.dev/api/cut` |
-| `LABS_BOT_TOKEN` | 몽실봇이 `x-bot-token` 헤더로 보내는 토큰.<br>`/api/bot/t/{코드}`, `/api/bot/users/{디스코드 ID}/tournaments`, 채널을 조에 연결하는 `PUT /api/bot/t/{코드}/links`, 채널에 올라온 결과 CSV를 넣는 `POST /api/bot/relay`에 씁니다.<br>비우면 이 주소들은 응답하지 않습니다 |
+| `LABS_BOT_TOKEN` | 몽실봇과 주고받는 `x-bot-token` 헤더의 토큰.<br>`/api/bot/t/{코드}`, `/api/bot/users/{디스코드 ID}/tournaments`, 채널을 조에 연결하는 `PUT /api/bot/t/{코드}/links`, 대회 하나의 연결을 돌려주는 `GET /api/bot/t/{코드}/links`, 끝나지 않은 대회의 연결 전체를 돌려주는 `GET /api/bot/links`, 채널에 올라온 결과 CSV를 넣는 `POST /api/bot/relay`에 씁니다.<br>비우면 이 주소들은 응답하지 않습니다 |
+| `BOT_API_URL` | 관리 화면의 채널 목록을 받고 대회가 바뀌었다고 알릴 몽실봇 주소.<br>비우면 운영 환경에서는 `https://bot.mongsil.dev`를 쓰고, 그 밖에서는 봇을 부르지 않습니다 |
 | `SENTRY_DSN` | 서버 오류를 보낼 Sentry DSN.<br>비우면 보내지 않습니다 |
 
 ## 데이터
