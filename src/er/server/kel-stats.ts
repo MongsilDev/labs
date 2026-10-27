@@ -33,11 +33,12 @@ export function top<T>(list: T[], value: (x: T) => number, tie: (x: T) => number
 
 export const gameLabel = (g: { event: KelEvent; stage: string; round: number }) => `${EVENT_NAME[g.event]} ${g.stage} ${g.round}R`;
 
-export type StyleScope = "season" | "c4" | "finals";
+// finals는 모든 대회의 결승 단계를 합친 범위
+export type StyleScope = "season" | "finals" | KelEvent;
 
 export type TeamStyle = { team: string; games: number; wins: number; eighth: number; top3: number; rankPerGame: number; killPerGame: number; killShare: number; perGame: number };
 
-const inScope = (scope: StyleScope) => (g: { event: KelEvent; stage: string }) => (scope === "c4" ? g.event === "c4" : scope === "finals" ? g.stage === "결승" : true);
+const inScope = (scope: StyleScope) => (g: { event: KelEvent; stage: string }) => (scope === "season" ? true : scope === "finals" ? g.stage === "결승" : g.event === scope);
 
 export function teamStyles(data: Kel, scope: StyleScope): TeamStyle[] {
   const games = data.games.filter(inScope(scope));
