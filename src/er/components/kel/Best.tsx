@@ -23,10 +23,13 @@ const TILES = {
 function Who({ r }: { r: KelRow }) {
   return (
     <div className="mt-1 grid gap-1">
-      <p className="flex flex-wrap items-baseline gap-x-1.5 text-[15px] font-bold">
-        <Char name={r.character} label={r.player} />
-        <span className="text-[13px] font-normal text-fg-3">{characterName(r.character)}</span>
-      </p>
+      <div className="flex items-center gap-2">
+        <Char name={r.character} label="" size={34} />
+        <p className="grid min-w-0 leading-snug">
+          <span className="truncate text-[15px] font-bold">{r.player}</span>
+          <span className="truncate text-[13px] text-fg-3">{characterName(r.character)}</span>
+        </p>
+      </div>
       <p className="text-[13px] leading-relaxed text-fg-3">
         {TEAM.get(r.team)!.name}
         <br />

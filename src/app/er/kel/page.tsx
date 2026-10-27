@@ -42,7 +42,8 @@ export default async function Page() {
   const data = kelData();
   const summary = data ? kelSummary(data) : null;
   const rec = data && records(data);
-  const wick = data ? wicklines(data)[0] : undefined;
+  const wicks = data ? wicklines(data) : [];
+  const wick = wicks[0];
   const wickTeam = wick && TEAM.get(wick.team)!;
   const { seeds, semi } = championshipTeams();
   const lead = summary?.first && summary.last ? `${day(summary.first)} 오프닝 위크부터 ${day(summary.last)} 서킷 4 결승까지 열린 ${summary.games}게임의 기록입니다.` : undefined;
@@ -69,11 +70,20 @@ export default async function Page() {
             {wick && wickTeam && (
               <Best label="위클라인 최다 처치" value={wick.count} unit="게임" href={`${KEL_SCREENS.teams.path}?v=ops`}>
                 <div className="mt-1 grid gap-1">
-                  <p className="flex items-center gap-1.5 text-[15px] font-bold">
-                    <Logo team={wickTeam} size={22} />
-                    {wickTeam.name}
+                  <div className="flex items-center gap-2">
+                    <Logo team={wickTeam} size={34} />
+                    <p className="grid min-w-0 leading-snug">
+                      <span className="truncate text-[15px] font-bold">{wickTeam.name}</span>
+                      <span className="truncate text-[13px] text-fg-3">{wick.games}게임 가운데</span>
+                    </p>
+                  </div>
+                  <p className="text-[13px] leading-relaxed text-fg-3">
+                    {wicks.slice(1, 3).map((w) => (
+                      <span key={w.team} className="block truncate">
+                        {1 + wicks.filter((x) => x.count > w.count).length}위 {TEAM.get(w.team)!.short} {w.count}게임
+                      </span>
+                    ))}
                   </p>
-                  <p className="text-[13px] text-fg-3">{wick.games}게임 가운데</p>
                 </div>
               </Best>
             )}
