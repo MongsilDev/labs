@@ -33,10 +33,15 @@ const cut = (b: Board) => (b.mode === "points" && b.advance > 0 && b.advance < b
 
 function meta(b: Board): string {
   const parts: string[] = [MODE[b.mode]];
-  parts.push(b.mode === "points" && !b.ended ? `${b.played}/${b.plannedRounds}라운드` : `${b.played}라운드`);
-  if (b.ended) parts.push("최종");
+  if (b.ended) parts.push(`${b.played}라운드`);
   else if (cut(b)) parts.push(`상위 ${b.advance}팀 진출`);
   return parts.join(" | ");
+}
+
+function roundLabel(b: Board): string {
+  if (b.ended) return "최종";
+  if (!b.played) return "";
+  return b.mode === "points" ? `${b.played}/${b.plannedRounds}라운드` : `${b.played}라운드`;
 }
 
 type Tag = { text: string; color: string; fill?: boolean };
@@ -155,8 +160,9 @@ export async function roundImage(b: Board) {
       <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", background: C.bg, color: C.text, fontFamily: "Pretendard", padding: px(pad) }}>
         <div style={{ display: "flex", flexDirection: "column", height: px(head) }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: px(12) }}>
-            <span style={{ fontSize: px(36), fontWeight: 800, maxWidth: px(W - pad * 2 - 90), overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{title}</span>
+            <span style={{ fontSize: px(36), fontWeight: 800, maxWidth: px(W - pad * 2 - 260), overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{title}</span>
             {group && <span style={{ fontSize: px(36), fontWeight: 800, color: C.accent }}>{group}</span>}
+            {roundLabel(b) && <span style={{ marginLeft: "auto", fontSize: px(34), fontWeight: 800, color: C.gold }}>{roundLabel(b)}</span>}
           </div>
           <span style={{ fontSize: px(24), fontWeight: 500, color: C.text2, marginTop: px(8) }}>{meta(b)}</span>
         </div>
