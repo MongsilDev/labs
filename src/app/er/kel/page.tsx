@@ -69,7 +69,7 @@ export default async function Page() {
             <Bests rec={rec} keys={["kills", "damage", "cc", "heal", "camera"]} prefix="한 게임 " href={() => KEL_SCREENS.records.path} />
             {wick && wickTeam && (
               <Best label="위클라인 최다 처치" value={wick.count} unit="게임" href={`${KEL_SCREENS.teams.path}?v=ops`}>
-                <div className="mt-1 grid gap-1">
+                <div className="mt-1 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
                   <div className="flex items-center gap-2">
                     <Logo team={wickTeam} size={34} />
                     <p className="grid min-w-0 leading-snug">

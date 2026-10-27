@@ -23,22 +23,22 @@ const chunks = <T,>(list: T[], n: number) => {
   return Array.from({ length: n }, (_, i) => list.slice(i * size, (i + 1) * size)).filter((x) => x.length);
 };
 
-function TeamWho({ g, detail }: { g: TeamGame; detail?: string }) {
+// 선수 기록 칸과 같은 줄 구성: 로고 옆 두 줄, 아래 경기와 점수
+function TeamWho({ g, sub, detail }: { g: TeamGame; sub: string; detail: string }) {
   const team = TEAM.get(g.team)!;
   return (
-    <div className="mt-1 grid gap-1">
-      <p className="flex items-center gap-1.5 text-[15px] font-bold">
-        <Logo team={team} size={22} />
-        {team.name}
-      </p>
+    <div className="mt-1 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
+      <div className="flex items-center gap-2">
+        <Logo team={team} size={34} />
+        <p className="grid min-w-0 leading-snug">
+          <span className="truncate text-[15px] font-bold">{team.name}</span>
+          <span className="truncate text-[13px] text-fg-3">{sub}</span>
+        </p>
+      </div>
       <p className="text-[13px] leading-relaxed text-fg-3">
         {gameLabel(g)}
-        {detail && (
-          <>
-            <br />
-            {detail}
-          </>
-        )}
+        <br />
+        {detail}
       </p>
     </div>
   );
@@ -107,11 +107,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
           <section className="grid grid-cols-5 gap-3 max-[1280px]:grid-cols-2" aria-label="한 게임 최고 기록">
             <Bests rec={rec} keys={["kills", "damage", "taken", "lowTeamDamage", "cc", "heal", "camera", "vision"]} href={(r) => playerPath(r.player)} />
             <Best label="팀이 기록한 킬" value={rec.teamKills.kills} unit="킬">
-              <TeamWho g={rec.teamKills} />
+              <TeamWho g={rec.teamKills} sub={`팀 순위 ${rec.teamKills.placement}위`} detail={`킬 점수 ${fmt(rec.teamKills.killScore)}`} />
             </Best>
             <Best label="팀 게임 점수" value={fmt(rec.teamScore.value)} unit="점">
               {rec.teamScore.games.map((s) => (
-                <TeamWho key={`${s.gameId}-${s.team}`} g={s} detail={`순위\u00a0점수\u00a0${placementPoints(s.placement)} + 킬\u00a0점수\u00a0${fmt(s.killScore)}`} />
+                <TeamWho key={`${s.gameId}-${s.team}`} g={s} sub={`순위 점수 ${placementPoints(s.placement)}`} detail={`킬 점수 ${fmt(s.killScore)}`} />
               ))}
             </Best>
           </section>

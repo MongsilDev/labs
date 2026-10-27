@@ -22,7 +22,7 @@ const TILES = {
 
 function Who({ r }: { r: KelRow }) {
   return (
-    <div className="mt-1 grid gap-1">
+    <div className="mt-1 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
       <div className="flex items-center gap-2">
         <Char name={r.character} label="" size={34} />
         <p className="grid min-w-0 leading-snug">
@@ -52,7 +52,7 @@ export function Best({ label, value, unit, href, r, className = "", children }: 
       {children}
     </>
   );
-  const box = `panel grid content-start gap-2 p-5 max-[760px]:p-4 ${className}`;
+  const box = `panel grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-2 p-5 max-[760px]:p-4 ${className}`;
   return href ? (
     <Link className={`${box} no-underline hover:border-line-strong`} href={href}>
       {body}
