@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Char from "@/er/components/t/Char";
 import { int } from "@/er/lib/cut";
+import { characterName } from "@/er/lib/format";
 import { TEAM } from "@/er/lib/kel";
 import type { KelRow } from "@/er/server/kel";
 import { gameLabel, type Records } from "@/er/server/kel-stats";
@@ -24,7 +25,7 @@ function Who({ r }: { r: KelRow }) {
     <div className="mt-1 grid gap-1">
       <p className="text-[15px] font-bold">
         <Char name={r.character} label={r.player} />
-        <span className="ml-1.5 text-[13px] font-normal text-fg-3">{r.character}</span>
+        <span className="ml-1.5 text-[13px] font-normal text-fg-3">{characterName(r.character)}</span>
       </p>
       <p className="text-[13px] leading-relaxed text-fg-3">
         {TEAM.get(r.team)!.name}

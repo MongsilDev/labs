@@ -67,7 +67,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
                 <th className="l pin w-10 min-w-[40px]">
                   <span className="sr-only">순위</span>
                 </th>
-                <th className="l pin w-[240px]">팀</th>
+                <th className="l pin min-[761px]:w-[240px]">팀</th>
                 <th className="narrow">합계</th>
                 <th>킬 점수</th>
                 {Array.from({ length: played }, (_, r) => (
