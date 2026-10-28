@@ -87,7 +87,7 @@ export default function KelPage({
         )}
         {screen === "home" && (
           <p className="text-[13px] leading-relaxed text-fg-3">
-            출처: 님블뉴런 이스포츠 팀 제공 경기 기록,{" "}
+            출처: 이터널 리턴 공식 경기 기록,{" "}
             <a className={SOURCE_LINK} href={DAKGG}>
               dak.gg e스포츠 경기 기록
             </a>
