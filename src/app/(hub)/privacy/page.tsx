@@ -13,7 +13,7 @@ export default function Privacy() {
       <SiteHeader>
         <ThemeToggle />
       </SiteHeader>
-      <main id="main" className="wrap slim doc">
+      <main id="main" className="wrap doc">
         <h1 className="mt-3 mb-[18px] text-[28px] font-extrabold tracking-[-0.5px]">개인정보 처리방침</h1>
         <p className="text-[14px] text-fg-3">2026년 10월 28일 시행</p>
         <p>

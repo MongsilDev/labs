@@ -61,7 +61,7 @@ export default function Criteria() {
   return (
     <>
       <Header crumb={{ href: "/tarkov/players", label: "계정 조회" }} />
-      <main id="main" className="wrap slim doc">
+      <main id="main" className="wrap doc">
         <h1 className="page-h1">판정 기준</h1>
         <p>
           판정 배지는 공개 전적이 비슷한 계정 사이에서 이 계정의 기록이 어느 위치인지 표시합니다.
