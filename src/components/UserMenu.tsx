@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Avatar from "@/er/components/Avatar";
+import { here } from "./here";
 
 export default function UserMenu({ name, avatar }: { name: string; avatar: string | null }) {
   const [open, setOpen] = useState(false);
@@ -28,7 +29,8 @@ export default function UserMenu({ name, avatar }: { name: string; avatar: strin
       {open && (
         <div className="site-pop" role="menu">
           <Link role="menuitem" href="/er/score">내 대회</Link>
-          <form method="post" action="/auth/logout">
+          <form method="post" action="/auth/logout" onSubmit={(e) => (e.currentTarget.next.value = here(location.pathname, location.search))}>
+            <input type="hidden" name="next" />
             <button role="menuitem" type="submit">로그아웃</button>
           </form>
         </div>

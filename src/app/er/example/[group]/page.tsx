@@ -19,7 +19,7 @@ export default async function Page({ params }: { params: Promise<{ group: string
   const user = await currentUser();
   return (
     <>
-      <Header user={user} crumb="점수 계산" wide />
+      <Header user={user} crumb="점수 계산" />
       <TournamentApp initial={view} groupIdx={idx} basePath="/er/example" />
       <Footer wide />
     </>

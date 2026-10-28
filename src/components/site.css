@@ -10,7 +10,6 @@
   align-items: center;
   gap: 14px;
 }
-.site-top-in.wide,
 .site-foot-in.wide {
   max-width: 1680px;
 }

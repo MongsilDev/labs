@@ -5,17 +5,15 @@ export default function Header({
   user,
   crumb,
   crumbHref = "/er/score",
-  wide,
   right,
 }: {
   user: User | null;
   crumb?: string;
   crumbHref?: string;
-  wide?: boolean;
   right?: React.ReactNode;
 }) {
   return (
-    <SiteHeader crumb={crumb ? { href: crumbHref, label: crumb } : undefined} wide={wide} user={user ? { name: user.name, avatar: avatarUrl(user) } : null}>
+    <SiteHeader crumb={crumb ? { href: crumbHref, label: crumb } : undefined} user={user ? { name: user.name, avatar: avatarUrl(user) } : null}>
       {right}
     </SiteHeader>
   );

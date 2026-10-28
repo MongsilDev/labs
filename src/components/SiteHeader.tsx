@@ -6,12 +6,10 @@ import "./site.css";
 
 export default function SiteHeader({
   crumb,
-  wide,
   user,
   children,
 }: {
   crumb?: { href: string; label: string };
-  wide?: boolean;
   user?: AccountUser | null;
   children?: React.ReactNode;
 }) {
@@ -20,7 +18,7 @@ export default function SiteHeader({
       <a className="site-skip" href="#main">
         본문으로 건너뛰기
       </a>
-      <div className={wide ? "site-top-in wide" : "site-top-in"}>
+      <div className="site-top-in">
         <Link className="site-mark" href="/">
           <MarkSvg />
           Labs

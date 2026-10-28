@@ -1,5 +1,5 @@
 import SiteHeader from "@/components/SiteHeader";
 
-export default function Header({ crumb, wide }: { crumb?: { href: string; label: string }; wide?: boolean }) {
-  return <SiteHeader crumb={crumb} wide={wide} />;
+export default function Header({ crumb }: { crumb?: { href: string; label: string } }) {
+  return <SiteHeader crumb={crumb} />;
 }
