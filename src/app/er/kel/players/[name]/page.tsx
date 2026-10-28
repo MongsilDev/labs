@@ -10,12 +10,15 @@ type Props = { params: Promise<{ name: string }> };
 
 const find = async ({ params }: Props) => {
   const raw = (await params).name;
-  let name = raw;
-  try {
-    name = decodeURIComponent(raw);
-  } catch {}
   const data = kelData();
   const all = data ? playerStats(data) : [];
+  // params가 이미 디코딩돼 오면 원래 값으로 먼저 찾음
+  let name = raw;
+  if (!all.some((p) => p.name === raw)) {
+    try {
+      name = decodeURIComponent(raw);
+    } catch {}
+  }
   return { name, ready: all.length > 0, found: all.find((p) => p.name === name) ?? all.find((p) => p.name.toLowerCase() === name.toLowerCase()) };
 };
 

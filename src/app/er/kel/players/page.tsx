@@ -7,9 +7,10 @@ export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("players");
 
 // 예전 주소 ?p=이름은 선수 주소로 옮김
-export default async function Page({ searchParams }: { searchParams: Promise<{ p?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ p?: string | string[] }> }) {
   const { user, owner } = await kelGate("players");
   const { p } = await searchParams;
-  if (p) permanentRedirect(playerPath(p));
+  const name = Array.isArray(p) ? p[0] : p;
+  if (name) permanentRedirect(playerPath(name));
   return <Players user={user} owner={owner} />;
 }
