@@ -15,7 +15,7 @@ export default function Privacy() {
       </SiteHeader>
       <main id="main" className="wrap slim doc">
         <h1 className="mt-3 mb-[18px] text-[28px] font-extrabold tracking-[-0.5px]">개인정보 처리방침</h1>
-        <p className="text-[14px] text-fg-3">2026년 10월 22일 시행</p>
+        <p className="text-[14px] text-fg-3">2026년 10월 28일 시행</p>
         <p>
           labs.mongsil.dev가 처리하는 개인정보를 개인정보 보호법 제30조에 따라 공개합니다.<br />개인이 운영하는 무료 서비스이며, 이터널 리턴 도구와 Escape from Tarkov 도구가
           있습니다.<br />로그인 기능은 이터널 리턴 대회 운영자만 사용합니다.
@@ -25,6 +25,7 @@ export default function Privacy() {
         <ul>
           <li>이터널 리턴 대회 순위 계산과 공유</li>
           <li>이터널 리턴 대회 운영자 로그인과 권한 확인</li>
+          <li>디스코드 채널에 올라온 이터널 리턴 경기 결과 반영</li>
           <li>Escape from Tarkov 계정 전적 조회와 판정 배지 계산</li>
           <li>Escape from Tarkov 닉네임 변경 이력과 전적 변화 기록</li>
           <li>오류 확인과 남용 방지</li>
@@ -45,12 +46,17 @@ export default function Privacy() {
             <tbody>
               <tr>
                 <td data-label="항목">게임 닉네임, 실험체, 팀 이름, 경기 순위와 기록</td>
-                <td data-label="수집 시점">운영자가 경기 결과 CSV를 올릴 때</td>
+                <td data-label="수집 시점">운영자가 경기 결과 CSV를 올리거나, 연결된 디스코드 채널에 누군가 CSV를 올릴 때</td>
                 <td data-label="보유 기간">대회를 마지막으로 수정하고 24시간 뒤까지</td>
               </tr>
               <tr>
-                <td data-label="항목">대회 이름, 감점, 날씨, 변경 기록과 변경한 운영자 이름</td>
+                <td data-label="항목">대회 이름, 감점, 날씨, 변경 기록과 변경한 운영자나 디스코드에서 결과를 올린 사람의 이름</td>
                 <td data-label="수집 시점">운영자가 대회를 만들거나 수정할 때</td>
+                <td data-label="보유 기간">대회를 마지막으로 수정하고 24시간 뒤까지</td>
+              </tr>
+              <tr>
+                <td data-label="항목">연결한 디스코드 서버 이름, 채널 이름과 채널 ID, 마지막으로 결과를 올린 사람의 디스코드 이름</td>
+                <td data-label="수집 시점">운영자가 조에 디스코드 채널을 연결할 때와 연결된 채널에 결과가 올라올 때</td>
                 <td data-label="보유 기간">대회를 마지막으로 수정하고 24시간 뒤까지</td>
               </tr>
               <tr>
@@ -61,8 +67,9 @@ export default function Privacy() {
             </tbody>
           </table>
         </div>
-        <p>디스코드 로그인은 사용자 식별 권한만 요청합니다.<br />디스코드 서버 목록, 메시지, 이메일은 수집하지 않고, 디스코드 접속 토큰은 저장하지 않습니다.</p>
+        <p>디스코드 로그인은 사용자 식별 권한만 요청합니다.<br />디스코드 로그인으로 서버 목록, 메시지, 이메일을 받지 않고, 디스코드 접속 토큰은 저장하지 않습니다.</p>
         <p>디스코드에서 몽실봇의 /대회 명령을 쓰면, 몽실봇이 사용자의 디스코드 ID로 그 사람이 운영하는 대회 목록과 대회 권한을 Labs에 조회합니다.<br />조회에 쓴 디스코드 ID는 Labs에 따로 저장하지 않습니다.</p>
+        <p>관리 화면에서 디스코드 채널을 고를 때, Labs는 운영자의 디스코드 ID를 몽실봇에 보내 그 운영자가 고를 수 있는 서버와 채널 목록을 받습니다.<br />받은 목록은 저장하지 않고, 고른 채널만 위 표처럼 저장합니다.<br />연결된 채널에 CSV가 올라오면 몽실봇이 올린 사람의 디스코드 ID와 이름을 함께 보내고, Labs는 디스코드 ID를 운영자 권한 확인에만 쓰고 저장하지 않습니다.</p>
 
         <h3 className={H3}>Escape from Tarkov</h3>
         <div className="doc-table cards">
@@ -131,7 +138,7 @@ export default function Privacy() {
 
         <h2>4. 제3자 제공</h2>
         <p>
-          수집한 개인정보는 제3자에게 제공하거나 판매하지 않습니다.<br />대회 순위와 선수 기록은 대회 코드를 아는 사람이라면 누구나 열람할 수 있습니다.<br />사이트에 표시되는 Escape from
+          수집한 개인정보는 제3자에게 제공하거나 판매하지 않습니다.<br />대회 순위와 선수 기록은 대회 코드를 아는 사람이라면 누구나 열람할 수 있습니다.<br />몽실봇의 /대회 명령으로 대회를 디스코드 채널에 올리면 순위 이미지와 개최자의 디스코드 이름이 담긴 대회 정보 이미지가 그 채널에 게시되므로, 채널을 볼 수 있는 사람도 열람할 수 있습니다.<br />사이트에 표시되는 Escape from
           Tarkov 전적도 누구나 열람할 수 있습니다.
         </p>
 
