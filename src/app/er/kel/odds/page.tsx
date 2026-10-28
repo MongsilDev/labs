@@ -2,7 +2,7 @@ import HeatCell from "@/er/components/kel/HeatCell";
 import KelPage, { KelScroll, KelTabs, NO_DATA } from "@/er/components/kel/KelPage";
 import { Logo, TeamName } from "@/er/components/kel/Team";
 import { byText } from "@/er/lib/format";
-import { EVENT_NAME, josa, KEL_SCREENS, KEL_TEAMS, QUALIFY, SEEDS, type KelEvent } from "@/er/lib/kel";
+import { EVENT_NAME, KEL_SCREENS, KEL_TEAMS, QUALIFY, SEEDS, type KelEvent } from "@/er/lib/kel";
 import { CIRCUIT_STAGES, kelData, kelGate, kelMetadata } from "@/er/server/kel";
 import { guaranteed, kelOdds, status, type TeamOdds } from "@/er/server/kel-odds";
 
@@ -59,7 +59,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
       user={user}
       owner={owner}
       screen="odds"
-      lead={["진출 확률은 서킷 단계가 끝날 때마다 그때까지의 결과로 다시 계산했습니다.", `서킷 포인트 합계 1~${SEEDS}위 팀은 결승에 직행하고, ${SEEDS + 1}~${QUALIFY}위 팀은 준결승에 출전합니다.`]}
+      lead={[`서킷 포인트 합계 1~${SEEDS}위 팀은 결승에 직행하고, ${SEEDS + 1}~${QUALIFY}위 팀은 준결승에 출전합니다.`]}
       notes={[
         "확률은 남은 경기에서 각 팀이 오를 수 있는 순위를 모두 같은 확률로 얻는다고 보고 계산했습니다.",
         "표의 -는 남은 경기 결과와 관계없이 일어날 수 없는 경우입니다.",
@@ -78,11 +78,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
           href={(k) => href(circuit, Number(k))}
         />
       </div>
-      <section className="panel p-5 max-[760px]:p-4" aria-labelledby="now">
-        <h2 id="now" className="text-[17px] font-extrabold">
-          {circuitName(circuit)} {josa(stage, "이", "가")} 끝난 뒤
-        </h2>
-        <KelScroll label={`${circuitName(circuit)} ${stage} 뒤 진출 확률`} className="mt-3">
+      <section className="panel p-5 max-[760px]:p-4">
+        <KelScroll label={`${circuitName(circuit)} ${stage} 뒤 진출 확률`}>
           <table className="kel-table">
             <thead>
               <tr>
@@ -97,7 +94,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
                 ))}
                 <th className="wide">포인트</th>
                 <th>결승 직행</th>
-                <th>준결승</th>
+                <th>준결승 진출</th>
                 <th>진출 실패</th>
               </tr>
             </thead>

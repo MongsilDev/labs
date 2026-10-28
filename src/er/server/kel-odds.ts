@@ -426,8 +426,8 @@ function cases(input: OddsInput, final: ReturnType<typeof enumerateFinal>): Map<
     const need = QUALIFY - above - (reach.length - maybe.length);
     // 넘을 수 있는 팀이 모두 넘어야 탈락할 때만 문장으로 씀
     if (!need || need !== maybe.length) continue;
-    const parts = maybe.map(({ u, r }, i) => `${josa(KEL_TEAMS[u].name, "이", "가")} ${i ? "" : `${where} `}${r === 1 ? "1위에" : `${r}위 안에`}`);
-    out.set(t, [`${parts.join(", ")} 들면 챔피언십에 진출하지 못합니다.`]);
+    const parts = maybe.map(({ u, r }, i) => `${josa(KEL_TEAMS[u].name, "이", "가")} ${i ? "" : `${where}에서 `}${r === 1 ? "1위를 차지하" : `${r}위 안에 들`}${i < maybe.length - 1 ? "고" : "면"}`);
+    out.set(t, [`${parts.join(" ")}, ${josa(KEL_TEAMS[t].name, "은", "는")} 챔피언십에 진출하지 못합니다.`]);
   }
   return out;
 }
