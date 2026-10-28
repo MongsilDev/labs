@@ -74,7 +74,7 @@ const FAQ: { q: string; a?: string; extra?: React.ReactNode }[] = [
   { q: "선수는 언제 바꿀 수 있나요?", a: "팀은 2라운드마다 선수를 바꿀 수 있습니다. 교체 여부는 경기가 끝난 뒤 온라인은 5분, 오프라인은 2분 안에 사무국이 지정한 방법으로 전달해야 합니다. 마감 뒤에 선수를 바꾸면 진행 중인 경기 점수에서 3점을 뺍니다." },
 ];
 
-const CUTS: Record<number, string> = { [SEEDS]: "여기까지 결승 직행", [QUALIFY]: "여기까지 준결승" };
+const CUTS: Record<number, string> = { [SEEDS]: "여기까지 결승 직행", [QUALIFY]: "여기까지 준결승 진출" };
 
 const POINT_ROWS: [string, number[]][] = [
   ["서킷 1, 2", CIRCUIT_POINTS.early],

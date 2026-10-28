@@ -4,21 +4,19 @@ import KelPage, { KelScroll } from "@/er/components/kel/KelPage";
 import { TeamName } from "@/er/components/kel/Team";
 import { KEL_EVENTS, QUALIFY, SEEDS, seasonStandings } from "@/er/lib/kel";
 import { kelGate, kelMetadata } from "@/er/server/kel";
-import { top } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("circuits");
 
 const CIRCUITS = KEL_EVENTS.filter((e) => /^c\d$/.test(e.key)).map((e) => e.name);
-const CUTS: Record<number, string> = { [SEEDS]: "여기까지 결승 직행", [QUALIFY]: "여기까지 준결승" };
+const CUTS: Record<number, string> = { [SEEDS]: "여기까지 결승 직행", [QUALIFY]: "여기까지 준결승 진출" };
 
 export default async function Page() {
   const { user, owner } = await kelGate("circuits");
   const season = seasonStandings();
-  const riser = top(season, (r) => r.ranks[0] - r.rank).team;
 
   return (
-    <KelPage user={user} owner={owner} screen="circuits" lead="서킷마다 받은 순위와 서킷 포인트 합계입니다.">
+    <KelPage user={user} owner={owner} screen="circuits">
       <section className="panel p-5 max-[760px]:p-4">
         <KelScroll label="서킷별 최종 순위">
           <table className="kel-table">
@@ -82,7 +80,7 @@ export default async function Page() {
           누적 순위
         </h2>
         <div className="mt-3">
-          <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[riser.key]} legend="" suffix="까지" />
+          <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[]} legend="" suffix="까지" />
         </div>
       </section>
     </KelPage>

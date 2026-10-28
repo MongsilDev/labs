@@ -19,6 +19,7 @@ function pick(picked: { key: string; tone: number }[], key: string) {
 export default function BumpChart({ rows, labels, initial, legend, suffix = "" }: { rows: Row[]; labels: string[]; initial: string[]; legend?: string; suffix?: string }) {
   const [ref, w, measured] = useWidth<HTMLDivElement>(900);
   const [picked, setPicked] = useState(() => initial.slice(0, TONES.length).map((key, tone) => ({ key, tone })));
+  const [hover, setHover] = useState<string | null>(null);
   const narrow = w < 560;
   const step = 26;
   const pad = { l: narrow ? 32 : 40, r: narrow ? 144 : 176, t: legend === "" ? 12 : 32, b: 30 };
@@ -54,7 +55,7 @@ export default function BumpChart({ rows, labels, initial, legend, suffix = "" }
           </text>
         ))}
         {rows
-          .filter((r) => toneOf(r.key) < 0)
+          .filter((r) => toneOf(r.key) < 0 && r.key !== hover)
           .map((r) => (
             <g key={r.key}>
               <polyline points={points(r)} fill="none" stroke="var(--kel-0)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
@@ -63,10 +64,12 @@ export default function BumpChart({ rows, labels, initial, legend, suffix = "" }
               ))}
             </g>
           ))}
+        {/* 범례에 마우스를 올린 팀은 고른 팀이 아니어도 선을 굵게 */}
         {rows
-          .filter((r) => toneOf(r.key) >= 0)
+          .filter((r) => toneOf(r.key) >= 0 || r.key === hover)
+          .sort((a, b) => toneOf(a.key) - toneOf(b.key))
           .map((r) => {
-            const color = TONES[toneOf(r.key)];
+            const color = toneOf(r.key) >= 0 ? TONES[toneOf(r.key)] : "var(--text-2)";
             return (
               <g key={r.key}>
                 <polyline points={points(r)} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
@@ -89,12 +92,16 @@ export default function BumpChart({ rows, labels, initial, legend, suffix = "" }
               type="button"
               aria-pressed={tone >= 0}
               onClick={() => setPicked((p) => pick(p, r.key))}
+              onMouseEnter={() => setHover(r.key)}
+              onMouseLeave={() => setHover(null)}
+              onFocus={() => setHover(r.key)}
+              onBlur={() => setHover(null)}
               className="absolute flex items-center gap-1.5 rounded-md px-1 text-left hover:bg-hover"
               style={{ left: x(last) + 8, top: y(r.ranks[last]) - 11, height: 22, maxWidth: pad.r - 10 }}
             >
               <span className="h-[3px] w-2.5 flex-none rounded-full" style={{ background: tone >= 0 ? TONES[tone] : "var(--kel-0)" }} aria-hidden="true" />
               <Logo team={team} size={18} />
-              <span className={`truncate text-[13px] max-[560px]:text-[12px] ${tone >= 0 ? "font-bold text-fg" : "text-fg-2"}`}>{team.name}</span>
+              <span className={`truncate text-[13px] max-[560px]:text-[12px] ${tone >= 0 || r.key === hover ? "font-bold text-fg" : "text-fg-2"}`}>{team.name}</span>
             </button>
           );
         })}

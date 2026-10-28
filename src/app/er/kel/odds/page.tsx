@@ -59,7 +59,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
       user={user}
       owner={owner}
       screen="odds"
-      lead={["서킷 단계가 끝날 때마다 그때까지의 결과로 계산한 확률입니다.", `서킷 포인트 합계 1~${SEEDS}위 팀은 결승에 직행하고, ${SEEDS + 1}~${QUALIFY}위 팀은 준결승에 출전합니다.`]}
+      lead={["진출 확률은 서킷 단계가 끝날 때마다 그때까지의 결과로 다시 계산했습니다.", `서킷 포인트 합계 1~${SEEDS}위 팀은 결승에 직행하고, ${SEEDS + 1}~${QUALIFY}위 팀은 준결승에 출전합니다.`]}
       notes={[
         "확률은 남은 경기에서 각 팀이 오를 수 있는 순위를 모두 같은 확률로 얻는다고 보고 계산했습니다.",
         "표의 -는 남은 경기 결과와 관계없이 일어날 수 없는 경우입니다.",
