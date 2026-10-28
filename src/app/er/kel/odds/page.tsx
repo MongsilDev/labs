@@ -94,7 +94,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
                 ))}
                 <th className="wide">포인트</th>
                 <th>결승 직행</th>
-                <th>준결승 진출</th>
+                <th>
+                  <span className="wide">준결승 진출</span>
+                  <span className="narrow">준결승</span>
+                </th>
                 <th>진출 실패</th>
               </tr>
             </thead>
