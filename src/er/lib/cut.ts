@@ -85,6 +85,7 @@ export function chanceLabel(p: number): string {
 
 /** 순위표에서 rp가 들어갈 순위로 정한 유예 티어 */
 export function graceKey(data: CutData, rp: number): GraceKey {
+  if (!data.rps.length) return "default";
   const rank = data.rps.filter((v) => v > rp).length + 1;
   return rank <= data.tiers.eternity.place ? "eternity" : rank <= data.tiers.demigod.place ? "demigod" : "default";
 }

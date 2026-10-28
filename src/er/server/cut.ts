@@ -15,6 +15,7 @@ function usable(d: CutData): boolean {
     at < Date.now() + DAY &&
     (end === null || (typeof end === "number" && near(end * 1000))) &&
     Array.isArray(d.rps) &&
+    typeof d.rule?.graceFrom === "number" &&
     TIERS.every(({ key }) => {
       const t = d.tiers?.[key];
       return t && t.history.every(([s]) => near(s * 1000)) && (t.forecast ?? []).every(([s]) => near(s * 1000)) && t.decay.every(([day]) => near(dayStart(day)));

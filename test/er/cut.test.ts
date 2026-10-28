@@ -33,6 +33,7 @@ describe("이터컷 계산", () => {
     expect(graceKey(data, 9250)).toBe("demigod");
     expect(graceKey(data, 9100)).toBe("demigod");
     expect(graceKey(data, 9050)).toBe("default");
+    expect(graceKey({ ...data, rps: [] }, 9300)).toBe("default");
   });
 
   it("남은 날은 KST 날짜 차이", () => {
@@ -70,6 +71,8 @@ describe("봇 응답 값의 범위", () => {
     reply([], { season: { id: 1, name: "시즌", end: 1e15 } });
     expect(await getCut()).toBeNull();
     reply([], { updatedAt: Date.now() / 1000 + 7 * 86_400 });
+    expect(await getCut()).toBeNull();
+    reply([], { rule: { grace: 12, step: 100, floor: 6400, dormantDays: 7 } as unknown as CutData["rule"] });
     expect(await getCut()).toBeNull();
     reply([["2026-10-25", 1]]);
     expect((await getCut())?.tiers.eternity.decay).toEqual([["2026-10-25", 1]]);
