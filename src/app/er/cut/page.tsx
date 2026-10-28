@@ -125,7 +125,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
                   휴면 반영 컷은 {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정의 RP에서 시즌 종료까지 깎일 RP를 빼고 다시 정렬한 순위표에서 이터니티 {int(data.tiers.eternity.place)}위와{" "}
                   데미갓 {int(data.tiers.demigod.place)}위의 RP입니다.
                   <br />
-                  깎이는 규칙은 오래 쉬었다 돌아온 플레이어 398명의 RP 변화에 맞춰 정했고, 이 중 353명의 실제 변화와 일치합니다.
+                  RP가 깎이는 규칙은 오래 쉬었다 돌아온 계정 341명의 RP 변화에 맞춰 정했고, 이 중 287명의 실제 변화와 일치합니다.
                 </li>
                 <li>
                   종료 예상은 매일 오전 9시 컷이 오르는 추세에, 지난 두 시즌 마지막 14일 동안 컷이 급등한 폭을 더한 값입니다.
@@ -135,10 +135,10 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
                   범위는 그 오차의 80% 구간입니다.
                 </li>
                 <li>
-                  순위표는 1000위까지만 있으므로, 데미갓 컷은 휴면 계정이 내려간 자리를 채울 1000위 밖 계정을 추정해 구합니다.
+                  순위표는 1,000위까지만 있으므로, 데미갓 컷은 휴면 계정이 내려간 자리를 채울 1,000위 밖 계정을 추정해 구합니다.
                 </li>
                 <li>
-                  컷은 몽실봇이 매시 기록하는 아시아1 상위 1000명 순위표로 계산합니다.
+                  컷은 몽실봇이 매시 기록하는 아시아1 상위 1,000명 순위표로 계산합니다.
                   <br />
                   디스코드 <a href="https://bot.mongsil.dev">몽실봇</a>의 /이터컷 명령도 같은 값을 보여 줍니다.
                 </li>

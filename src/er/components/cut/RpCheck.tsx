@@ -54,7 +54,7 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
                 </h3>
                 <dl>
                   <Row
-                    label="지금 컷"
+                    label="휴면 반영 컷"
                     value={gap > 0 ? `${int(gap)} RP 부족` : `${int(-gap)} RP 여유`}
                     note={near != null ? `순위표 기준 내 RP와 컷 사이 ${int(near)}명` : "순위표 밖이라 사이 인원을 알 수 없음"}
                   />
@@ -62,7 +62,7 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
                     <Row
                       label="종료 예상 컷"
                       value={end[1] > rp ? `${int(end[1] - rp)} RP 부족` : `${int(rp - end[1])} RP 여유`}
-                      note={end[1] > rp && left ? `${tens(end[1])}까지 하루 ${int(Math.ceil((end[1] - rp) / left))} RP씩` : `예상 ${tens(end[1])}`}
+                      note={end[1] > rp && left ? `${tens(end[1])}까지 하루 ${int(Math.ceil((end[1] - rp) / left))} RP씩` : undefined}
                     />
                   )}
                   {end && (
@@ -76,7 +76,7 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
                     <Row
                       label="오늘부터 쉬면"
                       value={`종료 때 ${int(quit)} RP`}
-                      note={`예상 컷${quit >= end[1] ? "보다 높음" : "보다 낮음"}, 유예 ${grace}일 가정`}
+                      note={`종료 예상 컷${quit >= end[1] ? "보다 높음" : "보다 낮음"}, 유예 ${grace}일 가정`}
                     />
                   )}
                 </dl>
