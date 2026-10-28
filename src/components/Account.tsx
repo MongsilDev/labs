@@ -6,6 +6,14 @@ import UserMenu from "./UserMenu";
 
 export type AccountUser = { name: string; avatar: string | null };
 
+// login=failed는 다시 돌아와도 경고가 남지 않도록 뺌. 쿼리는 safeNext가 받는 문자로 다시 인코딩
+function loginHref(path: string, search = "") {
+  const q = new URLSearchParams(search);
+  q.delete("login");
+  const s = q.toString();
+  return `/auth/login?next=${encodeURIComponent(s ? `${path}?${s}` : path)}`;
+}
+
 // user를 받지 않은 화면은 서버에서 쿠키를 읽지 않도록 /api/me로 확인. 확인 전에는 자리만 잡음
 export default function Account({ user }: { user?: AccountUser | null }) {
   const [fetched, setFetched] = useState<AccountUser | null>();
@@ -27,9 +35,9 @@ export default function Account({ user }: { user?: AccountUser | null }) {
     <a
       className="btn sm site-login"
       style={me === undefined ? { visibility: "hidden" } : undefined}
-      href={`/auth/login?next=${encodeURIComponent(path)}`}
+      href={loginHref(path)}
       onClick={(e) => {
-        e.currentTarget.href = `/auth/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+        e.currentTarget.href = loginHref(location.pathname, location.search);
       }}
     >
       로그인

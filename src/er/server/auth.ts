@@ -32,7 +32,7 @@ export function safeEqual(a: string, b: string): boolean {
 }
 
 export function safeNext(value: string | null | undefined): string {
-  if (!value || !/^\/(?:[A-Za-z0-9_\-/.~%]*)(?:\?[A-Za-z0-9_\-=&.~%+]*)?$/.test(value) || value.startsWith("//")) return "/er/score";
+  if (!value || !/^\/(?:[A-Za-z0-9_\-/.~%]*)(?:\?[A-Za-z0-9_\-=&.~%+*]*)?$/.test(value) || value.startsWith("//")) return "/er/score";
   return value;
 }
 
