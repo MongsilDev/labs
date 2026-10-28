@@ -10,10 +10,13 @@ type Props = { params: Promise<{ name: string }> };
 
 const find = async ({ params }: Props) => {
   const raw = (await params).name;
-  const name = /%[0-9A-Fa-f]{2}/.test(raw) ? decodeURIComponent(raw) : raw;
+  let name = raw;
+  try {
+    name = decodeURIComponent(raw);
+  } catch {}
   const data = kelData();
   const all = data ? playerStats(data) : [];
-  return { name, found: all.find((p) => p.name === name) ?? all.find((p) => p.name.toLowerCase() === name.toLowerCase()) };
+  return { name, ready: all.length > 0, found: all.find((p) => p.name === name) ?? all.find((p) => p.name.toLowerCase() === name.toLowerCase()) };
 };
 
 export async function generateMetadata(props: Props) {
@@ -25,7 +28,9 @@ export async function generateMetadata(props: Props) {
 // 대소문자만 다르게 적은 주소는 기록에 있는 이름으로 옮김
 export default async function Page(props: Props) {
   const { user, owner } = await kelGate("players");
-  const { name, found } = await find(props);
+  const { name, ready, found } = await find(props);
+  // 자료가 빠진 동안은 404 대신 자료 없음 안내
+  if (!ready) return <Players user={user} owner={owner} />;
   if (!found) notFound();
   if (found.name !== name) permanentRedirect(playerPath(found.name));
   return <Players user={user} owner={owner} name={found.name} />;

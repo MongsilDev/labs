@@ -49,11 +49,12 @@ export default async function Page({ params }: Props) {
   const season = seasonStandings();
   const me = season.find((r) => r.team.key === key)!;
   const styles = teamStyles(data, "season");
-  const style = styles.find((s) => s.team === key)!;
+  const style = styles.find((s) => s.team === key);
+  const games = data.games.filter((g) => g.team === key);
+  if (!style || !games.length) return <KelPage user={user} owner={owner} screen="teams" title={team.name} missing={NO_DATA} />;
   const styleRank = (v: (s: (typeof styles)[number]) => number) => <Rank pool={styles.length} rank={rankBy(styles, style, v)} unit="팀" />;
   const status = me.rank <= SEEDS ? "결승에 직행했습니다" : me.rank <= QUALIFY ? "준결승에 진출했습니다" : "챔피언십에 진출하지 못했습니다";
 
-  const games = data.games.filter((g) => g.team === key);
   const events = KEL_EVENTS.map((e) => {
     const list = games.filter((g) => g.event === e.key);
     // 오프닝 위크 단계는 CIRCUIT_STAGES에 없어 첫 단계 이름을 그대로 씀
@@ -81,7 +82,7 @@ export default async function Page({ params }: Props) {
 
   const ks = killStats(data);
   const vs = KEL_TEAMS.filter((t) => t.key !== key).map((t) => ({ t, out: ks.teams.get(`${key}|${t.key}`) ?? 0, in: ks.teams.get(`${t.key}|${key}`) ?? 0 }));
-  const most = (f: (x: (typeof vs)[number]) => number) => [...vs].sort((a, b) => f(b) - f(a)).slice(0, 3);
+  const most = (f: (x: (typeof vs)[number]) => number) => vs.filter((x) => f(x) > 0).sort((a, b) => f(b) - f(a)).slice(0, 3);
 
   const score = (g: (typeof games)[number]) => placementPoints(g.placement) + g.killScore;
   const best = [...games].sort((a, b) => score(b) - score(a))[0];

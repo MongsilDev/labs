@@ -91,7 +91,10 @@ export default function BumpChart({ rows, labels, initial, legend, suffix = "" }
               key={r.key}
               type="button"
               aria-pressed={tone >= 0}
-              onClick={() => setPicked((p) => pick(p, r.key))}
+              onClick={() => {
+                setPicked((p) => pick(p, r.key));
+                setHover(null);
+              }}
               onMouseEnter={() => setHover(r.key)}
               onMouseLeave={() => setHover(null)}
               onFocus={() => setHover(r.key)}
