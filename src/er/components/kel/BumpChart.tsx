@@ -15,7 +15,8 @@ function pick(picked: { key: string; tone: number }[], key: string) {
   return [...kept, { key, tone }];
 }
 
-export default function BumpChart({ rows, labels, initial }: { rows: Row[]; labels: string[]; initial: string[] }) {
+// 열 이름만으로 무슨 순위인지 안 드러날 때 legend와 suffix로 머리글과 툴팁 문구를 바꿈
+export default function BumpChart({ rows, labels, initial, legend, suffix = "" }: { rows: Row[]; labels: string[]; initial: string[]; legend?: string; suffix?: string }) {
   const [ref, w, measured] = useWidth<HTMLDivElement>(900);
   const [picked, setPicked] = useState(() => initial.slice(0, TONES.length).map((key, tone) => ({ key, tone })));
   const narrow = w < 560;
@@ -43,7 +44,7 @@ export default function BumpChart({ rows, labels, initial }: { rows: Row[]; labe
           </g>
         ))}
         <text x={x(last) + 12} y={14} fontSize={12} fill="var(--text-3)">
-          {labels[last]} 순위
+          {legend ?? `${labels[last]} 순위`}
         </text>
         {ticksY.map((r) => (
           <text key={r} x={pad.l - 4} y={y(r)} dy="0.32em" textAnchor="end" fontSize={11} fill="var(--text-3)">
@@ -69,7 +70,7 @@ export default function BumpChart({ rows, labels, initial }: { rows: Row[]; labe
                 <polyline points={points(r)} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
                 {r.ranks.map((k, i) => (
                   <circle key={i} cx={x(i)} cy={y(k)} r={4.5} fill={color} stroke="var(--surface)" strokeWidth={2}>
-                    <title>{`${TEAM.get(r.key)?.name} ${labels[i]} ${k}위`}</title>
+                    <title>{`${TEAM.get(r.key)?.name} ${labels[i]}${suffix} ${k}위`}</title>
                   </circle>
                 ))}
               </g>

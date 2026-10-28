@@ -53,16 +53,23 @@ export function circuitPoints(circuit: number, rank: number): number {
   return rank <= 12 ? table[8] : 0;
 }
 
-export type SeasonRow = { team: KelTeam; points: number[]; total: number; rank: number };
+export type SeasonRow = { team: KelTeam; points: number[]; total: number; rank: number; ranks: number[] };
 
-// 포인트가 같으면 서킷 4 순위가 높은 팀이 위
+// 서킷 n까지 누적 포인트 순위, 동률은 서킷 n 순위로. 규정은 서킷 2와 4만 정하고 서킷 3까지 누적에는 동률이 없음
+function standingsAfter(n: number) {
+  const sum = (t: KelTeam) => t.circuits.slice(0, n).reduce((a, rank, i) => a + circuitPoints(i + 1, rank), 0);
+  return KEL_TEAMS.map((team) => ({ team, total: sum(team) })).sort((a, b) => b.total - a.total || a.team.circuits[n - 1] - b.team.circuits[n - 1]);
+}
+
 export function seasonStandings(): SeasonRow[] {
-  return KEL_TEAMS.map((team) => {
-    const points = team.circuits.map((rank, i) => circuitPoints(i + 1, rank));
-    return { team, points, total: points.reduce((a, b) => a + b, 0), rank: 0 };
-  })
-    .sort((a, b) => b.total - a.total || a.team.circuits[3] - b.team.circuits[3])
-    .map((row, i) => ({ ...row, rank: i + 1 }));
+  const after = KEL_TEAMS[0].circuits.map((_, i) => standingsAfter(i + 1).map((r) => r.team.key));
+  return standingsAfter(after.length).map(({ team, total }, i) => ({
+    team,
+    points: team.circuits.map((rank, c) => circuitPoints(c + 1, rank)),
+    total,
+    rank: i + 1,
+    ranks: after.map((order) => order.indexOf(team.key) + 1),
+  }));
 }
 
 export const FINAL_ROUNDS = 9;

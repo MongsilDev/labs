@@ -29,6 +29,15 @@ describe("KEL 정규 시즌", () => {
         .slice(0, 4),
     ).toEqual([1900, 1880, 1680, 1240]);
   });
+
+  it("서킷마다 누적 순위를 매기고 마지막 순위는 시즌 순위와 같다", () => {
+    const season = seasonStandings();
+    expect(season.every((r) => r.ranks[3] === r.rank)).toBe(true);
+    expect(season.every((r) => r.ranks[0] === r.team.circuits[0])).toBe(true);
+    // 서킷 2까지 520점 동률은 서킷 2 순위로 가름, 미드 시즌 컵 2일차 직행과 같음
+    const after2 = (name: string) => season.find((r) => r.team.name === name)!.ranks[1];
+    expect([after2("성남 락스"), after2("대구 가디언즈")]).toEqual([4, 5]);
+  });
 });
 
 describe("KEL 점수와 체크포인트", () => {
