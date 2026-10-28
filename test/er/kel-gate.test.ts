@@ -15,8 +15,9 @@ const MISSING = ["not-found.tsx", join("[...missing]", "page.tsx")];
 describe("KEL 접근 제한", () => {
   const all = files.map((f) => ({ file: relative(ROOT, f), src: readFileSync(f, "utf8") }));
   const pages = all.filter((p) => !MISSING.includes(p.file));
+  // teams/[key]처럼 동적 주소의 상세 화면은 바로 위 화면에 속함
   const screenOf = (file: string) => {
-    const path = ["/er/kel", ...file.split(sep).slice(0, -1)].join("/");
+    const path = ["/er/kel", ...file.split(sep).slice(0, -1).filter((s) => !s.startsWith("["))].join("/");
     return (Object.keys(KEL_SCREENS) as KelScreen[]).find((k) => KEL_SCREENS[k].path === path);
   };
 
@@ -33,6 +34,6 @@ describe("KEL 접근 제한", () => {
       expect(src, file).toContain(`kelMetadata("${screen}")`);
       expect(src, file).toContain('export const dynamic = "force-dynamic"');
     }
-    expect(pages.map((p) => screenOf(p.file)).sort()).toEqual(Object.keys(KEL_SCREENS).sort());
+    expect([...new Set(pages.map((p) => screenOf(p.file)))].sort()).toEqual(Object.keys(KEL_SCREENS).sort());
   });
 });

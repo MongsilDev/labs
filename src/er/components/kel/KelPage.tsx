@@ -46,6 +46,8 @@ export default function KelPage({
   user,
   owner,
   screen,
+  title,
+  head,
   lead,
   missing,
   notes = [],
@@ -54,6 +56,8 @@ export default function KelPage({
   user: User | null;
   owner: boolean;
   screen: KelScreen;
+  title?: string;
+  head?: React.ReactNode;
   lead?: Text;
   missing?: Missing;
   notes?: Text;
@@ -68,9 +72,9 @@ export default function KelPage({
     <>
       <Header user={user} crumb="KEL 기록" crumbHref={KEL_SCREENS.home.path} />
       <main id="main" className="wrap grid grid-cols-1 content-start gap-5 pt-6">
-        <div>
+        {head ?? (<div>
           <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[28px] font-extrabold tracking-[-0.5px] max-[760px]:text-[24px]">
-            {s.title}
+            {title ?? s.title}
             {owner && !s.public && <span className="chip">나만 보기</span>}
           </h1>
           {intro && (
@@ -78,7 +82,7 @@ export default function KelPage({
               <Lines text={intro} />
             </p>
           )}
-        </div>
+        </div>)}
         {children}
         {note && (
           <p className="text-[13px] leading-relaxed text-fg-3">

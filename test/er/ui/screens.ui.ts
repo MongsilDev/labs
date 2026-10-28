@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Browser, chromium, type Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { KEL_SCREENS, playerPath } from "../../../src/er/lib/kel";
+import { KEL_SCREENS, KEL_TEAMS, playerPath, teamPath } from "../../../src/er/lib/kel";
 import { csv, kelFixture } from "../helpers";
 
 const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
@@ -164,10 +164,13 @@ const SCREENS: Screen[] = [
   { name: "KEL 결승 라운드별 점수", path: () => "/er/kel/finals", login: true },
   { name: "KEL 팀 성향", path: () => "/er/kel/teams", login: true },
   { name: "KEL 팀 성향 결승 운영", path: () => "/er/kel/teams?s=finals&v=ops", login: true },
+  { name: "KEL 팀 상세", path: () => teamPath(KEL_TEAMS[0]), login: true },
+  { name: "KEL 없는 팀", path: () => "/er/kel/teams/nope", status: 404 },
   { name: "KEL 시작 지역과 사망 지역", path: () => "/er/kel/regions", login: true },
   { name: "KEL 선수 카드", path: () => playerPath("선수4-0"), login: true },
   { name: "KEL 선수 카드 처음", path: () => "/er/kel/players", login: true },
   { name: "KEL 선수 카드 잡은 상대", path: () => playerPath("선수2-0"), login: true },
+  { name: "KEL 없는 선수", path: () => playerPath("nope"), status: 404 },
   { name: "KEL 역할", path: () => "/er/kel/roles", login: true },
   { name: "KEL 처치 관계", path: () => "/er/kel/kills", login: true },
   { name: "KEL 실험체", path: () => "/er/kel/characters", login: true },
@@ -282,6 +285,19 @@ describe("화면 점검", () => {
     const res = await fetch(new URL(new URL(og!).pathname + new URL(og!).search, base));
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/png");
+  });
+
+  it("예전 선수 주소는 선수 주소로 옮기고, 팀과 선수 상세는 제목을 따로 두고 sitemap에 있다", async () => {
+    const old = await fetch(`${base}/er/kel/players?p=${encodeURIComponent("선수4-0")}`, { redirect: "manual" });
+    expect([old.status, old.headers.get("location")]).toEqual([308, playerPath("선수4-0")]);
+    const sitemap = await fetch(`${base}/sitemap.xml`).then((r) => r.text());
+    for (const [path, title] of [
+      [teamPath(KEL_TEAMS[0]), `${KEL_TEAMS[0].name} 팀 기록`],
+      [playerPath("선수4-0"), "선수4-0 선수 카드"],
+    ]) {
+      const html = await fetch(base + path).then((r) => r.text());
+      expect([path, html.includes(`<title>${title} - Labs</title>`), sitemap.includes(`${base}${path}<`)]).toEqual([path, true, true]);
+    }
   });
 
   it("공개한 KEL 화면은 누구나 열리고 sitemap에 있으며, 공개하지 않은 화면은 운영자 말고는 제목 없이 404가 나간다", async () => {

@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
-import { KEL_SCREENS } from "@/er/lib/kel";
+import { KEL_SCREENS, KEL_TEAMS, playerPath, teamPath } from "@/er/lib/kel";
 import { BASE_URL } from "@/er/server/auth";
+import { kelData } from "@/er/server/kel";
+import { playerStats } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -21,5 +23,7 @@ const PATHS = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return PATHS.map((path) => ({ url: `${BASE_URL}${path}` }));
+  const data = kelData();
+  const kel = [...(KEL_SCREENS.teams.public ? KEL_TEAMS.map(teamPath) : []), ...(data && KEL_SCREENS.players.public ? playerStats(data).map((p) => playerPath(p.name)) : [])];
+  return [...PATHS, ...kel].map((path) => ({ url: `${BASE_URL}${path}` }));
 }

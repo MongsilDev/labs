@@ -1,4 +1,5 @@
-import { LOGO_CDN, wikiUrl, type KelTeam } from "@/er/lib/kel";
+import Link from "next/link";
+import { LOGO_CDN, playerPath, teamPath, type KelTeam } from "@/er/lib/kel";
 
 export const plate = (team: KelTeam) => (team.dark ? "#1d2431" : "#e9edf3");
 export const logoUrl = (team: KelTeam) => `${LOGO_CDN}/${team.key}.png`;
@@ -16,9 +17,9 @@ export function TeamName({ team, size = 24 }: { team: KelTeam; size?: number }) 
   return (
     <span className="inline-flex min-w-0 items-center gap-2 max-[760px]:gap-1.5">
       <Logo team={team} size={size} />
-      <a className="truncate decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={wikiUrl(team.wiki)}>
+      <Link className="truncate decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={teamPath(team)}>
         {team.name}
-      </a>
+      </Link>
     </span>
   );
 }
@@ -27,9 +28,9 @@ export function PlayerName({ name, team, logoClass }: { name: string; team?: Kel
   return (
     <span className="inline-flex min-w-0 items-center gap-2">
       {team && <Logo team={team} size={22} label className={logoClass} />}
-      <a className="truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={wikiUrl(name)}>
+      <Link className="truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(name)}>
         {name}
-      </a>
+      </Link>
     </span>
   );
 }

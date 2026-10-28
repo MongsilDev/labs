@@ -116,7 +116,8 @@ export const KEL_SCREENS: Record<KelScreen, { path: string; title: string; publi
 
 export const kelVisible = (screen: KelScreen, owner: boolean) => owner || KEL_SCREENS[screen].public;
 
-export const playerPath = (name: string) => `${KEL_SCREENS.players.path}?p=${encodeURIComponent(name)}`;
+export const playerPath = (name: string) => `${KEL_SCREENS.players.path}/${encodeURIComponent(name)}`;
+export const teamPath = (team: KelTeam) => `${KEL_SCREENS.teams.path}/${team.key}`;
 
 // 첫 화면의 묶음. 하위 화면 아래에는 같은 묶음의 다른 화면 링크를 둠
 export const KEL_SECTIONS: { title: string; items: KelScreen[] }[] = [
