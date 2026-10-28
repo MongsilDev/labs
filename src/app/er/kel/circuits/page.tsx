@@ -81,8 +81,9 @@ export default async function Page() {
         <h2 id="cumulative" className="text-[17px] font-extrabold">
           누적 순위
         </h2>
-        <p className="mt-1 mb-3 text-[13px] text-fg-3">서킷이 끝날 때마다 그때까지 받은 서킷 포인트 합계로 매긴 순위입니다.</p>
-        <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[riser.key]} legend="누적 순위" suffix="까지" />
+        <div className="mt-3">
+          <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[riser.key]} legend="" suffix="까지" />
+        </div>
       </section>
     </KelPage>
   );
