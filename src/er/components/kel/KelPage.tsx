@@ -2,11 +2,13 @@ import Link from "next/link";
 import Lines from "@/components/Lines";
 import Footer from "@/components/SiteFooter";
 import Header from "@/er/components/Header";
-import { DAKGG, KEL_SCREENS, KEL_SECTIONS, kelVisible, type KelScreen } from "@/er/lib/kel";
+import { DAKGG, KEL_SCREENS, KEL_SECTIONS, kelVisible, RULES, wikiUrl, type KelScreen } from "@/er/lib/kel";
 import type { User } from "@/er/server/auth";
 
 type Text = string | (string | false | null | undefined)[];
 type Tab<K extends string> = readonly [K, React.ReactNode];
+
+const SOURCE_LINK = "whitespace-nowrap decoration-line-strong underline-offset-[3px] hover:decoration-fg-3";
 
 const join = (t?: Text) => (Array.isArray(t) ? t.filter(Boolean).join(" ") : (t ?? ""));
 
@@ -86,10 +88,17 @@ export default function KelPage({
         {screen === "home" && (
           <p className="text-[13px] leading-relaxed text-fg-3">
             출처: 님블뉴런 이스포츠 팀 제공 경기 기록,{" "}
-            <a className="whitespace-nowrap decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={DAKGG}>
+            <a className={SOURCE_LINK} href={DAKGG}>
               dak.gg e스포츠 경기 기록
             </a>
-            , bori.wiki 대회 결과, 2026 KEL 경기 규정 10월 12일 시행판
+            ,{" "}
+            <a className={SOURCE_LINK} href={wikiUrl("2026 Korean Esports League")}>
+              bori.wiki 대회 결과
+            </a>
+            ,{" "}
+            <a className={SOURCE_LINK} href={RULES}>
+              2026 KEL 경기 규정 10월 12일 시행판
+            </a>
             <br />
             팀 로고의 저작권은 각 구단에 있습니다.
             <br />

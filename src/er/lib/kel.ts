@@ -28,6 +28,8 @@ export const TEAM_BY_CSV = new Map(KEL_TEAMS.map((t) => [t.csv, t]));
 export const WIKI = "https://bori.wiki";
 export const LOGO_CDN = "https://cdn.mongsil.dev/er-labs/teams";
 export const DAKGG = "https://dak.gg/er/esports/kel_2026";
+// KEL 사이트는 HTTPS 접속을 받지 않음
+export const RULES = "http://kel.e-sports.or.kr/notice/view/1334";
 
 export const wikiUrl = (title: string) => `${WIKI}/${encodeURIComponent(title.replace(/ /g, "_"))}`;
 
