@@ -108,7 +108,7 @@ export default async function Page({ params }: Props) {
           </div>
         </div>
       }
-      notes={["처치 관계에서는 상대 선수를 알 수 없는 처치를 제외했습니다.", "운영 기록은 팀 세 명 모두 경기 상세가 있는 게임만 셌습니다."]}
+      notes={["처치 관계에서는 상대 선수를 알 수 없는 처치를 제외했습니다.", "운영 기록은 팀원 세 명의 경기 상세가 모두 있는 게임만 계산했습니다."]}
     >
       <section className="panel p-5 max-[760px]:p-4" aria-label="시즌 요약">
         <dl className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2 max-[420px]:gap-2">
@@ -271,7 +271,7 @@ export default async function Page({ params }: Props) {
                 </li>
               ))}
             </ul>
-            <h3 className={`mt-5 border-t border-line-soft pt-4 ${SUB}`}>많이 쓴 3인 조합</h3>
+            <h3 className={`mt-5 border-t border-line-soft pt-4 ${SUB}`}>많이 고른 3인 조합</h3>
             <ul className="@container mt-2 grid gap-2.5 text-[14px]">
               {combos.map((c) => (
                 <li key={c.chars.join()} className="grid grid-cols-[repeat(3,minmax(0,1fr))_auto] items-center gap-x-3 gap-y-1 @max-[440px]:grid-cols-3">
@@ -292,8 +292,8 @@ export default async function Page({ params }: Props) {
             <ul className="mt-3 grid gap-2 text-[14px]">
               {(
                 [
-                  ["팀 게임 점수", `${score(best)}점`, best],
-                  ["팀이 기록한 킬", `${kills.kills}킬`, kills],
+                  ["게임 점수", `${score(best)}점`, best],
+                  ["킬", `${kills.kills}킬`, kills],
                 ] as const
               ).map(([label, value, g]) => (
                 <li key={label} className="grid grid-cols-[7.5rem_4rem_minmax(0,1fr)] items-center gap-3">
@@ -312,7 +312,7 @@ export default async function Page({ params }: Props) {
             </h2>
             {op && (
               <dl className="mt-3 grid grid-cols-2 gap-3 max-[420px]:gap-2">
-                <Tile label="위클라인 처치 게임" value={`${op.wickline}게임`}>
+                <Tile label="위클라인을 처치한 게임" value={`${op.wickline}게임`}>
                   {opRank((r) => r.wickline)}
                 </Tile>
                 <Tile label="평균 생존 시간" value={duration(op.time)}>
@@ -321,7 +321,7 @@ export default async function Page({ params }: Props) {
                 <Tile label="게임당 시야 점수" value={op.vision.toFixed(1)}>
                   {opRank((r) => r.vision)}
                 </Tile>
-                <Tile label="게임당 망원 카메라" value={`${op.camera.toFixed(1)}개`}>
+                <Tile label="게임당 망원 카메라 설치" value={`${op.camera.toFixed(1)}개`}>
                   {opRank((r) => r.camera)}
                 </Tile>
               </dl>

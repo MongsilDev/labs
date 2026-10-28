@@ -32,8 +32,8 @@ const GROUPS: [string, Tile[]][] = [
       ["cc", "게임당 군중제어 시간", (p) => `${p.cc.toFixed(1)}초`],
       ["heal", "게임당 팀원 회복", (p) => int(p.heal)],
       ["vision", "게임당 시야 점수", (p) => p.vision.toFixed(1)],
-      ["camera", "게임당 망원 카메라", (p) => `${p.camera.toFixed(1)}개`],
-      ["revive", "게임당 동료 부활", (p) => `${p.revive.toFixed(2)}번`],
+      ["camera", "게임당 망원 카메라 설치", (p) => `${p.camera.toFixed(1)}개`],
+      ["revive", "게임당 팀원 부활", (p) => `${p.revive.toFixed(2)}번`],
       ["time", "평균 생존 시간", (p) => duration(p.time)],
       // 제목이 두 줄이 되는 폭에서도 같은 줄에 다른 칸이 없게 마지막에 둠
       ["cameraOff", "게임당 망원 카메라 파괴", (p) => `${p.cameraOff.toFixed(1)}개`],
@@ -175,7 +175,7 @@ export default function Players({ user, owner, name }: { user: User | null; owne
       screen="players"
       notes={[
         `순위는 ${MIN_GAMES}게임 이상 출전한 선수끼리 비교해 매겼고, 평균 순위와 게임당 데스는 값이 작을수록 순위가 높습니다.`,
-        "KPR은 경기 기록에 적힌 선수 평점의 평균이고, 한 게임 평균은 약\u00a01.0입니다.",
+        "KPR은 경기 기록에 적힌 선수 평점의 평균이고, 한 게임에 출전한 선수 전체의 평균은 약\u00a01.0입니다.",
         "가한 피해 비중은 팀 세 명이 가한 피해에서 그 선수가 차지한 비율을 게임마다 구해 평균한 값입니다.",
         "많이 처치한 상대와 이 선수를 많이 처치한 상대에서는 상대 선수를 알\u00a0수 없는 처치를 제외했습니다.",
       ]}
