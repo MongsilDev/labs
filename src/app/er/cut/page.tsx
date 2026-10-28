@@ -76,7 +76,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
   const left = data?.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
   return (
     <>
-      <Header user={user} crumb="이터컷 예측" crumbHref="/er/cut" next="/er/cut" />
+      <Header user={user} crumb="이터컷 예측" crumbHref="/er/cut" />
       <main id="main" className="wrap cut">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-3 pb-5">
           <h1 className="text-[28px] font-extrabold tracking-[-0.5px]">이터컷 예측</h1>

@@ -1,14 +1,18 @@
 import Link from "next/link";
+import Account, { type AccountUser } from "./Account";
 import { MarkSvg } from "./SiteMark";
+import ThemeToggle from "./ThemeToggle";
 import "./site.css";
 
 export default function SiteHeader({
   crumb,
   wide,
+  user,
   children,
 }: {
   crumb?: { href: string; label: string };
   wide?: boolean;
+  user?: AccountUser | null;
   children?: React.ReactNode;
 }) {
   return (
@@ -26,7 +30,11 @@ export default function SiteHeader({
             {crumb.label}
           </Link>
         )}
-        <div className="site-right">{children}</div>
+        <div className="site-right">
+          {children}
+          <Account user={user} />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

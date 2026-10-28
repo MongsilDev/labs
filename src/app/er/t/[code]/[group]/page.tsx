@@ -43,7 +43,7 @@ export default async function Page({ params, searchParams }: P) {
   if (group.length !== 1 || idx < 0 || idx >= view.groupCount) redirect(`/er/t/${view.code}/a`);
   return (
     <>
-      <Header user={user} crumb="점수 계산" wide next={`/er/t/${view.code}/${group}`} />
+      <Header user={user} crumb="점수 계산" wide />
       <TournamentApp initial={view} groupIdx={idx} basePath={`/er/t/${view.code}`} created={q.created === "1"} />
       <Footer wide />
     </>

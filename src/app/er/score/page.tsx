@@ -20,7 +20,7 @@ export default async function ScorePage({ searchParams }: { searchParams: Promis
   const mine = user ? myTournaments(user) : [];
   return (
     <>
-      <Header user={user} crumb="점수 계산" next="/er/score" />
+      <Header user={user} crumb="점수 계산" />
       <main id="main" className="wrap">
         {q.login === "failed" && (
           <p className="panel mb-4 border-minus px-4 py-3" role="alert">

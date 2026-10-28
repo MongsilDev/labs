@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
-import ThemeToggle from "@/er/components/ThemeToggle";
 
 export const metadata: Metadata = { title: "개인정보 처리방침" };
 
@@ -10,9 +9,7 @@ const H3 = "mt-5 mb-2 text-[15px] font-bold";
 export default function Privacy() {
   return (
     <>
-      <SiteHeader>
-        <ThemeToggle />
-      </SiteHeader>
+      <SiteHeader />
       <main id="main" className="wrap doc">
         <h1 className="mt-3 mb-[18px] text-[28px] font-extrabold tracking-[-0.5px]">개인정보 처리방침</h1>
         <p className="text-[14px] text-fg-3">2026년 10월 28일 시행</p>

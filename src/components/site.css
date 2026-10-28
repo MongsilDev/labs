@@ -63,6 +63,75 @@
   align-items: center;
   gap: 8px;
 }
+.site-right .btn.site-login {
+  height: 36px;
+}
+.site-av {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  object-fit: cover;
+  font-weight: 800;
+  color: #0a0d14;
+}
+.site-user {
+  position: relative;
+  display: flex;
+}
+.site-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.site-user-name {
+  min-width: 0;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-pop {
+  position: absolute;
+  right: 0;
+  top: 42px;
+  z-index: 40;
+  display: grid;
+  min-width: 160px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.site-pop a,
+.site-pop button {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.site-pop a:hover,
+.site-pop button:hover {
+  background: var(--hover);
+}
 .site-foot {
   margin-top: auto;
   padding: 48px 24px 0;
@@ -103,6 +172,14 @@
     flex-wrap: wrap;
     row-gap: 8px;
     padding: 8px 16px;
+  }
+  .site-user-btn {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+  .site-user-name {
+    display: none;
   }
   .site-foot {
     padding: 40px 16px 0;

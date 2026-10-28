@@ -16,7 +16,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const info = inviteInfo(token);
   return (
     <>
-      <Header user={user} login={false} />
+      <Header user={user} />
       <main id="main" className="wrap slim">
         <section className="panel mx-auto my-10 grid max-w-[460px] gap-3 p-[26px]">
           {info ? (

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import Avatar from "./Avatar";
+import Avatar from "@/er/components/Avatar";
 
 export default function UserMenu({ name, avatar }: { name: string; avatar: string | null }) {
   const [open, setOpen] = useState(false);
@@ -20,13 +20,13 @@ export default function UserMenu({ name, avatar }: { name: string; avatar: strin
     };
   }, [open]);
   return (
-    <div className="relative" ref={ref}>
-      <button type="button" className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[18px] border border-line bg-surface pr-3 pl-1.5 text-[13px] font-semibold" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+    <div className="site-user" ref={ref}>
+      <button type="button" className="site-user-btn" aria-label={name} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
         <Avatar name={name} src={avatar} />
-        <span className="min-w-0 truncate" style={{ maxWidth: 120 }}>{name}</span>
+        <span className="site-user-name">{name}</span>
       </button>
       {open && (
-        <div className="menu-pop panel" role="menu">
+        <div className="site-pop" role="menu">
           <Link role="menuitem" href="/er/score">내 대회</Link>
           <form method="post" action="/auth/logout">
             <button role="menuitem" type="submit">로그아웃</button>

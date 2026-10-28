@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
-import SiteHeader from "@/components/SiteHeader";
+import Header from "@/er/components/Header";
+import { currentUser } from "@/er/server/auth";
 import ExampleBoard from "@/er/components/ExampleBoard";
-import ThemeToggle from "@/er/components/ThemeToggle";
 import { int as rp, TIERS, tens } from "@/er/lib/cut";
 import { getCut } from "@/er/server/cut";
 import CutMini from "@/er/components/cut/CutMini";
@@ -101,9 +101,7 @@ export default async function Hub() {
   const kel = kelHighlights(kelData());
   return (
     <>
-      <SiteHeader>
-        <ThemeToggle />
-      </SiteHeader>
+      <Header user={await currentUser()} />
       <main id="main" className="wrap">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-4 pb-6 max-[760px]:pt-1 max-[760px]:pb-5">
           <h1 className="text-[30px] leading-none font-extrabold tracking-[-0.6px]">Labs</h1>
