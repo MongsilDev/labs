@@ -77,13 +77,12 @@ export default async function Page() {
           </table>
         </KelScroll>
       </section>
-      <section className="panel p-5 max-[760px]:p-4" aria-label="누적 순위 변화">
-        <p className="mb-3 text-[13px] text-fg-3">
-          서킷이 끝날 때마다 그때까지 받은 서킷 포인트 합계로 매긴 순위입니다.
-          <br />
-          서킷 1 뒤부터 순위가 가장 많이 오른 {riser.name}의 선을 강조했습니다.
-        </p>
-        <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[riser.key]} legend="정규 시즌 순위" suffix="까지" />
+      <section className="panel p-5 max-[760px]:p-4" aria-labelledby="cumulative">
+        <h2 id="cumulative" className="text-[17px] font-extrabold">
+          누적 순위
+        </h2>
+        <p className="mt-1 mb-3 text-[13px] text-fg-3">서킷이 끝날 때마다 그때까지 받은 서킷 포인트 합계로 매긴 순위입니다.</p>
+        <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[riser.key]} legend="누적 순위" suffix="까지" />
       </section>
     </KelPage>
   );
