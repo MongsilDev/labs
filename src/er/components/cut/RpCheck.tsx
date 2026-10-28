@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { between, chance, chanceLabel, type CutData, daysLeft, int, quitRp, TIERS, tens } from "@/er/lib/cut";
+import { between, chance, chanceLabel, type CutData, daysLeft, graceKey, int, quitRp, TIERS, tens } from "@/er/lib/cut";
 
 function Row({ label, value, note }: { label: string; value: React.ReactNode; note?: React.ReactNode }) {
   return (
@@ -20,6 +20,9 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
   const rp = Number(text);
   const valid = text !== "" && Number.isFinite(rp) && rp >= 0 && rp <= 20000;
   const left = data.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
+  const key = valid ? graceKey(data, rp) : "default";
+  const grace = data.updatedAt < data.rule.graceFrom ? data.rule.grace.default : data.rule.grace[key];
+  const quit = valid && data.quitTicks ? quitRp(rp, data.quitTicks[key], data.rule.step, data.rule.floor) : null;
 
   return (
     <div>
@@ -43,7 +46,6 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
             const gap = tier.cut - rp;
             const near = between(data.rps, rp, tier.cut);
             const end = tier.forecast?.[tier.forecast.length - 1];
-            const quit = data.quitTicks != null ? quitRp(rp, data.quitTicks, data.rule.step, data.rule.floor) : null;
             return (
               <section key={key} className="rounded-md border border-line px-4 py-3" aria-label={`${name} 진단`}>
                 <h3 className="mb-1 flex items-center gap-1.5 text-[15px] font-extrabold">
@@ -74,7 +76,7 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
                     <Row
                       label="오늘부터 쉬면"
                       value={`종료 때 ${int(quit)} RP`}
-                      note={`예상 컷${quit >= end[1] ? "보다 높음" : "보다 낮음"}, 유예 ${data.rule.grace}일 가정`}
+                      note={`예상 컷${quit >= end[1] ? "보다 높음" : "보다 낮음"}, 유예 ${grace}일 가정`}
                     />
                   )}
                 </dl>

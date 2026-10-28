@@ -17,9 +17,12 @@ export type CutData = {
   season: { id: number; name: string; end: number | null };
   rps: number[];
   tiers: { eternity: CutTier; demigod: CutTier };
-  quitTicks: number | null;
-  rule: { grace: number; step: number; floor: number; dormantDays: number };
+  quitTicks: Record<GraceKey, number> | null;
+  // graceFrom(12.7 점검) 전에는 모두 grace.default
+  rule: { grace: Record<GraceKey, number>; graceFrom: number; step: number; floor: number; dormantDays: number };
 };
+
+export type GraceKey = "eternity" | "demigod" | "default";
 
 export const TIERS = [
   { key: "eternity", name: "이터니티", color: "var(--et)" },
@@ -78,6 +81,12 @@ export function chanceLabel(p: number): string {
   if (p >= 0.45) return "중간";
   if (p >= 0.2) return "낮음";
   return "매우 낮음";
+}
+
+/** 순위표에서 rp가 들어갈 순위로 정한 유예 티어 */
+export function graceKey(data: CutData, rp: number): GraceKey {
+  const rank = data.rps.filter((v) => v > rp).length + 1;
+  return rank <= data.tiers.eternity.place ? "eternity" : rank <= data.tiers.demigod.place ? "demigod" : "default";
 }
 
 /** 지금부터 랭크 게임을 안 했을 때 시즌 끝 RP. 유예를 다 가진 상태 가정 */

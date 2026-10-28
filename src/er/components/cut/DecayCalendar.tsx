@@ -1,6 +1,6 @@
 import { type CutData, DAY, dayStart, md, TIERS } from "@/er/lib/cut";
 
-// 12.7 패치. 이터니티 유예 상한 8, 데미갓 10으로 줄어듦
+// 12.7 패치. 유예 상한이 티어별로 바뀜
 const PATCH = { day: "2026-10-29", label: "12.7" };
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -14,6 +14,7 @@ export default function DecayCalendar({ data }: { data: CutData }) {
   const until = Math.max(dayStart(lastDrop ?? today), dayStart(PATCH.day)) + 2 * DAY;
   const dates: string[] = [];
   for (let t = dayStart(today) + DAY; t <= until; t += DAY) dates.push(new Date(t + 9 * 3_600_000).toISOString().slice(0, 10));
+  const grace = data.rule.grace;
   const peak = Math.max(1, ...[...counts.values()].flatMap((c) => Object.values(c)));
 
   return (
@@ -60,11 +61,13 @@ export default function DecayCalendar({ data }: { data: CutData }) {
         </ol>
       </div>
       <p className="mt-4 text-[13px] text-fg-3">
-        {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정은 유예 {data.rule.grace}일이 지난 뒤 매일 15시에 RP가 {data.rule.step}점씩 깎입니다.
+        {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정은 유예 기간이 지난 뒤 매일 15시에 RP가 {data.rule.step}점씩 깎입니다.
+        <br />
+        {data.updatedAt < data.rule.graceFrom
+          ? `유예는 ${grace.default}일이고, 10월 29일 12.7 패치부터 이터니티 ${grace.eternity}일, 데미갓 ${grace.demigod}일로 줄어듭니다.`
+          : `유예는 이터니티 ${grace.eternity}일, 데미갓 ${grace.demigod}일, 그 밖의 티어 ${grace.default}일입니다.`}
         <br />
         막대는 휴면 계정이 지금 컷 아래로 내려가는 날과 인원을 표시합니다.
-        <br />
-        10월 29일 12.7 패치로 유예 상한이 이터니티 8일, 데미갓 10일로 줄면 휴면 계정이 더 일찍 내려갈 수 있습니다.
       </p>
     </div>
   );

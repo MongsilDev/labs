@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { between, type CutData, type CutTier, chance, chanceLabel, daysLeft, quitRp } from "../../src/er/lib/cut";
+import { between, type CutData, type CutTier, chance, chanceLabel, daysLeft, graceKey, quitRp } from "../../src/er/lib/cut";
 import { ticks } from "../../src/er/lib/ticks";
 import { getCut } from "../../src/er/server/cut";
 
@@ -25,6 +25,14 @@ describe("이터컷 계산", () => {
     expect(quitRp(9050, 8, 100, 6400)).toBe(8250);
     expect(quitRp(6600, 8, 100, 6400)).toBe(6400);
     expect(quitRp(6000, 8, 100, 6400)).toBe(6000);
+  });
+
+  it("유예 티어는 순위표에서 내 RP가 들어갈 순위로 정한다", () => {
+    const data = { rps: [9300, 9200, 9100, 9000], tiers: { eternity: { place: 1 }, demigod: { place: 3 } } } as CutData;
+    expect(graceKey(data, 9300)).toBe("eternity");
+    expect(graceKey(data, 9250)).toBe("demigod");
+    expect(graceKey(data, 9100)).toBe("demigod");
+    expect(graceKey(data, 9050)).toBe("default");
   });
 
   it("남은 날은 KST 날짜 차이", () => {
@@ -54,7 +62,7 @@ describe("봇 응답 값의 범위", () => {
       decayStay: 0,
     });
     const reply = (decay: [string, number][], over: Partial<CutData> = {}) => {
-      const data: CutData = { updatedAt: at, season: { id: 1, name: "시즌", end: null }, rps: [9000], tiers: { eternity: tier(decay), demigod: tier([]) }, quitTicks: null, rule: { grace: 0, step: 0, floor: 0, dormantDays: 0 }, ...over };
+      const data: CutData = { updatedAt: at, season: { id: 1, name: "시즌", end: null }, rps: [9000], tiers: { eternity: tier(decay), demigod: tier([]) }, quitTicks: null, rule: { grace: { eternity: 0, demigod: 0, default: 0 }, graceFrom: 0, step: 0, floor: 0, dormantDays: 0 }, ...over };
       vi.stubGlobal("fetch", async () => Response.json(data));
     };
     reply([["9999-12-31", 1]]);
