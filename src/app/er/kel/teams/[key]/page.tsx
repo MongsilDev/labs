@@ -356,7 +356,7 @@ export default async function Page({ params }: Props) {
                         <Link className={`truncate font-semibold ${LINK}`} href={teamPath(x.t)}>
                           {x.t.name}
                         </Link>
-                        <span className="ml-auto flex-none text-fg-3">{x[side]}번 처치</span>
+                        <span className="ml-auto flex-none text-fg-3">{x[side]}번</span>
                       </li>
                     ))}
                   </ul>
