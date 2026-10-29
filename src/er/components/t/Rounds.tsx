@@ -201,7 +201,7 @@ export function Replays({ rounds, copy }: { rounds: GroupResult["rounds"]; copy:
           복사
         </button>
       </div>
-      <ul className="grid list-none grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-x-3 gap-y-1 text-[13px] tabular-nums">
+      <ul className="grid list-none grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-x-2 gap-y-1 text-[13px] tabular-nums">
         {list.map((r) => (
           <li key={r.roundNo}>
             <span className="text-fg-3">{r.roundNo}R</span> {r.gameId}
