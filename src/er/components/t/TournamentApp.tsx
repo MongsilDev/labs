@@ -8,7 +8,7 @@ import { computeGroup, type GroupResult } from "@/er/lib/engine";
 import { boardImage, download, playersImage, standingsCsv } from "@/er/lib/export";
 import { remaining } from "@/er/lib/format";
 import { useNow } from "@/er/lib/useNow";
-import { LIMITS, MODE_LABEL, PRESET_LABEL } from "@/er/lib/rules";
+import { LIMITS, MODE_LABEL, scoreLabel } from "@/er/lib/rules";
 import type { Op, TournamentView } from "@/er/lib/view";
 import Details from "./Details";
 import ManualRound from "./ManualRound";
@@ -280,7 +280,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
             {example && <span className="chip dashed">예시</span>}
           </h1>
           <p className="text-[14px] text-fg-3">
-            {MODE_LABEL[view.mode]} {view.mode === "points" ? `${view.plannedRounds}라운드` : `최대 ${view.plannedRounds}라운드`}, {view.rules.preset === "custom" ? "직접 정한 순위 점수" : PRESET_LABEL.masters}
+            {MODE_LABEL[view.mode]} {view.mode === "points" ? `${view.plannedRounds}라운드` : `최대 ${view.plannedRounds}라운드`}, {scoreLabel(view.rules)}
             {!example && (
               <>
                 ,{" "}

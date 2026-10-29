@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { api } from "@/er/lib/client";
 import { ago, timeKo } from "@/er/lib/format";
-import { LIMITS, PRESET_LABEL, groupLabel, presetRules, type Mode, type Preset, type Rules } from "@/er/lib/rules";
+import { LIMITS, PLACEMENT_POINTS, PRESET_LABEL, groupLabel, type Mode, type Preset, type Rules } from "@/er/lib/rules";
 import { useNow } from "@/er/lib/useNow";
 import type { DiscordGuild, DiscordLinkRow, InviteRow, MemberRow, RelayStatus, TournamentView } from "@/er/lib/view";
 import Avatar from "./Avatar";
@@ -471,7 +471,7 @@ function Settings({ view, onSaved, onError }: { view: TournamentView; onSaved: (
               onChange={(e) => {
                 const p = e.target.value as Preset;
                 setPreset(p);
-                setRules({ ...presetRules(p), advance: rules.advance });
+                setRules({ ...rules, preset: p, placementPoints: [...PLACEMENT_POINTS], killMultiplier: 1 });
               }}
             >
               {(Object.keys(PRESET_LABEL) as Preset[]).map((p) => (

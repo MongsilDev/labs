@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/er/lib/client";
-import { LIMITS, PRESET_LABEL, presetRules, type Mode, type Preset, type Rules } from "@/er/lib/rules";
+import { LIMITS, PLACEMENT_POINTS, PRESET_LABEL, presetRules, type Mode, type Preset, type Rules } from "@/er/lib/rules";
 import type { CreateInput } from "@/er/lib/view";
 import ModeSeg from "./ModeSeg";
 import RulesFields from "./RulesFields";
@@ -106,7 +106,7 @@ export default function CreateForm({ loggedIn, autoCreate }: { loggedIn: boolean
             onChange={(e) => {
               const p = e.target.value as Preset;
               setPreset(p);
-              setRules({ ...presetRules(p), advance: rules.advance });
+              setRules({ ...rules, preset: p, placementPoints: [...PLACEMENT_POINTS], killMultiplier: 1 });
               if (p === "custom") setDetailsOpen(true);
             }}
           >

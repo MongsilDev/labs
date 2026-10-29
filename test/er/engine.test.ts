@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { computeGroup, type GroupInput } from "../../src/er/lib/engine";
 import { parseRoundCsv } from "../../src/er/lib/parse";
 import { standingsCsv } from "../../src/er/lib/export";
-import { clampRules, presetRules, type Mode } from "../../src/er/lib/rules";
+import { clampRules, PLACEMENT_POINTS, presetRules, type Mode } from "../../src/er/lib/rules";
 import { csv, places, round } from "./helpers";
 
 const T = ["알파", "브라보", "찰리", "델타", "에코", "폭스", "골프", "호텔"];
@@ -498,9 +498,11 @@ describe("규칙 정리", () => {
     expect(clampRules({ placementPoints: Array.from({ length: 20 }, () => 1) }, "custom").placementPoints).toHaveLength(8);
   });
 
-  it("점수표 계산 여부는 규칙 선택으로만 정해진다", () => {
-    expect(clampRules({ scoreSource: "table" }, "masters").scoreSource).toBe("csv");
-    expect(clampRules({ scoreSource: "csv" }, "custom").scoreSource).toBe("table");
+  it("점수는 순위 점수표로 계산하고 공식 값과 같으면 공식 점수로 본다", () => {
+    expect(clampRules({ scoreSource: "csv" } as never, "masters").scoreSource).toBe("table");
+    expect(clampRules({ placementPoints: [1, 1, 1, 1, 1, 1, 1, 1], killMultiplier: 3 }, "masters")).toMatchObject({ preset: "masters", placementPoints: PLACEMENT_POINTS, killMultiplier: 1 });
+    expect(clampRules({ placementPoints: [...PLACEMENT_POINTS], killMultiplier: 1, bans: "basic" }, "custom")).toMatchObject({ preset: "masters", bans: "basic" });
+    expect(clampRules({ placementPoints: [...PLACEMENT_POINTS], killMultiplier: 2 }, "custom").preset).toBe("custom");
   });
 
   it("참거짓 규칙에는 참거짓 값만 남긴다", () => {

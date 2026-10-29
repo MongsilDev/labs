@@ -54,7 +54,7 @@ export default function RulesFields({ rules, mode, rounds, onChange }: { rules: 
         </label>
       </fieldset>
 
-      {rules.scoreSource === "table" && (
+      {rules.preset === "custom" && (
         <fieldset>
           <legend className="lbl">순위별 점수</legend>
           <div className="grid grid-cols-4 gap-2 [&>label]:grid [&>label]:gap-1 [&>label]:text-[12px] [&>label]:text-fg-3">

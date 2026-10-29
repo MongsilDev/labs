@@ -50,7 +50,7 @@ describe("스크림봇 대회 만들기", () => {
     const t = conn.prepare("SELECT * FROM tournaments WHERE code = ?").get(r.body.code) as { id: number; group_count: number; planned_rounds: number; rules: string };
     expect(t.group_count).toBe(2);
     expect(t.planned_rounds).toBe(4);
-    expect(JSON.parse(t.rules)).toMatchObject({ preset: "custom", scoreSource: "table", bans: "basic" });
+    expect(JSON.parse(t.rules)).toMatchObject({ preset: "masters", scoreSource: "table", bans: "basic" });
     expect(conn.prepare("SELECT user_id, role FROM members WHERE tournament_id = ? ORDER BY user_id").all(t.id)).toEqual([
       { user_id: owner.id, role: "owner" },
       { user_id: op.id, role: "operator" },

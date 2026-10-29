@@ -43,9 +43,17 @@ export const PLACEMENT_POINTS = [10, 7, 5, 4, 3, 2, 1, 0];
 export const CHECKPOINT_SEQUENCE = [0, 0, 0, 0, 2, 3, 5, 7, 8];
 
 export const PRESET_LABEL: Record<Preset, string> = {
-  masters: "공식 규정",
+  masters: "공식 점수",
   custom: "직접 정하기",
 };
+
+export function isOfficialScore(r: Pick<Rules, "placementPoints" | "killMultiplier">): boolean {
+  return r.killMultiplier === 1 && PLACEMENT_POINTS.every((p, i) => r.placementPoints[i] === p);
+}
+
+export function scoreLabel(r: Rules): string {
+  return r.preset === "custom" ? "직접 정한 순위 점수" : PRESET_LABEL.masters;
+}
 
 export const MODE_LABEL: Record<Mode, string> = {
   points: "포인트제",
@@ -56,7 +64,7 @@ export const MODE_LABEL: Record<Mode, string> = {
 export function presetRules(preset: Preset): Rules {
   return {
     preset,
-    scoreSource: preset === "custom" ? "table" : "csv",
+    scoreSource: "table",
     placementPoints: [...PLACEMENT_POINTS],
     killMultiplier: 1,
     tiebreak: "killScore",
@@ -102,15 +110,18 @@ export function clampRules(input: Partial<Rules> | undefined, preset: Preset): R
     const n = typeof v === "number" && Number.isFinite(v) ? v : d;
     return Math.min(hi, Math.max(lo, n));
   };
+  // 공식 점수는 순위 점수표로 계산하고, 직접 정한 값이 공식 값과 같으면 공식 점수로 봄
+  const custom = preset === "custom";
   const points = Array.from({ length: LIMITS.teamsPerGroup }, (_, i) =>
-    Array.isArray(input.placementPoints) ? num(input.placementPoints[i], -100, 100, 0) : base.placementPoints[i],
+    custom && Array.isArray(input.placementPoints) ? num(input.placementPoints[i], -100, 100, 0) : base.placementPoints[i],
   );
+  const killMultiplier = custom ? num(input.killMultiplier, 0, 10, 1) : 1;
   const cp = input.checkpoint ?? base.checkpoint;
   return {
-    preset,
-    scoreSource: preset === "custom" ? "table" : "csv",
+    preset: isOfficialScore({ placementPoints: points, killMultiplier }) ? "masters" : "custom",
+    scoreSource: "table",
     placementPoints: points,
-    killMultiplier: num(input.killMultiplier, 0, 10, 1),
+    killMultiplier,
     tiebreak: (["killScore", "kills", "rankScore", "wins"] as const).includes(input.tiebreak as Tiebreak) ? (input.tiebreak as Tiebreak) : "killScore",
     deathPenalty: bool(input.deathPenalty, base.deathPenalty),
     bans: ban(input.bans, base.bans),
