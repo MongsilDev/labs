@@ -51,12 +51,20 @@ export type Board = {
 
 export type BotTournament = { code: string; name: string; role: "owner" | "operator"; played: number };
 
-export function botAuthorized(header: string | null): boolean {
-  const want = process.env.LABS_BOT_TOKEN;
+function tokenIs(want: string | undefined, header: string | null): boolean {
   if (!want || !header) return false;
   const a = Buffer.from(header);
   const b = Buffer.from(want);
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+export function botAuthorized(header: string | null): boolean {
+  return tokenIs(process.env.LABS_BOT_TOKEN, header);
+}
+
+// 스크림봇 토큰은 대회 만들기와 순위 읽기만 씀
+export function scrimAuthorized(header: string | null): boolean {
+  return tokenIs(process.env.LABS_SCRIM_TOKEN, header);
 }
 
 const asUser = (id: string | null) => (id && /^\d{1,20}$/.test(id) ? { id, name: "", avatar: null } : null);

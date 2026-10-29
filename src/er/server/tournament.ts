@@ -861,6 +861,64 @@ export function setDiscordLinks(code: string, actor: unknown, links: unknown): L
   });
 }
 
+export type ScrimInput = { owner?: unknown; operators?: unknown; name?: unknown; preset?: unknown; plannedRounds?: unknown; rules?: unknown; links?: unknown };
+export type ScrimResult = { status: "forbidden" | "invalid" | "full" } | { status: "ok"; code: string; reused: boolean; missing: string[] };
+
+// 같은 날 다시 불러도 대회가 하나만 남도록 같은 개최자의 같은 이름 대회는 이 시간 안이면 다시 씀
+const SCRIM_REUSE_MS = 20 * 60 * 60 * 1000;
+
+// 스크림봇이 조편성 뒤 부름. 대회 만들기, 운영자 추가, 조 채널 연결을 한 트랜잭션으로 함. missing은 Labs에 로그인한 적이 없어 넣지 못한 운영자
+export function createScrim(input: ScrimInput): ScrimResult {
+  const owner = userById(input.owner);
+  if (!owner) return { status: "forbidden" };
+  const name = clean(input.name, LIMITS.nameLength);
+  const links = input.links;
+  if (!name || !Array.isArray(links) || links.length < 1 || links.length > LIMITS.groups) return { status: "invalid" };
+  const labels = links.map((_, i) => groupLabel(i));
+  const want: LinkWant[] = [];
+  for (const l of links as { group?: unknown; channelId?: unknown; guild?: unknown; channel?: unknown }[]) {
+    const g = typeof l?.group === "string" ? labels.indexOf(l.group.trim().toUpperCase()) : -1;
+    if (g < 0 || want.some((w) => w.g === g) || typeof l.channelId !== "string" || !DISCORD_ID.test(l.channelId) || want.some((w) => w.channelId === l.channelId)) return { status: "invalid" };
+    want.push({ g, channelId: l.channelId, guild: clean(l.guild, 100), channel: clean(l.channel, 100) });
+  }
+  const ids = Array.isArray(input.operators) ? [...new Set(input.operators.filter((x): x is string => typeof x === "string" && DISCORD_ID.test(x) && x !== owner.id))] : [];
+  return tx(() => {
+    const conn = db();
+    let t = conn
+      .prepare("SELECT * FROM tournaments WHERE created_by = ? AND name = ? AND group_count = ? AND created_at > ? ORDER BY id DESC LIMIT 1")
+      .get(owner.id, name, want.length, now() - SCRIM_REUSE_MS) as TRow | undefined;
+    const reused = Boolean(t);
+    if (!t) {
+      const active = conn.prepare("SELECT COUNT(*) AS n FROM members WHERE user_id = ? AND role = 'owner'").get(owner.id) as { n: number };
+      if (active.n >= 20) return { status: "full" } as const;
+      const preset = PRESETS.includes(input.preset as Preset) ? (input.preset as Preset) : "masters";
+      const planned = int(input.plannedRounds, 1, LIMITS.rounds, 4);
+      const code = newCode();
+      const at = now();
+      const r = conn
+        .prepare("INSERT INTO tournaments(code, name, mode, rules, planned_rounds, group_count, created_by, created_at, updated_at) VALUES (?, ?, 'points', ?, ?, ?, ?, ?, ?)")
+        .run(code, name, JSON.stringify(clampRules(input.rules as Partial<Rules> | undefined, preset)), planned, want.length, owner.id, at, at);
+      conn.prepare("INSERT INTO members(tournament_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)").run(Number(r.lastInsertRowid), owner.id, at);
+      conn.prepare("INSERT INTO logs(tournament_id, user_name, text, created_at) VALUES (?, ?, ?, ?)").run(Number(r.lastInsertRowid), owner.name, "대회 만들기 (스크림봇)", at);
+      t = find(code)!;
+    }
+    const missing: string[] = [];
+    let slots = LIMITS.operators - (conn.prepare("SELECT COUNT(*) AS n FROM members WHERE tournament_id = ? AND role = 'operator'").get(t.id) as { n: number }).n;
+    for (const id of ids) {
+      const user = userById(id);
+      if (!user) {
+        missing.push(id);
+        continue;
+      }
+      if (roleOf(t, user) || slots <= 0) continue;
+      conn.prepare("INSERT INTO members(tournament_id, user_id, role, joined_at) VALUES (?, ?, 'operator', ?)").run(t.id, user.id, now());
+      slots--;
+    }
+    writeLinks(t, owner, want);
+    return { status: "ok", code: t.code, reused, missing } as const;
+  });
+}
+
 // 관리 화면에서 고른 채널. 봇의 채널 목록을 다시 받아 그 안에 있을 때만 연결함
 export async function linkDiscord(code: string, user: User, group: unknown, channelId: unknown): Promise<OpResult> {
   const { t } = findRole(code, user);
