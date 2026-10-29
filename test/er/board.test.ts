@@ -38,6 +38,7 @@ describe("몽실봇 순위 API", () => {
     expect(r.ended).toBe(true);
     expect(r.standings[0]).toMatchObject({ rank: 1, name: "인천 웨이브", total: 105, fixed: 1 });
     expect(r.next).toBeNull();
+    expect(r.replays).toEqual([]);
     expect(b.botBoard("EXAMPLE", "B", null)).toBe("no-group");
   });
 
@@ -50,6 +51,7 @@ describe("몽실봇 순위 API", () => {
     expect(r.url).toMatch(new RegExp(`/er/t/${code}/b$`));
     expect(r.standings.map((s) => [s.rank, s.name, s.total])).toEqual([[1, "가", 13], [2, "나", 8], [3, "다", 6]]);
     expect(r.next?.roundNo).toBe(2);
+    expect(r.replays).toEqual([{ roundNo: 1, gameId: 10 }]);
     const anon = b.botBoard(code, "B", "999");
     expect(anon && anon !== "no-group" && anon.role).toBeNull();
     expect(b.boardVersion(code)).toBe(r.version);
@@ -61,5 +63,15 @@ describe("몽실봇 순위 API", () => {
     expect(list[0]).toEqual({ code: expect.any(String), name: "봇 시험", role: "owner", played: 1 });
     expect(b.botTournaments("999")).toEqual([]);
     expect(b.botTournaments("abc")).toEqual([]);
+  });
+
+  it("리플레이 코드는 게임 ID가 있는 CSV 라운드만 라운드 순서대로 준다", () => {
+    const code = t.createTournament(owner, { name: "리플레이 시험", mode: "points", preset: "masters", plannedRounds: 4, groupCount: 1 });
+    t.applyOp(code, owner, { op: "add_csv", group: 0, files: [{ name: "c.csv", text: csv(30, teams(["가", "나"])) }], round: 3 });
+    t.applyOp(code, owner, { op: "add_manual", group: 0, round: 2, teams: [{ team: "가", placement: 1, killScore: 0 }, { team: "나", placement: 2, killScore: 0 }] });
+    t.applyOp(code, owner, { op: "add_csv", group: 0, files: [{ name: "a.csv", text: csv(10, teams(["가", "나"])) }], round: 1 });
+    const r = b.botBoard(code, null, owner.id);
+    if (!r || r === "no-group") throw new Error("대회 없음");
+    expect(r.replays).toEqual([{ roundNo: 1, gameId: 10 }, { roundNo: 3, gameId: 30 }]);
   });
 });
