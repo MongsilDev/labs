@@ -1,6 +1,6 @@
 import type { Player } from "./parse";
 import type { TournamentView } from "./view";
-import { CHECKPOINT_SEQUENCE, MAIN_WEATHERS, SUB_WEATHERS, defaultMainWeather, type Mode, type Rules } from "./rules";
+import { CHECKPOINT_SEQUENCE, MAIN_WEATHERS, SUB_WEATHERS, defaultMainWeather, type Ban, type Mode, type Rules } from "./rules";
 
 export type RoundInput = {
   roundNo: number;
@@ -231,7 +231,9 @@ function penaltyPoints(p: PenaltyInput, rules: Rules) {
   return p.points;
 }
 
-export function banRoundsFor(count: number): number {
+export function banRoundsFor(count: number, ban: Ban): number {
+  if (ban === "none") return 0;
+  if (ban === "basic") return count >= 3 ? 1 : 0;
   if (count >= 5) return 3;
   if (count === 4) return 2;
   if (count === 3) return 1;
@@ -470,7 +472,7 @@ export function computeGroup(input: GroupInput): GroupResult {
     const counts = new Map<string, number>();
     for (const p of round.players) if (p.character) counts.set(p.character, (counts.get(p.character) ?? 0) + 1);
     const list = [...counts.entries()]
-      .map(([character, count]) => ({ character, count, banRounds: rules.bans ? banRoundsFor(count) : 0 }))
+      .map(([character, count]) => ({ character, count, banRounds: banRoundsFor(count, rules.bans) }))
       .sort((a, b) => b.count - a.count || byText(a.character, b.character));
     picks.push({ roundNo: r, counts: list });
     for (const c of list) {

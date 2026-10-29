@@ -1,6 +1,6 @@
 "use client";
 
-import { LIMITS, TIEBREAK_LABEL, type Mode, type Rules, type Tiebreak } from "@/er/lib/rules";
+import { BAN_LABEL, LIMITS, TIEBREAK_LABEL, type Ban, type Mode, type Rules, type Tiebreak } from "@/er/lib/rules";
 
 export default function RulesFields({ rules, mode, rounds, onChange }: { rules: Rules; mode: Mode; rounds: number; onChange: (r: Rules) => void }) {
   const set = <K extends keyof Rules>(k: K, v: Rules[K]) => onChange({ ...rules, [k]: v });
@@ -31,15 +31,22 @@ export default function RulesFields({ rules, mode, rounds, onChange }: { rules: 
         </div>
       </div>
 
+      <div>
+        <label className="lbl" htmlFor="rf-ban">3-PICK-BAN</label>
+        <select id="rf-ban" className="field" value={rules.bans} onChange={(e) => set("bans", e.target.value as Ban)}>
+          {(Object.keys(BAN_LABEL) as Ban[]).map((b) => (
+            <option key={b} value={b}>
+              {BAN_LABEL[b]}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <fieldset className="grid gap-2">
         <legend className="lbl">적용할 규칙</legend>
         <label className="flex cursor-pointer items-center gap-2 text-[14px] [&>input]:size-4 [&>input]:accent-accent">
           <input type="checkbox" checked={rules.deathPenalty} onChange={(e) => set("deathPenalty", e.target.checked)} />
           처치자 불명 사망 1회 1점 감점
-        </label>
-        <label className="flex cursor-pointer items-center gap-2 text-[14px] [&>input]:size-4 [&>input]:accent-accent">
-          <input type="checkbox" checked={rules.bans} onChange={(e) => set("bans", e.target.checked)} />
-          강화 3-PICK-BAN: 3명 1라운드, 4명 2라운드, 5명 이상 3라운드 금지
         </label>
         <label className="flex cursor-pointer items-center gap-2 text-[14px] [&>input]:size-4 [&>input]:accent-accent">
           <input type="checkbox" checked={rules.subWeather} onChange={(e) => set("subWeather", e.target.checked)} />

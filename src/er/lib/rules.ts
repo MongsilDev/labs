@@ -1,6 +1,14 @@
 export type Mode = "points" | "checkpoint" | "double";
 export type Preset = "masters" | "custom";
 
+export type Ban = "none" | "basic" | "strict";
+
+export const BAN_LABEL: Record<Ban, string> = {
+  none: "없음",
+  basic: "기본: 3명 이상 1R",
+  strict: "강화: 3명 1R, 4명 2R, 5명 이상 3R",
+};
+
 export type Tiebreak = "killScore" | "kills" | "rankScore" | "wins";
 
 export const TIEBREAK_LABEL: Record<Tiebreak, string> = {
@@ -17,7 +25,7 @@ export type Rules = {
   killMultiplier: number;
   tiebreak: Tiebreak;
   deathPenalty: boolean;
-  bans: boolean;
+  bans: Ban;
   subWeather: boolean;
   advance: number;
   checkpoint: {
@@ -53,7 +61,7 @@ export function presetRules(preset: Preset): Rules {
     killMultiplier: 1,
     tiebreak: "killScore",
     deathPenalty: true,
-    bans: true,
+    bans: "strict",
     subWeather: true,
     advance: 0,
     checkpoint: {
@@ -85,6 +93,7 @@ export const LIMITS = {
 };
 
 const bool = (v: unknown, d: boolean) => (typeof v === "boolean" ? v : d);
+const ban = (v: unknown, d: Ban): Ban => (v === true ? "strict" : v === false ? "none" : typeof v === "string" && Object.hasOwn(BAN_LABEL, v) ? (v as Ban) : d);
 
 export function clampRules(input: Partial<Rules> | undefined, preset: Preset): Rules {
   const base = presetRules(preset);
@@ -104,7 +113,7 @@ export function clampRules(input: Partial<Rules> | undefined, preset: Preset): R
     killMultiplier: num(input.killMultiplier, 0, 10, 1),
     tiebreak: (["killScore", "kills", "rankScore", "wins"] as const).includes(input.tiebreak as Tiebreak) ? (input.tiebreak as Tiebreak) : "killScore",
     deathPenalty: bool(input.deathPenalty, base.deathPenalty),
-    bans: bool(input.bans, base.bans),
+    bans: ban(input.bans, base.bans),
     subWeather: bool(input.subWeather, base.subWeather),
     advance: Math.round(num(input.advance, 0, LIMITS.teamsPerGroup, 0)),
     checkpoint: {

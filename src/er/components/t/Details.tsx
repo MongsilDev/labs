@@ -3,14 +3,13 @@
 import { useState } from "react";
 import type { GroupResult } from "@/er/lib/engine";
 import { fmt, num } from "@/er/lib/format";
-import type { Rules } from "@/er/lib/rules";
 import Char from "./Char";
 
 type Tab = "rounds" | "picks" | "players";
 
 const PICK = "flex items-center gap-2 py-1 text-[13px]";
 
-export default function Details({ result, rules }: { result: GroupResult; rules: Rules }) {
+export default function Details({ result }: { result: GroupResult }) {
   const [tab, setTab] = useState<Tab>("rounds");
   const { standings, played, picks, players } = result;
   if (played === 0) return null;
@@ -83,7 +82,7 @@ export default function Details({ result, rules }: { result: GroupResult; rules:
                         <li key={c.character} className={PICK}>
                           <Char name={c.character} />
                           <span className="text-fg-3">{c.count}명</span>
-                          {c.banRounds > 0 && rules.bans && (
+                          {c.banRounds > 0 && (
                             <span className="ml-auto text-[12px] font-bold text-minus">
                               {c.banRounds === 1 ? `${p.roundNo + 1}라운드 금지` : `${p.roundNo + 1}~${p.roundNo + c.banRounds}라운드 금지`}
                             </span>
