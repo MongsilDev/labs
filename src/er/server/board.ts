@@ -2,6 +2,7 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { exampleView } from "@/er/lib/example";
 import { groupResult } from "@/er/lib/engine";
+import { replays } from "@/er/lib/format";
 import { characterName } from "@/er/lib/format";
 import type { Mode, Tiebreak } from "@/er/lib/rules";
 import type { Role, TournamentView } from "@/er/lib/view";
@@ -44,6 +45,7 @@ export type Board = {
   channelId: string | null;
   standings: BoardRow[];
   next: { roundNo: number; main: string; sub: string | null; bans: string[] } | null;
+  replays?: { roundNo: number; gameId: number }[];
   host?: { id: string; name: string } | null;
 };
 
@@ -101,6 +103,7 @@ export function botBoard(code: string, group: string | null, userId: string | nu
       tiedBy: s.tiedBy,
     })),
     host: example ? null : tournamentHost(view.code),
+    replays: replays(res.rounds),
     next: res.next && !res.ended ? { roundNo: res.next.roundNo, main: res.next.main, sub: res.next.sub, bans: res.next.bans.map(characterName) } : null,
   };
 }

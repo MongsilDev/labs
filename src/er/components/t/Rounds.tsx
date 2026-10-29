@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { GroupResult } from "@/er/lib/engine";
-import { num, rampColor } from "@/er/lib/format";
+import { num, rampColor, replays, replayText } from "@/er/lib/format";
 import { MAIN_WEATHERS, SUB_WEATHERS, type Mode } from "@/er/lib/rules";
 import type { GroupView, Op } from "@/er/lib/view";
 import Char from "./Char";
@@ -17,9 +17,10 @@ type Props = {
   run: (op: Op) => Promise<unknown>;
   pickFiles: (round?: number) => void;
   openManual: (round: number) => void;
+  copy: (text: string, done: string) => void;
 };
 
-export default function Rounds({ group, result, mode, planned, multi, editable, run, pickFiles, openManual }: Props) {
+export default function Rounds({ group, result, mode, planned, multi, editable, run, pickFiles, openManual, copy }: Props) {
   const [weatherFor, setWeatherFor] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const rows = new Map(group.rounds.map((r) => [r.roundNo, r]));
@@ -98,6 +99,8 @@ export default function Rounds({ group, result, mode, planned, multi, editable, 
           </section>
         );
       })}
+
+      <Replays rounds={rounds} copy={copy} />
 
       {next && (
         <section className="panel flex min-w-0 flex-col gap-2 px-3.5 py-3 col-span-2 border-line-strong max-[760px]:-order-1 max-[760px]:col-span-full" aria-label={`${next.roundNo}라운드 다음 경기`}>
@@ -184,6 +187,28 @@ export default function Rounds({ group, result, mode, planned, multi, editable, 
 
       {!next && !ended && played >= planned && <p className="text-fg-3">정한 라운드가 모두 끝났습니다.</p>}
     </div>
+  );
+}
+
+export function Replays({ rounds, copy }: { rounds: GroupResult["rounds"]; copy: (text: string, done: string) => void }) {
+  const list = replays(rounds);
+  if (list.length === 0) return null;
+  return (
+    <section className="panel flex min-w-0 flex-col gap-2 px-3.5 py-3 max-[760px]:col-span-full" aria-labelledby="replays-title">
+      <div className="flex min-w-0 items-center gap-2">
+        <b id="replays-title" className="text-[15px] font-extrabold whitespace-nowrap">리플레이 코드</b>
+        <button type="button" className="btn sm ml-auto" onClick={() => copy(replayText(list), "리플레이 코드를 복사했습니다.")}>
+          복사
+        </button>
+      </div>
+      <ul className="grid list-none grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-x-3 gap-y-1 text-[13px] tabular-nums">
+        {list.map((r) => (
+          <li key={r.roundNo}>
+            <span className="text-fg-3">{r.roundNo}R</span> {r.gameId}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

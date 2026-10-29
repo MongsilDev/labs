@@ -1,4 +1,5 @@
 import characters from "@/er/data/characters.json";
+import type { RoundSummary } from "./engine";
 
 const KO = characters as Record<string, string>;
 
@@ -62,3 +63,8 @@ export const rampTextClass = (i: number, n: number) => [rampDarkText(i, n, "dark
 
 export const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 export const byCharacter = (a: string, b: string) => byText(characterName(a), characterName(b));
+
+export const replays = (rounds: RoundSummary[]) =>
+  rounds.flatMap((r) => (r.source === "csv" && r.gameId !== null ? [{ roundNo: r.roundNo, gameId: r.gameId }] : []));
+
+export const replayText = (list: { roundNo: number; gameId: number }[]) => list.map((r) => `${r.roundNo}R ${r.gameId}`).join("\n");

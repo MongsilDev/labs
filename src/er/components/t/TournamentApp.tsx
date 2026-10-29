@@ -184,7 +184,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
       await navigator.clipboard.writeText(text);
       toast({ text: done });
     } catch {
-      toast({ text: `복사하지 못했습니다.\n아래 주소를 직접 복사해주세요.\n${text}`, bad: true }, 15000);
+      toast({ text: `복사하지 못했습니다.\n아래 내용을 직접 복사해주세요.\n${text}`, bad: true }, 15000);
     }
   };
   const origin = useSyncExternalStore(
@@ -341,17 +341,17 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
             </button>
           </div>
           {result.next && (
-            <Rounds group={group} result={result} mode={view.mode} planned={view.plannedRounds} multi={view.groupCount > 1} editable={operator} run={run} pickFiles={pickFiles} openManual={setManual} />
+            <Rounds group={group} result={result} mode={view.mode} planned={view.plannedRounds} multi={view.groupCount > 1} editable={operator} run={run} pickFiles={pickFiles} openManual={setManual} copy={copy} />
           )}
         </section>
       ) : (
-        <Rounds group={group} result={result} mode={view.mode} planned={view.plannedRounds} multi={view.groupCount > 1} editable={operator} run={run} pickFiles={pickFiles} openManual={setManual} />
+        <Rounds group={group} result={result} mode={view.mode} planned={view.plannedRounds} multi={view.groupCount > 1} editable={operator} run={run} pickFiles={pickFiles} openManual={setManual} copy={copy} />
       )}
 
       <div className={`grid items-start gap-4 ${operator ? "cols grid-cols-[minmax(0,1fr)_340px] max-[1100px]:grid-cols-[minmax(0,1fr)]" : "grid-cols-[minmax(0,1fr)]"}`}>
         <div className="min-w-0 max-[1100px]:contents">
           <Standings result={result} rules={view.rules} mode={view.mode} label={label} />
-          <Details result={result} rules={view.rules} />
+          <Details result={result} />
         </div>
         {operator && (
           <div className="grid min-w-0 gap-3 max-[1100px]:contents">
