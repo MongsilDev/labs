@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   return handle(async () => {
     const token = req.headers.get("x-bot-token");
     if (!botAuthorized(token) && !scrimAuthorized(token)) return new Response(null, { status: 404 });
-    if (!allow("bot", 1200, 60_000)) return fail("요청이 너무 많습니다.", 429);
+    if (!allow(scrimAuthorized(token) ? "scrim-read" : "bot", 1200, 60_000)) return fail("요청이 너무 많습니다.", 429);
     const { code } = await ctx.params;
     const q = req.nextUrl.searchParams;
     const since = Number(q.get("since"));

@@ -71,6 +71,16 @@ describe("스크림봇 대회 만들기", () => {
     expect(ops.n).toBe(1);
   });
 
+  it("개최자가 내보낸 운영자는 다시 넣지 않음", async () => {
+    const { body } = await create(base);
+    const conn = db.db();
+    const t = conn.prepare("SELECT id FROM tournaments WHERE code = ?").get(body.code) as { id: number };
+    conn.prepare("DELETE FROM members WHERE tournament_id = ? AND user_id = ?").run(t.id, op.id);
+    conn.prepare("INSERT INTO removals(tournament_id, user_id, removed_at) VALUES (?, ?, ?)").run(t.id, op.id, Date.now());
+    await create(base);
+    expect(conn.prepare("SELECT COUNT(*) AS n FROM members WHERE tournament_id = ? AND role = 'operator'").get(t.id)).toEqual({ n: 0 });
+  });
+
   it("다음 날 대회가 같은 채널 연결을 가져감", async () => {
     const first = await create(base);
     db.db().prepare("UPDATE tournaments SET created_at = created_at - ?").run(21 * 60 * 60 * 1000);

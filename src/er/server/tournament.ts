@@ -885,7 +885,9 @@ export function createScrim(input: ScrimInput): ScrimResult {
   return tx(() => {
     const conn = db();
     let t = conn
-      .prepare("SELECT * FROM tournaments WHERE created_by = ? AND name = ? AND group_count = ? AND created_at > ? ORDER BY id DESC LIMIT 1")
+      .prepare(
+        "SELECT t.* FROM tournaments t JOIN members m ON m.tournament_id = t.id AND m.user_id = ? AND m.role = 'owner' WHERE t.name = ? AND t.group_count = ? AND t.created_at > ? ORDER BY t.id DESC LIMIT 1",
+      )
       .get(owner.id, name, want.length, now() - SCRIM_REUSE_MS) as TRow | undefined;
     const reused = Boolean(t);
     if (!t) {
@@ -903,6 +905,7 @@ export function createScrim(input: ScrimInput): ScrimResult {
       t = find(code)!;
     }
     const missing: string[] = [];
+    let added = 0;
     let slots = LIMITS.operators - (conn.prepare("SELECT COUNT(*) AS n FROM members WHERE tournament_id = ? AND role = 'operator'").get(t.id) as { n: number }).n;
     for (const id of ids) {
       const user = userById(id);
@@ -910,10 +913,13 @@ export function createScrim(input: ScrimInput): ScrimResult {
         missing.push(id);
         continue;
       }
-      if (roleOf(t, user) || slots <= 0) continue;
+      // 개최자가 내보낸 사람은 다시 넣지 않음
+      if (roleOf(t, user) || slots <= 0 || conn.prepare("SELECT 1 FROM removals WHERE tournament_id = ? AND user_id = ?").get(t.id, user.id)) continue;
       conn.prepare("INSERT INTO members(tournament_id, user_id, role, joined_at) VALUES (?, ?, 'operator', ?)").run(t.id, user.id, now());
       slots--;
+      added++;
     }
+    if (reused && added) bump(t, owner, `운영자 ${added}명 추가 (스크림봇)`);
     writeLinks(t, owner, want);
     return { status: "ok", code: t.code, reused, missing } as const;
   });
