@@ -222,7 +222,7 @@ export default function Manage({
         onMsg={(text, bad) => setMsg({ text, bad })}
       />
 
-      {owner && <Settings view={view} onSaved={(t) => setMsg({ text: t })} onError={(t) => setMsg({ text: t, bad: true })} />}
+      {owner && <Settings key={JSON.stringify(view.rules)} view={view} onSaved={(t) => setMsg({ text: t })} onError={(t) => setMsg({ text: t, bad: true })} />}
 
       {owner && (
         <section className={BOX} aria-labelledby="d-h">
