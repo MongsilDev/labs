@@ -362,8 +362,20 @@ describe("밴", () => {
     expect(g(8, 4)).toEqual([]);
   });
 
+  it("3-PICK-BAN은 3명 이상 고른 실험체를 다음 1라운드만 금지한다", () => {
+    const pick = (char: string, n: number) => Array.from({ length: n }, (_, i) => ({ nick: `${char}${i}`, char }));
+    const r1 = round(1, 1, [
+      { team: "A", place: 1, ks: 0, players: [...pick("Tsubame", 5), ...pick("Rio", 4), ...pick("Leni", 3), ...pick("Aya", 2)] },
+    ]);
+    const rules = { ...presetRules("masters"), bans: "basic" as const };
+    const g = (rounds: number) =>
+      computeGroup(group({ rules, plannedRounds: 8, rounds: [r1, ...Array.from({ length: rounds - 1 }, (_, i) => places(i + 2, ["A"]))] })).next?.bans.sort();
+    expect(g(1)).toEqual(["Leni", "Rio", "Tsubame"]);
+    expect(g(2)).toEqual([]);
+  });
+
   it("밴을 끄면 금지 실험체가 없다", () => {
-    const rules = { ...presetRules("masters"), bans: false };
+    const rules = { ...presetRules("masters"), bans: "none" as const };
     const r1 = round(1, 1, [{ team: "A", place: 1, ks: 0, players: [1, 2, 3].map((i) => ({ nick: `n${i}`, char: "Rio" })) }]);
     expect(computeGroup(group({ rules, rounds: [r1] })).next?.bans).toEqual([]);
   });
@@ -493,7 +505,18 @@ describe("규칙 정리", () => {
 
   it("참거짓 규칙에는 참거짓 값만 남긴다", () => {
     const r = clampRules({ deathPenalty: "x".repeat(1_000_000), bans: 5, subWeather: {}, checkpoint: { type: "sequential", penaltyKeeps: "y" } } as never, "masters");
-    expect([r.deathPenalty, r.bans, r.subWeather, r.checkpoint.penaltyKeeps].every((v) => typeof v === "boolean")).toBe(true);
+    expect([r.deathPenalty, r.subWeather, r.checkpoint.penaltyKeeps].every((v) => typeof v === "boolean")).toBe(true);
+    expect(r.bans).toBe("strict");
     expect(JSON.stringify(r).length).toBeLessThan(1024);
+  });
+
+  it("밴 규칙은 예전에 저장한 참거짓 값도 읽는다", () => {
+    const bans = (v: unknown) => clampRules({ bans: v } as never, "masters").bans;
+    expect(bans(true)).toBe("strict");
+    expect(bans(false)).toBe("none");
+    expect(bans("basic")).toBe("basic");
+    expect(bans("toString")).toBe("strict");
+    expect(bans(undefined)).toBe("strict");
+    expect(presetRules("masters").bans).toBe("strict");
   });
 });
