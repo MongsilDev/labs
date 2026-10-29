@@ -31,7 +31,7 @@ export default function Rounds({ group, result, mode, planned, multi, editable, 
   const fold = rounds.length > 2;
 
   return (
-    <div className={`grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] items-start gap-2.5 max-[760px]:grid-cols-2 ${drop ? "mt-2 w-full" : "mb-4"}`}>
+    <div className={`grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] items-start min-[760px]:items-stretch gap-2.5 max-[760px]:grid-cols-2 ${drop ? "mt-2 w-full" : "mb-4"}`}>
       {fold && (
         <button type="button" className="btn col-span-full min-[761px]:hidden" aria-expanded={open} onClick={() => setOpen(!open)}>
           {open ? "지난 라운드 접기" : `지난 라운드 ${rounds.length}개 보기`}
