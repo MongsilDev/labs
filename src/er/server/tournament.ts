@@ -50,6 +50,7 @@ type TRow = {
   planned_rounds: number;
   group_count: number;
   created_by: string;
+  created_at: number;
   updated_at: number;
   version: number;
 };
@@ -923,6 +924,24 @@ export function createScrim(input: ScrimInput): ScrimResult {
     writeLinks(t, owner, want);
     return { status: "ok", code: t.code, reused, missing } as const;
   });
+}
+
+// 같은 날 재조편성이나 재시작 때 오늘 대회를 지우지 않도록 막는 시간
+const SCRIM_KEEP_MS = 12 * 60 * 60 * 1000;
+
+// 스크림봇이 다음 조편성 때 전날 대회를 지움. 스크림봇이 만들었고 개최자가 그대로인 대회만
+export function deleteScrim(code: string, ownerId: unknown): { status: "ok" | "gone" | "forbidden" | "recent" } {
+  const t = find(code);
+  if (!t) return { status: "gone" };
+  const owner = userById(ownerId);
+  const conn = db();
+  if (!owner || roleOf(t, owner) !== "owner") return { status: "forbidden" };
+  const first = conn.prepare("SELECT text FROM logs WHERE tournament_id = ? ORDER BY id LIMIT 1").get(t.id) as { text: string } | undefined;
+  if (first?.text !== "대회 만들기 (스크림봇)") return { status: "forbidden" };
+  if (t.created_at > now() - SCRIM_KEEP_MS) return { status: "recent" };
+  conn.prepare("DELETE FROM tournaments WHERE id = ?").run(t.id);
+  notifyChanged(t.code);
+  return { status: "ok" };
 }
 
 // 관리 화면에서 고른 채널. 봇의 채널 목록을 다시 받아 그 안에 있을 때만 연결함

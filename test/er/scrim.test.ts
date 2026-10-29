@@ -100,6 +100,26 @@ describe("스크림봇 대회 만들기", () => {
     expect((await create({ ...base, links: [] })).status).toBe(400);
   });
 
+  it("전날 스크림봇 대회만 지움", async () => {
+    const { DELETE } = await import("../../src/app/api/bot/t/[code]/route");
+    const del = async (code: string, who = owner.id, token = SCRIM) => {
+      const res = await DELETE(new NextRequest(`http://localhost/api/bot/t/${code}`, { method: "DELETE", headers: { "x-bot-token": token }, body: JSON.stringify({ owner: who }) }), { params: Promise.resolve({ code }) });
+      return { status: res.status, body: res.status === 404 ? null : await res.json() };
+    };
+    const { body } = await create(base);
+    expect(await del(body.code)).toEqual({ status: 409, body: { status: "recent" } });
+    const conn = db.db();
+    conn.prepare("UPDATE tournaments SET created_at = created_at - ?").run(21 * 60 * 60 * 1000);
+    expect((await del(body.code, owner.id, "b".repeat(64))).status).toBe(404);
+    expect((await del(body.code, op.id)).status).toBe(403);
+    conn.prepare("UPDATE logs SET text = '대회 만들기' WHERE tournament_id = (SELECT id FROM tournaments WHERE code = ?)").run(body.code);
+    expect((await del(body.code)).status).toBe(403);
+    conn.prepare("UPDATE logs SET text = '대회 만들기 (스크림봇)' WHERE tournament_id = (SELECT id FROM tournaments WHERE code = ?)").run(body.code);
+    expect(await del(body.code)).toEqual({ status: 200, body: { status: "ok" } });
+    expect(conn.prepare("SELECT COUNT(*) AS n FROM discord_links").get()).toEqual({ n: 0 });
+    expect(await del(body.code)).toEqual({ status: 200, body: { status: "gone" } });
+  });
+
   it("스크림봇 토큰으로 순위를 읽음", async () => {
     const { body } = await create(base);
     const { GET } = await import("../../src/app/api/bot/t/[code]/route");
