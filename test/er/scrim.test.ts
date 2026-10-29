@@ -110,6 +110,8 @@ describe("스크림봇 대회 만들기", () => {
     expect(await del(body.code)).toEqual({ status: 409, body: { status: "recent" } });
     const conn = db.db();
     conn.prepare("UPDATE tournaments SET created_at = created_at - ?").run(21 * 60 * 60 * 1000);
+    expect((await del(body.code)).body).toEqual({ status: "recent" });
+    conn.prepare("UPDATE tournaments SET updated_at = updated_at - ?").run(13 * 60 * 60 * 1000);
     expect((await del(body.code, owner.id, "b".repeat(64))).status).toBe(404);
     expect((await del(body.code, op.id)).status).toBe(403);
     conn.prepare("UPDATE logs SET text = '대회 만들기' WHERE tournament_id = (SELECT id FROM tournaments WHERE code = ?)").run(body.code);

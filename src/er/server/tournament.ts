@@ -926,7 +926,7 @@ export function createScrim(input: ScrimInput): ScrimResult {
   });
 }
 
-// 같은 날 재조편성이나 재시작 때 오늘 대회를 지우지 않도록 막는 시간
+// 같은 날 재조편성이나 재시작 때 오늘 대회를 지우지 않도록 최근에 기록이 바뀐 대회도 남김
 const SCRIM_KEEP_MS = 12 * 60 * 60 * 1000;
 
 // 스크림봇이 다음 조편성 때 전날 대회를 지움. 스크림봇이 만들었고 개최자가 그대로인 대회만
@@ -938,7 +938,7 @@ export function deleteScrim(code: string, ownerId: unknown): { status: "ok" | "g
   if (!owner || roleOf(t, owner) !== "owner") return { status: "forbidden" };
   const first = conn.prepare("SELECT text FROM logs WHERE tournament_id = ? ORDER BY id LIMIT 1").get(t.id) as { text: string } | undefined;
   if (first?.text !== "대회 만들기 (스크림봇)") return { status: "forbidden" };
-  if (t.created_at > now() - SCRIM_KEEP_MS) return { status: "recent" };
+  if (t.created_at > now() - SCRIM_REUSE_MS || t.updated_at > now() - SCRIM_KEEP_MS) return { status: "recent" };
   conn.prepare("DELETE FROM tournaments WHERE id = ?").run(t.id);
   notifyChanged(t.code);
   return { status: "ok" };
