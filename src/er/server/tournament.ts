@@ -186,11 +186,6 @@ export function visibleVersion(code: string, user: User | null, key?: string | n
   return keysOf(t) ? (visibleView(code, user, key)?.version ?? null) : t.version;
 }
 
-export function isPrivate(code: string): boolean {
-  const t = find(code);
-  return Boolean(t && keysOf(t));
-}
-
 // 봇이 조 채널에 올리는 주소
 export function groupPath(code: string, g: number): string {
   const t = find(code);

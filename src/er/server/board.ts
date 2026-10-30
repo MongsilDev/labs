@@ -8,7 +8,7 @@ import type { Mode, Tiebreak } from "@/er/lib/rules";
 import type { Role, TournamentView } from "@/er/lib/view";
 import { BASE_URL } from "./auth";
 import { groupLabel } from "@/er/lib/rules";
-import { groupPath, isPrivate, linkedChannel, loadView, myTournaments, relayDiscord, tournamentHost, tournamentVersion } from "./tournament";
+import { groupPath, linkedChannel, loadView, myTournaments, relayDiscord, tournamentHost, tournamentVersion } from "./tournament";
 
 export const EXAMPLE_CODE = "EXAMPLE";
 
@@ -41,8 +41,6 @@ export type Board = {
   updatedAt: number;
   url: string;
   role: Role;
-  /** 스크림 대회. 봇이 운영자가 아닌 사람에게 순위를 보여 주지 않음 */
-  private: boolean;
   /** 이 조에 연결된 디스코드 채널 */
   channelId: string | null;
   standings: BoardRow[];
@@ -99,7 +97,6 @@ export function botBoard(code: string, group: string | null, userId: string | nu
     updatedAt: view.updatedAt,
     url: example ? `${BASE_URL}/er/example/${label.toLowerCase()}` : `${BASE_URL}${groupPath(view.code, idx)}`,
     role: example ? null : view.role,
-    private: !example && isPrivate(view.code),
     channelId: example ? null : linkedChannel(view.code, idx),
     standings: res.standings.map((s) => ({
       rank: s.rank,

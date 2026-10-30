@@ -127,11 +127,10 @@ describe("스크림 조별 키", () => {
     expect(groupIndex(t.visibleView(code, null, keys[1])!, keys[1])).toBe(0);
   });
 
-  it("봇 보드의 주소에 그 조의 키가 들어가고 스크림 표시가 붙음", () => {
+  it("봇 보드의 주소에 그 조의 키가 들어감", () => {
     const b = board.botBoard(code, "B", null);
     if (!b || b === "no-group") throw new Error("보드 없음");
     expect(b.url.endsWith(`/er/t/${code}/${keys[1]}`)).toBe(true);
-    expect(b.private).toBe(true);
     expect(board.botRelay("901", owner.id, "개최자", "x.txt", "").status).not.toBe("unlinked");
   });
 
