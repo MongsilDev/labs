@@ -939,7 +939,7 @@ export function createScrim(input: ScrimInput): ScrimResult {
     const conn = db();
     let t = conn
       .prepare(
-        "SELECT t.* FROM tournaments t JOIN members m ON m.tournament_id = t.id AND m.user_id = ? AND m.role = 'owner' WHERE t.name = ? AND t.group_count = ? AND t.created_at > ? ORDER BY t.id DESC LIMIT 1",
+        "SELECT t.* FROM tournaments t JOIN members m ON m.tournament_id = t.id AND m.user_id = ? AND m.role = 'owner' WHERE t.name = ? AND t.group_count = ? AND t.created_at > ? AND t.group_keys IS NOT NULL ORDER BY t.id DESC LIMIT 1",
       )
       .get(owner.id, name, want.length, now() - SCRIM_REUSE_MS) as TRow | undefined;
     const reused = Boolean(t);

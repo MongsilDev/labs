@@ -164,12 +164,19 @@ export function db(): DatabaseSync {
     if (!roundCols.some((c) => c.name === "discord")) conn.exec("ALTER TABLE rounds ADD COLUMN discord INTEGER NOT NULL DEFAULT 0");
     const tournamentCols = conn.prepare("PRAGMA table_info(tournaments)").all() as { name: string }[];
     if (!tournamentCols.some((c) => c.name === "group_keys")) {
-      conn.exec("ALTER TABLE tournaments ADD COLUMN group_keys TEXT");
-      // 이미 만든 스크림 대회도 막음. version을 올려야 몽실봇이 안내 메시지의 주소를 고침
-      const scrims = conn
-        .prepare("SELECT id, group_count FROM tournaments t WHERE (SELECT text FROM logs l WHERE l.tournament_id = t.id ORDER BY l.id LIMIT 1) = '대회 만들기 (스크림봇)'")
-        .all() as { id: number; group_count: number }[];
-      for (const t of scrims) conn.prepare("UPDATE tournaments SET group_keys = ?, version = version + 1 WHERE id = ?").run(JSON.stringify(newGroupKeys(t.group_count)), t.id);
+      conn.exec("BEGIN IMMEDIATE");
+      try {
+        conn.exec("ALTER TABLE tournaments ADD COLUMN group_keys TEXT");
+        // 이미 만든 스크림 대회도 막음. version을 올려야 몽실봇이 안내 메시지의 주소를 고침
+        const scrims = conn
+          .prepare("SELECT id, group_count FROM tournaments t WHERE (SELECT text FROM logs l WHERE l.tournament_id = t.id ORDER BY l.id LIMIT 1) = '대회 만들기 (스크림봇)'")
+          .all() as { id: number; group_count: number }[];
+        for (const t of scrims) conn.prepare("UPDATE tournaments SET group_keys = ?, version = version + 1 WHERE id = ?").run(JSON.stringify(newGroupKeys(t.group_count)), t.id);
+        conn.exec("COMMIT");
+      } catch (e) {
+        conn.exec("ROLLBACK");
+        throw e;
+      }
     }
     g.__erDb = conn;
   }
