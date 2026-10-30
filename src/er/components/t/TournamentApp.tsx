@@ -54,8 +54,8 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
   const result = useResult(view, view.groups[groupIdx] ? groupIdx : 0);
   const router = useRouter();
   useEffect(() => {
-    if (!view.groups[groupIdx]) router.replace(`${basePath}/a`);
-  }, [view.groups, groupIdx, basePath, router]);
+    if (!view.groups[groupIdx]) router.replace(`${basePath}/${view.keys?.[0] ?? "a"}`);
+  }, [view.groups, view.keys, groupIdx, basePath, router]);
   const operator = !example && !preview && view.role !== null;
   const label = view.groupCount > 1 ? `${group.label}조` : view.name;
   const linked = view.discord?.find((d) => d.group === group.idx);
@@ -321,7 +321,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
         <div className="mb-3.5 flex flex-wrap items-center gap-3">
           <nav className="tabs groups" aria-label="조">
             {view.groups.map((g) => (
-              <Link key={g.idx} href={`${basePath}/${g.label.toLowerCase()}`} aria-current={g.idx === groupIdx ? "page" : undefined} scroll={false}>
+              <Link key={g.idx} href={`${basePath}/${view.keys?.[g.idx] ?? g.label.toLowerCase()}`} aria-current={g.idx === groupIdx ? "page" : undefined} scroll={false}>
                 {g.label}조
               </Link>
             ))}

@@ -8,7 +8,7 @@ import TournamentApp from "@/er/components/t/TournamentApp";
 import { currentUser } from "@/er/server/auth";
 import { openView } from "@/er/server/http";
 import { summary } from "@/er/server/og";
-import { groupIndex } from "@/er/lib/view";
+import { firstPath, groupIndex } from "@/er/lib/view";
 
 type P = { params: Promise<{ code: string; group: string }>; searchParams?: Promise<{ created?: string }> };
 
@@ -40,7 +40,11 @@ export default async function Page({ params, searchParams }: P) {
   if (limited) return <Limited />;
   if (!view) notFound();
   const idx = groupIndex(view, group);
-  if (idx < 0) redirect(`/er/t/${view.code}/a`);
+  if (idx < 0) {
+    // 코드로 들어온 스크림 운영자는 같은 조의 키 주소로 보냄
+    const key = group.length === 1 ? view.keys?.[group.toLowerCase().charCodeAt(0) - 97] : undefined;
+    redirect(key ? `/er/t/${view.code}/${key}` : firstPath(view));
+  }
   return (
     <>
       <Header user={user} crumb="점수 계산" />

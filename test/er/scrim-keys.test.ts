@@ -122,8 +122,10 @@ describe("스크림 조별 키", () => {
     const { groupIndex } = await import("../../src/er/lib/view");
     const full = t.visibleView(code, owner)!;
     expect(groupIndex(full, keys[1])).toBe(1);
-    expect(groupIndex(full, "b")).toBe(1);
-    expect(groupIndex(full, "z")).toBe(-1);
+    expect(groupIndex(full, "b")).toBe(-1);
+    const plain = t.createTournament(owner, { name: "일반", mode: "points", preset: "masters", plannedRounds: 4, groupCount: 2 });
+    expect(groupIndex(t.visibleView(plain, null)!, "b")).toBe(1);
+    expect(groupIndex(t.visibleView(plain, null)!, "z")).toBe(-1);
     expect(groupIndex(t.visibleView(code, null, keys[1])!, keys[1])).toBe(0);
   });
 
@@ -131,6 +133,13 @@ describe("스크림 조별 키", () => {
     const b = board.botBoard(code, "B", null);
     if (!b || b === "no-group") throw new Error("보드 없음");
     expect(b.url.endsWith(`/er/t/${code}/${keys[1]}`)).toBe(true);
+    const pasted = board.botBoard(code, keys[1], owner.id);
+    if (!pasted || pasted === "no-group") throw new Error("보드 없음");
+    expect([pasted.group, pasted.role]).toEqual(["B", "owner"]);
+    const typed = board.botBoard(code, "B", owner.id);
+    if (!typed || typed === "no-group") throw new Error("보드 없음");
+    expect(typed.url).toBe(pasted.url);
+    expect(board.botBoard(code, "ffffffffffffffffffffffff", owner.id)).toBe("no-group");
     expect(board.botRelay("901", owner.id, "개최자", "x.txt", "").status).not.toBe("unlinked");
   });
 

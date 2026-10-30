@@ -186,6 +186,13 @@ export function visibleVersion(code: string, user: User | null, key?: string | n
   return keysOf(t) ? (visibleView(code, user, key)?.version ?? null) : t.version;
 }
 
+// 운영진이 /대회에 붙여 넣은 키 주소의 조
+export function keyGroup(code: string, key: string | null): string | null {
+  const t = find(code);
+  const g = key && t ? (keysOf(t)?.findIndex((k) => safeEqual(k, key)) ?? -1) : -1;
+  return g >= 0 ? groupLabel(g) : null;
+}
+
 // 봇이 조 채널에 올리는 주소
 export function groupPath(code: string, g: number): string {
   const t = find(code);

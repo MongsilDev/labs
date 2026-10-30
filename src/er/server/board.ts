@@ -8,7 +8,7 @@ import type { Mode, Tiebreak } from "@/er/lib/rules";
 import type { Role, TournamentView } from "@/er/lib/view";
 import { BASE_URL } from "./auth";
 import { groupLabel } from "@/er/lib/rules";
-import { groupPath, linkedChannel, loadView, myTournaments, relayDiscord, tournamentHost, tournamentVersion } from "./tournament";
+import { groupPath, keyGroup, linkedChannel, loadView, myTournaments, relayDiscord, tournamentHost, tournamentVersion } from "./tournament";
 
 export const EXAMPLE_CODE = "EXAMPLE";
 
@@ -77,7 +77,7 @@ export function botBoard(code: string, group: string | null, userId: string | nu
   const example = code.toUpperCase() === EXAMPLE_CODE;
   const view: TournamentView | null = example ? exampleView() : loadView(code, asUser(userId));
   if (!view) return null;
-  const label = (group || "A").toUpperCase();
+  const label = (keyGroup(code, group) ?? (group || "A")).toUpperCase();
   const idx = view.groups.findIndex((g) => g.label === label);
   if (idx < 0) return "no-group";
   const res = groupResult(view, idx);

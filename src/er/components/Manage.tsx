@@ -7,7 +7,7 @@ import { api } from "@/er/lib/client";
 import { ago, timeKo } from "@/er/lib/format";
 import { LIMITS, PLACEMENT_POINTS, PRESET_LABEL, groupLabel, type Mode, type Preset, type Rules } from "@/er/lib/rules";
 import { useNow } from "@/er/lib/useNow";
-import type { DiscordGuild, DiscordLinkRow, InviteRow, MemberRow, RelayStatus, TournamentView } from "@/er/lib/view";
+import { firstPath, type DiscordGuild, type DiscordLinkRow, type InviteRow, type MemberRow, type RelayStatus, type TournamentView } from "@/er/lib/view";
 import Avatar from "./Avatar";
 import ModeSeg from "./ModeSeg";
 import RulesFields from "./RulesFields";
@@ -68,7 +68,7 @@ export default function Manage({
 
   return (
     <main id="main" className="wrap slim">
-      <Link className="text-[13px] text-fg-3 no-underline" href={`/er/t/${view.code}/a`}>
+      <Link className="text-[13px] text-fg-3 no-underline" href={firstPath(view)}>
         대회 화면으로 돌아가기
       </Link>
       <h1 className="mt-1.5 mb-0.5 text-[28px] font-extrabold tracking-[-0.5px]">관리</h1>
@@ -108,7 +108,7 @@ export default function Manage({
                     className="btn sm danger"
                     onClick={async () => {
                       await act({ action: "leave" });
-                      router.push(`/er/t/${view.code}/a`);
+                      router.push(firstPath(view));
                     }}
                   >
                     운영자 그만두기

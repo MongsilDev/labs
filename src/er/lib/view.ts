@@ -50,12 +50,13 @@ export type TournamentView = {
 };
 
 /** 키로 연 사람이 조회 요청에 함께 보낼 키 */
+export const firstPath = (view: Pick<TournamentView, "code" | "keys">) => `/er/t/${view.code}/${view.keys?.[0] ?? "a"}`;
+
 export const viewKey = (view: Pick<TournamentView, "role" | "keys">) => (view.role ? undefined : view.keys?.[0]);
 
-/** 주소의 조 자리는 글자나 조별 키. 없는 조면 -1 */
+/** 주소의 조 자리는 일반 대회면 글자, 스크림 대회면 조별 키. 없는 조면 -1 */
 export function groupIndex(view: Pick<TournamentView, "keys" | "groupCount">, segment: string): number {
-  const keyed = view.keys?.indexOf(segment) ?? -1;
-  if (keyed >= 0) return keyed;
+  if (view.keys) return view.keys.indexOf(segment);
   const idx = segment.length === 1 ? segment.toLowerCase().charCodeAt(0) - 97 : -1;
   return idx >= 0 && idx < view.groupCount ? idx : -1;
 }

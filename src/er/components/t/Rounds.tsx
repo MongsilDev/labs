@@ -37,20 +37,22 @@ export default function Rounds({ group, result, mode, planned, multi, editable, 
           {open ? "지난 라운드 접기" : `지난 라운드 ${rounds.length}개 보기`}
         </button>
       )}
-      {rounds.map((r) => {
+      {rounds.map((r, i) => {
         const row = rows.get(r.roundNo);
+        const alone = i === rounds.length - 1 && i % 2 === 0;
         return (
-          <section key={r.roundNo} className={`panel flex min-w-0 flex-col gap-2 px-3.5 py-3 ${fold && !open ? "max-[760px]:hidden" : ""}`} aria-label={`${r.roundNo}라운드`}>
+          <section key={r.roundNo} className={`panel flex min-w-0 flex-col gap-2 px-3.5 py-3 ${fold && !open ? "max-[760px]:hidden" : ""} ${alone ? "max-[760px]:col-span-full" : ""}`} aria-label={`${r.roundNo}라운드`}>
             <div className="flex min-w-0 items-center gap-2">
               <span className="size-3 flex-none rounded-[2px]" style={{ background: rampColor(r.roundNo - 1, played) }} />
               <b className="text-[15px] font-extrabold whitespace-nowrap">{r.roundNo}라운드</b>
               {r.source === "manual" ? (
-                <span className="chip dashed">직접 입력</span>
+                <span className="chip dashed -my-1">직접 입력</span>
               ) : (
-                <span className="ml-auto flex items-center gap-1 text-[12px] text-fg-3 max-[760px]:hidden">
-                  {row?.discord && <DiscordMark />}
-                  {r.gameId}
-                </span>
+                row?.discord && (
+                  <span className="ml-auto text-fg-3 max-[760px]:hidden">
+                    <DiscordMark />
+                  </span>
+                )
               )}
             </div>
             {row ? (
@@ -106,7 +108,7 @@ export default function Rounds({ group, result, mode, planned, multi, editable, 
         <section className="panel flex min-w-0 flex-col gap-2 px-3.5 py-3 col-span-2 border-line-strong max-[760px]:-order-1 max-[760px]:col-span-full" aria-label={`${next.roundNo}라운드 다음 경기`}>
           <div className="flex min-w-0 items-center gap-2">
             <b className="text-[15px] font-extrabold whitespace-nowrap">{next.roundNo}라운드</b>
-            <span className="chip strong">다음 경기</span>
+            <span className="chip strong -my-1">다음 경기</span>
           </div>
           <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 text-[13px] [&>dd]:min-w-0 [&>dt]:whitespace-nowrap [&>dt]:text-fg-3">
             <dt>{editable ? <label htmlFor={`mw-${group.idx}`}>메인 날씨</label> : "메인 날씨"}</dt>
@@ -197,7 +199,7 @@ export function Replays({ rounds, copy }: { rounds: GroupResult["rounds"]; copy:
     <section className="panel flex min-w-0 flex-col gap-2 px-3.5 py-3 max-[760px]:col-span-full" aria-labelledby="replays-title">
       <div className="flex min-w-0 items-center gap-2">
         <b id="replays-title" className="text-[15px] font-extrabold whitespace-nowrap">리플레이 코드</b>
-        <button type="button" className="btn sm ml-auto" onClick={() => copy(replayText(list), "리플레이 코드를 복사했습니다.")}>
+        <button type="button" className="btn sm -my-1 ml-auto" onClick={() => copy(replayText(list), "리플레이 코드를 복사했습니다.")}>
           복사
         </button>
       </div>
