@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { currentUser, sameOrigin, type User } from "./auth";
 import { allow, blocked, clientIp, miss } from "@/limits";
-import { loadView, OpError } from "./tournament";
+import { OpError, visibleView } from "./tournament";
 
 export const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
   NextResponse.json(data, { status, headers: { "Cache-Control": "no-store", ...headers } });
@@ -13,10 +13,10 @@ export const json = (data: unknown, status = 200, headers: Record<string, string
 export const fail = (message: string, status = 400) => json({ error: message }, status);
 
 // 코드로 대회를 여는 화면은 모두 이 검사를 거침. 막힌 IP에는 있는 코드도 열어 주지 않고, 없는 코드를 열면 막힘 횟수에 셈
-export async function openView(code: string, user: User | null, bucket?: string, max = 300) {
+export async function openView(code: string, user: User | null, key: string | null, bucket?: string, max = 300) {
   const ip = await clientIp();
   if (blocked(ip) || (bucket && !allow(`${bucket}:${ip}`, max, 60_000))) return { limited: true, view: null };
-  const view = loadView(code, user);
+  const view = visibleView(code, user, key);
   if (!view) miss(ip);
   return { limited: false, view };
 }

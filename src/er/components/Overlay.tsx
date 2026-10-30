@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api } from "@/er/lib/client";
 import { num } from "@/er/lib/format";
-import type { TournamentView } from "@/er/lib/view";
+import { viewKey, type TournamentView } from "@/er/lib/view";
 import { barTotal } from "@/er/lib/engine";
 import Bar from "./t/Bar";
 import { useResult } from "./t/TournamentApp";
@@ -23,6 +23,7 @@ export default function Overlay({
 }) {
   const [view, setView] = useState(initial);
   const version = useRef(initial.version);
+  const key = viewKey(initial);
   const idx = view.groups[groupIdx] ? groupIdx : 0;
   const result = useResult(view, idx);
   useEffect(() => {
@@ -30,8 +31,9 @@ export default function Overlay({
     document.documentElement.classList.add("overlay-page");
     const t = setInterval(async () => {
       try {
-        const next = await api.view(view.code, version.current);
-        if (next && next.version >= version.current) {
+        const next = await api.view(view.code, version.current, key);
+        // 키로 연 화면의 version은 내용으로 만든 값이라 크기를 비교하지 않음
+        if (next && (key || next.version >= version.current)) {
           version.current = next.version;
           setView(next);
         }
@@ -40,7 +42,7 @@ export default function Overlay({
       }
     }, 5000);
     return () => clearInterval(t);
-  }, [view.code]);
+  }, [view.code, key]);
   const g = view.groups[idx];
   const rows = result.standings.slice(0, limit);
   const box = useRef<HTMLDivElement>(null);

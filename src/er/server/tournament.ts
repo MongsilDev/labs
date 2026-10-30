@@ -1,5 +1,5 @@
 import "server-only";
-import { randomInt } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import type { PenaltyInput } from "@/er/lib/engine";
 import { groupResult, normalize } from "@/er/lib/engine";
 import { decodeCsv } from "@/er/lib/csv";
@@ -33,9 +33,9 @@ import {
   type UploadKeyRow,
 } from "@/er/lib/view";
 import type { User } from "./auth";
-import { hash, token } from "./auth";
+import { hash, safeEqual, token } from "./auth";
 import { botChannels, notifyChanged, type BotGuild } from "./bot";
-import { afterCommit, db, now, tx } from "./db";
+import { afterCommit, db, newGroupKeys, now, tx } from "./db";
 
 const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 const MODES: Mode[] = ["points", "checkpoint", "double"];
@@ -53,6 +53,7 @@ type TRow = {
   created_at: number;
   updated_at: number;
   version: number;
+  group_keys: string | null;
 };
 
 export class OpError extends Error {}
@@ -143,6 +144,57 @@ export function createTournament(user: User, input: CreateInput): string {
 
 export function tournamentVersion(code: string): number | null {
   return find(code)?.version ?? null;
+}
+
+const keysOf = (t: TRow) => (t.group_keys ? (JSON.parse(t.group_keys) as string[]) : null);
+
+// 줄인 조의 키는 조 수를 다시 늘려도 되살아나지 않음
+function resizedKeys(t: TRow, groups: number): string | null {
+  const keys = keysOf(t);
+  return keys && JSON.stringify([...keys.slice(0, groups), ...newGroupKeys(Math.max(0, groups - keys.length))]);
+}
+
+// 스크림 대회는 개최자와 운영자에게만 전체를 보내고, 그 밖에는 키로 연 조만 보냄. 키가 안 맞으면 없는 대회와 같음
+// 다른 조의 기록으로 version과 수정 시각이 바뀌는 것도 보이지 않게 그 조의 내용으로 version을 만듦
+export function visibleView(code: string, user: User | null, key?: string | null): TournamentView | null {
+  const t = find(code);
+  const view = loadView(code, user);
+  const keys = t && keysOf(t);
+  if (!t || !view || !keys) return view;
+  if (view.role) return { ...view, keys };
+  const g = key ? keys.findIndex((k) => safeEqual(k, key)) : -1;
+  if (g < 0) return null;
+  const group = { ...view.groups[g], idx: 0 };
+  const name = `${view.name} ${group.label}조`;
+  const body = JSON.stringify([name, view.mode, view.rules, view.plannedRounds, group]);
+  return {
+    ...view,
+    name,
+    groupCount: 1,
+    groups: [group],
+    keys: [keys[g]],
+    version: parseInt(createHash("sha256").update(body).digest("hex").slice(0, 8), 16) || 1,
+    updatedAt: t.created_at,
+    expiresAt: t.created_at + RETENTION_MS,
+  };
+}
+
+// 조회 API의 변경 확인. 일반 대회는 DB를 한 번만 읽음
+export function visibleVersion(code: string, user: User | null, key?: string | null): number | null {
+  const t = find(code);
+  if (!t) return null;
+  return keysOf(t) ? (visibleView(code, user, key)?.version ?? null) : t.version;
+}
+
+export function isPrivate(code: string): boolean {
+  const t = find(code);
+  return Boolean(t && keysOf(t));
+}
+
+// 봇이 조 채널에 올리는 주소
+export function groupPath(code: string, g: number): string {
+  const t = find(code);
+  return `/er/t/${normalizeCode(code)}/${(t && keysOf(t)?.[g]) ?? groupLabel(g).toLowerCase()}`;
 }
 
 export function loadView(code: string, user: User | null): TournamentView | null {
@@ -557,8 +609,8 @@ function runOp(t: TRow, role: Role, user: Actor, op: Op, via = ""): OpResult {
         conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx >= ?").run(t.id, groups);
       }
       conn
-        .prepare("UPDATE tournaments SET name = ?, mode = ?, rules = ?, planned_rounds = ?, group_count = ? WHERE id = ?")
-        .run(name, mode, JSON.stringify(rules), planned, groups, t.id);
+        .prepare("UPDATE tournaments SET name = ?, mode = ?, rules = ?, planned_rounds = ?, group_count = ?, group_keys = ? WHERE id = ?")
+        .run(name, mode, JSON.stringify(rules), planned, groups, resizedKeys(t, groups), t.id);
       bump(t, user, `설정 변경: ${changes.join(", ")}`);
       notices.push("설정을 저장했습니다.");
       break;
@@ -899,8 +951,8 @@ export function createScrim(input: ScrimInput): ScrimResult {
       const code = newCode();
       const at = now();
       const r = conn
-        .prepare("INSERT INTO tournaments(code, name, mode, rules, planned_rounds, group_count, created_by, created_at, updated_at) VALUES (?, ?, 'points', ?, ?, ?, ?, ?, ?)")
-        .run(code, name, JSON.stringify(clampRules(input.rules as Partial<Rules> | undefined, preset)), planned, want.length, owner.id, at, at);
+        .prepare("INSERT INTO tournaments(code, name, mode, rules, planned_rounds, group_count, created_by, created_at, updated_at, group_keys) VALUES (?, ?, 'points', ?, ?, ?, ?, ?, ?, ?)")
+        .run(code, name, JSON.stringify(clampRules(input.rules as Partial<Rules> | undefined, preset)), planned, want.length, owner.id, at, at, JSON.stringify(newGroupKeys(want.length)));
       conn.prepare("INSERT INTO members(tournament_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)").run(Number(r.lastInsertRowid), owner.id, at);
       conn.prepare("INSERT INTO logs(tournament_id, user_name, text, created_at) VALUES (?, ?, ?, ?)").run(Number(r.lastInsertRowid), owner.name, "대회 만들기 (스크림봇)", at);
       t = find(code)!;

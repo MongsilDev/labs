@@ -9,7 +9,7 @@ import { boardImage, download, playersImage, standingsCsv } from "@/er/lib/expor
 import { remaining } from "@/er/lib/format";
 import { useNow } from "@/er/lib/useNow";
 import { LIMITS, MODE_LABEL, scoreLabel } from "@/er/lib/rules";
-import type { Op, TournamentView } from "@/er/lib/view";
+import { viewKey, type Op, type TournamentView } from "@/er/lib/view";
 import Details from "./Details";
 import ManualRound from "./ManualRound";
 import Rounds, { DiscordMark } from "./Rounds";
@@ -49,6 +49,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
   const roleRef = useRef(initial.role);
   const now = useNow();
   const example = Boolean(view.example);
+  const key = viewKey(initial);
   const group = view.groups[groupIdx] ?? view.groups[0];
   const result = useResult(view, view.groups[groupIdx] ? groupIdx : 0);
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
   const operator = !example && !preview && view.role !== null;
   const label = view.groupCount > 1 ? `${group.label}조` : view.name;
   const linked = view.discord?.find((d) => d.group === group.idx);
+  const segment = view.keys?.[group.idx] ?? group.label.toLowerCase();
 
   const toast = useCallback((t: Omit<Toast, "id">, ms = 5000) => {
     const id = Date.now() + Math.random();
@@ -69,8 +71,9 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
     async (force = false) => {
       if (example) return;
       try {
-        const next = await api.view(view.code, force ? undefined : versionRef.current);
-        if (!next || next.version < versionRef.current) return;
+        const next = await api.view(view.code, force ? undefined : versionRef.current, key);
+        // 키로 연 화면의 version은 내용으로 만든 값이라 크기를 비교하지 않음
+        if (!next || (!key && next.version < versionRef.current)) return;
         if (roleRef.current && !next.role) toast({ text: "운영자 권한이 해제돼 참가자 화면으로 바뀌었습니다.", bad: true }, 8000);
         roleRef.current = next.role;
         versionRef.current = next.version;
@@ -79,12 +82,12 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
         if ((e as { status?: number }).status === 404) setGone(true);
       }
     },
-    [example, view.code, toast],
+    [example, view.code, key, toast],
   );
 
   useEffect(() => {
-    if (!example) rememberRecent(view.code, view.name);
-  }, [example, view.code, view.name]);
+    if (!example && !key) rememberRecent(view.code, view.name);
+  }, [example, key, view.code, view.name]);
 
   useEffect(() => {
     if (example || gone) return;
@@ -230,7 +233,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
           <div className="ml-auto flex flex-wrap gap-2 max-[760px]:ml-0">
             {!preview && (
               <>
-                <button type="button" className="btn sm" onClick={() => copy(`${origin}/er/t/${view.code}`, "보기 링크를 복사했습니다.")}>
+                <button type="button" className="btn sm" onClick={() => copy(`${origin}/er/t/${view.code}${view.keys ? `/${segment}` : ""}`, "보기 링크를 복사했습니다.")}>
                   보기 링크 복사
                 </button>
                 <Link className="btn sm" href={`/er/t/${view.code}/manage`}>
@@ -253,7 +256,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
             <b className="text-[30px] font-extrabold tracking-[4px]" translate="no">{view.code}</b>
           </div>
           <div className="flex flex-wrap justify-start gap-2">
-            <button type="button" className="btn primary" onClick={() => copy(`${origin}/er/t/${view.code}`, "보기 링크를 복사했습니다.")}>
+            <button type="button" className="btn primary" onClick={() => copy(`${origin}/er/t/${view.code}${view.keys ? `/${segment}` : ""}`, "보기 링크를 복사했습니다.")}>
               보기 링크 복사
             </button>
             <Link className="btn" href={`/er/t/${view.code}/manage`}>
@@ -306,7 +309,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
             </button>
           )}
           {!example && (
-            <button type="button" className="btn" onClick={() => copy(`${origin}/er/t/${view.code}/${group.label.toLowerCase()}/overlay`, "방송 화면 주소를 복사했습니다.")}>
+            <button type="button" className="btn" onClick={() => copy(`${origin}/er/t/${view.code}/${segment}/overlay`, "방송 화면 주소를 복사했습니다.")}>
               방송 화면 주소 복사
             </button>
           )}

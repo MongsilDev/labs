@@ -8,7 +8,7 @@ import type { Mode, Tiebreak } from "@/er/lib/rules";
 import type { Role, TournamentView } from "@/er/lib/view";
 import { BASE_URL } from "./auth";
 import { groupLabel } from "@/er/lib/rules";
-import { linkedChannel, loadView, myTournaments, relayDiscord, tournamentHost, tournamentVersion } from "./tournament";
+import { groupPath, isPrivate, linkedChannel, loadView, myTournaments, relayDiscord, tournamentHost, tournamentVersion } from "./tournament";
 
 export const EXAMPLE_CODE = "EXAMPLE";
 
@@ -41,6 +41,8 @@ export type Board = {
   updatedAt: number;
   url: string;
   role: Role;
+  /** 스크림 대회. 봇이 운영자가 아닌 사람에게 순위를 보여 주지 않음 */
+  private: boolean;
   /** 이 조에 연결된 디스코드 채널 */
   channelId: string | null;
   standings: BoardRow[];
@@ -95,8 +97,9 @@ export function botBoard(code: string, group: string | null, userId: string | nu
     group: label,
     version: view.version,
     updatedAt: view.updatedAt,
-    url: example ? `${BASE_URL}/er/example/${label.toLowerCase()}` : `${BASE_URL}/er/t/${view.code}/${label.toLowerCase()}`,
+    url: example ? `${BASE_URL}/er/example/${label.toLowerCase()}` : `${BASE_URL}${groupPath(view.code, idx)}`,
     role: example ? null : view.role,
+    private: !example && isPrivate(view.code),
     channelId: example ? null : linkedChannel(view.code, idx),
     standings: res.standings.map((s) => ({
       rank: s.rank,
@@ -144,7 +147,7 @@ export function botRelay(channelId: unknown, actor: unknown, actorName: unknown,
   const r = relayDiscord(channelId, actor, actorName, { name: typeof fileName === "string" ? fileName : "", bytes });
   if (r.status === "unlinked") return r;
   const label = groupLabel(r.group);
-  const out = { status: r.status, message: r.message, code: r.code, name: r.name, group: label, groupCount: r.groupCount, url: `${BASE_URL}/er/t/${r.code}/${label.toLowerCase()}` };
+  const out = { status: r.status, message: r.message, code: r.code, name: r.name, group: label, groupCount: r.groupCount, url: `${BASE_URL}${groupPath(r.code, r.group)}` };
   if (r.status !== "added" || r.round === null) return out;
   const round = r.round;
   const ranking = groupResult(loadView(r.code, null)!, r.group)

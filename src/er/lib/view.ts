@@ -45,7 +45,20 @@ export type TournamentView = {
   logs: LogRow[] | null;
   /** 개최자와 운영자에게만 보내는 조별 디스코드 연결 */
   discord?: { group: number; channel: string }[];
+  /** 스크림 대회의 조별 키. 개최자와 운영자는 모든 조, 키로 연 사람은 그 조 하나 */
+  keys?: string[];
 };
+
+/** 키로 연 사람이 조회 요청에 함께 보낼 키 */
+export const viewKey = (view: Pick<TournamentView, "role" | "keys">) => (view.role ? undefined : view.keys?.[0]);
+
+/** 주소의 조 자리는 글자나 조별 키. 없는 조면 -1 */
+export function groupIndex(view: Pick<TournamentView, "keys" | "groupCount">, segment: string): number {
+  const keyed = view.keys?.indexOf(segment) ?? -1;
+  if (keyed >= 0) return keyed;
+  const idx = segment.length === 1 ? segment.toLowerCase().charCodeAt(0) - 97 : -1;
+  return idx >= 0 && idx < view.groupCount ? idx : -1;
+}
 
 export type CreateInput = {
   name: string;

@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { currentUser } from "@/er/server/auth";
 import { allow, blocked, clientIp, miss } from "@/limits";
-import { applyOp, deleteTournament, linkDiscord, loadView, tournamentVersion } from "@/er/server/tournament";
+import { applyOp, deleteTournament, linkDiscord, visibleVersion, visibleView } from "@/er/server/tournament";
 import { fail, guardWrite, handle, json, readJson } from "@/er/server/http";
 import type { Op } from "@/er/lib/view";
 
@@ -13,16 +13,19 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const ip = await clientIp();
     if (!allow(`get:${ip}`, 600, 60_000)) return fail("요청이 너무 많습니다. 잠시 뒤 다시 시도해주세요.", 429);
     if (blocked(ip)) return fail("없는 대회 코드를 너무 많이 열었습니다. 잠시 뒤 다시 시도해주세요.", 429);
-    const since = Number(req.nextUrl.searchParams.get("since"));
+    const q = req.nextUrl.searchParams;
+    const since = Number(q.get("since"));
+    const key = q.get("key");
+    const user = await currentUser();
     if (since) {
-      const v = tournamentVersion(code);
+      const v = visibleVersion(code, user, key);
       if (v === null) {
         miss(ip);
         return fail("없거나 지워진 대회입니다.", 404);
       }
       if (v === since) return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
     }
-    const view = loadView(code, await currentUser());
+    const view = visibleView(code, user, key);
     if (!view) {
       miss(ip);
       return fail("없거나 지워진 대회입니다.", 404);

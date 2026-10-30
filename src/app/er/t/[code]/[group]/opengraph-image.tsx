@@ -1,4 +1,5 @@
 import { openView } from "@/er/server/http";
+import { groupIndex } from "@/er/lib/view";
 import { OG_SIZE, boardImage } from "@/er/server/og";
 
 export const size = OG_SIZE;
@@ -8,7 +9,6 @@ export const dynamic = "force-dynamic";
 
 export default async function Image({ params }: { params: Promise<{ code: string; group: string }> }) {
   const { code, group } = await params;
-  const { view } = await openView(code, null, "og", 120);
-  const idx = group.length === 1 ? group.toUpperCase().charCodeAt(0) - 65 : -1;
-  return boardImage(view, view && idx >= 0 && idx < view.groupCount ? idx : 0);
+  const { view } = await openView(code, null, group, "og", 120);
+  return boardImage(view, view ? Math.max(0, groupIndex(view, group)) : 0);
 }

@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
   const { code } = await params;
   const user = await currentUser();
   if (!user) redirect(`/auth/login?next=${encodeURIComponent(`/er/t/${code.toUpperCase()}/manage`)}`);
-  const { limited, view } = await openView(code, user);
+  const { limited, view } = await openView(code, user, null);
   if (limited) return <Limited />;
   if (!view) notFound();
   if (!view.role) redirect(`/er/t/${view.code}/a`);

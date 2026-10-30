@@ -1,4 +1,5 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS tournaments (
   created_by TEXT NOT NULL,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
-  version INTEGER NOT NULL DEFAULT 1
+  version INTEGER NOT NULL DEFAULT 1,
+  group_keys TEXT
 );
 CREATE TABLE IF NOT EXISTS members (
   tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
@@ -138,6 +140,9 @@ CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
 
 const g = globalThis as unknown as { __erDb?: DatabaseSync };
 
+// 주소에 넣는 조별 키. 소문자 코드 주소를 고칠 때 함께 소문자가 돼도 값이 그대로이게 16진수로 씀
+export const newGroupKeys = (n: number) => Array.from({ length: n }, () => randomBytes(12).toString("hex"));
+
 export function db(): DatabaseSync {
   if (!g.__erDb) {
     const dir = process.env.DATA_DIR || join(process.cwd(), "data");
@@ -157,6 +162,15 @@ export function db(): DatabaseSync {
     if (!cols.some((c) => c.name === "uses_left")) conn.exec("ALTER TABLE invites ADD COLUMN uses_left INTEGER NOT NULL DEFAULT 1");
     const roundCols = conn.prepare("PRAGMA table_info(rounds)").all() as { name: string }[];
     if (!roundCols.some((c) => c.name === "discord")) conn.exec("ALTER TABLE rounds ADD COLUMN discord INTEGER NOT NULL DEFAULT 0");
+    const tournamentCols = conn.prepare("PRAGMA table_info(tournaments)").all() as { name: string }[];
+    if (!tournamentCols.some((c) => c.name === "group_keys")) {
+      conn.exec("ALTER TABLE tournaments ADD COLUMN group_keys TEXT");
+      // 이미 만든 스크림 대회도 막음. version을 올려야 몽실봇이 안내 메시지의 주소를 고침
+      const scrims = conn
+        .prepare("SELECT id, group_count FROM tournaments t WHERE (SELECT text FROM logs l WHERE l.tournament_id = t.id ORDER BY l.id LIMIT 1) = '대회 만들기 (스크림봇)'")
+        .all() as { id: number; group_count: number }[];
+      for (const t of scrims) conn.prepare("UPDATE tournaments SET group_keys = ?, version = version + 1 WHERE id = ?").run(JSON.stringify(newGroupKeys(t.group_count)), t.id);
+    }
     g.__erDb = conn;
   }
   return g.__erDb;

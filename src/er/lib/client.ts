@@ -14,7 +14,10 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  view: (code: string, since?: number) => call<TournamentView | null>(`/api/t/${code}${since ? `?since=${since}` : ""}`),
+  view: (code: string, since?: number, key?: string) => {
+    const q = new URLSearchParams({ ...(since ? { since: String(since) } : {}), ...(key ? { key } : {}) }).toString();
+    return call<TournamentView | null>(`/api/t/${code}${q && `?${q}`}`);
+  },
   op: (code: string, op: Op) => call<OpResult>(`/api/t/${code}`, { method: "POST", body: JSON.stringify(op) }),
   create: (input: CreateInput) => call<{ code: string }>("/api/t", { method: "POST", body: JSON.stringify(input) }),
   remove: (code: string, confirm: string) => call<{ ok: true }>(`/api/t/${code}`, { method: "DELETE", body: JSON.stringify({ confirm }) }),
