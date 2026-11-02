@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { between, chance, chanceLabel, type CutData, daysLeft, graceKey, int, quitRp, TIERS, tens } from "@/er/lib/cut";
+import { between, chance, chanceLabel, type CutData, daysLeft, graceKey, int, quitRp, round10, TIERS } from "@/er/lib/cut";
 
 function Row({ label, value, note }: { label: string; value: React.ReactNode; note?: React.ReactNode }) {
   return (
@@ -46,6 +46,8 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
             const gap = tier.cut - rp;
             const near = between(data.rps, rp, tier.cut);
             const end = tier.forecast?.[tier.forecast.length - 1];
+            // 화면의 종료 예상이 10 단위라 부족분과 가능성도 같은 값으로 계산
+            const goal = end && round10(end[1]);
             return (
               <section key={key} className="rounded-md border border-line px-4 py-3" aria-label={`${name} 진단`}>
                 <h3 className="mb-1 flex items-center gap-1.5 text-[15px] font-extrabold">
@@ -58,25 +60,25 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
                     value={gap > 0 ? `${int(gap)} RP 부족` : `${int(-gap)} RP 여유`}
                     note={near != null ? `순위표 기준 내 RP와 컷 사이 ${int(near)}명` : "순위표 밖이라 사이 인원을 알 수 없음"}
                   />
-                  {end && (
+                  {end && goal != null && (
                     <Row
                       label="종료 예상 컷"
-                      value={end[1] > rp ? `${int(end[1] - rp)} RP 부족` : `${int(rp - end[1])} RP 여유`}
-                      note={end[1] > rp && left ? `${tens(end[1])}까지 하루 ${int(Math.ceil((end[1] - rp) / left))} RP씩` : undefined}
+                      value={goal > rp ? `${int(goal - rp)} RP 부족` : `${int(rp - goal)} RP 여유`}
+                      note={goal > rp && left ? `${int(goal)}까지 하루 ${int(Math.ceil((goal - rp) / left))} RP씩` : undefined}
                     />
                   )}
-                  {end && (
+                  {end && goal != null && (
                     <Row
                       label="가능성"
-                      value={chanceLabel(chance(rp, end[1], end[4], end[3]))}
+                      value={chanceLabel(chance(rp, goal, end[4], end[3]))}
                       note="지금 RP로 끝나면"
                     />
                   )}
-                  {end && quit != null && (
+                  {goal != null && quit != null && (
                     <Row
                       label="오늘부터 쉬면"
                       value={`종료 때 ${int(quit)} RP`}
-                      note={`종료 예상 컷${quit >= end[1] ? "보다 높음" : "보다 낮음"}, 유예 ${grace}일 가정`}
+                      note={`종료 예상 컷${quit >= goal ? "보다 높음" : "보다 낮음"}, 유예 ${grace}일 가정`}
                     />
                   )}
                 </dl>

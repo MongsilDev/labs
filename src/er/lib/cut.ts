@@ -45,7 +45,8 @@ export function dayStart(ymd: string): number {
 }
 
 export const int = (v: number) => Math.round(v).toLocaleString("ko-KR");
-export const tens = (v: number) => int(Math.round(v / 10) * 10);
+export const round10 = (v: number) => Math.round(v / 10) * 10;
+export const tens = (v: number) => int(round10(v));
 
 /** 시즌 종료까지 남은 날. 종료일 당일은 0 */
 export function daysLeft(end: number, now: number): number {
