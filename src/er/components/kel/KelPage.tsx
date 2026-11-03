@@ -71,9 +71,9 @@ export default function KelPage({
   return (
     <>
       <Header user={user} crumb="KEL 기록" crumbHref={KEL_SCREENS.home.path} />
-      <main id="main" className="wrap grid grid-cols-1 content-start gap-5 pt-6">
+      <main id="main" className="wrap grid grid-cols-1 content-start gap-5 pt-9 max-[760px]:pt-7">
         {head ?? (<div>
-          <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[28px] font-extrabold tracking-[-0.5px] max-[760px]:text-[24px]">
+          <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[28px] font-extrabold tracking-[-0.5px]">
             {title ?? s.title}
             {owner && !s.public && <span className="chip">나만 보기</span>}
           </h1>

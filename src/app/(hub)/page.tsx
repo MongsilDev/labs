@@ -103,12 +103,9 @@ export default async function Hub() {
     <>
       <Header user={await currentUser()} />
       <main id="main" className="wrap">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-4 pb-6 max-[760px]:pt-1 max-[760px]:pb-5">
-          <h1 className="text-[30px] leading-none font-extrabold tracking-[-0.6px]">Labs</h1>
-          <p className="text-[15px] text-fg-3">게임 도구 모음</p>
-        </div>
+        <h1 className="sr-only">Labs</h1>
 
-        <div className="grid grid-cols-2 gap-3 max-[760px]:grid-cols-1">
+        <div className="mt-3 grid grid-cols-2 gap-3 max-[760px]:grid-cols-1">
           <Tool
             game="이터널 리턴"
             icon="er"
