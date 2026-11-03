@@ -58,8 +58,8 @@ export default function Highlights({ data }: { data: Data }) {
         </section>
       )}
       {data.bests.length > 0 && (
-        <section className="min-w-0 max-[760px]:order-last max-[760px]:col-span-2" aria-label="한 게임 최고 기록">
-          <Head href={records.path}>한 게임 최고 기록</Head>
+        <section className="min-w-0 max-[760px]:order-last max-[760px]:col-span-2" aria-label={records.title}>
+          <Head href={records.path}>{records.title}</Head>
           <ul className="grid max-[760px]:grid-cols-3 max-[760px]:gap-x-3">
             {data.bests.map((b) => {
               const team = TEAM.get(b.r.team);
