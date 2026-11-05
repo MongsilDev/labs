@@ -154,4 +154,13 @@ describe("스크림 조별 키", () => {
     expect(now[1]).not.toBe(old[1]);
     expect(t.visibleView(empty.code, null, old[1])).toBeNull();
   });
+
+  it("cleanup이 개최자 행을 지운 뒤에도 봇이 대회를 만듦", () => {
+    d.db().exec("DELETE FROM tournaments");
+    t.cleanup();
+    expect(d.db().prepare("SELECT 1 FROM users WHERE id = ?").get(owner.id)).toBeUndefined();
+    const r = t.createScrim({ owner: owner.id, name: "다음 날", links: [{ group: "A", channelId: "905" }] });
+    expect(r.status).toBe("ok");
+    for (const u of [owner, op, stranger]) d.db().prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name").run(u.id, u.name, Date.now());
+  });
 });

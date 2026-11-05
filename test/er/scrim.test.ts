@@ -93,8 +93,8 @@ describe("스크림봇 대회 만들기", () => {
     ]);
   });
 
-  it("Labs에 없는 개최자와 잘못된 조는 거부함", async () => {
-    expect((await create({ ...base, owner: "38" })).status).toBe(403);
+  it("형식이 틀린 개최자와 잘못된 조는 거부함", async () => {
+    expect((await create({ ...base, owner: "없는 값" })).status).toBe(403);
     expect((await create({ ...base, links: [{ group: "B", channelId: "5001" }] })).status).toBe(400);
     expect((await create({ ...base, links: [links[0], { ...links[1], channelId: "5001" }] })).status).toBe(400);
     expect((await create({ ...base, links: [] })).status).toBe(400);

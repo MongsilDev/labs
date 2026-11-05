@@ -860,6 +860,14 @@ function userById(id: unknown): User | null {
   return (db().prepare("SELECT id, name, avatar FROM users WHERE id = ?").get(id) as User | undefined) ?? null;
 }
 
+// 세션과 대회가 없는 날 cleanup이 지운 개최자 행을 다시 만듦
+function scrimOwner(id: unknown): User | null {
+  const found = userById(id);
+  if (found || typeof id !== "string" || !DISCORD_ID.test(id)) return found;
+  db().prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO NOTHING").run(id, "스크림봇", now());
+  return userById(id);
+}
+
 const live = (t: TRow) => t.updated_at + RETENTION_MS > now();
 
 export type LinkResult = { status: "gone" | "forbidden" | "invalid" } | { status: "ok"; links: { group: string; channelId: string }[] };
@@ -924,7 +932,7 @@ const SCRIM_REUSE_MS = 20 * 60 * 60 * 1000;
 
 // 스크림봇이 조편성 뒤 부름. 대회 만들기, 운영자 추가, 조 채널 연결을 한 트랜잭션으로 함. missing은 Labs에 로그인한 적이 없어 넣지 못한 운영자
 export function createScrim(input: ScrimInput): ScrimResult {
-  const owner = userById(input.owner);
+  const owner = scrimOwner(input.owner);
   if (!owner) return { status: "forbidden" };
   const name = clean(input.name, LIMITS.nameLength);
   const links = input.links;
