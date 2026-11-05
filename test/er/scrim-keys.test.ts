@@ -155,8 +155,9 @@ describe("스크림 조별 키", () => {
     expect(t.visibleView(empty.code, null, old[1])).toBeNull();
   });
 
-  it("봇이 이름을 보내지 않으면 기존 개최자 이름을 그대로 둠", () => {
+  it("로그인한 개최자 이름은 봇이 보낸 이름으로 덮지 않음", () => {
     t.createScrim({ owner: owner.id, name: "이름 없음", links: [{ group: "A", channelId: "907" }] });
+    t.createScrim({ owner: owner.id, ownerName: "다른 이름", name: "이름 있음", links: [{ group: "A", channelId: "908" }] });
     expect(d.db().prepare("SELECT name FROM users WHERE id = ?").get(owner.id)).toEqual({ name: owner.name });
   });
 
@@ -168,6 +169,9 @@ describe("스크림 조별 키", () => {
     expect(d.db().prepare("SELECT 1 FROM users WHERE id = ?").get(owner.id)).toBeUndefined();
     const r = t.createScrim({ owner: owner.id, ownerName: "서버 주인", name: "다음 날", links: [{ group: "A", channelId: "905" }] });
     expect(r.status).toBe("ok");
+    expect(d.db().prepare("SELECT name FROM users WHERE id = ?").get(owner.id)).toEqual({ name: "서버 주인" });
+    d.db().prepare("UPDATE users SET name = '스크림봇' WHERE id = ?").run(owner.id);
+    t.createScrim({ owner: owner.id, ownerName: "서버 주인", name: "그다음 날", links: [{ group: "A", channelId: "909" }] });
     expect(d.db().prepare("SELECT name FROM users WHERE id = ?").get(owner.id)).toEqual({ name: "서버 주인" });
     for (const u of [owner, op, stranger]) d.db().prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name").run(u.id, u.name, Date.now());
   });

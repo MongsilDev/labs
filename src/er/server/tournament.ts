@@ -860,10 +860,10 @@ function userById(id: unknown): User | null {
   return (db().prepare("SELECT id, name, avatar FROM users WHERE id = ?").get(id) as User | undefined) ?? null;
 }
 
-// 세션과 대회가 없는 날 cleanup이 지운 개최자 행을 다시 만들고 봇이 보낸 이름으로 맞춤. 트랜잭션 안에서만 부름
+// 세션과 대회가 없는 날 cleanup이 지운 개최자 행을 다시 만듦. 이름은 자리 표시 이름일 때만 봇이 보낸 값으로 맞춤. 트랜잭션 안에서만 부름
 function upsertScrimOwner(id: string, name: string): User {
   const conn = db();
-  if (name) conn.prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name").run(id, name, now());
+  if (name) conn.prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name WHERE users.name = '스크림봇'").run(id, name, now());
   else conn.prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, '스크림봇', NULL, ?) ON CONFLICT(id) DO NOTHING").run(id, now());
   return userById(id)!;
 }
