@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { COMMON, PERK as BY_ID, PERSONAL, decodeBuild as decode, encodeBuild as encode, type Perk } from "@/tarkov/lib/kord";
+import { COMMON, PERK as BY_ID, PERSONAL, decodeBuild as decode, encodeBuild as encode, type Perk, type Preset } from "@/tarkov/lib/kord";
 
 const POSITIVE = PERSONAL.filter((p) => (p.points ?? 0) < 0).sort((a, b) => b.points! - a.points!);
 const NEGATIVE = PERSONAL.filter((p) => (p.points ?? 0) > 0).sort((a, b) => a.points! - b.points!);
@@ -60,7 +60,7 @@ function Card({ p, on, blockedBy, onToggle }: { p: Perk; on: boolean; blockedBy:
   );
 }
 
-export default function Simulator() {
+export default function Simulator({ presets }: { presets: Preset[] }) {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState("");
   const [undo, setUndo] = useState<Set<string> | null>(null);
@@ -178,6 +178,29 @@ export default function Simulator() {
           )}
         </div>
       </div>
+
+      {presets.length > 0 && (
+        <section aria-labelledby="kb-ach">
+          <h2 id="kb-ach" className="kb-h">
+            업적 조건
+          </h2>
+          <div className="kb-presets">
+            {presets.map((p) => (
+              <button
+                key={p.name}
+                type="button"
+                className="btn sm"
+                onClick={() => {
+                  setUndo(sel.size ? sel : null);
+                  setSel(new Set(p.ids));
+                }}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="kb-cols">
         <section aria-labelledby="kb-pos">
