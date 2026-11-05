@@ -860,11 +860,12 @@ function userById(id: unknown): User | null {
   return (db().prepare("SELECT id, name, avatar FROM users WHERE id = ?").get(id) as User | undefined) ?? null;
 }
 
-// 세션과 대회가 없는 날 cleanup이 지운 개최자 행을 다시 만듦. 트랜잭션 안에서만 부름
-function restoreScrimOwner(id: string): User {
-  const user = { id, name: "스크림봇", avatar: null };
-  db().prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?)").run(id, user.name, now());
-  return user;
+// 세션과 대회가 없는 날 cleanup이 지운 개최자 행을 다시 만들고 봇이 보낸 이름으로 맞춤. 트랜잭션 안에서만 부름
+function upsertScrimOwner(id: string, name: string): User {
+  const conn = db();
+  if (name) conn.prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name").run(id, name, now());
+  else conn.prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, '스크림봇', NULL, ?) ON CONFLICT(id) DO NOTHING").run(id, now());
+  return userById(id)!;
 }
 
 const live = (t: TRow) => t.updated_at + RETENTION_MS > now();
@@ -923,7 +924,7 @@ export function setDiscordLinks(code: string, actor: unknown, links: unknown): L
   });
 }
 
-export type ScrimInput = { owner?: unknown; operators?: unknown; name?: unknown; preset?: unknown; plannedRounds?: unknown; rules?: unknown; links?: unknown };
+export type ScrimInput = { owner?: unknown; ownerName?: unknown; operators?: unknown; name?: unknown; preset?: unknown; plannedRounds?: unknown; rules?: unknown; links?: unknown };
 export type ScrimResult = { status: "forbidden" | "invalid" | "full" } | { status: "ok"; code: string; reused: boolean; missing: string[] };
 
 // 같은 날 다시 불러도 대회가 하나만 남도록 같은 개최자의 같은 이름 대회는 이 시간 안이면 다시 씀
@@ -946,7 +947,7 @@ export function createScrim(input: ScrimInput): ScrimResult {
   const ids = Array.isArray(input.operators) ? [...new Set(input.operators.filter((x): x is string => typeof x === "string" && DISCORD_ID.test(x) && x !== ownerId))] : [];
   return tx(() => {
     const conn = db();
-    const owner = userById(ownerId) ?? restoreScrimOwner(ownerId);
+    const owner = upsertScrimOwner(ownerId, clean(input.ownerName, 32));
     let t = conn
       .prepare(
         "SELECT t.* FROM tournaments t JOIN members m ON m.tournament_id = t.id AND m.user_id = ? AND m.role = 'owner' WHERE t.name = ? AND t.group_count = ? AND t.created_at > ? AND t.group_keys IS NOT NULL ORDER BY t.id DESC LIMIT 1",

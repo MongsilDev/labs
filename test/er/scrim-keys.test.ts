@@ -155,14 +155,20 @@ describe("스크림 조별 키", () => {
     expect(t.visibleView(empty.code, null, old[1])).toBeNull();
   });
 
+  it("봇이 이름을 보내지 않으면 기존 개최자 이름을 그대로 둠", () => {
+    t.createScrim({ owner: owner.id, name: "이름 없음", links: [{ group: "A", channelId: "907" }] });
+    expect(d.db().prepare("SELECT name FROM users WHERE id = ?").get(owner.id)).toEqual({ name: owner.name });
+  });
+
   it("cleanup이 개최자 행을 지운 뒤에도 봇이 대회를 만듦", () => {
     d.db().exec("DELETE FROM tournaments");
     t.cleanup();
     expect(d.db().prepare("SELECT 1 FROM users WHERE id = ?").get(owner.id)).toBeUndefined();
     expect(t.createScrim({ owner: owner.id, name: "다음 날", links: [] }).status).toBe("invalid");
     expect(d.db().prepare("SELECT 1 FROM users WHERE id = ?").get(owner.id)).toBeUndefined();
-    const r = t.createScrim({ owner: owner.id, name: "다음 날", links: [{ group: "A", channelId: "905" }] });
+    const r = t.createScrim({ owner: owner.id, ownerName: "서버 주인", name: "다음 날", links: [{ group: "A", channelId: "905" }] });
     expect(r.status).toBe("ok");
+    expect(d.db().prepare("SELECT name FROM users WHERE id = ?").get(owner.id)).toEqual({ name: "서버 주인" });
     for (const u of [owner, op, stranger]) d.db().prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name").run(u.id, u.name, Date.now());
   });
 });
