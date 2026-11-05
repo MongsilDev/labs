@@ -65,6 +65,8 @@ export default function DecayCalendar({ data }: { data: CutData }) {
       <p className="mt-4 text-[13px] text-fg-3">
         {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정은 유예 기간이 지난 뒤 매일 15시에 RP가 {data.rule.step}점씩 깎입니다.
         <br />
+        게임 기록은 매일 05시에 확인하므로, 05시 뒤에 한 게임은 그날 15시 차감을 막지 못합니다.
+        <br />
         {data.updatedAt < data.rule.graceFrom
           ? `유예는 최대 ${grace.default}일이고, 10월 29일 12.7 패치부터 이터니티 최대 ${grace.eternity}일, 데미갓 최대 ${grace.demigod}일로 줄어듭니다.`
           : `유예는 이터니티 최대 ${grace.eternity}일, 데미갓 최대 ${grace.demigod}일, 그 밖의 티어 최대 ${grace.default}일입니다.`}
