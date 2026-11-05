@@ -860,12 +860,11 @@ function userById(id: unknown): User | null {
   return (db().prepare("SELECT id, name, avatar FROM users WHERE id = ?").get(id) as User | undefined) ?? null;
 }
 
-// 세션과 대회가 없는 날 cleanup이 지운 개최자 행을 다시 만듦
-function scrimOwner(id: unknown): User | null {
-  const found = userById(id);
-  if (found || typeof id !== "string" || !DISCORD_ID.test(id)) return found;
-  db().prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO NOTHING").run(id, "스크림봇", now());
-  return userById(id);
+// 세션과 대회가 없는 날 cleanup이 지운 개최자 행을 다시 만듦. 트랜잭션 안에서만 부름
+function restoreScrimOwner(id: string): User {
+  const user = { id, name: "스크림봇", avatar: null };
+  db().prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?)").run(id, user.name, now());
+  return user;
 }
 
 const live = (t: TRow) => t.updated_at + RETENTION_MS > now();
@@ -932,8 +931,8 @@ const SCRIM_REUSE_MS = 20 * 60 * 60 * 1000;
 
 // 스크림봇이 조편성 뒤 부름. 대회 만들기, 운영자 추가, 조 채널 연결을 한 트랜잭션으로 함. missing은 Labs에 로그인한 적이 없어 넣지 못한 운영자
 export function createScrim(input: ScrimInput): ScrimResult {
-  const owner = scrimOwner(input.owner);
-  if (!owner) return { status: "forbidden" };
+  const ownerId = typeof input.owner === "string" && DISCORD_ID.test(input.owner) ? input.owner : null;
+  if (!ownerId) return { status: "forbidden" };
   const name = clean(input.name, LIMITS.nameLength);
   const links = input.links;
   if (!name || !Array.isArray(links) || links.length < 1 || links.length > LIMITS.groups) return { status: "invalid" };
@@ -944,9 +943,10 @@ export function createScrim(input: ScrimInput): ScrimResult {
     if (g < 0 || want.some((w) => w.g === g) || typeof l.channelId !== "string" || !DISCORD_ID.test(l.channelId) || want.some((w) => w.channelId === l.channelId)) return { status: "invalid" };
     want.push({ g, channelId: l.channelId, guild: clean(l.guild, 100), channel: clean(l.channel, 100) });
   }
-  const ids = Array.isArray(input.operators) ? [...new Set(input.operators.filter((x): x is string => typeof x === "string" && DISCORD_ID.test(x) && x !== owner.id))] : [];
+  const ids = Array.isArray(input.operators) ? [...new Set(input.operators.filter((x): x is string => typeof x === "string" && DISCORD_ID.test(x) && x !== ownerId))] : [];
   return tx(() => {
     const conn = db();
+    const owner = userById(ownerId) ?? restoreScrimOwner(ownerId);
     let t = conn
       .prepare(
         "SELECT t.* FROM tournaments t JOIN members m ON m.tournament_id = t.id AND m.user_id = ? AND m.role = 'owner' WHERE t.name = ? AND t.group_count = ? AND t.created_at > ? AND t.group_keys IS NOT NULL ORDER BY t.id DESC LIMIT 1",

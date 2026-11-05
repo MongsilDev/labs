@@ -159,6 +159,8 @@ describe("스크림 조별 키", () => {
     d.db().exec("DELETE FROM tournaments");
     t.cleanup();
     expect(d.db().prepare("SELECT 1 FROM users WHERE id = ?").get(owner.id)).toBeUndefined();
+    expect(t.createScrim({ owner: owner.id, name: "다음 날", links: [] }).status).toBe("invalid");
+    expect(d.db().prepare("SELECT 1 FROM users WHERE id = ?").get(owner.id)).toBeUndefined();
     const r = t.createScrim({ owner: owner.id, name: "다음 날", links: [{ group: "A", channelId: "905" }] });
     expect(r.status).toBe("ok");
     for (const u of [owner, op, stranger]) d.db().prepare("INSERT INTO users(id, name, avatar, updated_at) VALUES (?, ?, NULL, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name").run(u.id, u.name, Date.now());
