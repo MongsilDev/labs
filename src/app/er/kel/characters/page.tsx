@@ -342,6 +342,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         <KelTabs label="정렬" items={sorts} current={sort} href={(k) => ratePath(scope, k)} className="sort" />
       </div>
       <section className="panel p-5 max-[760px]:p-4">
+        {shown.length < rows.length && (
+          <p className="mb-3 text-[13px] text-fg-3 tabular-nums">
+            {rows.length}종 가운데 {min}게임 이상 등장한 {shown.length}종
+          </p>
+        )}
         <KelScroll label="대회별 실험체 등장률">
           <table className="kel-table kel-heat">
             <thead>
