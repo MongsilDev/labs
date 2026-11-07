@@ -87,6 +87,8 @@ const GAMES = "dakgg/games";
 const CHARACTERS = "dakgg/d_characters.json";
 const AREAS = "dakgg/d_areas.json";
 const WEATHERS = "dakgg/d_weathers.json";
+// CSV가 아직 없는 경기 명단, 형식은 readScheduled 참고
+const SCHEDULE = "dakgg/schedule.json";
 const LABELS = ["d_masteries", "d_items", "d_tactical-skills", "d_trait-skills", "d_skills"].map((f) => `dakgg/${f}.json`);
 
 const games = (dir: string) =>
@@ -97,9 +99,9 @@ const games = (dir: string) =>
 // kelData 서명에 넣는 경로, 폴더를 읽지 못하면 이름표만 넣고 오류는 readDak에서 남김
 export function dakFiles(dir: string): string[] {
   try {
-    return [CHARACTERS, AREAS, WEATHERS, ...LABELS, ...games(dir).map((f) => `${GAMES}/${f}`)];
+    return [CHARACTERS, AREAS, WEATHERS, SCHEDULE, ...LABELS, ...games(dir).map((f) => `${GAMES}/${f}`)];
   } catch {
-    return [CHARACTERS, AREAS, WEATHERS, ...LABELS];
+    return [CHARACTERS, AREAS, WEATHERS, SCHEDULE, ...LABELS];
   }
 }
 
@@ -318,4 +320,62 @@ export function readDak(dir: string): { gameId: number; rank: number; character:
       return [];
     }
   });
+}
+
+// 명단의 한 줄. round는 dak.gg recent-games code의 끝 두 자리
+export type Scheduled = { gameId: number; event: string; stage: string; round: number };
+
+export type DakPlayer = Scheduled & {
+  date: string;
+  rank: number;
+  nickname: string;
+  // dak.gg 이름표의 영문 key
+  character: string;
+  kills: number;
+  deaths: number;
+  damage: number;
+  taken: number;
+  rankScore: number;
+  killScore: number;
+};
+
+type Base = { gameRank: number; teamNumber: number; nickname: string; characterNum: number; playerKill: number; playerDeaths: number; damageToPlayer: number; damageFromPlayer: number; startDtm: string };
+type Score = { teamNumber: number; rankScore: number; killScore: number };
+
+// 명단에 있고 skip에 없는 게임만 선수 기록으로 바꿈
+export function readScheduled(dir: string, skip: Set<number>): DakPlayer[] {
+  let list: Scheduled[];
+  let keys: Map<number, string>;
+  try {
+    list = JSON.parse(readFileSync(join(dir, SCHEDULE), "utf8"));
+    keys = new Map((JSON.parse(readFileSync(join(dir, CHARACTERS), "utf8")).characters as { id: number; key: string }[]).map((c) => [c.id, c.key]));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") console.error("[kel] dak.gg 경기 명단을 읽지 못함", e);
+    return [];
+  }
+  return list
+    .filter((g) => !skip.has(g.gameId))
+    .flatMap((g) => {
+      try {
+        const game: { games: Base[]; scoreInfos: Score[] } = JSON.parse(readFileSync(join(dir, GAMES, `${g.gameId}.json`), "utf8"));
+        const scores = new Map(game.scoreInfos.map((s) => [s.teamNumber, s]));
+        return game.games.map((p) => ({
+          ...g,
+          // startDtm은 +0900 시각이라 앞 10자가 서울 날짜
+          date: p.startDtm.slice(0, 10),
+          rank: p.gameRank,
+          nickname: p.nickname.trim(),
+          character: keys.get(p.characterNum) ?? "",
+          kills: p.playerKill,
+          deaths: p.playerDeaths,
+          damage: p.damageToPlayer,
+          taken: p.damageFromPlayer,
+          rankScore: scores.get(p.teamNumber)?.rankScore ?? 0,
+          killScore: scores.get(p.teamNumber)?.killScore ?? 0,
+        }));
+      } catch (e) {
+        console.error(`[kel] dak.gg ${g.gameId} 경기 상세를 읽지 못함`, e);
+        return [];
+      }
+    });
 }

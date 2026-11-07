@@ -3,9 +3,9 @@ import Lines from "@/components/Lines";
 import { Best, Bests } from "@/er/components/kel/Best";
 import KelPage from "@/er/components/kel/KelPage";
 import { Logo, TeamName } from "@/er/components/kel/Team";
-import { championshipTeams, KEL_SCREENS, KEL_SECTIONS, kelVisible, TEAM, type KelTeam } from "@/er/lib/kel";
+import { championshipTeams, EVENT_NAME, KEL_SCREENS, KEL_SECTIONS, kelVisible, SEMI_QUALIFY, SEMI_ROUNDS, TEAM, type KelTeam } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata, kelSummary } from "@/er/server/kel";
-import { records, wicklines } from "@/er/server/kel-stats";
+import { records, semifinal, wicklines } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("home");
@@ -15,21 +15,59 @@ const day = (date: string) => {
   return `${m}월 ${d}일`;
 };
 
-function Event({ date, name, teams, slot, text }: { date: string; name: string; teams: KelTeam[]; slot?: string; text: string }) {
+type Result = { team: KelTeam; total: number };
+
+const points = (n: number) => `${n.toLocaleString("ko-KR")}점`;
+
+function ResultRow({ r, rank }: { r: Result; rank: number }) {
+  return (
+    <li className="flex min-w-0 items-center gap-2">
+      <span className="w-4 shrink-0 text-right text-[13px] font-bold tabular-nums text-fg-3">{rank}</span>
+      <span className="min-w-0 flex-1">
+        <TeamName team={r.team} size={28} />
+      </span>
+      <span className="shrink-0 font-bold tabular-nums">{points(r.total)}</span>
+    </li>
+  );
+}
+
+// 상위 칸과 아래 칸을 선으로 나눠 진출 팀을 구분
+function Results({ results, cut }: { results: Result[]; cut: number }) {
+  return (
+    <div className="grid gap-2 text-[14px]">
+      <ol className="grid grid-cols-2 gap-x-4 gap-y-2 max-[420px]:grid-cols-1">
+        {results.slice(0, cut).map((r, i) => (
+          <ResultRow key={r.team.key} r={r} rank={i + 1} />
+        ))}
+      </ol>
+      <ol className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-line-soft pt-2 text-fg-2 max-[420px]:grid-cols-1" start={cut + 1}>
+        {results.slice(cut).map((r, i) => (
+          <ResultRow key={r.team.key} r={r} rank={cut + i + 1} />
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function Event({ date, name, teams, slot, results, text }: { date: string; name: string; teams: KelTeam[]; slot?: string; results?: Result[]; text: string }) {
   return (
     <section className="panel flex flex-col gap-3 p-5 max-[760px]:p-4" aria-label={name}>
       <div>
         <p className="text-[13px] text-fg-3">{date}</p>
         <h2 className="text-[22px] font-extrabold tracking-[-0.3px]">{name}</h2>
       </div>
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-[14px]">
-        {teams.map((t) => (
-          <li key={t.key} className="min-w-0">
-            <TeamName team={t} size={28} />
-          </li>
-        ))}
-        {slot && <li className="col-span-2 flex min-h-16 items-center rounded-md border border-dashed border-line-strong px-3 text-fg-3">{slot}</li>}
-      </ul>
+      {results ? (
+        <Results results={results} cut={SEMI_QUALIFY} />
+      ) : (
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-[14px]">
+          {teams.map((t) => (
+            <li key={t.key} className="min-w-0">
+              <TeamName team={t} size={28} />
+            </li>
+          ))}
+          {slot && <li className="col-span-2 flex min-h-16 items-center rounded-md border border-dashed border-line-strong px-3 text-fg-3">{slot}</li>}
+        </ul>
+      )}
       <p className="mt-auto text-[14px] text-fg-2">
         <Lines text={text} />
       </p>
@@ -46,18 +84,30 @@ export default async function Page() {
   const wick = wicks[0];
   const wickTeam = wick && TEAM.get(wick.team)!;
   const { seeds, semi } = championshipTeams();
-  const lead = summary?.first && summary.last ? `${day(summary.first)} 오프닝 위크부터 ${day(summary.last)} 서킷 4 결승까지 열린 ${summary.games}게임의 기록입니다.` : undefined;
+  const sf = data && semifinal(data);
+  const results = sf?.rows.map((r) => ({ team: TEAM.get(r.key)!, total: r.total }));
+  const qualified = sf?.qualified.map((k) => TEAM.get(k)!) ?? [];
+  const lastRow = summary?.last ? data!.rows.find((r) => r.date === summary.last) : undefined;
+  const lead = summary?.first && lastRow ? `${day(summary.first)} 오프닝 위크부터 ${day(summary.last)} ${EVENT_NAME[lastRow.event]} ${lastRow.stage}까지 열린 ${summary.games}게임의 기록입니다.` : undefined;
 
   return (
     <KelPage user={user} owner={owner} screen="home" lead={lead}>
       <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
-        <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="준결승에는 정규 시즌 5~12위 8팀이 출전해 6라운드를 진행합니다. 상위 4팀이 결승에 진출합니다." />
+        {sf?.done && results ? (
+          <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} results={results} text={`정규 시즌 5~12위 8팀이 ${SEMI_ROUNDS}라운드를 진행했고, 상위 ${SEMI_QUALIFY}팀이 결승에 진출했습니다.`} />
+        ) : (
+          <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="준결승에는 정규 시즌 5~12위 8팀이 출전해 6라운드를 진행합니다. 상위 4팀이 결승에 진출합니다." />
+        )}
         <Event
           date="11월 8일 일요일, 대전이스포츠경기장"
           name="결승"
-          teams={seeds}
-          slot="준결승 상위 4팀"
-          text={"정규 시즌 1~4위는 결승에 직행했습니다. 결승은 순차 체크포인트 방식으로 최대\u00a09라운드까지 진행합니다."}
+          teams={[...seeds, ...qualified]}
+          slot={qualified.length ? undefined : "준결승 상위 4팀"}
+          text={
+            qualified.length
+              ? "결승은 순차 체크포인트 방식으로 최대\u00a09라운드까지 진행합니다."
+              : "정규 시즌 1~4위는 결승에 직행했습니다. 결승은 순차 체크포인트 방식으로 최대\u00a09라운드까지 진행합니다."
+          }
         />
       </div>
       {rec && (

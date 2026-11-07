@@ -1,7 +1,7 @@
 import "server-only";
 import { byCharacter, byText } from "@/er/lib/format";
-import { EVENT_NAME, KEL_EVENTS, TEAM, type KelEvent } from "@/er/lib/kel";
-import { finalState, placementPoints, type FinalState, type Round } from "@/er/lib/kel-calc";
+import { EVENT_NAME, KEL_EVENTS, SEMI_QUALIFY, SEMI_ROUNDS, TEAM, type KelEvent } from "@/er/lib/kel";
+import { finalState, placementPoints, standings, type FinalState, type Round } from "@/er/lib/kel-calc";
 import { CIRCUIT_STAGES, stageRounds, type Kel, type KelRow, type TeamGame } from "./kel";
 import type { KelDak } from "./kel-dakgg";
 
@@ -114,7 +114,7 @@ export const playerStats = memo((data): PlayerStat[] => {
       team: rows[0].team,
       games: rows.length,
       wins: rows.filter((r) => r.placement === 1).length,
-      kpr: mean(rows.map((r) => r.kpr)),
+      kpr: mean(rows.flatMap((r) => r.kpr ?? [])),
       kills: mean(rows.map((r) => r.kills)),
       deaths: mean(rows.map((r) => r.deaths)),
       top3: rows.filter((r) => r.placement <= 3).length / rows.length,
@@ -329,6 +329,17 @@ export function finals(data: Kel): Final[] {
     const ids = new Map(data.games.filter((g) => g.event === event && g.stage === "결승").map((g) => [g.round, g.gameId]));
     return [{ event, teams, rounds, state: finalState(teams, rounds), weather: rounds.map((_, i) => weather.get(ids.get(i + 1) ?? 0) ?? "") }];
   });
+}
+
+// 챔피언십 준결승 누적 순위, 기록이 빠진 라운드부터는 세지 않음. done이면 상위 SEMI_QUALIFY팀이 결승 진출
+export function semifinal(data: Kel) {
+  const { teams, rounds: all } = stageRounds(data, "nc", "준결승");
+  if (!teams.length) return null;
+  const end = all.findIndex((r) => !r);
+  const rounds = end < 0 ? all : all.slice(0, end);
+  const rows = standings(teams, rounds);
+  const done = rounds.length >= SEMI_ROUNDS;
+  return { rows, played: rounds.length, done, qualified: done ? rows.slice(0, SEMI_QUALIFY).map((r) => r.key) : [] };
 }
 
 export type TeamOps = {

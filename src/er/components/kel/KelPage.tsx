@@ -2,7 +2,7 @@ import Link from "next/link";
 import Lines from "@/components/Lines";
 import Footer from "@/components/SiteFooter";
 import Header from "@/er/components/Header";
-import { DAKGG, KEL_SCREENS, KEL_SECTIONS, kelVisible, RULES, wikiUrl, type KelScreen } from "@/er/lib/kel";
+import { DAKGG, KEL_SCREENS, KEL_SECTIONS, kelVisible, RULES, SEMI_VOD, wikiUrl, type KelScreen } from "@/er/lib/kel";
 import type { User } from "@/er/server/auth";
 
 type Text = string | (string | false | null | undefined)[];
@@ -98,6 +98,10 @@ export default function KelPage({
             ,{" "}
             <a className={SOURCE_LINK} href={wikiUrl("2026 Korean Esports League")}>
               bori.wiki 대회 결과
+            </a>
+            ,{" "}
+            <a className={SOURCE_LINK} href={SEMI_VOD}>
+              챔피언십 준결승 공식 중계
             </a>
             ,{" "}
             <a className={SOURCE_LINK} href={RULES}>

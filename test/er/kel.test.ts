@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -8,7 +8,7 @@ import { finalState, placementPoints, standings, type Entry, type Round } from "
 import { kelData, stageRounds } from "../../src/er/server/kel";
 import { lastHit } from "../../src/er/server/kel-dakgg";
 import { kelOdds } from "../../src/er/server/kel-odds";
-import { characterBuilds, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, seasonBuilds, teamOps, wicklines } from "../../src/er/server/kel-stats";
+import { characterBuilds, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
 import { kelFixture } from "./helpers";
 
 process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "er-labs-kel-"));
@@ -119,6 +119,51 @@ describe("KEL 자료", () => {
     const final = stageRounds(data, "c4", "결승");
     expect(final.teams).toHaveLength(8);
     expect(final.rounds[2]["new-rise-gangwon"].penalty).toBe(1);
+  });
+
+  it("CSV에 없는 명단 게임은 dak.gg 경기 상세로 선수 기록을 만들고, CSV에 있는 게임은 CSV 기록만 쓴다", () => {
+    kelFixture(process.env.DATA_DIR!);
+    const dak = join(process.env.DATA_DIR!, "kel", "dakgg");
+    const before = kelData()!.rows.filter((r) => r.gameId === 10_001).length;
+    const semi = ["daegu-guardians", "jeonnam-esports", "gyeongnam-sparkle", "new-rise-gangwon", "chungnam-cnj", "fn-sejong", "seongnam-rox", "gyeonggi-innate"];
+    const games = semi.flatMap((key, i) =>
+      [0, 1, 2].map((p) => ({
+        gameId: 20_001,
+        gameRank: i + 1,
+        teamNumber: 8 - i,
+        nickname: `${KEL_TEAMS.find((t) => t.key === key)!.tags[0]}_선수${p}`,
+        characterNum: ((i * 3 + p) % 9) + 1,
+        playerKill: p,
+        playerDeaths: 1,
+        damageToPlayer: 10_000 + p,
+        damageFromPlayer: 8_000,
+        startDtm: "2026-11-07T14:02:16.016+0900",
+      })),
+    );
+    const scoreInfos = semi.map((_, i) => ({ teamNumber: 8 - i, rankScore: placementPoints(i + 1), killScore: 2 }));
+    writeFileSync(join(dak, "games", "20001.json"), JSON.stringify({ games, scoreInfos }));
+    writeFileSync(
+      join(dak, "schedule.json"),
+      JSON.stringify([
+        { gameId: 20_001, event: "nc", stage: "준결승", round: 1 },
+        { gameId: 10_001, event: "nc", stage: "준결승", round: 2 },
+      ]),
+    );
+    try {
+      const data = kelData()!;
+      const rows = data.rows.filter((r) => r.gameId === 20_001);
+      expect(rows).toHaveLength(24);
+      expect(rows.every((r) => r.event === "nc" && r.stage === "준결승" && r.round === 1 && r.date === "2026-11-07" && r.kpr === undefined && r.dak)).toBe(true);
+      expect(rows.find((r) => r.player === "선수2" && r.team === "gyeonggi-innate")).toMatchObject({ placement: 8, kills: 2, total: placementPoints(8) + 2 });
+      expect(data.rows.filter((r) => r.gameId === 10_001)).toHaveLength(before);
+      expect(data.rows.filter((r) => r.gameId === 10_001).every((r) => r.event !== "nc")).toBe(true);
+      const sf = semifinal(data)!;
+      expect(sf).toMatchObject({ played: 1, done: false, qualified: [] });
+      expect(sf.rows.find((r) => r.key === "gyeonggi-innate")).toMatchObject({ penalty: 5, total: placementPoints(8) + 2 - 5 });
+    } finally {
+      rmSync(join(dak, "schedule.json"));
+      rmSync(join(dak, "games", "20001.json"));
+    }
   });
 
   it("dak.gg 경기 상세는 게임, 팀 순위, 실험체가 같은 경기 기록에 붙이고, 위클라인 처치는 팀 게임 단위로 센다", () => {
@@ -357,7 +402,7 @@ describe("KEL 실험체 빌드", () => {
     const season = seasonBuilds(data);
     expect(season.records).toBe(data.rows.length);
     const bond = season.tactical.find((t) => t.name === "강한 결속")!;
-    expect(bond.byEvent).toEqual({ opening: 0, c1: 0, c2: 0, msc: 0, c3: 0, c4: 1 / 3 });
+    expect(bond.byEvent).toEqual({ opening: 0, c1: 0, c2: 0, msc: 0, c3: 0, c4: 1 / 3, nc: null });
     expect(bond.share).toBeCloseTo(data.rows.filter((r) => r.event === "c4").length / 3 / data.rows.length, 9);
     expect(season.tactical[0]).toMatchObject({ name: "블링크", share: 1 - bond.share });
     expect(season.traits.map((t) => [t.name, t.group, t.share])).toEqual([

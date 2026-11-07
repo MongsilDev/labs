@@ -11,8 +11,9 @@ import { kelGate, kelMetadata } from "@/er/server/kel";
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("rules");
 
+// 챔피언십은 준결승과 결승을 따로 적음
 const FLOW = [
-  ...KEL_EVENTS.map((e) => ({ name: e.name, dates: e.dates })),
+  ...KEL_EVENTS.filter((e) => e.key !== "nc").map((e) => ({ name: e.name, dates: e.dates })),
   { name: "준결승", dates: "11.7" },
   { name: "결승", dates: "11.8" },
 ];

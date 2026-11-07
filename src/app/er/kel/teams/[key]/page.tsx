@@ -9,7 +9,7 @@ import { duration, pct } from "@/er/lib/format";
 import { circuitPoints, KEL_EVENTS, KEL_SCREENS, KEL_TEAMS, playerPath, QUALIFY, SEEDS, seasonStandings, TEAM, teamPath, wikiUrl } from "@/er/lib/kel";
 import { placementPoints } from "@/er/lib/kel-calc";
 import { CIRCUIT_STAGES, kelData, kelGate, kelMetadata } from "@/er/server/kel";
-import { finals, gameLabel, killStats, playerStats, regions, teamOps, teamStyles } from "@/er/server/kel-stats";
+import { finals, gameLabel, killStats, playerStats, regions, semifinal, teamOps, teamStyles } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +53,10 @@ export default async function Page({ params }: Props) {
   const games = data.games.filter((g) => g.team === key);
   if (!style || !games.length) return <KelPage user={user} owner={owner} screen="teams" title={team.name} missing={NO_DATA} />;
   const styleRank = (v: (s: (typeof styles)[number]) => number) => <Rank pool={styles.length} rank={rankBy(styles, style, v)} unit="팀" />;
-  const status = me.rank <= SEEDS ? "결승에 직행했습니다" : me.rank <= QUALIFY ? "준결승에 진출했습니다" : "챔피언십에 진출하지 못했습니다";
+  const sf = semifinal(data);
+  const semiRank = sf?.done ? sf.rows.findIndex((r) => r.key === key) + 1 : 0;
+  const semiStatus = !semiRank ? "준결승에 진출했습니다" : `준결승에 진출했고, 준결승 ${semiRank}위로 ${sf!.qualified.includes(key) ? "결승에 진출했습니다" : "탈락했습니다"}`;
+  const status = me.rank <= SEEDS ? "결승에 직행했습니다" : me.rank <= QUALIFY ? semiStatus : "챔피언십에 진출하지 못했습니다";
 
   const events = KEL_EVENTS.map((e) => {
     const list = games.filter((g) => g.event === e.key);

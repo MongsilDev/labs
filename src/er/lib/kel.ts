@@ -1,35 +1,38 @@
 // 서킷 순위는 bori.wiki 대회 결과 표, 배점과 일정은 2026-10-12 시행 규정집 기준
 
-// short는 좁은 화면 열지도에 쓰는 연고지 두 글자
-export type KelTeam = { key: string; name: string; short: string; csv: string; wiki: string; circuits: [number, number, number, number]; dark?: boolean };
+// short는 좁은 화면 열지도에 쓰는 연고지 두 글자, tags는 경기 닉네임 앞 팀 약칭
+export type KelTeam = { key: string; name: string; short: string; csv: string; wiki: string; tags: string[]; circuits: [number, number, number, number]; dark?: boolean };
 
 export const KEL_TEAMS: KelTeam[] = [
-  { key: "gc-busan-stella", name: "GC 부산 스텔라", short: "부산", csv: "GC Busan Stella", wiki: "GC_BUSAN_Stella", circuits: [3, 3, 1, 11] },
-  { key: "daejeon-autoarms", name: "대전 오토암즈", short: "대전", csv: "DAEJEON AutoArms", wiki: "DAEJEON_AutoArms", circuits: [7, 1, 3, 3] },
-  { key: "incheon-wave", name: "인천 웨이브", short: "인천", csv: "INCHEON WAVE", wiki: "INCHEON_WAVE", circuits: [13, 7, 4, 1] },
-  { key: "gyeongbuk-ascenders", name: "경북 어센더스", short: "경북", csv: "Gyeongbuk Ascenders", wiki: "GyeongBuk_Ascenders", circuits: [1, 5, 9, 7] },
-  { key: "gyeongnam-sparkle", name: "경남 스파클", short: "경남", csv: "Gyeongnam Sparkle Esports", wiki: "Gyeongnam_Sparkle", circuits: [4, 6, 10, 2] },
-  { key: "seongnam-rox", name: "성남 락스", short: "성남", csv: "Seongnam ROX", wiki: "Seongnam_ROX", circuits: [10, 2, 6, 5] },
-  { key: "chungnam-cnj", name: "충남 CNJ", short: "충남", csv: "Chungnam CNJ Esports", wiki: "Chungnam_CNJ", circuits: [9, 10, 2, 9] },
-  { key: "new-rise-gangwon", name: "뉴 라이즈 강원", short: "강원", csv: "New Rise Gangwon", wiki: "New_Rise_Gangwon", circuits: [5, 14, 8, 4] },
-  { key: "jeonnam-esports", name: "전남 이스포츠", short: "전남", csv: "Jeonnam Esports", wiki: "JEONNAM_ESPORTS", circuits: [16, 4, 5, 12] },
-  { key: "daegu-guardians", name: "대구 가디언즈", short: "대구", csv: "Daegu Guardians", wiki: "Daegu_Guardians", circuits: [2, 9, 16, 13] },
-  { key: "fn-sejong", name: "FN 세종", short: "세종", csv: "FN SEJONG", wiki: "FN_SEJONG", circuits: [11, 12, 12, 6], dark: true },
-  { key: "gyeonggi-innate", name: "경기 이네이트", short: "경기", csv: "Gyeonggi Innate", wiki: "Gyeonggi_Innate", circuits: [8, 8, 7, 16] },
-  { key: "gj-slasher", name: "광주 슬래셔", short: "광주", csv: "GJ Slasher", wiki: "GJ_Slasher", circuits: [6, 15, 15, 10] },
-  { key: "yj-whales", name: "양주 웨일즈", short: "양주", csv: "YJ Whales", wiki: "Yangju_Whales", circuits: [14, 13, 14, 8] },
-  { key: "jeju-shadow", name: "제주 쉐도우", short: "제주", csv: "Jeju Shadow", wiki: "Jeju_Shadow", circuits: [15, 11, 11, 14] },
-  { key: "goyang-mir", name: "고양 미르", short: "고양", csv: "Goyang Mir", wiki: "Goyang_MIR", circuits: [12, 16, 13, 15] },
+  { key: "gc-busan-stella", name: "GC 부산 스텔라", short: "부산", csv: "GC Busan Stella", wiki: "GC_BUSAN_Stella", tags: ["BS", "GBS"], circuits: [3, 3, 1, 11] },
+  { key: "daejeon-autoarms", name: "대전 오토암즈", short: "대전", csv: "DAEJEON AutoArms", wiki: "DAEJEON_AutoArms", tags: ["DTS"], circuits: [7, 1, 3, 3] },
+  { key: "incheon-wave", name: "인천 웨이브", short: "인천", csv: "INCHEON WAVE", wiki: "INCHEON_WAVE", tags: ["INW"], circuits: [13, 7, 4, 1] },
+  { key: "gyeongbuk-ascenders", name: "경북 어센더스", short: "경북", csv: "Gyeongbuk Ascenders", wiki: "GyeongBuk_Ascenders", tags: ["GBA"], circuits: [1, 5, 9, 7] },
+  { key: "gyeongnam-sparkle", name: "경남 스파클", short: "경남", csv: "Gyeongnam Sparkle Esports", wiki: "Gyeongnam_Sparkle", tags: ["GNS"], circuits: [4, 6, 10, 2] },
+  { key: "seongnam-rox", name: "성남 락스", short: "성남", csv: "Seongnam ROX", wiki: "Seongnam_ROX", tags: ["ROX"], circuits: [10, 2, 6, 5] },
+  { key: "chungnam-cnj", name: "충남 CNJ", short: "충남", csv: "Chungnam CNJ Esports", wiki: "Chungnam_CNJ", tags: ["CNJ"], circuits: [9, 10, 2, 9] },
+  { key: "new-rise-gangwon", name: "뉴 라이즈 강원", short: "강원", csv: "New Rise Gangwon", wiki: "New_Rise_Gangwon", tags: ["NRG"], circuits: [5, 14, 8, 4] },
+  { key: "jeonnam-esports", name: "전남 이스포츠", short: "전남", csv: "Jeonnam Esports", wiki: "JEONNAM_ESPORTS", tags: ["JNE"], circuits: [16, 4, 5, 12] },
+  { key: "daegu-guardians", name: "대구 가디언즈", short: "대구", csv: "Daegu Guardians", wiki: "Daegu_Guardians", tags: ["DG"], circuits: [2, 9, 16, 13] },
+  { key: "fn-sejong", name: "FN 세종", short: "세종", csv: "FN SEJONG", wiki: "FN_SEJONG", tags: ["FN"], circuits: [11, 12, 12, 6], dark: true },
+  { key: "gyeonggi-innate", name: "경기 이네이트", short: "경기", csv: "Gyeonggi Innate", wiki: "Gyeonggi_Innate", tags: ["GIN"], circuits: [8, 8, 7, 16] },
+  { key: "gj-slasher", name: "광주 슬래셔", short: "광주", csv: "GJ Slasher", wiki: "GJ_Slasher", tags: ["GSL"], circuits: [6, 15, 15, 10] },
+  { key: "yj-whales", name: "양주 웨일즈", short: "양주", csv: "YJ Whales", wiki: "Yangju_Whales", tags: ["YJS"], circuits: [14, 13, 14, 8] },
+  { key: "jeju-shadow", name: "제주 쉐도우", short: "제주", csv: "Jeju Shadow", wiki: "Jeju_Shadow", tags: ["JSD"], circuits: [15, 11, 11, 14] },
+  { key: "goyang-mir", name: "고양 미르", short: "고양", csv: "Goyang Mir", wiki: "Goyang_MIR", tags: ["MIR"], circuits: [12, 16, 13, 15] },
 ];
 
 export const TEAM = new Map(KEL_TEAMS.map((t) => [t.key, t]));
 export const TEAM_BY_CSV = new Map(KEL_TEAMS.map((t) => [t.csv, t]));
+export const TEAM_BY_TAG = new Map(KEL_TEAMS.flatMap((t) => t.tags.map((tag) => [tag.toLowerCase(), t] as const)));
 
 export const WIKI = "https://bori.wiki";
 export const LOGO_CDN = "https://cdn.mongsil.dev/er-labs/teams";
 export const DAKGG = "https://dak.gg/er/esports/kel_2026";
 // KEL 사이트는 HTTPS 접속을 받지 않음
 export const RULES = "http://kel.e-sports.or.kr/notice/view/1334";
+// 챔피언십 준결승 감점은 이 중계 경기 화면 순위표 기준
+export const SEMI_VOD = "https://www.youtube.com/live/TblEt6pkVRU";
 
 export const wikiUrl = (title: string) => `${WIKI}/${encodeURIComponent(title.replace(/ /g, "_"))}`;
 
@@ -73,6 +76,9 @@ export function seasonStandings(): SeasonRow[] {
 }
 
 export const FINAL_ROUNDS = 9;
+export const SEMI_ROUNDS = 6;
+// 준결승에서 결승에 진출하는 팀 수
+export const SEMI_QUALIFY = 4;
 
 // 시즌 순위로 가르는 결승 직행과 준결승 진출 기준
 export const SEEDS = 4;
@@ -90,6 +96,7 @@ export const KEL_EVENTS = [
   { key: "msc", name: "미드 시즌 컵", dates: "8.1~8.2" },
   { key: "c3", name: "서킷 3", dates: "9.12~9.20" },
   { key: "c4", name: "서킷 4", dates: "10.10~10.18" },
+  { key: "nc", name: "챔피언십", dates: "11.7~11.8" },
 ] as const;
 
 export type KelEvent = (typeof KEL_EVENTS)[number]["key"];

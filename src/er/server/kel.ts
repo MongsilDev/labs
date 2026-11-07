@@ -6,10 +6,10 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import characters from "@/er/data/characters.json";
 import { parseCsv } from "@/er/lib/csv";
-import { KEL_SCREENS, kelVisible, TEAM_BY_CSV, type KelEvent, type KelScreen } from "@/er/lib/kel";
+import { EVENT_NAME, KEL_SCREENS, kelVisible, TEAM_BY_CSV, TEAM_BY_TAG, type KelEvent, type KelScreen } from "@/er/lib/kel";
 import type { Round } from "@/er/lib/kel-calc";
 import { currentUser, type User } from "./auth";
-import { dakFiles, readDak, type KelDak } from "./kel-dakgg";
+import { dakFiles, readDak, readScheduled, type KelDak } from "./kel-dakgg";
 
 const viewer = cache(async (): Promise<{ user: User | null; owner: boolean }> => {
   const user = await currentUser();
@@ -48,7 +48,8 @@ export type KelRow = {
   taken: number;
   killScore: number;
   total: number;
-  kpr: number;
+  // 님블뉴런 CSV에만 있는 평점이라 dak.gg로 만든 행은 비움
+  kpr?: number;
   deaths: number;
   dak?: KelDak;
 };
@@ -84,6 +85,9 @@ function stageOf(file: string): { event: KelEvent; stage: string } | null {
   if (/Opening_week_Group_Omega/i.test(file)) return { event: "opening", stage: "오메가 그룹" };
   if (/MIDSEASON_CUP_SEMIFINALS/i.test(file)) return { event: "msc", stage: "준결승" };
   if (/MIDSEASON_CUP_FINALS/i.test(file)) return { event: "msc", stage: "결승" };
+  // 챔피언십 CSV 이름은 아직 공개되지 않아 SEMI가 들어간 이름만 준결승으로 봄
+  if (/CHAMPIONSHIP.*SEMI/i.test(file)) return { event: "nc", stage: "준결승" };
+  if (/CHAMPIONSHIP.*FINAL/i.test(file)) return { event: "nc", stage: "결승" };
   const m = /CIRCUIT_([1-4])_(Group_A|Group_B|Upper_Match|Lower_Match|Lower_Finals|Finals)_/i.exec(file);
   return m ? { event: `c${m[1]}` as KelEvent, stage: STAGES[m[2].toLowerCase() as keyof typeof STAGES] } : null;
 }
@@ -185,6 +189,37 @@ function teamGames(rows: KelRow[]): TeamGame[] {
   return [...map.values()];
 }
 
+// 님블뉴런 CSV에 없는 게임만 dak.gg 경기 상세로 채움. CSV가 공개되면 같은 gameId는 CSV 행이 대신함
+function scheduledRows(known: Set<number>): KelRow[] {
+  const rows: KelRow[] = [];
+  for (const p of readScheduled(dir(), known)) {
+    const at = p.nickname.indexOf("_");
+    const team = at > 0 ? TEAM_BY_TAG.get(p.nickname.slice(0, at).toLowerCase()) : undefined;
+    if (!team || !(p.event in EVENT_NAME) || p.round < 1 || p.rank < 1 || p.rank > 8) {
+      console.error(`[kel] dak.gg ${p.gameId} ${p.nickname}: 팀이나 대회를 알 수 없어 건너뜀`);
+      continue;
+    }
+    rows.push({
+      event: p.event as KelEvent,
+      stage: p.stage,
+      date: p.date,
+      round: p.round,
+      gameId: p.gameId,
+      placement: p.rank,
+      team: team.key,
+      player: p.nickname.slice(at + 1),
+      character: characterKey(p.character),
+      kills: p.kills,
+      damage: p.damage,
+      taken: p.taken,
+      killScore: p.killScore,
+      total: p.rankScore + p.killScore,
+      deaths: p.deaths,
+    });
+  }
+  return rows;
+}
+
 const store = globalThis as unknown as { __kel?: { sig: string; data: Kel | null } };
 const dir = () => join(process.env.DATA_DIR || join(process.cwd(), "data"), "kel");
 
@@ -221,7 +256,8 @@ export function kelData(): Kel | null {
       })
       .join("|");
     if (store.__kel?.sig === sig) return store.__kel.data;
-    const rows = files.flatMap((f) => parseFile(f, readFileSync(join(dir(), f), "utf8")));
+    const csv = files.flatMap((f) => parseFile(f, readFileSync(join(dir(), f), "utf8")));
+    const rows = [...csv, ...scheduledRows(new Set(csv.map((r) => r.gameId)))];
     attachDak(rows);
     const data = rows.length ? { rows, games: teamGames(rows) } : null;
     store.__kel = { sig, data };
@@ -252,6 +288,10 @@ const CORRECTIONS: { event: KelEvent; stage: string; round: number; team: string
   { event: "msc", stage: "결승", round: 4, team: "daejeon-autoarms", points: 3, kind: "rule" },
   { event: "msc", stage: "결승", round: 4, team: "gyeongbuk-ascenders", points: 5, kind: "rule" },
   { event: "c4", stage: "결승", round: 3, team: "new-rise-gangwon", points: 1, kind: "penalty" },
+  // 챔피언십 준결승은 공식 방송 경기 화면 순위표와 dak.gg 점수의 라운드별 차이, 사유는 미확인
+  { event: "nc", stage: "준결승", round: 1, team: "gyeonggi-innate", points: 5, kind: "penalty" },
+  { event: "nc", stage: "준결승", round: 4, team: "gyeonggi-innate", points: 1, kind: "penalty" },
+  { event: "nc", stage: "준결승", round: 4, team: "seongnam-rox", points: 1, kind: "penalty" },
 ];
 
 // 기록이 빠진 라운드는 빈칸으로 남음
