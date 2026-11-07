@@ -31,8 +31,6 @@ export const LOGO_CDN = "https://cdn.mongsil.dev/er-labs/teams";
 export const DAKGG = "https://dak.gg/er/esports/kel_2026";
 // KEL 사이트는 HTTPS 접속을 받지 않음
 export const RULES = "http://kel.e-sports.or.kr/notice/view/1334";
-// 챔피언십 준결승 감점은 이 중계 경기 화면 순위표 기준
-export const SEMI_VOD = "https://www.youtube.com/live/TblEt6pkVRU";
 
 export const wikiUrl = (title: string) => `${WIKI}/${encodeURIComponent(title.replace(/ /g, "_"))}`;
 
