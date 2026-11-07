@@ -8,7 +8,7 @@ import { finalState, placementPoints, standings, type Entry, type Round } from "
 import { kelData, stageRounds } from "../../src/er/server/kel";
 import { lastHit } from "../../src/er/server/kel-dakgg";
 import { kelOdds } from "../../src/er/server/kel-odds";
-import { characterBuilds, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, scoped, scopesOf, scoreStages, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
+import { characterBuilds, characterStats, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, scoped, scopesOf, scoreStages, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
 import { kelFixture } from "./helpers";
 
 process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "er-labs-kel-"));
@@ -204,6 +204,9 @@ describe("KEL 자료", () => {
     expect(rec.damage.every(({ r }) => r.event === "msc")).toBe(true);
     expect(lows(msc).deaths.every(({ r }) => r.event === "msc")).toBe(true);
     expect(rec.characters.map((c) => c.key)).toEqual([...new Set(msc.rows.map((r) => r.character))].sort(byCharacter));
+    const stats = characterStats(msc);
+    expect(stats.total).toBe(new Set(msc.games.map((g) => g.gameId)).size);
+    expect(stats.rows.every((r) => r.games <= stats.total)).toBe(true);
   });
 
   it("부진한 기록은 5위 안의 기록을 넣고, 같은 값은 같은 순위로 모두 넣는다", () => {

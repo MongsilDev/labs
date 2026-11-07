@@ -7,7 +7,7 @@ import { characterName, pct } from "@/er/lib/format";
 import { KEL_EVENTS, KEL_SCREENS, TEAM } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata, type Kel } from "@/er/server/kel";
 import { SKILL_SLOTS } from "@/er/server/kel-dakgg";
-import { characterBuilds, characterStats, seasonBuilds, type CharacterBuild, type CharacterStat, type PickRate, type Share } from "@/er/server/kel-stats";
+import { characterBuilds, characterStats, MIN_GAMES, scoped, scopesOf, seasonBuilds, type CharacterBuild, type CharacterStat, type PickRate, type Share, type StyleScope } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("characters");
@@ -34,6 +34,14 @@ const SORT: Record<Sort, (a: CharacterStat, b: CharacterStat) => number> = {
   place: (a, b) => a.avgPlace - b.avgPlace,
   rise: (a, b) => b.byEvent.c4 - b.byEvent.c3 - (a.byEvent.c4 - a.byEvent.c3),
 };
+
+// 범위, 보기, 정렬 탭이 서로의 값을 잃지 않도록 기본값이 아닌 것만 주소에 남김
+function ratePath(scope: StyleScope, sort: Sort) {
+  const q = new URLSearchParams();
+  if (scope !== "season") q.set("s", scope);
+  if (sort !== SORTS[0][0]) q.set("sort", sort);
+  return q.size ? `${KEL_SCREENS.characters.path}?${q}` : KEL_SCREENS.characters.path;
+}
 
 const buildPath = (key: string) => `${KEL_SCREENS.characters.path}?view=build&c=${encodeURIComponent(key)}`;
 const place = (v: number) => `${v.toFixed(2)}위`;
@@ -271,15 +279,21 @@ function Build({ data, b }: { data: Kel; b: CharacterBuild }) {
   );
 }
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ view?: string; sort?: string; c?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ view?: string; sort?: string; c?: string; s?: string }> }) {
   const { user, owner } = await kelGate("characters");
   const q = await searchParams;
   const view = pickTab(VIEWS, q.view);
-  const sort = pickTab(SORTS, q.sort);
   const data = kelData();
   if (!data) return <KelPage user={user} owner={owner} screen="characters" missing={NO_DATA} />;
-  const { total, eventGames, rows } = characterStats(data);
-  const tabs = <KelTabs screen="characters" param="view" label="보기" items={VIEWS} current={view} />;
+  const scopes = scopesOf(data);
+  const scope = pickTab(scopes, q.s);
+  const season = scope === "season";
+  // 서킷 4 증가 순은 대회별 칸이 있는 시즌 전체에서만
+  const sorts = season ? SORTS : SORTS.filter(([k]) => k !== "rise");
+  const sort = pickTab(sorts, q.sort);
+  const scopeName = scopes.find(([k]) => k === scope)![1];
+  const { total, eventGames, rows } = characterStats(scoped(data, scope));
+  const tabs = <KelTabs label="보기" items={VIEWS} current={view} href={(v) => (v === "build" ? `${KEL_SCREENS.characters.path}?view=build` : ratePath(scope, sort))} />;
 
   if (view === "build") {
     const builds = characterBuilds(data);
@@ -307,7 +321,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
 
   const min = Math.ceil(total * 0.1);
   const shown = rows.filter((r) => r.games >= min).sort(SORT[sort]);
-  const events = KEL_EVENTS.filter((e) => eventGames[e.key] > 0);
+  const events = season ? KEL_EVENTS.filter((e) => eventGames[e.key] > 0) : [];
 
   return (
     <KelPage
@@ -315,14 +329,20 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
       owner={owner}
       screen="characters"
       notes={[
-        "칸의 숫자는 그 대회 게임 가운데 한 팀이라도 그 실험체를 고른 게임이 차지하는 비율입니다.",
-        `2026 시즌에 등장한 ${rows.length}종 가운데 시즌 게임의 10%인 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`,
+        season
+          ? "칸의 숫자는 그 대회 게임 가운데 한 팀이라도 그 실험체를 고른 게임이 차지하는 비율입니다."
+          : `등장률은 ${scopeName} ${total}게임 가운데 한 팀이라도 그 실험체를 고른 게임이 차지하는 비율입니다.`,
+        season
+          ? `2026 시즌에 등장한 ${rows.length}종 가운데 시즌 게임의 10%인 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`
+          : `${scopeName}에 등장한 ${rows.length}종 가운데 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`,
         AVG_NOTE,
+        total < MIN_GAMES && `${scopeName} 경기는 ${total}게임뿐이라 등장한 게임이 적은 실험체는 평균 순위와 1위 비율이 한두 게임 결과로 크게 달라집니다.`,
       ]}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         {tabs}
-        <KelTabs screen="characters" param="sort" label="정렬" items={SORTS} current={sort} className="sort" />
+        <KelTabs label="범위" items={scopes} current={scope} href={(s) => ratePath(s, sort)} />
+        <KelTabs label="정렬" items={sorts} current={sort} href={(k) => ratePath(scope, k)} className="sort" />
       </div>
       <section className="panel p-5 max-[760px]:p-4">
         <KelScroll label="대회별 실험체 등장률">
@@ -330,14 +350,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
             <thead>
               <tr>
                 <th className="l pin">실험체</th>
-                <th className="narrow">시즌 전체</th>
+                <th className="narrow">{scopeName}</th>
                 {events.map((e) => (
                   <th key={e.key} className="text-center">
                     {e.name}
                     <span className="block font-normal">{eventGames[e.key]}게임</span>
                   </th>
                 ))}
-                <th className="wide">시즌 전체</th>
+                <th className="wide">{scopeName}</th>
+                {!season && <th>게임</th>}
                 <th>평균 순위</th>
                 <th>1위 비율</th>
               </tr>
@@ -355,6 +376,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
                     </HeatCell>
                   ))}
                   <td className="wide font-bold">{pct(r.rate, 0)}</td>
+                  {!season && <td>{r.games}</td>}
                   <td>{r.avgPlace.toFixed(2)}위</td>
                   <td>{pct(r.winRate, 0)}</td>
                 </tr>
