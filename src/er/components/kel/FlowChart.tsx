@@ -18,10 +18,13 @@ export default function FlowChart({ cum, order, focus, holders }: { cum: Record<
   const h = 320;
   const pad = { l: 34, r: labeled ? 168 : 14, t: 14, b: 28 };
   const max = Math.max(...teams.map((k) => Math.max(...cum[k])));
-  const ys = ticks(0, max, 5);
-  const top = ys[ys.length - 1] || 1;
+  // 1라운드 감점으로 누적이 음수인 팀이 있으면 0 아래까지 축을 늘림
+  const min = Math.min(0, ...teams.map((k) => Math.min(...cum[k])));
+  const ys = ticks(min, max, 5);
+  const bottom = ys[0];
+  const top = ys[ys.length - 1] > bottom ? ys[ys.length - 1] : bottom + 1;
   const x = (i: number) => pad.l + (i * (w - pad.l - pad.r)) / rounds;
-  const y = (v: number) => pad.t + (1 - v / top) * (h - pad.t - pad.b);
+  const y = (v: number) => pad.t + (1 - (v - bottom) / (top - bottom)) * (h - pad.t - pad.b);
   const toneOf = (k: string) => focus.indexOf(k);
   const path = (k: string) => cum[k].map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
   // 강조한 선은 회색 선 위에, 우승 팀 선이 맨 위
