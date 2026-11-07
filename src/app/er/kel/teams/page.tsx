@@ -2,14 +2,12 @@ import KelPage, { KelScroll, KelTabs, NO_DAK, NO_DATA, pickTab } from "@/er/comp
 import Scatter from "@/er/components/kel/Scatter";
 import { TeamName } from "@/er/components/kel/Team";
 import { duration, pct } from "@/er/lib/format";
-import { KEL_EVENTS, KEL_SCREENS, seasonStandings, TEAM, TONES } from "@/er/lib/kel";
+import { KEL_SCREENS, seasonStandings, TEAM, TONES } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata } from "@/er/server/kel";
-import { inScope, teamOps, teamStyles, type StyleScope, type TeamOps, type TeamStyle } from "@/er/server/kel-stats";
+import { SCOPES, scopesOf, teamOps, teamStyles, type StyleScope, type TeamOps, type TeamStyle } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("teams");
-
-const SCOPES: [StyleScope, string][] = [["season", "시즌 전체"], ...KEL_EVENTS.map((e): [StyleScope, string] => [e.key, e.name]), ["finals", "모든 결승"]];
 
 const VIEWS: ["score" | "ops", string][] = [
   ["score", "점수"],
@@ -185,8 +183,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   const { user, owner } = await kelGate("teams");
   const q = await searchParams;
   const data = kelData();
-  // 경기 기록이 없는 대회는 탭에서 뺌
-  const scopes = data ? SCOPES.filter(([s]) => s === "season" || data.games.some(inScope(s))) : SCOPES;
+  const scopes = scopesOf(data);
   const scope = pickTab(scopes, q.s);
   const view = pickTab(VIEWS, q.v);
   const rows = data ? teamStyles(data, scope) : [];

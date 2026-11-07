@@ -42,6 +42,24 @@ export type TeamStyle = { team: string; games: number; wins: number; eighth: num
 
 export const inScope = (scope: StyleScope) => (g: { event: KelEvent; stage: string }) => (scope === "season" ? true : scope === "finals" ? g.stage === "결승" : g.event === scope);
 
+export const SCOPES: [StyleScope, string][] = [["season", "시즌 전체"], ...KEL_EVENTS.map((e): [StyleScope, string] => [e.key, e.name]), ["finals", "모든 결승"]];
+
+// 경기 기록이 없는 대회는 탭에서 뺌
+export const scopesOf = (data: Kel | null) => (data ? SCOPES.filter(([s]) => s === "season" || data.games.some(inScope(s))) : SCOPES);
+
+// 범위로 거른 사본을 범위마다 하나씩 두어 memo로 묶은 계산을 범위별로 다시 씀
+const scopedCache = new WeakMap<Kel, Map<StyleScope, Kel>>();
+export function scoped(data: Kel, scope: StyleScope): Kel {
+  if (scope === "season") return data;
+  const cache = scopedCache.get(data) ?? new Map<StyleScope, Kel>();
+  scopedCache.set(data, cache);
+  if (!cache.has(scope)) {
+    const keep = inScope(scope);
+    cache.set(scope, { rows: data.rows.filter(keep), games: data.games.filter(keep) });
+  }
+  return cache.get(scope)!;
+}
+
 export function teamStyles(data: Kel, scope: StyleScope): TeamStyle[] {
   const games = data.games.filter(inScope(scope));
   return [...Map.groupBy(games, (g) => g.team)]

@@ -2,13 +2,13 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { characterName } from "../../src/er/lib/format";
+import { byCharacter, characterName } from "../../src/er/lib/format";
 import { championshipTeams, KEL_TEAMS, seasonStandings } from "../../src/er/lib/kel";
 import { finalState, placementPoints, standings, type Entry, type Round } from "../../src/er/lib/kel-calc";
 import { kelData, stageRounds } from "../../src/er/server/kel";
 import { lastHit } from "../../src/er/server/kel-dakgg";
 import { kelOdds } from "../../src/er/server/kel-odds";
-import { characterBuilds, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, scoreStages, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
+import { characterBuilds, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, scoped, scopesOf, scoreStages, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
 import { kelFixture } from "./helpers";
 
 process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "er-labs-kel-"));
@@ -188,6 +188,22 @@ describe("KEL 자료", () => {
     expect(teamScore.games.length).toBeGreaterThan(1);
     const dates = teamScore.games.map((g) => g.date);
     expect(dates).toEqual([...dates].sort());
+  });
+
+  it("한 게임 기록의 범위는 그 범위 경기만으로 같은 records와 lows를 계산하고, 시즌 전체는 첫 화면과 같은 결과를 쓴다", () => {
+    kelFixture(process.env.DATA_DIR!);
+    const data = kelData()!;
+    expect(records(scoped(data, "season"))).toBe(records(data));
+    expect(scopesOf(data).map(([s]) => s)).toEqual(["season", "opening", "c1", "c2", "msc", "c3", "c4", "finals"]);
+    const msc = scoped(data, "msc");
+    expect(scoped(data, "msc")).toBe(msc);
+    expect(msc.rows.length).toBeGreaterThan(0);
+    expect(msc.rows.every((r) => r.event === "msc")).toBe(true);
+    const rec = records(msc);
+    expect(rec.kills.kills).toBe(Math.max(...msc.rows.map((r) => r.kills)));
+    expect(rec.damage.every(({ r }) => r.event === "msc")).toBe(true);
+    expect(lows(msc).deaths.every(({ r }) => r.event === "msc")).toBe(true);
+    expect(rec.characters.map((c) => c.key)).toEqual([...new Set(msc.rows.map((r) => r.character))].sort(byCharacter));
   });
 
   it("부진한 기록은 5위 안의 기록을 넣고, 같은 값은 같은 순위로 모두 넣는다", () => {

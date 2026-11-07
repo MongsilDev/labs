@@ -4,16 +4,17 @@ import { Logo, PlayerName } from "@/er/components/kel/Team";
 import Char from "@/er/components/t/Char";
 import { int } from "@/er/lib/cut";
 import { fmt } from "@/er/lib/format";
-import { playerPath, TEAM } from "@/er/lib/kel";
+import { KEL_SCREENS, playerPath, TEAM } from "@/er/lib/kel";
 import { placementPoints } from "@/er/lib/kel-calc";
 import { kelData, kelGate, kelMetadata, type KelRow, type TeamGame } from "@/er/server/kel";
-import { gameLabel, lows, records } from "@/er/server/kel-stats";
+import { gameLabel, lows, records, scoped, scopesOf, type StyleScope } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("records");
 
+// season은 예전 주소를 지키려고 남긴 키
 const VIEWS: ["season" | "characters" | "low", string][] = [
-  ["season", "시즌 전체"],
+  ["season", "최고 기록"],
   ["characters", "실험체별"],
   ["low", "부진한 기록"],
 ];
@@ -91,17 +92,31 @@ function Ranking({ id, title, rows, label, value }: { id: string; title: string;
   );
 }
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+function href(scope: StyleScope, view: (typeof VIEWS)[number][0]) {
+  const q = new URLSearchParams();
+  if (scope !== "season") q.set("s", scope);
+  if (view !== VIEWS[0][0]) q.set("view", view);
+  return q.size ? `${KEL_SCREENS.records.path}?${q}` : KEL_SCREENS.records.path;
+}
+
+export default async function Page({ searchParams }: { searchParams: Promise<{ s?: string; view?: string }> }) {
   const { user, owner } = await kelGate("records");
-  const view = pickTab(VIEWS, (await searchParams).view);
+  const q = await searchParams;
+  const view = pickTab(VIEWS, q.view);
   const data = kelData();
   if (!data) return <KelPage user={user} owner={owner} screen="records" missing={NO_DATA} />;
-  const rec = records(data);
-  const low = view === "low" ? lows(data) : null;
+  const scopes = scopesOf(data);
+  const scope = pickTab(scopes, q.s);
+  // 첫 화면 시즌 최고 기록과 같은 records를 범위로 거른 기록에 씀
+  const rec = records(scoped(data, scope));
+  const low = view === "low" ? lows(scoped(data, scope)) : null;
 
   return (
     <KelPage user={user} owner={owner} screen="records" notes={low ? "같은 값은 같은 순위로 묶고, 같은 순위 안에서는 경기가 열린 순서대로 표시했습니다." : undefined}>
-      <KelTabs screen="records" param="view" label="보기" items={VIEWS} current={view} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <KelTabs label="범위" items={scopes} current={scope} href={(s) => href(s, view)} />
+        <KelTabs label="보기" items={VIEWS} current={view} href={(v) => href(scope, v)} />
+      </div>
       {view === "season" && (
         <>
           <section className="grid grid-cols-5 gap-3 max-[1280px]:grid-cols-2" aria-label="한 게임 최고 기록">
