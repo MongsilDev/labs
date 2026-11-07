@@ -332,9 +332,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         season
           ? "칸의 숫자는 그 대회 게임 가운데 한 팀이라도 그 실험체를 고른 게임이 차지하는 비율입니다."
           : `등장률은 ${scopeName} ${total}게임 가운데 한 팀이라도 그 실험체를 고른 게임이 차지하는 비율입니다.`,
-        season
-          ? `2026 시즌에 등장한 ${rows.length}종 가운데 시즌 게임의 10%인 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`
-          : `${scopeName}에 등장한 ${rows.length}종 가운데 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`,
+        shown.length < rows.length &&
+          (season
+            ? `2026 시즌에 등장한 ${rows.length}종 가운데 시즌 게임의 10%인 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`
+            : `${scopeName}에 등장한 ${rows.length}종 가운데 ${min}게임 이상 등장한 ${shown.length}종만 표시했습니다.`),
         AVG_NOTE,
         total < MIN_GAMES && `${scopeName} 경기는 ${total}게임뿐이라 등장한 게임이 적은 실험체는 평균 순위와 1위 비율이 한두 게임 결과로 크게 달라집니다.`,
       ]}
