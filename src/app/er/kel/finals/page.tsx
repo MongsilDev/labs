@@ -2,15 +2,16 @@ import FlowChart from "@/er/components/kel/FlowChart";
 import KelPage, { KelScroll, KelTabs, NO_DATA } from "@/er/components/kel/KelPage";
 import { TeamName } from "@/er/components/kel/Team";
 import { fmt } from "@/er/lib/format";
-import { EVENT_NAME, KEL_SCREENS, TEAM, TONES, type KelEvent } from "@/er/lib/kel";
+import { EVENT_NAME, KEL_SCREENS, TEAM, TONES } from "@/er/lib/kel";
 import { gameScore, standings } from "@/er/lib/kel-calc";
 import { kelData, kelGate, kelMetadata } from "@/er/server/kel";
-import { finals } from "@/er/server/kel-stats";
+import { scoreStages } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("finals");
 
-const NOTES: Partial<Record<KelEvent, string>> = {
+// 탭 키는 결승이면 대회 키, 준결승이면 대회 키 뒤에 -semi
+const NOTES: Partial<Record<string, string>> = {
   c2: "전남 이스포츠의 4라운드 점수는 bori.wiki 결과 표보다 2점 낮지만, 이유를 찾지 못해 경기 기록에 있는 값을 그대로 썼습니다.",
 };
 
@@ -20,11 +21,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   const { user, owner } = await kelGate("finals");
   const q = await searchParams;
   const data = kelData();
-  const list = data ? finals(data) : [];
-  const f = list.find((x) => x.event === q.f) ?? list.at(-1);
+  const list = data ? scoreStages(data) : [];
+  const f = list.find((x) => x.key === q.f) ?? list.at(-1);
   if (!f) return <KelPage user={user} owner={owner} screen="finals" missing={NO_DATA} />;
 
-  const { state, rounds, teams } = f;
+  const { state, rounds, teams, qualify } = f;
+  const semi = f.stage === "준결승";
   const played = state.played;
   const steps = Array.from({ length: played + 1 }, (_, i) => standings(teams, rounds.slice(0, i)));
   const order = steps.map((s) => s.map((r) => r.key));
@@ -42,14 +44,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
       notes={[
         state.rows.some((r) => r.penalty > 0) && "감점 열에는 경기 기록으로 계산한 점수에서 뺀 감점을 표시합니다.",
         f.weather.some(Boolean) && "라운드 번호 아래 글자는 그 라운드의 메인 날씨입니다.",
-        NOTES[f.event],
+        NOTES[f.key],
       ]}
     >
       <KelTabs
-        label="결승"
-        items={list.map((x) => [x.event, EVENT_NAME[x.event]] as const)}
-        current={f.event}
-        href={(k) => (k === list.at(-1)!.event ? KEL_SCREENS.finals.path : `${KEL_SCREENS.finals.path}?f=${k}`)}
+        label="경기"
+        items={list.map((x) => [x.key, `${EVENT_NAME[x.event]} ${x.stage}`] as const)}
+        current={f.key}
+        href={(k) => (k === list.at(-1)!.key ? KEL_SCREENS.finals.path : `${KEL_SCREENS.finals.path}?f=${k}`)}
       />
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="round-scores">
         {/* 페이지 제목과 같은 말이라 화면에서는 숨김 */}
@@ -58,8 +60,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         </h2>
         <p className="text-[13px] text-fg-3">
           굵은 숫자는 그 라운드에서 1위를 차지한 팀의 점수입니다.
-          <br />
-          숫자 앞 고리는 그 팀이 체크포인트를 가진 라운드를 표시합니다.
+          {!semi && (
+            <>
+              <br />
+              숫자 앞 고리는 그 팀이 체크포인트를 가진 라운드를 표시합니다.
+            </>
+          )}
         </p>
         <KelScroll label="라운드별 점수" className="mt-3">
           <table className="kel-table">
@@ -82,7 +88,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
             </thead>
             <tbody>
               {state.rows.map((row, i) => (
-                <tr key={row.key}>
+                <tr key={row.key} className={i + 1 === qualify ? "[&>td]:border-b-2 [&>td]:border-b-line-strong" : undefined}>
                   <td className="l pin">
                     <span className={champ?.key === row.key ? "rk first" : "rk"}>{i + 1}</span>
                   </td>
@@ -90,6 +96,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <TeamName team={TEAM.get(row.key)!} />
                       {champ?.key === row.key && <span className="cp">체크포인트 우승</span>}
+                      {i < qualify && <span className="cp">결승 진출</span>}
                     </span>
                   </td>
                   <td className="narrow font-bold">{fmt(row.total)}</td>
@@ -112,7 +119,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
       </section>
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="flow">
         <h2 id="flow" className="text-[17px] font-extrabold">
-          {EVENT_NAME[f.event]} 결승 누적 점수
+          {EVENT_NAME[f.event]} {f.stage} 누적 점수
         </h2>
         <span className="legend mt-2">
           {focus.map((k, i) => (
@@ -121,13 +128,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
               {i === 0 && champ ? "우승" : `${i + 1}위`} {name(k)}
             </span>
           ))}
-          <span>
-            <i style={{ width: 9, height: 9, border: "2px solid var(--text-3)", borderRadius: 999 }} />
-            체크포인트를 가진 라운드
-          </span>
+          {!semi && (
+            <span>
+              <i style={{ width: 9, height: 9, border: "2px solid var(--text-3)", borderRadius: 999 }} />
+              체크포인트를 가진 라운드
+            </span>
+          )}
         </span>
         <div className="mt-3">
-          <FlowChart key={f.event} cum={cum} order={order} focus={focus} holders={state.holders} />
+          <FlowChart key={f.key} cum={cum} order={order} focus={focus} holders={state.holders} />
         </div>
       </section>
     </KelPage>

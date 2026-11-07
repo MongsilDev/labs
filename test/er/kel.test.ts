@@ -8,7 +8,7 @@ import { finalState, placementPoints, standings, type Entry, type Round } from "
 import { kelData, stageRounds } from "../../src/er/server/kel";
 import { lastHit } from "../../src/er/server/kel-dakgg";
 import { kelOdds } from "../../src/er/server/kel-odds";
-import { characterBuilds, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
+import { characterBuilds, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, scoreStages, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
 import { kelFixture } from "./helpers";
 
 process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "er-labs-kel-"));
@@ -201,6 +201,21 @@ describe("KEL 자료", () => {
       [5, 1010],
     ]);
     expect(deaths.map((x) => [x.rank, x.r.deaths])).toEqual([[1, 10], ...Array.from({ length: 6 }, () => [2, 8])]);
+  });
+
+  it("라운드별 점수 탭은 경기 순서대로 놓고, 준결승에는 체크포인트 없이 진출 팀 수만 붙인다", () => {
+    kelFixture(process.env.DATA_DIR!);
+    const data = kelData()!;
+    const list = scoreStages(data);
+    const keys = list.map((x) => x.key);
+    expect(keys).toEqual(["c1", "c2", "msc-semi", "c3", "c4"]);
+    expect(list.filter((x) => x.stage === "결승").map((x) => x.key)).toEqual(finals(data).map((f) => f.event));
+    const semi = list.find((x) => x.key === "msc-semi")!;
+    expect(semi).toMatchObject({ event: "msc", stage: "준결승", qualify: 4 });
+    expect(semi.state.champion).toBeNull();
+    expect(semi.state.holders.every((h) => h.length === 0)).toBe(true);
+    expect(semi.state.rows.map((r) => r.key)).toEqual(standings(semi.teams, semi.rounds).map((r) => r.key));
+    expect(list.filter((x) => x.stage === "결승").every((x) => x.qualify === 0)).toBe(true);
   });
 
   it("dak.gg 경기 상세로 결승 날씨, 팀 운영 기록, 시작 지역과 사망 장소를 모은다", () => {

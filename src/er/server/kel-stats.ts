@@ -316,27 +316,53 @@ export function wicklines(data: Kel): { team: string; count: number; games: numb
 // 오프닝 위크는 결승이 없어 빠짐, 탭은 시간 순서
 const FINAL_ORDER = KEL_EVENTS.map((e) => e.key);
 
-// weather는 라운드별 메인 날씨, 경기 상세가 없는 라운드는 빈 문자열
+// 기록이 빠진 라운드부터는 세지 않음
+function playedRounds(data: Kel, event: KelEvent, stage: string) {
+  const { teams, rounds: all } = stageRounds(data, event, stage);
+  const end = all.findIndex((r) => !r);
+  return { teams, rounds: end < 0 ? all : all.slice(0, end) };
+}
+
+// 라운드별 메인 날씨, 경기 상세가 없는 라운드는 빈 문자열
+const weatherOf = memo((data) => new Map(withDak(data.rows).map((r) => [r.gameId, r.dak.weather])));
+function stageWeather(data: Kel, event: KelEvent, stage: string, rounds: Round[]) {
+  const ids = new Map(data.games.filter((g) => g.event === event && g.stage === stage).map((g) => [g.round, g.gameId]));
+  return rounds.map((_, i) => weatherOf(data).get(ids.get(i + 1) ?? 0) ?? "");
+}
+
 export type Final = { event: KelEvent; teams: string[]; rounds: Round[]; state: FinalState; weather: string[] };
 
 export function finals(data: Kel): Final[] {
-  const weather = new Map(withDak(data.rows).map((r) => [r.gameId, r.dak.weather]));
   return FINAL_ORDER.flatMap((event) => {
-    const { teams, rounds: all } = stageRounds(data, event, "결승");
+    const { teams, rounds } = playedRounds(data, event, "결승");
     if (!teams.length) return [];
-    const end = all.findIndex((r) => !r);
-    const rounds = end < 0 ? all : all.slice(0, end);
-    const ids = new Map(data.games.filter((g) => g.event === event && g.stage === "결승").map((g) => [g.round, g.gameId]));
-    return [{ event, teams, rounds, state: finalState(teams, rounds), weather: rounds.map((_, i) => weather.get(ids.get(i + 1) ?? 0) ?? "") }];
+    return [{ event, teams, rounds, state: finalState(teams, rounds), weather: stageWeather(data, event, "결승", rounds) }];
   });
 }
 
-// 챔피언십 준결승 누적 순위, 기록이 빠진 라운드부터는 세지 않음. done이면 상위 SEMI_QUALIFY팀이 결승 진출
+// 라운드별 점수 화면의 탭. 준결승은 체크포인트 없이 누적 점수만 겨루고, 마지막 라운드까지 끝나면 상위 qualify팀이 결승에 진출
+export type ScoreStage = Final & { key: string; stage: "준결승" | "결승"; qualify: number };
+
+export function scoreStages(data: Kel): ScoreStage[] {
+  const fin = new Map(finals(data).map((f) => [f.event, f]));
+  return FINAL_ORDER.flatMap((event): ScoreStage[] => {
+    const out: ScoreStage[] = [];
+    const { teams, rounds } = playedRounds(data, event, "준결승");
+    if (teams.length) {
+      const rows = standings(teams, rounds).map((r) => ({ ...r, checkpoint: false }));
+      const state: FinalState = { rows, champion: null, played: rounds.length, holders: rounds.map(() => []), next: null };
+      out.push({ key: `${event}-semi`, event, stage: "준결승", qualify: rounds.length >= SEMI_ROUNDS ? SEMI_QUALIFY : 0, teams, rounds, state, weather: stageWeather(data, event, "준결승", rounds) });
+    }
+    const f = fin.get(event);
+    if (f) out.push({ ...f, key: event, stage: "결승", qualify: 0 });
+    return out;
+  });
+}
+
+// 챔피언십 준결승 누적 순위. done이면 상위 SEMI_QUALIFY팀이 결승 진출
 export function semifinal(data: Kel) {
-  const { teams, rounds: all } = stageRounds(data, "nc", "준결승");
+  const { teams, rounds } = playedRounds(data, "nc", "준결승");
   if (!teams.length) return null;
-  const end = all.findIndex((r) => !r);
-  const rounds = end < 0 ? all : all.slice(0, end);
   const rows = standings(teams, rounds);
   const done = rounds.length >= SEMI_ROUNDS;
   return { rows, played: rounds.length, done, qualified: done ? rows.slice(0, SEMI_QUALIFY).map((r) => r.key) : [] };

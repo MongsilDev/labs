@@ -108,7 +108,7 @@ export const KEL_SCREENS: Record<KelScreen, { path: string; title: string; publi
   odds: { path: "/er/kel/odds", title: "챔피언십 진출 확률", public: true },
   rules: { path: "/er/kel/rules", title: "포맷과 규칙", public: true },
   circuits: { path: "/er/kel/circuits", title: "서킷별 순위", public: true },
-  finals: { path: "/er/kel/finals", title: "결승 라운드별 점수", public: true },
+  finals: { path: "/er/kel/finals", title: "라운드별 점수", public: true },
   teams: { path: "/er/kel/teams", title: "팀 성향", public: true },
   regions: { path: "/er/kel/regions", title: "시작 지역과 사망 지역", public: true },
   players: { path: "/er/kel/players", title: "선수 카드", public: true },
