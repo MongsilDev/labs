@@ -176,6 +176,7 @@ const SCREENS: Screen[] = [
   { name: "KEL 처치 관계", path: () => "/er/kel/kills", login: true },
   { name: "KEL 실험체", path: () => "/er/kel/characters", login: true },
   { name: "KEL 실험체 평균 순위 순", path: () => "/er/kel/characters?sort=place", login: true },
+  { name: "KEL 실험체 미드 시즌 컵", path: () => "/er/kel/characters?s=msc", login: true },
   { name: "KEL 실험체 빌드", path: () => "/er/kel/characters?view=build", login: true },
   { name: "KEL 실험체 빌드 나딘", path: () => "/er/kel/characters?view=build&c=Nadine", login: true },
   { name: "KEL 실험체 빌드 없는 실험체", path: () => "/er/kel/characters?view=build&c=nope", login: true },
@@ -183,6 +184,7 @@ const SCREENS: Screen[] = [
   { name: "KEL 한 게임 기록", path: () => "/er/kel/records", login: true },
   { name: "KEL 한 게임 기록 실험체별", path: () => "/er/kel/records?view=characters", login: true },
   { name: "KEL 한 게임 기록 부진한 기록", path: () => "/er/kel/records?view=low", login: true },
+  { name: "KEL 한 게임 기록 미드 시즌 컵 부진한 기록", path: () => "/er/kel/records?s=msc&view=low", login: true },
   { name: "KEL 기록 로그아웃", path: () => "/er/kel" },
   { name: "없는 KEL 화면 다른 계정", path: () => "/er/kel/calc", login: "other", status: 404 },
 ];
