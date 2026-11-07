@@ -11,7 +11,8 @@ import HubSearch from "@/tarkov/components/players/HubSearch";
 import { exampleView } from "@/er/lib/example";
 import Highlights from "@/er/components/kel/Highlights";
 import { kelData } from "@/er/server/kel";
-import { daysUntil, kelHighlights } from "@/er/server/kel-stats";
+import { daysUntil, kelChampion, kelHighlights } from "@/er/server/kel-stats";
+import { TEAM } from "@/er/lib/kel";
 import { date, int } from "@/tarkov/lib/format";
 import { PERSONAL } from "@/tarkov/lib/kord";
 import { getMeta } from "@/tarkov/server/db";
@@ -98,7 +99,9 @@ export default async function Hub() {
   const minus = PERSONAL.filter((p) => (p.points ?? 0) > 0);
   // 포인트를 가장 많이 쓰는 긍정 특성과 가장 많이 얻는 부정 특성 둘씩
   const picks = [...[...plus].sort((a, b) => a.points! - b.points!).slice(0, 2), ...[...minus].sort((a, b) => b.points! - a.points!).slice(0, 2)];
-  const kel = kelHighlights(kelData());
+  const kelRaw = kelData();
+  const kel = kelHighlights(kelRaw);
+  const champion = kelChampion(kelRaw);
   return (
     <>
       <Header user={await currentUser()} />
@@ -114,10 +117,14 @@ export default async function Hub() {
             desc="2026 KEL 서킷 순위, 결승 라운드별 점수, 선수와 실험체 기록"
             className="col-span-2 max-[760px]:col-span-1"
             statsTop
-            stats={[
-              { label: "준결승", value: <Day date="2026-11-07" text="11월 7일" /> },
-              { label: "결승", value: <Day date="2026-11-08" text="11월 8일" /> },
-            ]}
+            stats={
+              champion
+                ? [{ label: "우승", value: TEAM.get(champion)!.name }]
+                : [
+                    { label: "준결승", value: <Day date="2026-11-07" text="11월 7일" /> },
+                    { label: "결승", value: <Day date="2026-11-08" text="11월 8일" /> },
+                  ]
+            }
           >
             {kel && <Highlights data={kel} />}
           </Tool>

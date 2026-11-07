@@ -8,7 +8,7 @@ import { finalState, placementPoints, standings, type Entry, type Round } from "
 import { kelData, stageRounds } from "../../src/er/server/kel";
 import { lastHit } from "../../src/er/server/kel-dakgg";
 import { kelOdds } from "../../src/er/server/kel-odds";
-import { characterBuilds, characterStats, comps, daysUntil, finals, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, scoped, scopesOf, scoreStages, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
+import { characterBuilds, characterStats, comps, daysUntil, finals, kelChampion, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, scoped, scopesOf, scoreStages, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
 import { kelFixture } from "./helpers";
 
 process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "er-labs-kel-"));
@@ -235,6 +235,23 @@ describe("KEL 자료", () => {
     expect(semi.state.holders.every((h) => h.length === 0)).toBe(true);
     expect(semi.state.rows.map((r) => r.key)).toEqual(standings(semi.teams, semi.rounds).map((r) => r.key));
     expect(list.filter((x) => x.stage === "결승").every((x) => x.qualify === 0)).toBe(true);
+  });
+
+  it("챔피언십 결승이 끝나기 전에는 우승 팀이 없고, 끝나면 체크포인트 우승 팀을 돌려준다", () => {
+    kelFixture(process.env.DATA_DIR!);
+    const data = kelData()!;
+    expect(kelChampion(null)).toBeNull();
+    expect(kelChampion(data)).toBeNull();
+    // 서킷 4 결승 기록을 챔피언십 결승으로 옮기고 한 팀이 모든 라운드 1위를 하게 바꿈
+    const c4 = data.games.filter((g) => g.event === "c4" && g.stage === "결승");
+    const team = c4[0].team;
+    const games = c4.map((g) => {
+      const top = c4.find((x) => x.round === g.round && x.team === team)!.placement;
+      const placement = g.team === team ? 1 : g.placement === 1 ? top : g.placement;
+      return { ...g, event: "nc" as const, placement };
+    });
+    expect(Math.max(...games.map((g) => g.round))).toBeGreaterThanOrEqual(5);
+    expect(kelChampion({ ...data, games: [...data.games.filter((g) => !(g.event === "c4" && g.stage === "결승")), ...games] })).toBe(team);
   });
 
   it("dak.gg 경기 상세로 결승 날씨, 팀 운영 기록, 시작 지역과 사망 장소를 모은다", () => {

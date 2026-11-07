@@ -606,6 +606,9 @@ export const highlights = memo((data) => {
 
 export const kelHighlights = (data: Kel | null) => (data && data.rows.length ? highlights(data) : null);
 
+// 챔피언십 결승 우승 팀, 결승이 끝나기 전에는 null
+export const kelChampion = (data: Kel | null) => (data && finals(data).find((f) => f.event === "nc")?.state.champion?.key) || null;
+
 // 서울 날짜 기준으로 date(YYYY-MM-DD)까지 남은 날 수, 지난 날은 음수
 export function daysUntil(date: string, now = new Date()): number {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(now);

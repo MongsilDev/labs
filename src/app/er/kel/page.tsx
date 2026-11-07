@@ -5,7 +5,7 @@ import KelPage from "@/er/components/kel/KelPage";
 import { Logo, TeamName } from "@/er/components/kel/Team";
 import { championshipTeams, EVENT_NAME, KEL_SCREENS, KEL_SECTIONS, kelVisible, SEMI_QUALIFY, TEAM, type KelTeam } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata, kelSummary } from "@/er/server/kel";
-import { records, semifinal, wicklines } from "@/er/server/kel-stats";
+import { finals, records, semifinal, wicklines } from "@/er/server/kel-stats";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () => kelMetadata("home");
@@ -19,25 +19,26 @@ type Result = { team: KelTeam; total: number };
 
 const points = (n: number) => `${n.toLocaleString("ko-KR")}점`;
 
-function ResultRow({ r, rank }: { r: Result; rank: number }) {
+function ResultRow({ r, rank, champion }: { r: Result; rank: number; champion?: boolean }) {
   return (
     <li className="flex min-w-0 items-center gap-2">
       <span className="w-4 shrink-0 text-right text-[13px] font-bold tabular-nums text-fg-3">{rank}</span>
-      <span className="min-w-0 flex-1">
+      <span className="flex min-w-0 flex-1 items-center gap-2">
         <TeamName team={r.team} size={28} />
+        {champion && <span className="cp shrink-0">우승</span>}
       </span>
       <span className="shrink-0 font-bold tabular-nums">{points(r.total)}</span>
     </li>
   );
 }
 
-// 상위 칸과 아래 칸을 선으로 나눠 진출 팀을 구분
-function Results({ results, cut }: { results: Result[]; cut: number }) {
+// 상위 칸과 아래 칸을 선으로 나눠 진출 팀이나 우승 팀을 구분
+function Results({ results, cut, champion }: { results: Result[]; cut: number; champion?: boolean }) {
   return (
     <div className="grid gap-2 text-[14px]">
       <ol className="grid grid-cols-2 gap-x-4 gap-y-2 max-[420px]:grid-cols-1">
         {results.slice(0, cut).map((r, i) => (
-          <ResultRow key={r.team.key} r={r} rank={i + 1} />
+          <ResultRow key={r.team.key} r={r} rank={i + 1} champion={champion && i === 0} />
         ))}
       </ol>
       <ol className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-line-soft pt-2 text-fg-2 max-[420px]:grid-cols-1" start={cut + 1}>
@@ -49,7 +50,7 @@ function Results({ results, cut }: { results: Result[]; cut: number }) {
   );
 }
 
-function Event({ date, name, teams, slot, results, text }: { date: string; name: string; teams: KelTeam[]; slot?: string; results?: Result[]; text?: string }) {
+function Event({ date, name, teams, slot, results, cut = SEMI_QUALIFY, champion, text }: { date: string; name: string; teams: KelTeam[]; slot?: string; results?: Result[]; cut?: number; champion?: boolean; text?: string }) {
   return (
     <section className="panel flex flex-col gap-3 p-5 max-[760px]:p-4" aria-label={name}>
       <div>
@@ -57,7 +58,7 @@ function Event({ date, name, teams, slot, results, text }: { date: string; name:
         <h2 className="text-[22px] font-extrabold tracking-[-0.3px]">{name}</h2>
       </div>
       {results ? (
-        <Results results={results} cut={SEMI_QUALIFY} />
+        <Results results={results} cut={cut} champion={champion} />
       ) : (
         <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-[14px]">
           {teams.map((t) => (
@@ -89,6 +90,9 @@ export default async function Page() {
   const sf = data && semifinal(data);
   const results = sf?.rows.map((r) => ({ team: TEAM.get(r.key)!, total: r.total }));
   const qualified = sf?.qualified.map((k) => TEAM.get(k)!) ?? [];
+  // 우승 팀이 정해지기 전에는 결과 대신 출전 팀을 보여 줌
+  const final = data ? finals(data).find((f) => f.event === "nc" && f.state.champion) : undefined;
+  const finalResults = final?.state.rows.map((r) => ({ team: TEAM.get(r.key)!, total: r.total }));
   const lastRow = summary?.last ? data!.rows.find((r) => r.date === summary.last) : undefined;
   const lead = summary?.first && lastRow ? `${day(summary.first)} 오프닝 위크부터 ${day(summary.last)} ${EVENT_NAME[lastRow.event]} ${lastRow.stage}까지 열린 ${summary.games}게임의 기록입니다.` : undefined;
 
@@ -100,17 +104,29 @@ export default async function Page() {
         ) : (
           <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="준결승에는 정규 시즌 5~12위 8팀이 출전해 6라운드를 진행합니다. 상위 4팀이 결승에 진출합니다." />
         )}
-        <Event
-          date="11월 8일 일요일, 대전이스포츠경기장"
-          name="결승"
-          teams={[...seeds, ...qualified]}
-          slot={qualified.length ? undefined : "준결승 상위 4팀"}
-          text={
-            qualified.length
-              ? "결승은 순차 체크포인트 방식으로 최대\u00a09라운드까지 진행합니다."
-              : "정규 시즌 1~4위는 결승에 직행했습니다. 결승은 순차 체크포인트 방식으로 최대\u00a09라운드까지 진행합니다."
-          }
-        />
+        {final && finalResults ? (
+          <Event
+            date="11월 8일 일요일, 대전이스포츠경기장"
+            name="결승"
+            teams={[...seeds, ...qualified]}
+            results={finalResults}
+            cut={1}
+            champion
+            text={`${final.state.champion!.round}라운드에서 우승 팀이 정해졌습니다.`}
+          />
+        ) : (
+          <Event
+            date="11월 8일 일요일, 대전이스포츠경기장"
+            name="결승"
+            teams={[...seeds, ...qualified]}
+            slot={qualified.length ? undefined : "준결승 상위 4팀"}
+            text={
+              qualified.length
+                ? "결승은 순차 체크포인트 방식으로 최대\u00a09라운드까지 진행합니다."
+                : "정규 시즌 1~4위는 결승에 직행했습니다. 결승은 순차 체크포인트 방식으로 최대\u00a09라운드까지 진행합니다."
+            }
+          />
+        )}
       </div>
       {rec && (
         <section aria-labelledby="best">

@@ -55,8 +55,13 @@ export default async function Page({ params }: Props) {
   const styleRank = (v: (s: (typeof styles)[number]) => number) => <Rank pool={styles.length} rank={rankBy(styles, style, v)} unit="팀" />;
   const sf = semifinal(data);
   const semiRank = sf?.done ? sf.rows.findIndex((r) => r.key === key) + 1 : 0;
-  const semiStatus = !semiRank ? "준결승에 진출했습니다" : `준결승에 진출했고, 준결승 ${semiRank}위로 ${sf!.qualified.includes(key) ? "결승에 진출했습니다" : "탈락했습니다"}`;
-  const status = me.rank <= SEEDS ? "결승에 직행했습니다" : me.rank <= QUALIFY ? semiStatus : "챔피언십에 진출하지 못했습니다";
+  const allFinals = finals(data);
+  // 챔피언십 결승 우승 팀이 정해진 뒤에만 결승 결과를 문장에 넣음
+  const ncFinal = allFinals.find((f) => f.event === "nc" && f.teams.includes(key) && f.state.champion);
+  const ncEnd = ncFinal && (ncFinal.state.champion?.key === key ? "우승했습니다" : `결승 ${ncFinal.state.rows.findIndex((r) => r.key === key) + 1}위로 시즌을 마쳤습니다`);
+  const reached = ncEnd ? `결승에 진출해 ${ncEnd}` : "결승에 진출했습니다";
+  const semiStatus = !semiRank ? "준결승에 진출했습니다" : `준결승에 진출했고, 준결승 ${semiRank}위로 ${sf!.qualified.includes(key) ? reached : "탈락했습니다"}`;
+  const status = me.rank <= SEEDS ? (ncEnd ? `결승에 직행해 ${ncEnd}` : "결승에 직행했습니다") : me.rank <= QUALIFY ? semiStatus : "챔피언십에 진출하지 못했습니다";
 
   const events = KEL_EVENTS.map((e) => {
     const list = games.filter((g) => g.event === e.key);
@@ -64,7 +69,7 @@ export default async function Page({ params }: Props) {
     const last = list.reduce((a, g) => (CIRCUIT_STAGES.indexOf(g.stage as never) > CIRCUIT_STAGES.indexOf(a as never) ? g.stage : a), list[0]?.stage);
     return { e, list, last };
   }).filter((x) => x.list.length);
-  const finalRank = new Map(finals(data).filter((f) => f.teams.includes(key)).map((f) => [f.event, f.state.rows.findIndex((r) => r.key === key) + 1]));
+  const finalRank = new Map(allFinals.filter((f) => f.teams.includes(key)).map((f) => [f.event, f.state.rows.findIndex((r) => r.key === key) + 1]));
 
   const players = playerStats(data)
     .filter((p) => p.team === key)
