@@ -40,7 +40,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
       owner={owner}
       screen="finals"
       notes={[
-        state.rows.some((r) => r.penalty > 0) && "감점 열은 bori.wiki 결과 표의 점수가 경기 기록으로 계산한 점수보다 낮은 만큼입니다.",
+        state.rows.some((r) => r.penalty > 0) && `감점 열에는 ${f.event === "nc" ? "공식 중계 순위표" : "bori.wiki 결과 표"}에 기록된 점수가 경기 기록으로 계산한 점수보다 낮은 만큼을 표시합니다.`,
         f.weather.some(Boolean) && "라운드 번호 아래 글자는 그 라운드의 메인 날씨입니다.",
         NOTES[f.event],
       ]}

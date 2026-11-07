@@ -3,7 +3,7 @@ import Lines from "@/components/Lines";
 import { Best, Bests } from "@/er/components/kel/Best";
 import KelPage from "@/er/components/kel/KelPage";
 import { Logo, TeamName } from "@/er/components/kel/Team";
-import { championshipTeams, EVENT_NAME, KEL_SCREENS, KEL_SECTIONS, kelVisible, SEMI_QUALIFY, SEMI_ROUNDS, TEAM, type KelTeam } from "@/er/lib/kel";
+import { championshipTeams, EVENT_NAME, KEL_SCREENS, KEL_SECTIONS, kelVisible, SEMI_QUALIFY, TEAM, type KelTeam } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata, kelSummary } from "@/er/server/kel";
 import { records, semifinal, wicklines } from "@/er/server/kel-stats";
 
@@ -49,7 +49,7 @@ function Results({ results, cut }: { results: Result[]; cut: number }) {
   );
 }
 
-function Event({ date, name, teams, slot, results, text }: { date: string; name: string; teams: KelTeam[]; slot?: string; results?: Result[]; text: string }) {
+function Event({ date, name, teams, slot, results, text }: { date: string; name: string; teams: KelTeam[]; slot?: string; results?: Result[]; text?: string }) {
   return (
     <section className="panel flex flex-col gap-3 p-5 max-[760px]:p-4" aria-label={name}>
       <div>
@@ -68,9 +68,11 @@ function Event({ date, name, teams, slot, results, text }: { date: string; name:
           {slot && <li className="col-span-2 flex min-h-16 items-center rounded-md border border-dashed border-line-strong px-3 text-fg-3">{slot}</li>}
         </ul>
       )}
-      <p className="mt-auto text-[14px] text-fg-2">
-        <Lines text={text} />
-      </p>
+      {text && (
+        <p className="mt-auto text-[14px] text-fg-2">
+          <Lines text={text} />
+        </p>
+      )}
     </section>
   );
 }
@@ -94,7 +96,7 @@ export default async function Page() {
     <KelPage user={user} owner={owner} screen="home" lead={lead}>
       <div className="grid grid-cols-2 gap-4 max-[760px]:grid-cols-1">
         {sf?.done && results ? (
-          <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} results={results} text={`정규 시즌 5~12위 8팀이 ${SEMI_ROUNDS}라운드를 진행했고, 상위 ${SEMI_QUALIFY}팀이 결승에 진출했습니다.`} />
+          <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} results={results} />
         ) : (
           <Event date="11월 7일 토요일, 대전이스포츠경기장" name="준결승" teams={semi} text="준결승에는 정규 시즌 5~12위 8팀이 출전해 6라운드를 진행합니다. 상위 4팀이 결승에 진출합니다." />
         )}
