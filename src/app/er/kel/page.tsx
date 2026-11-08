@@ -19,29 +19,29 @@ type Result = { team: KelTeam; total: number };
 
 const points = (n: number) => `${n.toLocaleString("ko-KR")}점`;
 
-function ResultRow({ r, rank, champion }: { r: Result; rank: number; champion?: boolean }) {
+function ResultRow({ r, rank, badge }: { r: Result; rank: number; badge?: string }) {
   return (
     <li className="flex min-w-0 items-center gap-2">
       <span className="w-4 shrink-0 text-right text-[13px] font-bold tabular-nums text-fg-3">{rank}</span>
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <TeamName team={r.team} size={28} />
-        {champion && <span className="cp shrink-0">우승</span>}
+        {badge && <span className="cp shrink-0">{badge}</span>}
       </span>
       <span className="shrink-0 font-bold tabular-nums">{points(r.total)}</span>
     </li>
   );
 }
 
-// 상위 칸과 아래 칸을 선으로 나눠 진출 팀이나 우승 팀을 구분
+// 상위 칸과 아래 칸을 선으로 나눠 진출 팀이나 우승 팀을 구분, 두 대회 카드의 행 수를 맞추려고 한 열로 나열
 function Results({ results, cut, champion }: { results: Result[]; cut: number; champion?: boolean }) {
   return (
     <div className="grid gap-2 text-[14px]">
-      <ol className="grid grid-cols-2 gap-x-4 gap-y-2 max-[420px]:grid-cols-1">
+      <ol className="grid gap-y-2">
         {results.slice(0, cut).map((r, i) => (
-          <ResultRow key={r.team.key} r={r} rank={i + 1} champion={champion && i === 0} />
+          <ResultRow key={r.team.key} r={r} rank={i + 1} badge={champion ? "우승" : "진출"} />
         ))}
       </ol>
-      <ol className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-line-soft pt-2 text-fg-2 max-[420px]:grid-cols-1" start={cut + 1}>
+      <ol className="grid gap-y-2 border-t border-line-soft pt-2 text-fg-2" start={cut + 1}>
         {results.slice(cut).map((r, i) => (
           <ResultRow key={r.team.key} r={r} rank={cut + i + 1} />
         ))}
@@ -112,7 +112,6 @@ export default async function Page() {
             results={finalResults}
             cut={1}
             champion
-            text={`${final.state.champion!.round}라운드에서 우승 팀이 정해졌습니다.`}
           />
         ) : (
           <Event
