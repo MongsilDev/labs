@@ -81,14 +81,18 @@ function Method({ data, view }: { data: TierData; view: TierView }) {
         <li>
           표본은 경기를 시작할 때 {data.band.server} 1,000위 안에 있던 플레이어의 랭크 게임입니다.
           <br />
-          1,000위 RP로는 몽실봇이 매시 기록하는 순위표 가운데 경기 직전에 기록된 값을 씁니다. 그 값이 데미갓 최소 RP인 {int(data.band.floor)}보다 낮으면 {int(data.band.floor)}으로 간주합니다.
+          1,000위 RP로는 몽실봇이 매시 기록하는 순위표 가운데 경기 직전에 기록된 값을 씁니다.
+          <br />
+          그 값이 데미갓 최소 RP인 {int(data.band.floor)}보다 낮으면 {int(data.band.floor)}으로 간주합니다.
         </li>
         <li>
           점수는 한 판에서 입장료를 빼기 전에 얻은 RP가 표본 평균 {view.base.toFixed(1)}보다 얼마나 많은지를 나타냅니다.
           <br />
-          판 수가 적은 실험체의 점수는 0에 가깝게, 판 수가 적은 조합의 점수는 그 실험체 점수에 가깝게 보정합니다. {int(view.k)}판인 조합은 보정 전 값과 실험체 점수의 차이가 절반으로 줄어듭니다.
+          판 수가 적은 실험체의 점수는 0에 가깝게, 판 수가 적은 조합의 점수는 그 실험체 점수에 가깝게 보정합니다.
           <br />
-          한 사람의 판은 조합이나 실험체 전체 판 수의 {Math.round(r.cap * 100)}%까지만 셉니다.
+          {int(view.k)}판인 조합은 보정 전 값과 실험체 점수의 차이가 절반으로 줄어듭니다.
+          <br />
+          한 사람의 판은 조합이나 실험체 전체 판 수의 <span className="whitespace-nowrap">{Math.round(r.cap * 100)}%까지만</span> 셉니다.
         </li>
         <li>
           등급은 점수를 표준화한 값으로 나눕니다.{" "}
