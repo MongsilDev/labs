@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/((?!er/t/[^/]+/[^/]+/(?:overlay|live)|er/tier/overlay).*)",
+        source: "/((?!er/t/[^/]+/[^/]+/(?:overlay|live)|er/rank/overlay).*)",
         headers: [{ key: "X-Frame-Options", value: "DENY" }],
       },
       {

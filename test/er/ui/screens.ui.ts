@@ -420,11 +420,11 @@ describe("화면 점검", () => {
   it("티어 방송 화면은 카드를, 없는 닉네임에는 안내를 표시한다", async () => {
     const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await ctx.newPage();
-    await page.goto(`${base}/er/tier/overlay?n=${encodeURIComponent("시험선수")}`, { waitUntil: "networkidle" });
+    await page.goto(`${base}/er/rank/overlay?n=${encodeURIComponent("시험선수")}`, { waitUntil: "networkidle" });
     await expect(page.locator(".tov-tn").textContent()).resolves.toBe("메테오라이트 3");
     await expect(page.locator(".tov-em").textContent()).resolves.toBe("M3");
     const p = await page.evaluate(inspect);
-    await page.goto(`${base}/er/tier/overlay?n=${encodeURIComponent("없는선수")}`, { waitUntil: "networkidle" });
+    await page.goto(`${base}/er/rank/overlay?n=${encodeURIComponent("없는선수")}`, { waitUntil: "networkidle" });
     await expect(page.locator(".tov-msg").textContent()).resolves.toBe("닉네임을 찾지 못했습니다.");
     await ctx.close();
     expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });

@@ -1,6 +1,6 @@
 import "server-only";
 import { botApiUrl } from "./bot";
-import type { TierView } from "@/er/lib/rank";
+import type { RankView } from "@/er/lib/rank";
 
 const TTL = 60_000;
 const MISS_TTL = 60_000;
@@ -8,17 +8,17 @@ const FAIL_TTL = 15_000;
 const MAX_ENTRIES = 2000;
 export const NICKNAME = /^[\p{L}\p{N}_]{2,16}$/u;
 
-export type TierResult = { ok: true; data: TierView } | { ok: false; status: 404 | 429 | 503 };
-type Entry = { at: number; result: TierResult };
+export type RankResult = { ok: true; data: RankView } | { ok: false; status: 404 | 429 | 503 };
+type Entry = { at: number; result: RankResult };
 
-const g = globalThis as unknown as { __tier?: Map<string, Entry>; __tierPending?: Map<string, Promise<TierResult>> };
-const cache = (g.__tier ??= new Map());
-const pending = (g.__tierPending ??= new Map());
+const g = globalThis as unknown as { __rank?: Map<string, Entry>; __rankPending?: Map<string, Promise<RankResult>> };
+const cache = (g.__rank ??= new Map());
+const pending = (g.__rankPending ??= new Map());
 
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const str = (v: unknown, max = 40) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, max) : "");
 
-export function parseTier(raw: unknown): TierView | null {
+export function parseRank(raw: unknown): RankView | null {
   const d = raw as Record<string, unknown> | null;
   if (!d || typeof d !== "object") return null;
   const nickname = str(d.nickname);
@@ -39,7 +39,7 @@ export function parseTier(raw: unknown): TierView | null {
   };
 }
 
-async function load(nickname: string): Promise<TierResult> {
+async function load(nickname: string): Promise<RankResult> {
   const url = botApiUrl();
   if (!url) return { ok: false, status: 503 };
   try {
@@ -60,7 +60,7 @@ async function load(nickname: string): Promise<TierResult> {
       await r.body?.cancel();
       return { ok: false, status: 503 };
     }
-    const data = parseTier(await r.json());
+    const data = parseRank(await r.json());
     return data ? { ok: true, data } : { ok: false, status: 503 };
   } catch {
     return { ok: false, status: 503 };
@@ -70,7 +70,7 @@ async function load(nickname: string): Promise<TierResult> {
 const fresh = (e: Entry, t: number) => t - e.at < (e.result.ok ? TTL : e.result.status === 404 ? MISS_TTL : FAIL_TTL);
 
 /** 몽실봇이 읽은 티어와 RP. 닉네임마다 60초 동안 같은 값, 실패하면 마지막 값을 그대로 씀 */
-export async function tierOf(nickname: string): Promise<TierResult> {
+export async function rankOf(nickname: string): Promise<RankResult> {
   const key = nickname.toLowerCase();
   const t = Date.now();
   const hit = cache.get(key);
@@ -92,4 +92,4 @@ export async function tierOf(nickname: string): Promise<TierResult> {
 }
 
 /** 처음 보는 닉네임인지. 남용 방지 한도를 셀 때 씀 */
-export const cachedTier = (nickname: string) => cache.has(nickname.toLowerCase());
+export const cachedRank = (nickname: string) => cache.has(nickname.toLowerCase());

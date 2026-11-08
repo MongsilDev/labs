@@ -1,4 +1,4 @@
-export type TierView = {
+export type RankView = {
   nickname: string;
   tier: string;
   mmr: number;
@@ -24,7 +24,7 @@ const FAMILIES: { name: string; short: string; color: string }[] = [
 const UNRANKED = { short: "-", color: "#4a5263" };
 
 /** 티어 이름의 약자와 색. "메테오라이트 3"은 M3 */
-export function tierBadge(tier: string): { short: string; color: string } {
+export function rankBadge(tier: string): { short: string; color: string } {
   const [name, div] = tier.split(" ");
   const f = FAMILIES.find((x) => x.name === name);
   if (!f) return UNRANKED;

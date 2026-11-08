@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { tierBadge, type TierView } from "@/er/lib/rank";
+import { rankBadge, type RankView } from "@/er/lib/rank";
 
 const EVERY = 60_000;
 const GAIN_FOR = 12 * 3_600_000;
 
-type State = { data: TierView | null; error: string | null };
+type State = { data: RankView | null; error: string | null };
 
-export default function TierOverlay({ nickname, scale }: { nickname: string; scale: number }) {
+export default function RankOverlay({ nickname, scale }: { nickname: string; scale: number }) {
   const [state, setState] = useState<State>({ data: null, error: null });
   useEffect(() => {
     document.documentElement.dataset.theme = "dark";
@@ -18,8 +18,8 @@ export default function TierOverlay({ nickname, scale }: { nickname: string; sca
     const load = async () => {
       let wait = EVERY;
       try {
-        const r = await fetch(`/api/tier?n=${encodeURIComponent(nickname)}`, { cache: "no-store" });
-        const body = (await r.json().catch(() => null)) as (TierView & { error?: string }) | null;
+        const r = await fetch(`/api/rank?n=${encodeURIComponent(nickname)}`, { cache: "no-store" });
+        const body = (await r.json().catch(() => null)) as (RankView & { error?: string }) | null;
         if (stop) return;
         if (r.ok && body) setState({ data: body, error: null });
         // 봇이 잠깐 응답하지 않을 때는 마지막 값을 그대로 둠
@@ -37,7 +37,7 @@ export default function TierOverlay({ nickname, scale }: { nickname: string; sca
 
   const { data, error } = state;
   if (!data) return error ? <div className="tov" style={{ zoom: scale }}><div className="tov-msg">{error}</div></div> : null;
-  const badge = tierBadge(data.tier);
+  const badge = rankBadge(data.tier);
   // 오래전 게임의 증감은 이번 방송과 상관없어서 몽실봇이 조회한 시각 기준 12시간 안의 게임만 표시
   const gain = data.last?.at && (data.updatedAt - data.last.at) * 1000 < GAIN_FOR ? data.last.gain : null;
   return (
