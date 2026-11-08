@@ -1298,6 +1298,46 @@
   .ov.dense .ov-tt {
     font-size: 17px;
   }
+
+  /* 실험체 티어 표 */
+  .tier-table td {
+    font-variant-numeric: tabular-nums;
+  }
+  .tier-grade {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    border: 1px solid var(--line);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-3);
+  }
+  .tier-grade[data-grade="S"] {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0a0d14;
+  }
+  .tier-grade[data-grade="A"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0d14;
+  }
+  .tier-grade[data-grade="B"] {
+    background: var(--field);
+    border-color: var(--line-strong);
+    color: var(--text);
+  }
+  .tier-grade[data-grade="C"] {
+    color: var(--text-2);
+  }
+  .tier-thin td {
+    color: var(--text-3);
+  }
+  .tier-thin .tier-grade {
+    opacity: 0.6;
+  }
 }
 
 /* 라운드 표의 오른쪽에 스크롤이 남았을 때만 총점 칸 앞에 그림자. 스크롤이 없으면 타임라인이 비활성이라 0 */

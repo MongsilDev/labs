@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { createServer as createHttpServer, type Server } from "node:http";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -65,6 +65,9 @@ async function seed() {
     conn.prepare("INSERT INTO sessions(hash, user_id, expires_at) VALUES (?, ?, ?)").run(createHash("sha256").update(u.sid).digest("hex"), u.id, Date.now() + 864e5);
   }
   kelFixture(DATA);
+  // 실험체 티어는 호스트 수집기 대신 고정 집계를 읽음
+  mkdirSync(join(DATA, "er-tier"), { recursive: true });
+  cpSync(join(ROOT, "test/er/fixtures/tier.json"), join(DATA, "er-tier/tier.json"));
   code = t.createTournament(owner, {
     name: "조별 예선 아주 긴 대회 이름을 넣어서 줄바꿈 확인하기",
     mode: "checkpoint",
@@ -144,6 +147,8 @@ const SCREENS: Screen[] = [
   { name: "이터컷 예측", path: () => "/er/cut" },
   { name: "이터컷 예측 RP 주소", path: () => "/er/cut?rp=9050" },
   { name: "서킷 진출 확률", path: () => "/er/circuit" },
+  { name: "실험체 티어", path: () => "/er/tier" },
+  { name: "실험체 티어 최근 3일", path: () => "/er/tier?v=3d" },
   { name: "점수 계산 로그인", path: () => "/er/score", login: true },
   { name: "처리방침", path: () => "/privacy" },
   { name: "예시 대회 선수 기록", path: () => "/er/example/a", tab: "선수 기록" },
