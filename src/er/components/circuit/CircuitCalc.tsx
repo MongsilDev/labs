@@ -63,7 +63,6 @@ export default function CircuitCalc() {
             대회 순위별 포인트
           </label>
           <input id="ci-table" className="field" value={tableText} onChange={(e) => setTableText(e.target.value)} placeholder="100, 70, 50, 40" inputMode="numeric" spellCheck={false} />
-          <p className="mt-1.5 text-[13px] text-fg-3">1위부터 마지막 순위까지 쉼표로 나눠 적어주세요.</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -113,7 +112,7 @@ export default function CircuitCalc() {
             진출 확률
           </h2>
           <div className="mt-3 overflow-x-auto">
-            <table className="kel-table w-full">
+            <table className="kel-table kel-heat w-full">
               <thead>
                 <tr>
                   <th className="l w-10">
