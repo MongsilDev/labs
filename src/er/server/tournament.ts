@@ -179,6 +179,23 @@ export function visibleView(code: string, user: User | null, key?: string | null
   };
 }
 
+// 경기 중 값을 주고받을 조. 스크림 대회는 조 키, 일반 대회는 조 글자로 찾고, 대회 한 행만 읽음
+export function liveGroup(code: string, user: User | null, segment: string): { code: string; group: number; operator: boolean; played: number } | null {
+  const t = find(code);
+  if (!t) return null;
+  const keys = keysOf(t);
+  const group = keys
+    ? keys.findIndex((k) => safeEqual(k, segment))
+    : segment.length === 1 && segment.toLowerCase().charCodeAt(0) - 97 < t.group_count
+      ? segment.toLowerCase().charCodeAt(0) - 97
+      : -1;
+  if (group < 0) return null;
+  const played = (
+    db().prepare("SELECT MAX(round_no) AS n FROM rounds WHERE tournament_id = ? AND group_idx = ? AND deleted_at IS NULL").get(t.id, group) as { n: number | null }
+  ).n;
+  return { code: t.code, group, operator: roleOf(t, user) !== null, played: played ?? 0 };
+}
+
 // 조회 API의 변경 확인. 일반 대회는 DB를 한 번만 읽음
 export function visibleVersion(code: string, user: User | null, key?: string | null): number | null {
   const t = find(code);
