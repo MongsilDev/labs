@@ -1428,6 +1428,11 @@
   .lr-head > span:first-child {
     padding-top: 0;
   }
+  .lr-head > span:nth-child(3),
+  .lr-head > span:nth-child(4) {
+    padding-right: 13px;
+    text-align: right;
+  }
   .lr-row .field {
     width: 100%;
     min-width: 0;
