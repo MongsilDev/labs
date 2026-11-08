@@ -53,6 +53,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         f.weather.some(Boolean) && "라운드 번호 아래 글자는 그 라운드의 메인 날씨입니다.",
         NOTES[f.key],
       ]}
+      narrowNotes={[NOTES[f.key]]}
     >
       <KelTabs
         label="경기"
@@ -93,7 +94,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
                 {state.rows.map((row, i) => (
                   <tr key={row.key} className={i + 1 === qualify ? "[&>td]:border-b-2 [&>td]:border-b-line-strong" : undefined}>
                     <td className="l pin">
-                      <span className={champ?.key === row.key ? "rk first" : i < qualify ? "rk adv" : "rk"}>{i + 1}</span>
+                      {/* 휴대폰 폭은 배지 대신 순위 아래 짧은 글자로 표시 */}
+                      <span className="inline-flex flex-col items-center gap-0.5">
+                        <span className={champ?.key === row.key ? "rk first" : i < qualify ? "rk adv" : "rk"}>{i + 1}</span>
+                        {(champ?.key === row.key || i < qualify) && (
+                          <span className="text-[9px] leading-none text-fg-3 min-[761px]:hidden">{champ?.key === row.key ? "우승" : "진출"}</span>
+                        )}
+                      </span>
                     </td>
                     <td className="l pin max-w-[260px]">
                       <span className="min-[761px]:hidden">
@@ -107,7 +114,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
                     </td>
                     <td className="narrow font-bold">
                       {fmt(row.total)}
-                      {row.penalty > 0 && <span className="block text-[11px] font-normal text-minus">-{fmt(row.penalty)}</span>}
+                      {row.penalty > 0 && <span className="block text-[11px] font-normal text-minus">감점 {fmt(row.penalty)}</span>}
                     </td>
                     <td className="text-fg-2 max-[760px]:hidden">{fmt(row.killScore)}</td>
                     {Array.from({ length: played }, (_, r) => (
@@ -140,7 +147,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
             {!semi && (
               <span>
                 <i style={{ width: 9, height: 9, border: "2px solid var(--text-3)", borderRadius: 999 }} />
-                체크포인트를 가진 라운드
+                체크포인트에 도달한 라운드
               </span>
             )}
           </span>

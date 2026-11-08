@@ -51,6 +51,7 @@ export default function KelPage({
   lead,
   missing,
   notes = [],
+  narrowNotes,
   children,
 }: {
   user: User | null;
@@ -61,11 +62,14 @@ export default function KelPage({
   lead?: Text;
   missing?: Missing;
   notes?: Text;
+  // 주면 휴대폰 폭에서는 notes 대신 이 각주를 보임
+  narrowNotes?: Text;
   children?: React.ReactNode;
 }) {
   const s = KEL_SCREENS[screen];
   const intro = missing ? join(owner ? [...missing] : [missing[0]]) : join(lead);
   const note = join(notes);
+  const narrow = narrowNotes && join(narrowNotes);
   const section = KEL_SECTIONS.find((g) => g.items.includes(screen));
   const siblings = section?.items.filter((k) => k !== screen && kelVisible(k, owner)) ?? [];
   return (
@@ -85,8 +89,13 @@ export default function KelPage({
         </div>)}
         {children}
         {note && (
-          <p className="text-[13px] leading-relaxed text-fg-3">
+          <p className={`text-[13px] leading-relaxed text-fg-3 ${narrowNotes ? "max-[760px]:hidden" : ""}`}>
             <Lines text={note} />
+          </p>
+        )}
+        {narrow && (
+          <p className="text-[13px] leading-relaxed text-fg-3 min-[761px]:hidden">
+            <Lines text={narrow} />
           </p>
         )}
         {screen === "home" && (
