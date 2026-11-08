@@ -1338,6 +1338,72 @@
   .tier-thin .tier-grade {
     opacity: 0.6;
   }
+
+  /* 티어 방송 화면. 위치와 크기는 OBS에서 정함 */
+  .tov {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 24px 16px 16px;
+    background: rgba(10, 13, 20, 0.86);
+    border-radius: 14px;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .tov-em {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    color: #0a0d14;
+    font-size: 24px;
+    font-weight: 800;
+  }
+  .tov-tn {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .tov-rp {
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.92);
+  }
+  .tov-rp span {
+    margin-left: 8px;
+    animation: tov-in 0.6s ease-out;
+  }
+  .tov-rp .up {
+    color: #7ee2a8;
+  }
+  .tov-rp .down {
+    color: #ff8a8a;
+  }
+  .tov-sv {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.62);
+  }
+  .tov-msg {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  @keyframes tov-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tov-rp span {
+      animation: none;
+    }
+  }
 }
 
 /* 라운드 표의 오른쪽에 스크롤이 남았을 때만 총점 칸 앞에 그림자. 스크롤이 없으면 타임라인이 비활성이라 0 */
