@@ -1348,7 +1348,7 @@
     gap: 16px;
     align-items: center;
     padding: 16px 24px 16px 16px;
-    background: rgba(10, 13, 20, 0.86);
+    background: #0a0d14;
     border-radius: 14px;
     color: #fff;
     white-space: nowrap;
@@ -1468,7 +1468,7 @@
     top: calc(840 * var(--u));
     width: calc(207 * var(--u));
     overflow: hidden;
-    background: rgba(10, 13, 20, 0.92);
+    background: #0a0d14;
     border-radius: calc(6 * var(--u));
     color: #fff;
   }
@@ -1496,9 +1496,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     font-size: calc(16 * var(--u));
     font-variant-numeric: tabular-nums;
-    transition:
-      top 0.6s ease,
-      opacity 0.6s ease;
+    transition: top 0.6s ease;
   }
   .lv-r b {
     overflow: hidden;
@@ -1515,11 +1513,9 @@
     font-size: calc(13 * var(--u));
     color: #7ee2a8;
   }
-  .lv-r.out {
-    opacity: 0.55;
-  }
+  .lv-r.out,
   .lv-r.out .d {
-    color: #fff;
+    color: #a3abb8;
   }
   @media (prefers-reduced-motion: reduce) {
     .lv-r {
