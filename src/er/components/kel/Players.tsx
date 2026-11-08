@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import KelPage, { NO_DATA } from "@/er/components/kel/KelPage";
+import KelPage, { KelScroll, KelTabs, NO_DATA } from "@/er/components/kel/KelPage";
 import Rank from "@/er/components/kel/Rank";
 import { Logo } from "@/er/components/kel/Team";
 import Char from "@/er/components/t/Char";
 import { int } from "@/er/lib/cut";
 import { byText, duration, pct } from "@/er/lib/format";
-import { playerPath, seasonStandings, TEAM, teamPath, wikiUrl } from "@/er/lib/kel";
+import { EVENT_NAME, KEL_SCREENS, playerPath, seasonStandings, TEAM, teamPath, wikiUrl } from "@/er/lib/kel";
 import type { User } from "@/er/server/auth";
 import { kelData, type KelRow } from "@/er/server/kel";
-import { DAK_METRICS, gameLabel, killStats, MIN_GAMES, playerStats, rankOf, rankPool, type KillPair, type Metric, type PlayerStat } from "@/er/server/kel-stats";
+import { DAK_METRICS, gameLabel, killStats, MIN_GAMES, playerStats, ranking, rankOf, rankPool, type KillPair, type Metric, type PlayerStat } from "@/er/server/kel-stats";
 
 type Tile = [Metric, string, (p: PlayerStat) => string];
 
@@ -20,10 +20,12 @@ const GROUPS: [string, Tile[]][] = [
       ["kpr", "KPR 평점", (p) => p.kpr.toFixed(3)],
       ["kills", "게임당 킬", (p) => p.kills.toFixed(2)],
       ["deaths", "게임당 데스", (p) => p.deaths.toFixed(2)],
+      ["assists", "게임당 어시스트", (p) => p.assists.toFixed(2)],
       ["top3", "3위 이내 비율", (p) => pct(p.top3)],
       ["avgPlace", "평균 순위", (p) => `${p.avgPlace.toFixed(2)}위`],
       ["damage", "게임당 가한 피해", (p) => int(p.damage)],
       ["damageShare", "가한 피해 비중", (p) => pct(p.damageShare)],
+      ["takenPerDeath", "데스당 받은 피해", (p) => int(p.takenPerDeath)],
     ],
   ],
   [
@@ -40,6 +42,14 @@ const GROUPS: [string, Tile[]][] = [
     ],
   ],
 ];
+
+const TILES = GROUPS.flatMap(([, tiles]) => tiles);
+export const METRICS = TILES.map(([m]) => m);
+const VIEWS = [
+  ["card", "선수 카드"],
+  ["rank", "지표별 순위"],
+] as const;
+const rankPath = (m: Metric) => `${KEL_SCREENS.players.path}?m=${m}`;
 
 const BESTS: [string, (p: PlayerStat) => KelRow | null, (r: KelRow) => string][] = [
   ["킬", (p) => p.bests.kills, (r) => `${r.kills}킬`],
@@ -101,14 +111,30 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
           2026 시즌 {p.games}게임에 출전해 1위를 {p.wins}번 차지했습니다.
         </p>
         <h3 className="mt-5 text-[13px] font-semibold text-fg-3">많이 고른 실험체</h3>
-        <ul className="mt-2 grid gap-2">
-          {p.characters.slice(0, 4).map(([c, n]) => (
-            <li key={c} className="flex items-center justify-between gap-3 text-[15px]">
-              <Char name={c} />
-              <span className="text-fg-3">{n}게임</span>
-            </li>
-          ))}
-        </ul>
+        <table className="mt-2 w-full text-[15px] tabular-nums">
+          <thead className="text-[12px] text-fg-3">
+            <tr>
+              <th className="text-left font-normal">
+                <span className="sr-only">실험체</span>
+              </th>
+              <th className="text-right font-normal">게임</th>
+              <th className="text-right font-normal">평균 순위</th>
+              <th className="text-right font-normal">게임당 킬</th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.characters.slice(0, 4).map((c) => (
+              <tr key={c.key}>
+                <td className="py-1">
+                  <Char name={c.key} />
+                </td>
+                <td className="text-right text-fg-3">{c.games}</td>
+                <td className="text-right text-fg-3">{c.avgPlace.toFixed(2)}위</td>
+                <td className="text-right text-fg-3">{c.kills.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         <h3 className="mt-5 border-t border-line-soft pt-4 text-[13px] font-semibold text-fg-3">개인 최고 기록</h3>
         <ul className="@container mt-2 grid gap-2 text-[14px]">
           {BESTS.map(([label, row, value]) => {
@@ -131,6 +157,35 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
             <Opponents title="이 선수를 많이 처치한 상대" list={killers} side="killer" />
           </div>
         )}
+        <section className="mt-5 border-t border-line-soft pt-4" aria-labelledby="player-events">
+          <h3 id="player-events" className="text-[13px] font-semibold text-fg-3">
+            대회별 기록
+          </h3>
+          <KelScroll label="대회별 기록" className="mt-2">
+            <table className="kel-table tabular-nums">
+              <thead>
+                <tr>
+                  <th className="l">대회</th>
+                  <th>게임</th>
+                  <th>평균 순위</th>
+                  <th>게임당 킬</th>
+                  <th>게임당 가한 피해</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.events.map((e) => (
+                  <tr key={e.event}>
+                    <td className="l">{EVENT_NAME[e.event]}</td>
+                    <td>{e.games}</td>
+                    <td>{e.avgPlace.toFixed(2)}위</td>
+                    <td>{e.kills.toFixed(2)}</td>
+                    <td>{int(e.damage)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </KelScroll>
+        </section>
       </div>
       <div className="grid content-start gap-5">
         {GROUPS.filter(([, tiles]) => p.dakGames > 0 || !tiles.every(([m]) => DAK_METRICS.has(m))).map(([title, tiles]) => (
@@ -157,14 +212,78 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
   );
 }
 
+function Ranking({ all, metric }: { all: PlayerStat[]; metric: Metric }) {
+  const [, label, value] = TILES.find(([m]) => m === metric)!;
+  const list = ranking(all, metric);
+  return (
+    <section className="panel p-5 max-[760px]:p-4" aria-label={`${label} 순위`}>
+      <div className="grid gap-2">
+        {GROUPS.map(([title, tiles]) => (
+          <KelTabs key={title} className="sort" label={title} items={tiles.map(([m, l]) => [m, l] as const)} current={metric} href={rankPath} />
+        ))}
+      </div>
+      <KelScroll label={`${label} 순위`} className="mt-4">
+        <table className="kel-table tabular-nums">
+          <thead>
+            <tr>
+              <th className="l w-10">
+                <span className="sr-only">순위</span>
+              </th>
+              <th className="l">선수</th>
+              <th>게임</th>
+              <th>{label}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map(({ p, rank }) => (
+              <tr key={p.name}>
+                <td className="l">
+                  <span className="rk">{rank}</span>
+                </td>
+                <td className="l">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Logo team={TEAM.get(p.team)!} size={22} label />
+                    <Link className="truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(p.name)}>
+                      {p.name}
+                    </Link>
+                  </span>
+                </td>
+                <td>{p.games}</td>
+                <td className="font-bold">{value(p)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </KelScroll>
+    </section>
+  );
+}
+
 // name이 없으면 시즌 순위 1위 팀에서 가장 많이 출전한 선수
-export default function Players({ user, owner, name }: { user: User | null; owner: boolean; name?: string }) {
+// metric을 주면 카드 대신 그 지표의 순위표
+export default function Players({ user, owner, name, metric }: { user: User | null; owner: boolean; name?: string; metric?: Metric }) {
   const data = kelData();
   const all = data ? playerStats(data) : [];
   if (!data || !all.length) return <KelPage user={user} owner={owner} screen="players" missing={NO_DATA} />;
   const byTeam = seasonStandings()
     .map((r) => ({ team: r.team, players: all.filter((p) => p.team === r.team.key).sort((a, b) => b.games - a.games) }))
     .filter((t) => t.players.length);
+  const notes = [
+    `순위는 ${MIN_GAMES}게임 이상 출전한 선수끼리 비교해 매겼고, 평균 순위와 게임당 데스는 값이 작을수록 순위가 높습니다.`,
+    "KPR은 경기 기록에 적힌 선수 평점의 평균이고, 한 게임에 출전한 선수 전체의 평균은 약\u00a01.0입니다.",
+    data.rows.some((r) => r.kpr === undefined) && "챔피언십 게임은 평점이 없는 dak.gg 경기 기록에서 가져왔기 때문에, KPR 평균에는 포함하지 않았습니다.",
+    "가한 피해 비중은 팀 세 명이 가한 피해에서 그 선수가 차지한 비율을 게임마다 구해 평균한 값입니다.",
+    "데스당 받은 피해는 시즌 동안 받은 피해의 합계를 데스 수의 합계로 나눈 값입니다.",
+  ];
+  const tabs = <KelTabs label="보기" items={VIEWS} current={metric ? "rank" : "card"} href={(v) => (v === "card" ? KEL_SCREENS.players.path : rankPath(METRICS[0]))} />;
+  if (metric) {
+    return (
+      <KelPage user={user} owner={owner} screen="players" notes={notes}>
+        {tabs}
+        <Ranking all={all} metric={metric} />
+      </KelPage>
+    );
+  }
   const picked = name === undefined ? byTeam[0].players[0] : all.find((p) => p.name === name);
   if (!picked) notFound();
 
@@ -173,14 +292,9 @@ export default function Players({ user, owner, name }: { user: User | null; owne
       user={user}
       owner={owner}
       screen="players"
-      notes={[
-        `순위는 ${MIN_GAMES}게임 이상 출전한 선수끼리 비교해 매겼고, 평균 순위와 게임당 데스는 값이 작을수록 순위가 높습니다.`,
-        "KPR은 경기 기록에 적힌 선수 평점의 평균이고, 한 게임에 출전한 선수 전체의 평균은 약\u00a01.0입니다.",
-        data.rows.some((r) => r.kpr === undefined) && "챔피언십 게임은 평점이 없는 dak.gg 경기 기록에서 가져왔기 때문에, KPR 평균에는 포함하지 않았습니다.",
-        "가한 피해 비중은 팀 세 명이 가한 피해에서 그 선수가 차지한 비율을 게임마다 구해 평균한 값입니다.",
-        "많이 처치한 상대와 이 선수를 많이 처치한 상대에서는 상대 선수를 알\u00a0수 없는 처치를 제외했습니다.",
-      ]}
+      notes={[...notes, "많이 처치한 상대와 이 선수를 많이 처치한 상대에서는 상대 선수를 알\u00a0수 없는 처치를 제외했습니다."]}
     >
+      {tabs}
       <Card p={picked} all={all} pairs={killStats(data).pairs} />
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="player-list">
         <h2 id="player-list" className="text-[17px] font-extrabold">

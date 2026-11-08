@@ -1,8 +1,10 @@
 import KelPage, { KelScroll, KelTabs, NO_DAK, NO_DATA, pickTab } from "@/er/components/kel/KelPage";
+import PlaceBars from "@/er/components/kel/PlaceBars";
 import Scatter from "@/er/components/kel/Scatter";
 import { TeamName } from "@/er/components/kel/Team";
+import { int } from "@/er/lib/cut";
 import { duration, pct } from "@/er/lib/format";
-import { KEL_SCREENS, seasonStandings, TEAM, TONES } from "@/er/lib/kel";
+import { KEL_SCREENS, seasonStandings, TEAM } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata } from "@/er/server/kel";
 import { SCOPES, scopesOf, teamOps, teamStyles, type StyleScope, type TeamOps, type TeamStyle } from "@/er/server/kel-stats";
 
@@ -44,6 +46,9 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
                 <th>1위</th>
                 <th className="wide">8위</th>
                 <th className="wide">3위 이내</th>
+                <th className="wide">평균 순위</th>
+                <th className="wide">팀 킬</th>
+                <th className="wide">가한 피해</th>
                 <th className="wide">킬 점수 비중</th>
                 <th>순위 점수</th>
                 <th>킬 점수</th>
@@ -60,6 +65,9 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
                   <td>{r.wins}</td>
                   <td className="wide">{r.eighth}</td>
                   <td className="wide">{pct(r.top3)}</td>
+                  <td className="wide">{r.avgPlace.toFixed(2)}</td>
+                  <td className="wide">{r.kills.toFixed(2)}</td>
+                  <td className="wide">{int(r.damage)}</td>
                   <td className="wide">{pct(r.killShare)}</td>
                   <td>{r.rankPerGame.toFixed(2)}</td>
                   <td>{r.killPerGame.toFixed(2)}</td>
@@ -94,7 +102,6 @@ function Score({ rows, scope }: { rows: TeamStyle[]; scope: StyleScope }) {
 function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
   const order = seasonStandings().map((r) => r.team.key);
   const list = [...rows].sort((a, b) => order.indexOf(a.team) - order.indexOf(b.team));
-  const max = Math.max(1, ...ranks);
   const games = ranks.reduce((a, n) => a + n, 0);
   return (
     <>
@@ -165,15 +172,7 @@ function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
           위클라인을 처치한 팀의 순위
           {games > 0 && <span className="text-[14px] font-semibold text-fg-3">평균 {(ranks.reduce((a, n, i) => a + n * (i + 1), 0) / games).toFixed(2)}위</span>}
         </h2>
-        <ol className="mt-4 grid grid-cols-8 items-end gap-3 max-[760px]:gap-1.5">
-          {ranks.map((n, i) => (
-            <li key={i} className="grid justify-items-center gap-1.5 text-[13px]">
-              <b className="text-[15px]">{n}</b>
-              <span className="w-full max-w-[72px] rounded-t-[4px]" style={{ height: Math.max(2, (n / max) * 140), background: TONES[0], opacity: i === 0 ? 1 : 0.45 }} aria-hidden="true" />
-              <span className="text-fg-3">{i + 1}위</span>
-            </li>
-          ))}
-        </ol>
+        <PlaceBars counts={ranks} />
       </section>
     </>
   );
@@ -213,7 +212,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   }
 
   return (
-    <KelPage user={user} owner={owner} screen="teams" notes="점수는 모두 게임당 평균이고, 감점은 반영하지 않았습니다.">
+    <KelPage user={user} owner={owner} screen="teams" notes={["순위 점수, 킬 점수, 합계, 팀 킬, 가한 피해는 게임당 평균입니다.", "순위 점수, 킬 점수, 합계에는 감점을 반영하지 않았습니다.", "팀 킬과 가한 피해는 팀원 세 명의 합계입니다.", "킬 점수는 규정에 따라 킬 수와 다르게 계산한 점수입니다."]}>
       {tabs}
       <Score rows={rows} scope={scope} />
     </KelPage>

@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import BumpChart from "@/er/components/kel/BumpChart";
-import KelPage, { KelScroll } from "@/er/components/kel/KelPage";
+import KelPage, { KelScroll, KelTabs, pickTab } from "@/er/components/kel/KelPage";
 import { TeamName } from "@/er/components/kel/Team";
 import { KEL_EVENTS, QUALIFY, SEEDS, seasonStandings } from "@/er/lib/kel";
 import { kelGate, kelMetadata } from "@/er/server/kel";
@@ -10,10 +10,15 @@ export const generateMetadata = () => kelMetadata("circuits");
 
 const CIRCUITS = KEL_EVENTS.filter((e) => /^c\d$/.test(e.key)).map((e) => e.name);
 const CUTS: Record<number, string> = { [SEEDS]: "여기까지 결승 직행", [QUALIFY]: "여기까지 준결승 진출" };
+const VIEWS = [
+  ["sum", "누적 순위"],
+  ["each", "서킷마다 받은 순위"],
+] as const;
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ v?: string }> }) {
   const { user, owner } = await kelGate("circuits");
   const season = seasonStandings();
+  const view = pickTab(VIEWS, (await searchParams).v);
 
   return (
     <KelPage user={user} owner={owner} screen="circuits">
@@ -75,12 +80,14 @@ export default async function Page() {
           </table>
         </KelScroll>
       </section>
-      <section className="panel p-5 max-[760px]:p-4" aria-labelledby="cumulative">
-        <h2 id="cumulative" className="text-[17px] font-extrabold">
-          누적 순위
-        </h2>
+      <section className="panel p-5 max-[760px]:p-4" aria-label="순위 변화">
+        <KelTabs label="순위 변화" items={VIEWS} current={view} screen="circuits" param="v" />
         <div className="mt-3">
-          <BumpChart rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[]} legend="" suffix="까지" />
+          {view === "sum" ? (
+            <BumpChart key={view} rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[]} legend="" suffix="까지" />
+          ) : (
+            <BumpChart key={view} rows={season.map((r) => ({ key: r.team.key, ranks: r.team.circuits }))} labels={CIRCUITS} initial={[]} legend="" />
+          )}
         </div>
       </section>
     </KelPage>

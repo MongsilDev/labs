@@ -8,7 +8,7 @@ import { finalState, placementPoints, standings, type Entry, type Round } from "
 import { kelData, stageRounds } from "../../src/er/server/kel";
 import { lastHit } from "../../src/er/server/kel-dakgg";
 import { kelOdds } from "../../src/er/server/kel-odds";
-import { characterBuilds, characterStats, comps, daysUntil, finals, kelChampion, killStats, lows, MIN_GAMES, playerStats, rankOf, kelHighlights, records, regions, scoped, scopesOf, scoreStages, seasonBuilds, semifinal, teamOps, wicklines } from "../../src/er/server/kel-stats";
+import { characterBuilds, characterStats, comps, daysUntil, finals, kelChampion, killStats, lows, MIN_GAMES, playerStats, ranking, rankOf, kelHighlights, records, regions, scoped, scopesOf, scoreStages, seasonBuilds, semifinal, teamOps, teamStyles, wicklines } from "../../src/er/server/kel-stats";
 import { kelFixture } from "./helpers";
 
 process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "er-labs-kel-"));
@@ -37,6 +37,11 @@ describe("KEL 정규 시즌", () => {
     // 서킷 2까지 520점 동률은 서킷 2 순위로 가름, 미드 시즌 컵 2일차 직행과 같음
     const after2 = (name: string) => season.find((r) => r.team.name === name)!.ranks[1];
     expect([after2("성남 락스"), after2("대구 가디언즈")]).toEqual([4, 5]);
+  });
+
+  it("서킷마다 받은 순위는 서킷별로 1위부터 16위까지 한 팀씩이라 꺾은선 끝 이름이 겹치지 않는다", () => {
+    const n = KEL_TEAMS.length;
+    for (let c = 0; c < 4; c++) expect(KEL_TEAMS.map((t) => t.circuits[c]).sort((a, b) => a - b)).toEqual(Array.from({ length: n }, (_, i) => i + 1));
   });
 });
 
@@ -135,6 +140,7 @@ describe("KEL 자료", () => {
         characterNum: ((i * 3 + p) % 9) + 1,
         playerKill: p,
         playerDeaths: 1,
+        playerAssistant: p + 3,
         damageToPlayer: 10_000 + p,
         damageFromPlayer: 8_000,
         startDtm: "2026-11-07T14:02:16.016+0900",
@@ -154,7 +160,7 @@ describe("KEL 자료", () => {
       const rows = data.rows.filter((r) => r.gameId === 20_001);
       expect(rows).toHaveLength(24);
       expect(rows.every((r) => r.event === "nc" && r.stage === "준결승" && r.round === 1 && r.date === "2026-11-07" && r.kpr === undefined && r.dak)).toBe(true);
-      expect(rows.find((r) => r.player === "선수2" && r.team === "gyeonggi-innate")).toMatchObject({ placement: 8, kills: 2, total: placementPoints(8) + 2 });
+      expect(rows.find((r) => r.player === "선수2" && r.team === "gyeonggi-innate")).toMatchObject({ placement: 8, kills: 2, assists: 5, total: placementPoints(8) + 2 });
       expect(data.rows.filter((r) => r.gameId === 10_001)).toHaveLength(before);
       expect(data.rows.filter((r) => r.gameId === 10_001).every((r) => r.event !== "nc")).toBe(true);
       const sf = semifinal(data)!;
@@ -327,6 +333,43 @@ describe("KEL 선수 기록", () => {
     const fewest = eligible.reduce((a, x) => (x.deaths < a.deaths ? x : a));
     expect(rankOf(all, fewest, "deaths")).toBe(1);
     expect(rankOf(all, all.find((x) => x.games < MIN_GAMES)!, "deaths")).toBeNull();
+  });
+
+  it("어시스트는 게임 평균, 데스당 받은 피해는 합계끼리 나누고, 대회와 실험체별 기록은 그 게임만 평균한다", () => {
+    const data = kelData()!;
+    const p = playerStats(data).find((x) => x.name === "선수4-0")!;
+    const rows = data.rows.filter((r) => r.player === "선수4-0");
+    const sum = (f: (r: (typeof rows)[number]) => number, list = rows) => list.reduce((a, r) => a + f(r), 0);
+    expect(p.assists).toBeCloseTo(sum((r) => r.assists) / rows.length, 12);
+    expect(p.takenPerDeath).toBeCloseTo(sum((r) => r.taken) / sum((r) => r.deaths), 9);
+    expect(p.events.reduce((a, e) => a + e.games, 0)).toBe(rows.length);
+    const c1 = rows.filter((r) => r.event === "c1");
+    expect(p.events.find((e) => e.event === "c1")!.damage).toBeCloseTo(sum((r) => r.damage, c1) / c1.length, 9);
+    const top = p.characters[0];
+    const picked = rows.filter((r) => r.character === top.key);
+    expect([top.games, top.avgPlace, top.kills]).toEqual([picked.length, sum((r) => r.placement, picked) / picked.length, sum((r) => r.kills, picked) / picked.length]);
+  });
+
+  it("팀 기록의 팀 킬과 가한 피해는 세 명 합계의 게임 평균이고, 순위별 게임 수를 더하면 게임 수다", () => {
+    const data = kelData()!;
+    const t = teamStyles(data, "season").find((x) => x.team === KEL_TEAMS[0].key)!;
+    const games = data.games.filter((g) => g.team === KEL_TEAMS[0].key);
+    const rows = data.rows.filter((r) => r.team === KEL_TEAMS[0].key);
+    expect(t.kills).toBeCloseTo(rows.reduce((a, r) => a + r.kills, 0) / games.length, 9);
+    expect(t.damage).toBeCloseTo(rows.reduce((a, r) => a + r.damage, 0) / games.length, 9);
+    expect(t.avgPlace).toBeCloseTo(games.reduce((a, g) => a + g.placement, 0) / games.length, 12);
+    expect(t.places.reduce((a, n) => a + n, 0)).toBe(t.games);
+    expect([t.places[0], t.places[7]]).toEqual([t.wins, t.eighth]);
+  });
+
+  it("지표별 순위표는 30게임 이상 선수만 rankOf와 같은 순위로 늘어놓는다", () => {
+    const all = playerStats(kelData()!);
+    for (const metric of ["damage", "avgPlace", "takenPerDeath"] as const) {
+      const list = ranking(all, metric);
+      expect(list.length).toBe(all.filter((x) => x.games >= MIN_GAMES).length);
+      expect(list.every(({ p, rank }) => rankOf(all, p, metric) === rank)).toBe(true);
+      expect(list.map((x) => x.rank)).toEqual([...list.map((x) => x.rank)].sort((a, b) => a - b));
+    }
   });
 
   it("경기 기록에서 맞춘 실험체 key는 한국어 이름으로 쓴다", () => {

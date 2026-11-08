@@ -18,10 +18,18 @@ const day = (date: string) => date.slice(5).split("-").map(Number).join(".");
 // 10만 번 시뮬레이션이라 소수점 아래는 오차 범위
 const percent = (v: number) => (v >= 0.995 ? ">99" : v < 0.005 ? "<1" : Math.round(v * 100));
 
+// 가능한 칸이 둘뿐이면 앞 칸만 반올림하고 뒤 칸은 100에서 빼서 합을 100으로 맞춤
+function shown(o: TeamOdds, b: number) {
+  const open = [0, 1, 2].filter((i) => !o.never[i]);
+  if (open.length !== 2 || b !== open[1]) return percent(o.p[b]);
+  const rest = 100 - Math.round(o.p[open[0]] * 100);
+  return rest >= 100 ? ">99" : rest <= 0 ? "<1" : rest;
+}
+
 function Cell({ o, b }: { o: TeamOdds; b: number }) {
   if (o.sure[b]) return <b className="text-accent-text">확정</b>;
   if (o.never[b]) return <span className="text-fg-3">-</span>;
-  return <>{percent(o.p[b])}%</>;
+  return <>{shown(o, b)}%</>;
 }
 
 function Heat({ o, on, wide }: { o: TeamOdds; on: boolean; wide: boolean }) {

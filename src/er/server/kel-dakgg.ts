@@ -333,13 +333,14 @@ export type DakPlayer = Scheduled & {
   character: string;
   kills: number;
   deaths: number;
+  assists: number;
   damage: number;
   taken: number;
   rankScore: number;
   killScore: number;
 };
 
-type Base = { gameRank: number; teamNumber: number; nickname: string; characterNum: number; playerKill: number; playerDeaths: number; damageToPlayer: number; damageFromPlayer: number; startDtm: string };
+type Base = { gameRank: number; teamNumber: number; nickname: string; characterNum: number; playerKill: number; playerDeaths: number; playerAssistant: number; damageToPlayer: number; damageFromPlayer: number; startDtm: string };
 type Score = { teamNumber: number; rankScore: number; killScore: number };
 
 // 명단에 있고 skip에 없는 게임만 선수 기록으로 바꿈
@@ -368,6 +369,7 @@ export function readScheduled(dir: string, skip: Set<number>): DakPlayer[] {
           character: keys.get(p.characterNum) ?? "",
           kills: p.playerKill,
           deaths: p.playerDeaths,
+          assists: p.playerAssistant,
           damage: p.damageToPlayer,
           taken: p.damageFromPlayer,
           rankScore: scores.get(p.teamNumber)?.rankScore ?? 0,

@@ -38,7 +38,7 @@ function Top({ id, title, rows, value, per }: { id: string; title: string; rows:
                   <PlayerName name={p.name} team={TEAM.get(p.team)} />
                 </td>
                 <td className="l wide">
-                  <Char name={p.characters[0][0]} />
+                  <Char name={p.characters[0].key} />
                 </td>
                 <td className="font-bold">{pct(value(p))}</td>
                 {per && <td className="wide">{per[1](p)}</td>}

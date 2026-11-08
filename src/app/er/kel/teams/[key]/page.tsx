@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import BumpChart from "@/er/components/kel/BumpChart";
 import KelPage, { KelScroll, NO_DATA } from "@/er/components/kel/KelPage";
+import PlaceBars from "@/er/components/kel/PlaceBars";
 import Rank from "@/er/components/kel/Rank";
 import { Logo } from "@/er/components/kel/Team";
 import Char from "@/er/components/t/Char";
+import { int } from "@/er/lib/cut";
 import { duration, pct } from "@/er/lib/format";
 import { circuitPoints, KEL_EVENTS, KEL_SCREENS, KEL_TEAMS, playerPath, QUALIFY, SEEDS, seasonStandings, TEAM, teamPath, wikiUrl } from "@/er/lib/kel";
 import { placementPoints } from "@/er/lib/kel-calc";
@@ -116,12 +118,15 @@ export default async function Page({ params }: Props) {
           </div>
         </div>
       }
-      notes={["처치 관계에서는 상대 선수를 알 수 없는 처치를 제외했습니다.", "운영 기록은 팀원 세 명의 경기 상세가 모두 있는 게임만 계산했습니다."]}
+      notes={["팀 킬과 팀이 가한 피해는 팀원 세 명의 합계입니다.", "킬 점수는 규정에 따라 킬 수와 다르게 계산한 점수입니다.", "처치 관계에서는 상대 선수를 알 수 없는 처치를 제외했습니다.", "운영 기록은 팀원 세 명의 경기 상세가 모두 있는 게임만 계산했습니다."]}
     >
       <section className="panel p-5 max-[760px]:p-4" aria-label="시즌 요약">
         <dl className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2 max-[420px]:gap-2">
           <Tile label="게임" value={String(style.games)}>
             <dd className="mt-0.5 text-[13px] text-fg-3">1위 {style.wins}번</dd>
+          </Tile>
+          <Tile label="평균 순위" value={`${style.avgPlace.toFixed(2)}위`}>
+            {styleRank((s) => -s.avgPlace)}
           </Tile>
           <Tile label="3위 이내 비율" value={pct(style.top3)}>
             {styleRank((s) => s.top3)}
@@ -129,10 +134,21 @@ export default async function Page({ params }: Props) {
           <Tile label="게임당 점수" value={style.perGame.toFixed(2)}>
             {styleRank((s) => s.perGame)}
           </Tile>
+          <Tile label="게임당 팀 킬" value={style.kills.toFixed(2)}>
+            {styleRank((s) => s.kills)}
+          </Tile>
+          <Tile label="게임당 킬 점수" value={style.killPerGame.toFixed(2)}>
+            {styleRank((s) => s.killPerGame)}
+          </Tile>
           <Tile label="킬 점수 비중" value={pct(style.killShare)}>
             {styleRank((s) => s.killShare)}
           </Tile>
+          <Tile label="게임당 팀이 가한 피해" value={int(style.damage)}>
+            {styleRank((s) => s.damage)}
+          </Tile>
         </dl>
+        <h3 className={`mt-5 ${SUB}`}>최종 순위별 게임 수</h3>
+        <PlaceBars counts={style.places} />
       </section>
 
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="circuits">
@@ -238,7 +254,7 @@ export default async function Page({ params }: Props) {
             </thead>
             <tbody>
               {players.map((p) => {
-                const faces = p.characters.slice(0, 3).map(([c]) => <Char key={c} name={c} label="" />);
+                const faces = p.characters.slice(0, 3).map((c) => <Char key={c.key} name={c.key} label="" />);
                 return (
                   <tr key={p.name}>
                     <td className="l pin font-semibold">

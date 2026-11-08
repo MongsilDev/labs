@@ -51,6 +51,7 @@ export type KelRow = {
   // 님블뉴런 CSV에만 있는 평점이라 dak.gg로 만든 행은 비움
   kpr?: number;
   deaths: number;
+  assists: number;
   dak?: KelDak;
 };
 
@@ -113,6 +114,7 @@ const COLUMNS = {
   total: "TS",
   kpr: "KPR",
   deaths: "데스",
+  assists: "어시",
 } as const;
 
 function parseFile(file: string, text: string): KelRow[] {
@@ -148,6 +150,7 @@ function parseFile(file: string, text: string): KelRow[] {
       total: num("total"),
       kpr: num("kpr"),
       deaths: num("deaths"),
+      assists: num("assists"),
     });
   }
   return rows;
@@ -215,6 +218,7 @@ function scheduledRows(known: Set<number>): KelRow[] {
       killScore: p.killScore,
       total: p.rankScore + p.killScore,
       deaths: p.deaths,
+      assists: p.assists,
     });
   }
   return rows;

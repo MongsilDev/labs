@@ -38,7 +38,22 @@ export const gameLabel = (g: { event: KelEvent; stage: string; round: number }) 
 // finals는 모든 대회의 결승 단계를 합친 범위
 export type StyleScope = "season" | "finals" | KelEvent;
 
-export type TeamStyle = { team: string; games: number; wins: number; eighth: number; top3: number; rankPerGame: number; killPerGame: number; killShare: number; perGame: number };
+export type TeamStyle = {
+  team: string;
+  games: number;
+  wins: number;
+  eighth: number;
+  top3: number;
+  rankPerGame: number;
+  killPerGame: number;
+  killShare: number;
+  perGame: number;
+  avgPlace: number;
+  kills: number;
+  damage: number;
+  // 1~8위 게임 수
+  places: number[];
+};
 
 export const inScope = (scope: StyleScope) => (g: { event: KelEvent; stage: string }) => (scope === "season" ? true : scope === "finals" ? g.stage === "결승" : g.event === scope);
 
@@ -76,6 +91,10 @@ export function teamStyles(data: Kel, scope: StyleScope): TeamStyle[] {
         killPerGame: kill / list.length,
         killShare: rank + kill > 0 ? kill / (rank + kill) : 0,
         perGame: (rank + kill) / list.length,
+        avgPlace: mean(list.map((g) => g.placement)),
+        kills: mean(list.map((g) => g.kills)),
+        damage: mean(list.map((g) => g.damage)),
+        places: Array.from({ length: 8 }, (_, i) => list.filter((g) => g.placement === i + 1).length),
       };
     })
     .sort((a, b) => b.perGame - a.perGame);
@@ -89,6 +108,8 @@ export type PlayerStat = {
   kpr: number;
   kills: number;
   deaths: number;
+  assists: number;
+  takenPerDeath: number;
   top3: number;
   avgPlace: number;
   damage: number;
@@ -104,7 +125,8 @@ export type PlayerStat = {
   ccShare: number;
   healShare: number;
   dakGames: number;
-  characters: [string, number][];
+  characters: { key: string; games: number; avgPlace: number; kills: number }[];
+  events: { event: KelEvent; games: number; avgPlace: number; kills: number; damage: number }[];
   // cc와 heal은 경기 상세가 없거나 값이 모두 0이면 null
   bests: { kills: KelRow; damage: KelRow; cc: DakRow | null; heal: DakRow | null };
 };
@@ -115,6 +137,7 @@ export const playerStats = memo((data): PlayerStat[] => {
   const full = fullTeams(data);
   return [...Map.groupBy(data.rows, (r) => r.player)].map(([name, rows]) => {
     const dak = withDak(rows);
+    const deaths = rows.reduce((a, r) => a + r.deaths, 0);
     const avg = (value: (d: KelDak) => number) => mean(dak.map((r) => value(r.dak)));
     const shares = rows.map((r) => {
       const key = `${r.gameId}:${r.team}`;
@@ -135,6 +158,8 @@ export const playerStats = memo((data): PlayerStat[] => {
       kpr: mean(rows.flatMap((r) => r.kpr ?? [])),
       kills: mean(rows.map((r) => r.kills)),
       deaths: mean(rows.map((r) => r.deaths)),
+      assists: mean(rows.map((r) => r.assists)),
+      takenPerDeath: deaths ? rows.reduce((a, r) => a + r.taken, 0) / deaths : 0,
       top3: rows.filter((r) => r.placement <= 3).length / rows.length,
       avgPlace: mean(rows.map((r) => r.placement)),
       damage: mean(rows.map((r) => r.damage)),
@@ -150,7 +175,13 @@ export const playerStats = memo((data): PlayerStat[] => {
       ccShare: mean(shares.flatMap((x) => x.cc)),
       healShare: mean(shares.flatMap((x) => x.heal)),
       dakGames: dak.length,
-      characters: [...Map.groupBy(rows, (r) => r.character)].map(([k, v]): [string, number] => [k, v.length]).sort((a, b) => b[1] - a[1] || byCharacter(a[0], b[0])),
+      characters: [...Map.groupBy(rows, (r) => r.character)]
+        .map(([key, v]) => ({ key, games: v.length, avgPlace: mean(v.map((r) => r.placement)), kills: mean(v.map((r) => r.kills)) }))
+        .sort((a, b) => b.games - a.games || byCharacter(a.key, b.key)),
+      events: KEL_EVENTS.flatMap(({ key }) => {
+        const v = rows.filter((r) => r.event === key);
+        return v.length ? [{ event: key, games: v.length, avgPlace: mean(v.map((r) => r.placement)), kills: mean(v.map((r) => r.kills)), damage: mean(v.map((r) => r.damage)) }] : [];
+      }),
       bests: {
         kills: top(
           rows,
@@ -165,7 +196,7 @@ export const playerStats = memo((data): PlayerStat[] => {
   });
 });
 
-export type Metric = "kpr" | "kills" | "deaths" | "top3" | "avgPlace" | "damage" | "damageShare" | "cc" | "heal" | "vision" | "camera" | "cameraOff" | "revive" | "time";
+export type Metric = "kpr" | "kills" | "deaths" | "assists" | "takenPerDeath" | "top3" | "avgPlace" | "damage" | "damageShare" | "cc" | "heal" | "vision" | "camera" | "cameraOff" | "revive" | "time";
 
 // 평균 순위와 데스는 작을수록 위
 const LOWER = new Set<Metric>(["avgPlace", "deaths"]);
@@ -182,6 +213,15 @@ export function rankOf(players: PlayerStat[], p: PlayerStat, metric: Metric): nu
 
 // rankOf가 견주는 선수 수
 export const rankPool = (players: PlayerStat[], metric: Metric) => players.filter((x) => comparable(x, metric)).length;
+
+// rankOf와 같은 모집단을 높은 순위부터, 같은 값은 같은 순위
+export function ranking(players: PlayerStat[], metric: Metric): { p: PlayerStat; rank: number }[] {
+  const sign = LOWER.has(metric) ? -1 : 1;
+  return players
+    .filter((x) => comparable(x, metric))
+    .sort((a, b) => sign * (b[metric] - a[metric]) || byText(a.name, b.name))
+    .map((p) => ({ p, rank: rankOf(players, p, metric)! }));
+}
 
 export type CharacterStat = { key: string; games: number; rate: number; byEvent: Record<KelEvent, number>; avgPlace: number; winRate: number };
 
