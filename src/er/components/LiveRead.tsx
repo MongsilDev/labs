@@ -11,7 +11,7 @@ import { firstPath, type TournamentView } from "@/er/lib/view";
 import { useResult } from "./t/TournamentApp";
 
 type Props = { initial: TournamentView; groupIdx: number; segment: string };
-type Source = "screen" | "file";
+type Source = "screen" | "video" | "image";
 type Processor = new (init: { track: MediaStreamTrack }) => { readable: ReadableStream<VideoFrame> };
 
 const BOX = "panel px-5 py-[18px] [section+&]:mt-3.5";
@@ -202,7 +202,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
         const bitmap = await createImageBitmap(file);
         w.postMessage({ type: "bitmap", bitmap } satisfies WorkerIn, [bitmap]);
       }
-      setSource("file");
+      setSource("image");
       return;
     }
     const el = document.createElement("video");
@@ -218,7 +218,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
       w.postMessage({ type: "bitmap", bitmap } satisfies WorkerIn, [bitmap]);
     }, EVERY);
     video.current = { el, timer, url };
-    setSource("file");
+    setSource("video");
   }
 
   function edit(slot: number, field: "ts" | "ks", raw: string) {
@@ -249,7 +249,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
         </h2>
         <p className="mt-1.5 text-[13px] text-fg-3" role="status">
           {source
-            ? `${source === "file" ? "녹화 파일" : "공유한 화면"}${size ? `(${size.width}x${size.height})` : ""}${ended ? "은 라운드가 끝나서 읽지 않습니다." : "을 1초마다 읽고 있습니다."}`
+            ? `${source === "screen" ? "공유한 화면" : source === "video" ? "녹화 영상" : "사진"}${size ? `(${size.width}x${size.height})` : ""}${ended ? "은 라운드가 끝나서 읽지 않습니다." : source === "image" ? "을 읽었습니다." : "을 1초마다 읽고 있습니다."}`
             : "공유한 화면이 없습니다."}
         </p>
         {wide && <p className="mt-1 text-[13px] text-minus">화면 비율이 16:9가 아니라 카드 위치가 맞지 않을 수 있습니다. 게임을 테두리 없는 창 모드로 바꿔주세요.</p>}
@@ -261,7 +261,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
         <div className="mt-3 flex flex-wrap gap-2">
           {source ? (
             <button type="button" className="btn" onClick={stop}>
-              공유 멈춤
+              읽기 멈춤
             </button>
           ) : (
             <button type="button" className="btn primary" onClick={share}>
@@ -299,7 +299,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
           {slots.map((s) => {
             const dup = teams[s.slot] && used.get(teams[s.slot]) !== s.slot;
             return (
-              <div key={s.slot} className={`lr-row${s.warn ? " warn" : ""}${s.fixed ? " fixed" : ""}`} role="row">
+              <div key={s.slot} className={`lr-row${s.warn ? " warn" : ""}${s.fixed ? " lr-fixed" : ""}`} role="row">
                 <span className="tabular-nums" role="cell">
                   {String(s.slot).padStart(2, "0")}
                 </span>
@@ -353,7 +353,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
                     value={s.out ? String(s.place ?? SLOTS) : "alive"}
                     onChange={(e) => setSlots((x) => fixSlot(x, s.slot, e.target.value === "alive" ? { out: false, place: null } : { out: true, place: Number(e.target.value) }))}
                   >
-                    <option value="alive">{s.warn ? "값 확인 필요" : "생존"}</option>
+                    <option value="alive">{s.warn ? "확인 필요" : "생존"}</option>
                     {Array.from({ length: SLOTS - 1 }, (_, i) => SLOTS - i).map((p) => (
                       <option key={p} value={p}>
                         {p}위 탈락

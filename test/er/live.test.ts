@@ -85,6 +85,19 @@ describe("읽기 탭 카드", () => {
     expect(s[0].ts).toBe(3);
   });
 
+  it("다른 카드는 읽히는데 한 카드만 3번 연속 못 읽으면 확인 표시", () => {
+    let s = emptySlots();
+    s = applyRead(applyRead(s, cards([{ ts: 3, ks: 2 }, { ts: 1, ks: 1 }])), cards([{ ts: 3, ks: 2 }, { ts: 1, ks: 1 }]));
+    for (let i = 0; i < 2; i++) s = applyRead(s, cards([{}, { ts: 1, ks: 1 }]));
+    expect(s[0]).toMatchObject({ ts: 3, warn: false });
+    s = applyRead(s, cards([{}, { ts: 1, ks: 1 }]));
+    expect(s[0]).toMatchObject({ ts: 3, warn: true });
+    s = applyRead(s, cards([{ ts: 3, ks: 2 }, { ts: 1, ks: 1 }]));
+    expect(s[0].warn).toBe(false);
+    for (let i = 0; i < 5; i++) s = applyRead(s, cards([{}, {}]));
+    expect(s[0].warn).toBe(false);
+  });
+
   it("탈락은 두 번 연속 보일 때 표시하고 순위 점수로 순위를 정함", () => {
     let s = emptySlots();
     s = applyRead(applyRead(s, cards([{ ts: 4.5, ks: 4.5 }])), cards([{ ts: 4.5, ks: 4.5 }]));

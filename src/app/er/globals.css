@@ -1435,7 +1435,7 @@
   .lr-row.warn {
     background: color-mix(in srgb, var(--gold) 12%, transparent);
   }
-  .lr-row.fixed .field {
+  .lr-row.lr-fixed .field {
     border-color: var(--accent);
   }
   @media (max-width: 560px) {
@@ -1463,7 +1463,7 @@
     top: calc(840 * var(--u));
     width: calc(207 * var(--u));
     overflow: hidden;
-    background: rgba(10, 13, 20, 0.88);
+    background: rgba(10, 13, 20, 0.92);
     border-radius: calc(6 * var(--u));
     color: #fff;
   }
@@ -1511,7 +1511,7 @@
     color: #7ee2a8;
   }
   .lv-r.out {
-    opacity: 0.42;
+    opacity: 0.55;
   }
   .lv-r.out .d {
     color: #fff;

@@ -47,14 +47,16 @@ export default function TierOverlay({ nickname, scale }: { nickname: string; sca
       </div>
       <div className="tov-txt">
         <div className="tov-tn">{data.tier}</div>
-        <div className="tov-rp">
-          {data.mmr.toLocaleString("ko-KR")} RP
-          {gain !== null && gain !== 0 && (
-            <span key={`${data.mmr}:${gain}`} className={gain > 0 ? "up" : "down"}>
-              {gain > 0 ? `+${gain}` : gain}
-            </span>
-          )}
-        </div>
+        {(data.mmr > 0 || badge.short !== "-") && (
+          <div className="tov-rp">
+            {data.mmr.toLocaleString("ko-KR")} RP
+            {gain !== null && gain !== 0 && (
+              <span key={`${data.mmr}:${gain}`} className={gain > 0 ? "up" : "down"}>
+                {gain > 0 ? `+${gain}` : gain}
+              </span>
+            )}
+          </div>
+        )}
         {data.place && <div className="tov-sv">{data.place}</div>}
       </div>
     </div>
