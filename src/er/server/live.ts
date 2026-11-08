@@ -23,7 +23,3 @@ export function getLive(code: string, group: number): LiveFrame | null {
   }
   return f;
 }
-
-export function clearLive(code: string, group: number) {
-  frames.delete(keyOf(code, group));
-}
