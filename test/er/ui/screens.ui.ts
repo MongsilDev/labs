@@ -106,6 +106,12 @@ beforeAll(async () => {
   botApi = createHttpServer((req, res) => {
     const url = new URL(req.url ?? "/", "http://bot");
     if (req.method === "POST" && url.pathname === "/api/t/changed") return res.writeHead(202).end();
+    if (url.pathname === "/api/tier") {
+      if (url.searchParams.get("n") !== "시험선수") return res.writeHead(404).end();
+      const now = Math.floor(Date.now() / 1000);
+      const tier = { nickname: "시험선수", tier: "메테오라이트 3", mmr: 6842, place: "상위 4.2%", serverRank: 1284, serverCode: 10, last: { gain: 38, at: now - 600 }, updatedAt: now };
+      return res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(tier));
+    }
     if (url.pathname !== "/api/t/channels") return res.writeHead(404).end();
     const user = url.searchParams.get("user");
     if (user === FAILING.id) return res.writeHead(500).end();
@@ -159,6 +165,7 @@ const SCREENS: Screen[] = [
   { name: "운영자와 설정", path: () => `/er/t/${code}/manage`, login: true },
   { name: "운영자와 설정 채널 없음", path: () => `/er/t/${code}/manage`, login: "empty" },
   { name: "운영자와 설정 채널 목록 실패", path: () => `/er/t/${code}/manage`, login: "fail" },
+  { name: "경기 중 점수 읽기", path: () => `/er/t/${code}/a/read`, login: true },
   { name: "초대", path: () => `/er/i/${invite}` },
   { name: "없는 대회", path: () => "/er/t/ZZZZZZ/a", status: 404 },
   { name: "없는 페이지", path: () => "/nope", status: 404 },
@@ -392,6 +399,35 @@ describe("화면 점검", () => {
     const box = await page.locator(".ov").boundingBox();
     expect(box && box.y + box.height).toBeLessThanOrEqual(1080);
     await ctx.close();
+  });
+
+  it("경기 중 순위 상자는 1920x1080의 오른쪽 아래 자리에 들어간다", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+    const page = await ctx.newPage();
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    await page.goto(`${base}/er/t/${code}/a/live`, { waitUntil: "networkidle" });
+    await page.locator(".lv-r").first().waitFor();
+    const box = await page.locator(".lv-box").boundingBox();
+    const p = await page.evaluate(inspect);
+    await ctx.close();
+    expect(box && [Math.round(box.x), Math.round(box.y), Math.round(box.width)]).toEqual([1443, 840, 207]);
+    expect(box && box.y + box.height).toBeLessThanOrEqual(1080);
+    expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
+    expect(errors).toEqual([]);
+  });
+
+  it("티어 방송 화면은 카드를, 없는 닉네임에는 안내를 표시한다", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/er/tier/overlay?n=${encodeURIComponent("시험선수")}`, { waitUntil: "networkidle" });
+    await expect(page.locator(".tov-tn").textContent()).resolves.toBe("메테오라이트 3");
+    await expect(page.locator(".tov-em").textContent()).resolves.toBe("M3");
+    const p = await page.evaluate(inspect);
+    await page.goto(`${base}/er/tier/overlay?n=${encodeURIComponent("없는선수")}`, { waitUntil: "networkidle" });
+    await expect(page.locator(".tov-msg").textContent()).resolves.toBe("닉네임을 찾지 못했습니다.");
+    await ctx.close();
+    expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
   });
 
   it("키보드로 옮긴 초점이 화면에 표시된다", async () => {

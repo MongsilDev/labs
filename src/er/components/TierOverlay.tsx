@@ -45,7 +45,7 @@ export default function TierOverlay({ nickname, scale }: { nickname: string; sca
       <div className="tov-em" style={{ background: badge.color }}>
         {badge.short}
       </div>
-      <div className="tov-txt">
+      <div>
         <div className="tov-tn">{data.tier}</div>
         {(data.mmr > 0 || badge.short !== "-") && (
           <div className="tov-rp">
