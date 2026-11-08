@@ -1132,6 +1132,39 @@
       padding-left: 8px;
     }
   }
+  /* 라운드별 점수 표: 표 옆에 그래프가 오는 폭과 휴대폰 폭에서 칸 여백을 줄여 가로 스크롤 없이 맞춤 */
+  @media (min-width: 1280px) {
+    .kel-rounds th,
+    .kel-rounds td {
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+  }
+  @media (max-width: 760px) {
+    .kel-rounds {
+      font-size: 11.5px;
+    }
+    /* 순위 칸 최소 폭 max-[760px]:min-w-[28px]과 같음 */
+    .kel-rounds .pin + .pin {
+      left: 28px;
+      padding-right: 4px;
+    }
+    .kel-rounds .pin + :not(.pin) {
+      padding-left: 5px;
+    }
+    .kel-rounds th,
+    .kel-rounds td {
+      padding: 7px 3px;
+    }
+    .kel-rounds .rk {
+      width: 22px;
+      height: 22px;
+      font-size: 12px;
+    }
+    .kel-rounds td.narrow {
+      font-size: 13px;
+    }
+  }
   .kel-heat td.h {
     color: #fff;
     font-weight: 600;

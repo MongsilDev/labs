@@ -13,10 +13,11 @@ export default function FlowChart({ cum, order, focus, holders }: { cum: Record<
   const [at, setAt] = useState<number | null>(null);
   const rounds = order.length - 1;
   const teams = order[rounds];
-  // 좁은 화면은 끝 이름표 없이 범례와 툴팁으로 팀을 구분
-  const labeled = w >= 560;
+  // 표 옆에 놓인 폭은 끝 이름표를 약칭으로, 휴대폰 폭은 이름표 없이 범례와 툴팁으로 팀을 구분
+  const short = w < 560;
+  const labeled = w >= 400;
   const h = 320;
-  const pad = { l: 34, r: labeled ? 168 : 14, t: 14, b: 28 };
+  const pad = { l: 34, r: labeled ? (short ? 84 : 168) : 14, t: 14, b: 28 };
   const max = Math.max(...teams.map((k) => Math.max(...cum[k])));
   // 1라운드 감점으로 누적이 음수인 팀이 있으면 0 아래까지 축을 늘림
   const min = Math.min(0, ...teams.map((k) => Math.min(...cum[k])));
@@ -101,7 +102,7 @@ export default function FlowChart({ cum, order, focus, holders }: { cum: Record<
             style={{ left: x(rounds) + 12, top: e.at - 9, height: 18, maxWidth: pad.r - 14 }}
           >
             <span className="h-[3px] w-2.5 flex-none rounded-full" style={{ background: color(e.k) }} aria-hidden="true" />
-            <span className="truncate">{TEAM.get(e.k)?.name}</span>
+            <span className="truncate">{short ? TEAM.get(e.k)?.short : TEAM.get(e.k)?.name}</span>
             <span className="font-semibold text-fg">{fmt(cum[e.k][rounds])}</span>
           </span>
         ))}

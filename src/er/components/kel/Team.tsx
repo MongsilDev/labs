@@ -13,7 +13,15 @@ export function Logo({ team, size = 24, label = false, className = "" }: { team:
   );
 }
 
-export function TeamName({ team, size = 24 }: { team: KelTeam; size?: number }) {
+export function TeamName({ team, size = 24, short = false }: { team: KelTeam; size?: number; short?: boolean }) {
+  // 약칭은 로고 아래에 두어 칸 폭을 로고 폭에 맞춤
+  if (short)
+    return (
+      <Link className="inline-flex flex-col items-center gap-0.5 text-[10px] leading-none text-fg-2 no-underline" href={teamPath(team)} aria-label={team.name}>
+        <Logo team={team} size={size} />
+        {team.short}
+      </Link>
+    );
   return (
     <span className="inline-flex min-w-0 items-center gap-2 max-[760px]:gap-1.5">
       <Logo team={team} size={size} />
