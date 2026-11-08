@@ -48,12 +48,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
       user={user}
       owner={owner}
       screen="finals"
-      notes={[
-        state.rows.some((r) => r.penalty > 0) && "감점 열에는 경기 기록으로 계산한 점수에서 뺀 감점을 표시합니다.",
-        f.weather.some(Boolean) && "라운드 번호 아래 글자는 그 라운드의 메인 날씨입니다.",
-        NOTES[f.key],
-      ]}
-      narrowNotes={[NOTES[f.key]]}
+      notes={NOTES[f.key]}
     >
       <KelTabs
         label="경기"
@@ -68,10 +63,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
           <h2 id="round-scores" className="sr-only">
             라운드별 점수
           </h2>
-          <p className="text-[13px] text-fg-3">
-            굵은 숫자는 그 라운드에서 1위를 차지한 팀의 점수입니다.
-          </p>
-          <KelScroll label="라운드별 점수" className="mt-3">
+          <KelScroll label="라운드별 점수">
             <table className="kel-table kel-rounds">
               <thead>
                 <tr>
