@@ -1404,6 +1404,123 @@
       animation: none;
     }
   }
+
+  /* 경기 중 점수 읽기 표 */
+  .lr-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 64px 64px 112px;
+    gap: 8px;
+    align-items: start;
+    padding: 7px 0;
+    border-top: 1px solid var(--line-soft);
+    font-size: 14px;
+  }
+  .lr-row > span:first-child {
+    padding-top: 8px;
+    color: var(--text-3);
+  }
+  .lr-head {
+    padding: 4px 0;
+    border-top: 0;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+  .lr-head > span:first-child {
+    padding-top: 0;
+  }
+  .lr-row .field {
+    width: 100%;
+    min-width: 0;
+  }
+  .lr-row.warn {
+    background: color-mix(in srgb, var(--gold) 12%, transparent);
+  }
+  .lr-row.fixed .field {
+    border-color: var(--accent);
+  }
+  @media (max-width: 560px) {
+    .lr-row {
+      grid-template-columns: 28px minmax(0, 1fr) 56px 56px;
+    }
+    .lr-row > span:last-child {
+      grid-column: 2 / -1;
+    }
+    .lr-head > span:last-child {
+      display: none;
+    }
+  }
+
+  /* 경기 중 방송 화면. 1920x1080 좌표를 화면 폭에 맞춰 줄이거나 늘림 */
+  .lv {
+    --u: calc(100vw / 1920);
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+  .lv-box {
+    position: absolute;
+    left: calc(1443 * var(--u));
+    top: calc(840 * var(--u));
+    width: calc(207 * var(--u));
+    overflow: hidden;
+    background: rgba(10, 13, 20, 0.88);
+    border-radius: calc(6 * var(--u));
+    color: #fff;
+  }
+  .lv-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: calc(27 * var(--u));
+    padding: 0 calc(8 * var(--u));
+    background: #f2f2f2;
+    color: #111;
+    font-size: calc(13 * var(--u));
+    font-weight: 700;
+  }
+  .lv-r {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: calc(16 * var(--u)) minmax(0, 1fr) calc(44 * var(--u)) calc(38 * var(--u));
+    gap: calc(4 * var(--u));
+    align-items: center;
+    height: calc(26 * var(--u));
+    padding: 0 calc(8 * var(--u));
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: calc(16 * var(--u));
+    font-variant-numeric: tabular-nums;
+    transition:
+      top 0.6s ease,
+      opacity 0.6s ease;
+  }
+  .lv-r b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+  .lv-r .t {
+    text-align: right;
+    font-weight: 700;
+  }
+  .lv-r .d {
+    text-align: right;
+    font-size: calc(13 * var(--u));
+    color: #7ee2a8;
+  }
+  .lv-r.out {
+    opacity: 0.42;
+  }
+  .lv-r.out .d {
+    color: #fff;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lv-r {
+      transition: none;
+    }
+  }
 }
 
 /* 라운드 표의 오른쪽에 스크롤이 남았을 때만 총점 칸 앞에 그림자. 스크롤이 없으면 타임라인이 비활성이라 0 */
