@@ -95,7 +95,8 @@ function Method({ data, view }: { data: TierData; view: TierView }) {
           한 사람의 판은 조합이나 실험체 전체 판 수의 <span className="whitespace-nowrap">{Math.round(r.cap * 100)}%까지만</span> 셉니다.
         </li>
         <li>
-          등급은 점수를 표준화한 값으로 나눕니다.{" "}
+          등급은 점수를 표준화한 값을 기준으로 나눕니다.
+          <br />
           {TIER_BOUNDS.map(([g, min]) => (
             <Fragment key={g}>
               <span className="whitespace-nowrap">
