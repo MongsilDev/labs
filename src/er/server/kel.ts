@@ -292,6 +292,7 @@ const CORRECTIONS: { event: KelEvent; stage: string; round: number; team: string
   { event: "nc", stage: "준결승", round: 1, team: "gyeonggi-innate", points: 5, kind: "penalty" },
   { event: "nc", stage: "준결승", round: 4, team: "gyeonggi-innate", points: 1, kind: "penalty" },
   { event: "nc", stage: "준결승", round: 4, team: "seongnam-rox", points: 1, kind: "penalty" },
+  { event: "nc", stage: "결승", round: 3, team: "daegu-guardians", points: 1, kind: "penalty" },
 ];
 
 // 기록이 빠진 라운드는 빈칸으로 남음
