@@ -101,7 +101,6 @@ export default async function NextHub() {
             <section className="sec">
               <h2 className="sec-h">
                 <Link href="/next/er/meta">메타 지도</Link>
-                <Link className="more" href="/next/er/meta">점수와 픽률</Link>
               </h2>
               <div className="mt-1 grid grid-cols-2 gap-6">
                 {([["적게 쓰지만 강함", hidden], ["많이 쓰지만 약함", trap]] as const).map(([name, rows]) => (
