@@ -37,6 +37,24 @@ describe("실험체 티어 산식", () => {
     expect(estimateK(g).k).toBe(RULE.kMax);
   });
 
+  it("RP가 같으면 평균 순위와 TOP3가 좋은 조합이 위", () => {
+    const at = (char: number, ranks: number[]) => ranks.map((rank, i) => ({ game: char * 10_000 + i, player: `p${char}-${i}`, char, weapon: 1, rank, gain: 60 + (i % 2 ? 30 : -30) }));
+    const good = at(1, Array.from({ length: 300 }, (_, i) => 1 + (i % 4)));
+    const bad = at(2, Array.from({ length: 300 }, (_, i) => 5 + (i % 4)));
+    const r = scoreRows([...good, ...bad])!;
+    expect(r.combos[0].key).toBe("1:1");
+    expect(r.combos[0].raw).toBeCloseTo(r.combos[1].raw);
+  });
+
+  it("판 수가 많을수록 90% 범위가 좁고, 기간 표는 넘겨받은 k를 씀", () => {
+    const many = rows(1, 1, Array.from({ length: 900 }, (_, i) => 60 + (i % 3) * 20 - 20));
+    const few = rows(2, 1, Array.from({ length: 60 }, (_, i) => 60 + (i % 3) * 20 - 20));
+    const r = scoreRows([...many, ...few], { ...RULE, k: { gain: 123, place: 45, top3: 67 } })!;
+    const by = new Map(r.combos.map((c) => [c.key, c]));
+    expect(by.get("1:1")!.half).toBeLessThan(by.get("2:1")!.half);
+    expect(r.ks).toEqual({ gain: 123, place: 45, top3: 67 });
+  });
+
   it("빈 입력은 null", () => {
     expect(scoreRows([])).toBeNull();
   });

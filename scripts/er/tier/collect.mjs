@@ -358,6 +358,7 @@ function view(id, label, rows, nm, extra = {}, k) {
     games: r.games,
     base: round(r.base, 1),
     k: Math.round(r.k),
+    ks: Object.fromEntries(Object.entries(r.ks).map(([m, v]) => [m, Math.round(v)])),
     ...extra,
     combos: r.combos.map((c) => ({
       char: c.char,
@@ -366,6 +367,7 @@ function view(id, label, rows, nm, extra = {}, k) {
       weaponName: nm.weapon(c.weapon),
       grade: c.grade,
       score: round(c.score, 1),
+      half: round(c.half, 1),
       raw: round(c.raw, 1),
       z: round(c.z, 2),
       n: c.n,
@@ -413,8 +415,8 @@ function publish(s, nm) {
     if (v) views.push(v);
   }
   const curRows = all.filter((r) => r.patch === cur);
-  // 짧은 기간은 조합 사이 분산을 추정하기에 표본이 적어 패치 전체의 k를 씀
-  const k = views.find((v) => v.patch === cur)?.k;
+  // 짧은 기간은 조합 사이 분산을 추정하기에 표본이 적어 패치 전체의 지표별 k를 씀
+  const k = views.find((v) => v.patch === cur)?.ks;
   for (const d of WINDOWS) {
     const rows = curRows.filter((r) => r.t >= now - d * 86_400_000);
     const v = view(`${d}d`, `최근 ${d}일`, rows, nm, { patch: cur, days: d }, k);

@@ -1,5 +1,6 @@
 export type TierRow = { game: number; player: string; char: number; weapon: number; rank: number; gain: number };
-export type Rule = { cap: number; kMin: number; kMax: number; thin: number; k?: number };
+export type Metric = "gain" | "place" | "top3";
+export type Rule = { cap: number; kMin: number; kMax: number; thin: number; weights: Record<Metric, number>; k?: Partial<Record<Metric, number>> };
 export type Group = { n: number; W: number; eff: number; dev: number; ss: number };
 export type ComboScore = Group & {
   char: number;
@@ -12,6 +13,7 @@ export type ComboScore = Group & {
   top3: number;
   win: number;
   score: number;
+  half: number;
   z: number;
   grade: "S" | "A" | "B" | "C" | "D";
   pick: number;
@@ -25,4 +27,4 @@ export function estimateK(groups: Group[], rule?: Rule): { k: number; within: nu
 export function scoreRows(
   rows: TierRow[],
   rule?: Rule,
-): { base: number; games: number; rows: number; k: number; within: number; between: number; combos: ComboScore[] } | null;
+): { base: number; games: number; rows: number; k: number; ks: Record<Metric, number>; within: number; between: number; combos: ComboScore[] } | null;
