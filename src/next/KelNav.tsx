@@ -2,7 +2,7 @@ import Link from "next/link";
 import { KEL_SCREENS, KEL_SECTIONS, type KelScreen } from "@/er/lib/kel";
 
 // 휴대폰에서는 묶음 이름 없이 한 줄로 밀고, 시안이 있는 화면만 /next로, 나머지는 운영 주소로 보냄
-const NEXT: Partial<Record<KelScreen, string>> = { home: "/next/er/kel", players: "/next/er/kel/players" };
+const NEXT: Partial<Record<KelScreen, string>> = Object.fromEntries((["finals", "records", "players", "circuits", "characters", "comps"] as const).map((k) => [k, `/next/er/kel/${k}`]).concat([["home", "/next/er/kel"]]));
 const href = (s: KelScreen) => NEXT[s] ?? KEL_SCREENS[s].path;
 
 export default function KelNav({ here }: { here: KelScreen }) {
@@ -14,7 +14,7 @@ export default function KelNav({ here }: { here: KelScreen }) {
           <h2 className="hidden text-[12px] font-semibold text-ink-3 lg:block">{g.title}</h2>
           <ul className="contents lg:grid">
             {g.items.map((s) => (
-              <li key={s} className="shrink-0">
+              <li key={s} className={`shrink-0 ${s === here ? "order-first lg:order-none" : ""}`}>
                 <Link
                   href={href(s)}
                   aria-current={s === here ? "page" : undefined}
