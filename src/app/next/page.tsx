@@ -71,7 +71,7 @@ export default async function NextHub() {
         <div className="grid content-start gap-10 lg:col-span-5">
           <section className="sec">
             <h2 className="sec-h">
-              <Link href="/er/cut">이터컷</Link>
+              <Link href="/next/er/cut">이터컷</Link>
               {cut && <small>{cut.season.name}</small>}
             </h2>
             {cut ? (
