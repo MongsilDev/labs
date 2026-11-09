@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { int } from "@/er/lib/cut";
-import { comboPath, METRIC_LABELS, signed, tacIcon, traitIcon, type TierCombo, type TierItem, type TierMetric, type TierRouteInfo, type TierSplit, type TierView } from "@/er/lib/tier";
+import { comboPath, halfArt, METRIC_LABELS, signed, tacIcon, traitIcon, type TierCombo, type TierItem, type TierMetric, type TierRouteInfo, type TierSplit, type TierView } from "@/er/lib/tier";
 import RouteTable, { Rp } from "./RouteTable";
 import { Weapon } from "./parts";
 
@@ -104,14 +104,14 @@ function Metric({ name, m, base }: { name: string; m?: TierMetric; base?: TierMe
 
 export default function TierDetail({ who, c, view, views, fallback, routes, items, thin, few }: Props) {
   const dn = c?.dn ?? 0;
+  const art = halfArt(who.key);
   const range = c?.half != null ? `${signed(c.score - c.half)} ~ ${signed(c.score + c.half)}` : null;
   const isThin = !!c && (c.n < thin || (few != null && c.ep != null && c.ep < few));
   return (
     <>
       <section className="tdx-hero" data-grade={c?.grade}>
-        {/* 팬키트 반신 그림. 새 실험체는 파일을 더하기 전까지 비워 둠 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="tdx-art" src={`/img/er/half/${who.key}.v1.webp`} alt="" width={390} height={576} fetchPriority="high" />
+        {art && <img className="tdx-art" src={art} alt="" width={390} height={576} fetchPriority="high" />}
         <div className="tdx-id">
           <h1>
             <span className="tdx-wn">

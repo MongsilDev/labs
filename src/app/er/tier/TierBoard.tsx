@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
 import { comboPath, compareView, movedCombos, signed, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
@@ -13,7 +13,9 @@ const GRADES: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
 const BACK = "tier:back";
 const BACK_MS = 30 * 60_000;
 
-function saveBack() {
+// 수정 키나 가운데 버튼으로 새 탭에 열면 이 탭은 떠나지 않으므로 남기지 않음
+function saveBack(e?: MouseEvent<HTMLElement>) {
+  if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)) return;
   try {
     sessionStorage.setItem(BACK, JSON.stringify({ url: window.location.pathname + window.location.search, y: window.scrollY, t: Date.now() }));
   } catch {}
@@ -99,7 +101,7 @@ const dayKo = (at: number) => new Intl.DateTimeFormat("ko-KR", { month: "long", 
 const kstDay = (at: number) => Math.floor((at + 9 * 3_600_000) / 86_400_000);
 
 // 줄 어디를 눌러도 이름 링크를 누른 것과 같음. 키보드는 이름 링크로 엶
-function PickTable({ list, thin, href, onOpen }: { list: TierCombo[]; thin: (c: TierCombo) => boolean; href: (c: TierCombo) => string; onOpen: () => void }) {
+function PickTable({ list, thin, href, onOpen }: { list: TierCombo[]; thin: (c: TierCombo) => boolean; href: (c: TierCombo) => string; onOpen: (e?: MouseEvent<HTMLElement>) => void }) {
   const router = useRouter();
   return (
     <table className="kel-table tier-table">
