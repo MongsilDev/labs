@@ -45,7 +45,7 @@ function Hours({ hours, w: W = 1100, h: H = 200, every = 3 }: { hours: RpHour[];
 export default async function NextRp({ searchParams }: { searchParams: Promise<{ rp?: string }> }) {
   const q = await searchParams;
   const data = await getRp();
-  if (!data) return <Shell here="rp"><h1 className="text-[26px] font-black">RP 손익</h1><p className="mt-3 text-ink-3" role="status">지금은 RP 손익 표를 가져올 수 없습니다.</p></Shell>;
+  if (!data) return <Shell here="rp"><h1 className="text-[26px] font-black">RP 손익</h1><p className="mt-3 text-ink-3" role="status">지금은 RP 손익 표를 가져올 수 없습니다.<br />잠시 뒤 다시 열어주세요.</p></Shell>;
   const rp = Number(q.rp);
   const band = data.bands.find((b) => rp >= b.lo && rp < b.hi) ?? data.bands.find((b) => b.lo === 8400) ?? data.bands[0];
   const even = breakEven(band);

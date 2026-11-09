@@ -15,7 +15,7 @@ const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 70 
 
 export default async function NextKel() {
   const data = kelData();
-  if (!data) return <Shell here="kel"><p className="text-ink-3" role="status">KEL 기록을 불러오지 못했습니다.</p></Shell>;
+  if (!data) return <Shell here="kel"><p className="text-ink-3" role="status">KEL 기록을 불러오지 못했습니다.<br />잠시 뒤 다시 열어주세요.</p></Shell>;
   const sum = kelSummary(data);
   const champ = kelChampion(data);
   const avg = (t: (typeof KEL_TEAMS)[number]) => t.circuits.reduce((s, x) => s + x, 0) / t.circuits.length;

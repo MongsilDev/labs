@@ -22,7 +22,7 @@ const COLS: { k: keyof PlayerStat; label: string; fmt: (v: number) => string; lo
 export default async function NextKelPlayers({ searchParams }: { searchParams: Promise<{ s?: string }> }) {
   const { s } = await searchParams;
   const data = kelData();
-  if (!data) return <Shell here="kel"><p className="text-ink-3" role="status">KEL 기록을 불러오지 못했습니다.</p></Shell>;
+  if (!data) return <Shell here="kel"><p className="text-ink-3" role="status">KEL 기록을 불러오지 못했습니다.<br />잠시 뒤 다시 열어주세요.</p></Shell>;
   const sort = COLS.find((c) => c.k === s) ?? COLS[0];
   const all = playerStats(data).filter((p) => p.games >= 20);
   const v = (p: PlayerStat, k: keyof PlayerStat) => p[k] as number;
