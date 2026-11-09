@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Footer from "@/components/SiteFooter";
 import Header from "@/er/components/Header";
-import { pickView } from "@/er/lib/tier";
+import { allViews, pickView } from "@/er/lib/tier";
 import { currentUser } from "@/er/server/auth";
 import { getTier } from "@/er/server/tier";
 import TierBoard from "./TierBoard";
@@ -12,9 +12,10 @@ export const metadata: Metadata = {
 
 export default async function TierPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [user, data, query] = await Promise.all([currentUser(), getTier(), searchParams]);
-  const v = Array.isArray(query.v) ? query.v[0] : query.v;
+  const one = (k: string) => (Array.isArray(query[k]) ? query[k][0] : query[k]);
+  const v = one("v");
   // 지난 시즌 탭은 뒤에 붙이고 기본값은 늘 지금 시즌
-  const views = data ? [...data.views, ...(data.past?.views.map((x) => ({ ...x, season: data.past!.season.name })) ?? [])] : [];
+  const views = data ? allViews(data) : [];
   const fallback = data ? pickView(data) : null;
   const view = views.find((x) => x.id === v) ?? fallback;
   const cur = data?.views.find((x) => x.id === `patch-${data.patch}`);
@@ -42,8 +43,10 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
             )}
             <TierBoard
               views={views}
-              routes={data.routes}
               initial={view.id}
+              initialRole={one("r") ?? null}
+              initialSort={one("s") === "pick" ? "pick" : "score"}
+              initialQuery={one("q") ?? ""}
               fallback={fallback.id}
               updatedAt={data.updatedAt}
               seasonEnd={data.season.end}

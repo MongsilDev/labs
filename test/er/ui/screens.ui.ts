@@ -154,7 +154,10 @@ const SCREENS: Screen[] = [
   { name: "이터컷 예측 RP 주소", path: () => "/er/cut?rp=9050" },
   { name: "실험체 티어", path: () => "/er/tier" },
   { name: "실험체 티어 최근 3일", path: () => "/er/tier?v=3d" },
-  { name: "실험체 티어 상세", path: () => "/er/tier", card: true },
+  { name: "실험체 티어 카드에서 상세", path: () => "/er/tier", card: true },
+  { name: "실험체 상세", path: () => "/er/tier/tsubame-directfire" },
+  { name: "실험체 상세 기록 없는 기간", path: () => "/er/tier/tsubame-directfire?v=1d" },
+  { name: "없는 실험체 상세", path: () => "/er/tier/nobody-glove", status: 404 },
   { name: "점수 계산 로그인", path: () => "/er/score", login: true },
   { name: "처리방침", path: () => "/privacy" },
   { name: "예시 대회 선수 기록", path: () => "/er/example/a", tab: "선수 기록" },
@@ -255,7 +258,8 @@ async function open(screen: Screen, width: number, theme: "dark" | "light"): Pro
   if (screen.tab) await page.getByRole("tab", { name: screen.tab }).click();
   if (screen.card) {
     await page.locator(".tier-card").first().click();
-    await page.locator("#tier-dx").waitFor();
+    await page.waitForURL(/\/er\/tier\/[a-z]+-[a-z]+/);
+    await page.locator(".tdx-hero").waitFor();
   }
   await page.evaluate(() => document.fonts.ready);
   return { page, errors, status: res?.status() ?? 0 };

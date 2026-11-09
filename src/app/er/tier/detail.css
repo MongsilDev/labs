@@ -1,0 +1,553 @@
+/* 실험체 상세 페이지 /er/tier/[combo] */
+@layer components {
+  .tdx {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding-bottom: 48px;
+  }
+
+  /* 머리: 왼쪽에 이름과 지표, 오른쪽에 팬키트 반신 그림 */
+  .tdx-hero {
+    position: relative;
+    display: grid;
+    align-content: end;
+    gap: 22px;
+    min-height: 340px;
+    padding: 40px 0 4px;
+    isolation: isolate;
+    /* 그림이 위쪽 메뉴를 넘지 않게 위만 자름 */
+    clip-path: inset(0 -100vw -80px);
+  }
+  .tdx-art {
+    position: absolute;
+    z-index: -1;
+    right: 3%;
+    bottom: -28px;
+    width: auto;
+    height: 400px;
+    pointer-events: none;
+    user-select: none;
+    /* 팬키트 그림은 좌우가 잘린 그림이 많아 양옆과 아래를 흐리게 함 */
+    -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 98%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+    mask-image: linear-gradient(to bottom, #000 62%, transparent 98%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  .tdx-id {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 6px 16px;
+  }
+  .tdx-id h1 {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+  }
+  .tdx-wn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+  .tdx-wn .tier-wg {
+    --s: 18px;
+  }
+  .tdx-nm {
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+  .tdx-grade {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+  .tdx-roles {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-3);
+  }
+  .tdx-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 14px 0;
+    margin: 0;
+    max-width: min(760px, 64%);
+  }
+  .tdx-stats > div {
+    padding: 0 22px;
+    border-left: 1px solid var(--line);
+  }
+  .tdx-stats > div:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .tdx-stats dt {
+    font-size: 13px;
+    color: var(--text-3);
+    white-space: nowrap;
+  }
+  .tdx-stats dd {
+    display: grid;
+    margin: 2px 0 0;
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .tdx-stats dd small {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+  }
+  .tdx-nw {
+    white-space: nowrap;
+  }
+  .tdx-score dd {
+    font-size: 34px;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+  .tdx-thin {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .tdx-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tdx-tabs a {
+    flex: none;
+  }
+  .tdx-empty {
+    margin: 0;
+    padding: 28px 0;
+    font-size: 15px;
+    color: var(--text-2);
+  }
+
+  /* 섹션과 표 */
+  .tdx-sec h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 0 6px;
+    font-size: 19px;
+    font-weight: 700;
+  }
+  .tdx-sec h2 small {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-3);
+  }
+  .tdx-tb {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  .tdx-tb th {
+    padding: 8px 0 8px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .tdx-tb td {
+    padding: 10px 0 10px 10px;
+    font-size: 14px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .tdx-tb tbody tr {
+    border-top: 1px solid var(--line-soft);
+  }
+  .tdx-tb .l {
+    padding-left: 0;
+    text-align: left;
+    white-space: normal;
+  }
+  .tdx-tb th.p,
+  .tdx-tb th.n,
+  .tdx-tb th.r {
+    width: 64px;
+  }
+  .tdx-tb th.g {
+    width: 70px;
+  }
+  .tdx-tb td.g.up {
+    color: var(--up);
+  }
+  .tdx-tb td.g.down {
+    color: var(--minus);
+  }
+  .tdx-tb td.tdx-base {
+    color: var(--text-3);
+  }
+  .tdx-ic {
+    flex: none;
+    display: block;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: var(--field);
+    object-fit: contain;
+  }
+  .tdx-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+  }
+  .tdx-name .tdx-ic {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* 루트 줄 */
+  .tdx-rt td {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .tdx-r {
+    display: grid;
+    grid-template-columns: 22px auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+  }
+  .tdx-no {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-3);
+    text-align: center;
+  }
+  .tdx-build {
+    display: flex;
+    gap: 4px;
+  }
+  .tdx-rm {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+  }
+  .tdx-l1 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    min-width: 0;
+  }
+  .tdx-title {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+  }
+  a.tdx-title:hover {
+    text-decoration: underline;
+  }
+  .tdx-hid {
+    font-weight: 600;
+    color: var(--text-3);
+  }
+  .tdx-copy {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 0 7px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    cursor: pointer;
+  }
+  /* 손가락으로 누르기 쉽게 보이는 크기보다 넓게 받음 */
+  .tdx-copy::before {
+    content: "";
+    position: absolute;
+    inset: -10px -4px;
+  }
+  .tdx-copy:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+  .tdx-copy:focus-visible,
+  .tdx-more:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .tdx-by {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .tdx-by a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .tdx-by a:hover {
+    text-decoration: underline;
+  }
+  .tdx-b {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 700;
+  }
+  .tdx-b[data-b="e"] {
+    color: var(--eternity);
+  }
+  .tdx-b[data-b="d"] {
+    color: var(--demigod);
+  }
+  .tdx-l2 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+  }
+  .tdx-items {
+    display: flex;
+    gap: 3px;
+  }
+  /* 게임의 아이템 칸처럼 가로형 칸에 등급 색을 깖 */
+  .tdx-it {
+    --gc: 120 128 140;
+    display: block;
+    width: 50px;
+    height: 28px;
+    border-radius: 5px;
+    background: linear-gradient(to bottom, rgb(var(--gc) / 0.14), rgb(var(--gc) / 0.48));
+    box-shadow: inset 0 -2px 0 rgb(var(--gc) / 0.9);
+  }
+  .tdx-itn {
+    display: grid;
+    place-items: center;
+    width: auto;
+    min-width: 50px;
+    padding: 0 7px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .tdx-it img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .tdx-it[data-g="Uncommon"] {
+    --gc: 74 170 92;
+  }
+  .tdx-it[data-g="Rare"] {
+    --gc: 64 132 230;
+  }
+  .tdx-it[data-g="Epic"] {
+    --gc: 150 92 230;
+  }
+  .tdx-it[data-g="Legend"] {
+    --gc: 222 168 60;
+  }
+  .tdx-it[data-g="Mythic"] {
+    --gc: 228 72 80;
+  }
+  .tdx-path {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 7px;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .tdx-path svg {
+    fill: none;
+    stroke: var(--text-3);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tdx-old {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold-text);
+  }
+  .tdx-more {
+    display: block;
+    width: 100%;
+    height: 44px;
+    margin-top: 4px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-2);
+    cursor: pointer;
+  }
+  .tdx-more:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+
+  /* 루트 아래 세 표 */
+  .tdx-cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 28px 40px;
+  }
+  .tdx-mt th:not(.l),
+  .tdx-mt td {
+    width: 96px;
+  }
+  .tdx-mt tbody th {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  @media (max-width: 1099px) {
+    .tdx-cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .tdx-stats {
+      max-width: 62%;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .tdx {
+      gap: 22px;
+    }
+    .tdx-hero {
+      min-height: 0;
+      padding-top: 20px;
+    }
+    .tdx-art {
+      /* .wrap 안쪽 여백만큼 밀어 화면 가장자리에 맞춤. 더 밀면 가로 스크롤이 생김 */
+      right: -16px;
+      top: -8px;
+      bottom: auto;
+      height: 280px;
+      opacity: 0.9;
+      /* 지표 줄 위에서 그림이 끝나야 글자가 읽힘 */
+      -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 76%), linear-gradient(to right, transparent, #000 40%);
+      mask-image: linear-gradient(to bottom, #000 40%, transparent 76%), linear-gradient(to right, transparent, #000 40%);
+      -webkit-mask-composite: source-in;
+      mask-composite: intersect;
+    }
+    .tdx-id {
+      min-height: 168px;
+      max-width: 62%;
+      align-content: flex-end;
+    }
+    .tdx-nm {
+      font-size: 44px;
+      letter-spacing: -1.2px;
+    }
+    .tdx-grade {
+      width: 36px;
+      height: 36px;
+      font-size: 19px;
+    }
+    .tdx-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
+      gap: 14px 12px;
+      max-width: none;
+      padding: 14px 0 0;
+      border-top: 1px solid var(--line);
+    }
+    .tdx-stats > div,
+    .tdx-stats > div:first-child {
+      padding: 0;
+      border: 0;
+    }
+    .tdx-stats dd,
+    .tdx-score dd {
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+    .tdx-stats dd small {
+      white-space: normal;
+    }
+    .tdx-cols {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    /* 루트 이름 줄을 위에 두고 수치는 아래 줄에서 표 첫 줄의 칸에 맞춤 */
+    .tdx-rt thead tr,
+    .tdx-rt tbody tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 60px 56px 64px;
+      align-items: center;
+    }
+    .tdx-rt .r {
+      display: none;
+    }
+    .tdx-rt td.l {
+      grid-column: 1 / -1;
+      padding-bottom: 6px;
+    }
+    .tdx-rt td:not(.l) {
+      padding-top: 0;
+      grid-row: 2;
+    }
+    .tdx-rt td.p {
+      grid-column: 2;
+    }
+    .tdx-rt td.n {
+      grid-column: 3;
+    }
+    .tdx-rt td.g {
+      grid-column: 4;
+    }
+    .tdx-r {
+      grid-template-columns: 16px auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+    .tdx-no {
+      padding-top: 8px;
+    }
+    .tdx-build .tdx-ic {
+      width: 30px;
+      height: 30px;
+    }
+    .tdx-it {
+      height: 25px;
+    }
+    .tdx-it:not(.tdx-itn) {
+      width: 44px;
+    }
+    .tdx-cols .tdx-tb .p {
+      display: none;
+    }
+  }
+}

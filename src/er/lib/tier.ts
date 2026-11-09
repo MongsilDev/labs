@@ -5,8 +5,21 @@ export type AuthorBadge = "e" | "d";
 export type TierRoute = [number, number, number, number | null, AuthorBadge?];
 /** [이름, 플레이어 수, 판 수, 평균 RP 획득, 코드] */
 export type TierSplit = [string, number, number, number | null, number?];
-/** 루트 번호별 [이름, 작성자 닉네임, 핵심 특성 코드, 핵심 특성 이름, 전술 스킬 그룹, 전술 스킬 이름]. 게임에서 찾을 수 없는 루트는 모두 null */
-export type TierRouteInfo = [string | null, string | null, number | null, string | null, number | null, string | null];
+/**
+ * 루트 번호별 [이름, 작성자 닉네임, 핵심 특성 코드, 핵심 특성 이름, 전술 스킬 그룹, 전술 스킬 이름, 목표 아이템 코드, 지역 이름 순서, 패치].
+ * 게임이 본문을 주지 않는 루트는 아이템, 지역, 패치가 null이고 특성과 전술 스킬은 그 루트로 한 판에서 가장 많이 고른 값. 11-10 전 표는 앞 6칸만 있음
+ */
+export type TierRouteInfo = [string | null, string | null, number | null, string | null, number | null, string | null, (number[] | null)?, (string[] | null)?, (string | null)?];
+/** 상위 1,000명 판당 평균 [킬, 어시스트, 사망, 피해량, 몬스터 처치] */
+export type TierItem = [name: string, grade: string | null];
+export type TierMetric = [number, number, number, number, number];
+export const METRIC_LABELS = ["킬", "어시스트", "사망", "피해량", "몬스터 처치"] as const;
+
+/** 게임에서 받을 수 없는 루트. 11-10 전 표는 모두 null인 6칸 */
+export function hiddenRoute(info: TierRouteInfo | undefined): boolean {
+  if (!info) return false;
+  return info.length > 6 ? info[6] == null : info.every((x) => x == null);
+}
 
 export type TierCombo = {
   char: number;
@@ -33,12 +46,14 @@ export type TierCombo = {
   pick: number;
   /** 상위 1,000명 행 수. 아래 세 표의 비율 분모이고 수집기 갱신 전 표에는 없음 */
   dn?: number;
-  /** 상위 1,000명이 쓴 시작 루트, 쓴 플레이어 수 순 3개 */
+  /** 상위 1,000명이 쓴 시작 루트, 쓴 플레이어 수 순. 상위 3개와 2명 이상이 쓴 루트를 20개까지 */
   routes?: TierRoute[];
   /** 판의 1% 이상인 핵심 특성 */
   traits?: TierSplit[];
   /** 판의 1% 이상인 전술 스킬 */
   tac?: TierSplit[];
+  /** 상위 1,000명 행의 경기 지표, 11-10 전 표에는 없음 */
+  metric?: TierMetric;
 };
 
 // 배지를 다는 순위 기준은 scripts/er/tier/collect.mjs의 AUTHOR_BADGE
@@ -57,6 +72,29 @@ export function traitIcon(code: number | null | undefined): string | null {
 
 export function tacIcon(code: number | null | undefined): string | null {
   return code && TAC_ICON.has(code) ? `/img/er/tac/${code}.v1.webp` : null;
+}
+
+// public/img/er/item에 팬키트 아이콘이 있는 루트 목표 아이템 코드. 스크립트가 받은 파일 목록에서 만듦
+const ITEM_ICON = new Set<number>([101401, 101402, 101404, 101406, 101407, 101408, 102405, 102406, 102407, 102408, 102410, 102411, 102413, 103401, 103403, 103501, 103506, 104401, 104402, 104403, 104406, 104407, 104408, 104409, 105402, 105403, 105404, 105405, 105406, 107403, 107405, 107407, 107408, 108403, 108404, 108501, 109401, 109403, 109404, 109405, 110405, 110406, 110407, 110408, 110409, 110410, 110411, 111402, 111403, 111404, 111406, 112302, 112401, 112402, 112408, 112501, 113401, 113405, 113406, 113410, 114401, 114403, 114406, 114501, 115402, 115403, 115404, 115406, 116404, 116405, 116406, 116407, 117403, 117404, 117405, 117407, 117501, 118403, 118405, 118406, 118407, 119301, 119401, 119402, 119404, 120302, 120401, 120403, 120406, 120407, 120408, 121401, 121402, 121403, 121404, 121406, 121407, 122402, 122404, 122405, 130401, 130402, 130403, 130404, 131301, 131302, 131303, 131401, 131402, 131403, 201304, 201305, 201404, 201405, 201406, 201407, 201409, 201410, 201412, 201413, 201414, 201416, 201417, 201418, 201419, 201420, 201421, 201422, 201531, 202104, 202307, 202402, 202404, 202405, 202406, 202408, 202410, 202411, 202413, 202417, 202418, 202419, 202420, 202422, 202423, 203306, 203402, 203403, 203405, 203406, 203407, 203409, 203410, 203411, 203412, 203414, 203415, 203506, 204303, 204304, 204401, 204402, 204403, 204406, 204408, 204411, 204412, 204415, 204416, 204417, 204418, 204419, 205201, 205304, 205308, 205309, 205404, 205405]);
+
+export function itemIcon(code: number | null | undefined): string | null {
+  return code && ITEM_ICON.has(code) ? `/img/er/item/${code}.v1.webp` : null;
+}
+
+// 상세 주소에 쓰는 무기 영문 이름. scripts/er/tier/collect.mjs의 WEAPON을 소문자로 바꾼 값
+const WEAPON_KEY: Record<number, string> = {
+  1: "glove", 2: "tonfa", 3: "bat", 4: "whip", 5: "highanglefire", 6: "directfire", 7: "bow", 8: "crossbow", 9: "pistol", 10: "assaultrifle", 11: "sniperrifle",
+  13: "hammer", 14: "axe", 15: "onehandsword", 16: "twohandsword", 18: "dualsword", 19: "spear", 20: "nunchaku", 21: "rapier", 22: "guitar", 23: "camera", 24: "arcana", 25: "vfarm",
+};
+
+/** 실험체 상세 주소의 마지막 칸. 예: garnet-bat */
+export function comboSlug(c: { key: string; weapon: number }): string {
+  return `${c.key.toLowerCase()}-${WEAPON_KEY[c.weapon] ?? c.weapon}`;
+}
+
+/** 기본 탭이면 v를 빼 공유 주소를 짧게 둠 */
+export function comboPath(c: { key: string; weapon: number }, view?: string | null): string {
+  return `/er/tier/${comboSlug(c)}${view ? `?v=${encodeURIComponent(view)}` : ""}`;
 }
 
 export type TierView = {
@@ -78,6 +116,8 @@ export type TierView = {
   base: number;
   k: number;
   ks?: { gain: number; place: number; top3: number };
+  /** 이 탭 상위 1,000명 전체의 경기 지표 */
+  metric?: TierMetric;
   combos: TierCombo[];
 };
 
@@ -91,6 +131,8 @@ export type TierData = {
   rule: { cap: number; kMin: number; kMax: number; thin: number; few?: number; publishRows: number; weights?: { gain: number; place: number; top3: number } };
   views: TierView[];
   routes?: Record<string, TierRouteInfo>;
+  /** 루트 목표 아이템 코드별 한국어 이름과 등급(Epic 같은 게임 값) */
+  items?: Record<string, TierItem>;
   /** 새 시즌 첫 집계 때 남긴 지난 시즌 마지막 표의 패치 탭 */
   past?: { season: { id: number; name: string; end: number }; views: TierView[] };
   /** 새 정규 시즌이 시작됐지만 집계할 행이 아직 없을 때 그 시즌 이름 */
@@ -104,6 +146,11 @@ export const TIER_BOUNDS: [TierCombo["grade"], number][] = [
   ["B", -0.3],
   ["C", -1],
 ];
+
+/** 지금 시즌 탭 뒤에 지난 시즌 탭을 붙임. 지난 시즌 탭은 화면에서 시즌 이름을 붙여 구분 */
+export function allViews(data: TierData): TierView[] {
+  return [...data.views, ...(data.past?.views.map((x) => ({ ...x, season: data.past!.season.name })) ?? [])];
+}
 
 /** 주소의 v가 없으면 지금 보여 줄 패치 표. 새 패치가 기준 전이면 직전 패치 */
 export function pickView(data: TierData, id?: string): TierView | null {

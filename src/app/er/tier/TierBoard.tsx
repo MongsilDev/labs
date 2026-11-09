@@ -1,31 +1,41 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
-import {
-  BADGE,
-  compareView,
-  movedCombos,
-  signed,
-  tacIcon,
-  traitIcon,
-  WEAPON_SPRITE,
-  type TierCombo,
-  type TierMoved,
-  type TierRouteInfo,
-  type TierSplit,
-  type TierView,
-} from "@/er/lib/tier";
+import { comboPath, compareView, movedCombos, signed, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
+import { Weapon } from "./parts";
 
 const GRADES: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
+// 상세로 떠날 때 목록 주소와 스크롤 위치를 남기는 탭 단위 저장소 키. 30분이 지나면 쓰지 않음
+const BACK = "tier:back";
+const BACK_MS = 30 * 60_000;
+
+function saveBack() {
+  try {
+    sessionStorage.setItem(BACK, JSON.stringify({ url: window.location.pathname + window.location.search, y: window.scrollY, t: Date.now() }));
+  } catch {}
+}
+
+function readBack(): { url: string; y: number } | null {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(BACK) ?? "null");
+    sessionStorage.removeItem(BACK);
+    return saved && Date.now() - saved.t < BACK_MS ? saved : null;
+  } catch {
+    return null;
+  }
+}
 const ROLES = ["탱커", "전사", "암살자", "스킬 딜러", "원거리 딜러", "지원가"];
 
 type Props = {
   views: TierView[];
-  routes?: Record<string, TierRouteInfo>;
   initial: string;
+  initialRole: string | null;
+  initialSort: "score" | "pick";
+  initialQuery: string;
   fallback: string;
   updatedAt: number;
   seasonEnd: number;
@@ -37,12 +47,6 @@ type Props = {
   early?: { label: string; patch: string; rows: number };
   weights?: { gain: number; place: number; top3: number };
 };
-
-function Weapon({ code, label }: { code: number; label?: string }) {
-  const i = WEAPON_SPRITE.indexOf(code);
-  if (i < 0) return null;
-  return <span className="tier-wg" style={{ ["--i" as string]: i }} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} />;
-}
 
 function Arrow() {
   return (
@@ -94,282 +98,9 @@ function MovedList({ title, list }: { title: string; list: TierMoved[] }) {
 const dayKo = (at: number) => new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(at);
 const kstDay = (at: number) => Math.floor((at + 9 * 3_600_000) / 86_400_000);
 
-function Rp({ g }: { g: number | null }) {
-  if (g == null) return <td className="g">-</td>;
-  return <td className={g > 0 ? "g up" : g < 0 ? "g down" : "g"}>{signed(g)}</td>;
-}
-
-function Head({ title }: { title: string }) {
-  return (
-    <thead>
-      <tr>
-        <th scope="col" className="t">
-          {title}
-        </th>
-        <th scope="col" className="p">
-          플레이어
-        </th>
-        <th scope="col" className="n">
-          판 수
-        </th>
-        <th scope="col" className="r">
-          비율
-        </th>
-        <th scope="col" className="g">
-          RP 획득
-        </th>
-      </tr>
-    </thead>
-  );
-}
-
-function Icon({ src, alt = "" }: { src: string | null; alt?: string | null }) {
-  // 팬키트에 없는 아이콘은 자리만 남겨 이름 시작 위치를 맞춤
-  if (!src) return <span className="tier-dx-ic" aria-hidden="true" />;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img className="tier-dx-ic" src={src} alt={alt ?? ""} title={alt || undefined} width={32} height={32} loading="lazy" />;
-}
-
-function Split({ title, icon, list, dn }: { title: string; icon: (code?: number) => string | null; list: TierSplit[]; dn: number }) {
-  if (!list.length) return null;
-  return (
-    <section>
-      <table>
-        <Head title={title} />
-        <tbody>
-          {list.map(([name, players, n, g, code], i) => (
-            <tr key={`${name}:${i}`}>
-              <td className="nm">
-                <span className="tier-dx-name">
-                  <Icon src={icon(code)} />
-                  {name}
-                </span>
-              </td>
-              <td className="p">{int(players)}명</td>
-              <td className="n">{int(n)}</td>
-              <td className="r">{((n / dn) * 100).toFixed(1)}%</td>
-              <Rp g={g} />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
-  );
-}
-
-const CopyIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-    <rect x="5" y="5" width="9" height="9" rx="2" />
-    <path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-    <path d="M3 8.5l3.2 3L13 4.5" />
-  </svg>
-);
-
-const NARROW = "(max-width: 1099px)";
-// dak.gg 루트 페이지의 작성자 링크와 같은 형식. 닉네임은 encodeURIComponent
-const DAK = "https://dak.gg/er";
-
-function useNarrow() {
-  return useSyncExternalStore(
-    (cb) => {
-      const m = window.matchMedia(NARROW);
-      m.addEventListener("change", cb);
-      return () => m.removeEventListener("change", cb);
-    },
-    () => window.matchMedia(NARROW).matches,
-    () => false,
-  );
-}
-
-function Drawer({ c, routes: info, onClose }: { c: TierCombo; routes?: Record<string, TierRouteInfo>; onClose: () => void }) {
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const panel = useRef<HTMLElement>(null);
-  const narrow = useNarrow();
-  const [copied, setCopied] = useState<number | null>(null);
-
-  // 조합을 바꾸면 key가 바뀌어 다시 마운트되므로 열릴 때마다 닫기 버튼으로 초점을 옮김
-  useEffect(() => {
-    closeRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  useEffect(() => {
-    const esc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.documentElement.classList.add("tier-dx-open");
-    window.addEventListener("keydown", esc);
-    return () => {
-      document.documentElement.classList.remove("tier-dx-open");
-      window.removeEventListener("keydown", esc);
-    };
-  }, [onClose]);
-
-  // 1099px 이하는 패널이 화면 전체를 덮으므로 body로 옮기고 뒤쪽을 inert로 막아 초점과 읽기를 패널 안에 둠
-  useEffect(() => {
-    if (!narrow) return;
-    const changed: HTMLElement[] = [];
-    for (const el of document.body.children) {
-      if (el === panel.current || !(el instanceof HTMLElement) || el.inert) continue;
-      el.inert = true;
-      changed.push(el);
-    }
-    return () => {
-      for (const el of changed) el.inert = false;
-    };
-  }, [narrow]);
-
-  useEffect(() => {
-    if (copied == null) return;
-    const t = setTimeout(() => setCopied(null), 1500);
-    return () => clearTimeout(t);
-  }, [copied]);
-
-  const copy = async (id: number) => {
-    try {
-      await navigator.clipboard.writeText(String(id));
-      setCopied(id);
-    } catch {
-      setCopied(null);
-    }
-  };
-
-  const range = c.half != null ? `${signed(c.score - c.half)} ~ ${signed(c.score + c.half)}` : null;
-  const dn = c.dn ?? 0;
-  const routes = c.routes ?? [];
-  const body = (
-    <aside ref={panel} id="tier-dx" className="tier-dx" role="dialog" aria-modal={narrow || undefined} aria-labelledby="tier-dx-h">
-      <header className="tier-dx-head">
-        <span className="tier-dx-pw">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={56} height={56} onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
-          <span className="tier-wb">
-            <Weapon code={c.weapon} />
-          </span>
-        </span>
-        <h2 id="tier-dx-h">
-          {c.weaponName} {c.name}
-        </h2>
-        <span className="tier-grade sm" data-grade={c.grade}>
-          {c.grade}
-        </span>
-        <button ref={closeRef} type="button" className="tier-dx-x" aria-label="닫기" onClick={onClose}>
-          <svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-            <path d="M3 3l10 10M13 3L3 13" />
-          </svg>
-        </button>
-      </header>
-      <div className="tier-dx-body">
-        <dl className="tier-dx-tiles">
-          <div>
-            <dt>점수</dt>
-            <dd>
-              {signed(c.score)}
-              {range && <small>90% 범위 {range}</small>}
-            </dd>
-          </div>
-          <div>
-            <dt>판 수</dt>
-            <dd>
-              {int(c.n)}
-              <small>플레이어 {int(c.players)}명</small>
-            </dd>
-          </div>
-          <div>
-            <dt>평균 순위</dt>
-            <dd>{c.place.toFixed(2)}</dd>
-          </div>
-          <div>
-            <dt>TOP 3</dt>
-            <dd>{c.top3.toFixed(1)}%</dd>
-          </div>
-          <div>
-            <dt>승률</dt>
-            <dd>{c.win.toFixed(1)}%</dd>
-          </div>
-          <div>
-            <dt>픽률</dt>
-            <dd>{c.pick.toFixed(2)}%</dd>
-          </div>
-        </dl>
-        {/* 아래 표는 상위 1,000명 본인 판만 세므로 위 판 수(경기 참가자 전원)와 분모가 다름 */}
-        {dn > 0 && (routes.length > 0 || !!c.traits?.length || !!c.tac?.length) && <p className="tier-dx-base">상위 1,000명의 {int(dn)}판 기준</p>}
-        {dn > 0 && routes.length > 0 && (
-          <section>
-            <table>
-              <Head title="루트" />
-              <tbody>
-                {routes.map(([id, players, n, g, b]) => {
-                  const [title, nick, trait, traitName, tac, tacName] = info?.[id] ?? [];
-                  return (
-                    <tr key={id}>
-                      <td className="nm">
-                        <div className="tier-dx-rt">
-                          <span className="tier-dx-build">
-                            <Icon src={traitIcon(trait)} alt={traitName} />
-                            <Icon src={tacIcon(tac)} alt={tacName} />
-                          </span>
-                          <span className="tier-dx-rn">
-                            <span className="tier-dx-l1">
-                              {title ? (
-                                <a className="tier-dx-title" href={`${DAK}/routes/${id}`} target="_blank" rel="noopener noreferrer" title={title}>
-                                  {title}
-                                </a>
-                              ) : (
-                                info?.[id]?.every((x) => x == null) && <span className="tier-dx-title tier-dx-gone">찾을 수 없음</span>
-                              )}
-                              <button type="button" className="tier-dx-copy" aria-label={`루트 번호 ${id} 복사`} onClick={() => copy(id)}>
-                                {id}
-                                {copied === id ? <CheckIcon /> : <CopyIcon />}
-                              </button>
-                            </span>
-                            {(b || nick) && (
-                              <span className="tier-dx-meta">
-                                {b && (
-                                  <span className="tier-dx-b" data-b={b}>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={BADGE[b].img} alt="" width={14} height={16} />
-                                    {BADGE[b].label}
-                                  </span>
-                                )}
-                                {nick && (
-                                  <a className="tier-dx-by" href={`${DAK}/players/${encodeURIComponent(nick)}`} target="_blank" rel="noopener noreferrer">
-                                    {nick}
-                                  </a>
-                                )}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p">{int(players)}명</td>
-                      <td className="n">{int(n)}</td>
-                      <td className="r">{((n / dn) * 100).toFixed(1)}%</td>
-                      <Rp g={g} />
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </section>
-        )}
-        {dn > 0 && <Split title="핵심 특성" icon={traitIcon} list={c.traits ?? []} dn={dn} />}
-        {dn > 0 && <Split title="전술 스킬" icon={tacIcon} list={c.tac ?? []} dn={dn} />}
-        <p className="sr-only" aria-live="polite">
-          {copied != null ? "루트 번호를 복사했습니다." : ""}
-        </p>
-      </div>
-    </aside>
-  );
-  return narrow ? createPortal(body, document.body) : body;
-}
-
-// 줄 어디를 눌러도 이름 버튼을 누른 것과 같음. 키보드는 이름 버튼으로 엶
-function PickTable({ list, open, thin, onToggle }: { list: TierCombo[]; open: string | null; thin: (c: TierCombo) => boolean; onToggle: (el: HTMLButtonElement, key: string) => void }) {
+// 줄 어디를 눌러도 이름 링크를 누른 것과 같음. 키보드는 이름 링크로 엶
+function PickTable({ list, thin, href, onOpen }: { list: TierCombo[]; thin: (c: TierCombo) => boolean; href: (c: TierCombo) => string; onOpen: () => void }) {
+  const router = useRouter();
   return (
     <table className="kel-table tier-table">
       <thead>
@@ -392,18 +123,25 @@ function PickTable({ list, open, thin, onToggle }: { list: TierCombo[]; open: st
       <tbody>
         {list.map((c, i) => {
           const key = `${c.char}:${c.weapon}`;
-          const on = key === open;
           return (
-            <tr key={key} data-on={on || undefined} data-thin={thin(c) || undefined} onClick={(e) => onToggle(e.currentTarget.querySelector("button")!, key)}>
+            <tr
+              key={key}
+              data-thin={thin(c) || undefined}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("a")) return;
+                onOpen();
+                router.push(href(c));
+              }}
+            >
               <td className="tier-no">{i + 1}</td>
               <td className="l">
                 <span className="tier-who">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={36} height={36} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
-                  <button type="button" aria-expanded={on} aria-controls={on ? "tier-dx" : undefined}>
+                  <Link href={href(c)} prefetch={false} onClick={onOpen}>
                     <b>{c.name}</b>
                     <small>{c.weaponName}</small>
-                  </button>
+                  </Link>
                 </span>
               </td>
               <td className="tier-gc">
@@ -429,36 +167,48 @@ function PickTable({ list, open, thin, onToggle }: { list: TierCombo[]; open: st
 
 export default function TierBoard(p: Props) {
   const [id, setId] = useState(p.initial);
-  const [role, setRole] = useState<string | null>(null);
-  const [sort, setSort] = useState<"score" | "pick">("score");
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState<string | null>(null);
-  const trigger = useRef<HTMLButtonElement | null>(null);
+  const [role, setRole] = useState<string | null>(p.initialRole);
+  const [sort, setSort] = useState<"score" | "pick">(p.initialSort);
+  const [q, setQ] = useState(p.initialQuery);
   const view = p.views.find((v) => v.id === id) ?? p.views[0];
-  const sel = open ? view.combos.find((c) => `${c.char}:${c.weapon}` === open) : undefined;
-  const close = useCallback(() => {
-    setOpen(null);
-    // 좁은 화면은 패널이 사라지며 inert가 풀린 뒤에야 카드에 초점을 줄 수 있음
-    requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
+  const thin = (c: TierCombo) => c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few);
+  const href = (c: TierCombo) => comboPath(c, view.id === p.fallback ? null : view.id);
+
+  // 뒤로 가기는 처음 렌더한 목록을 다시 쓰므로 상태를 주소에 맞춤.
+  // 위쪽 「실험체 티어」 링크로 돌아오면 주소에 역할군과 정렬이 없어 떠날 때 저장한 주소를 씀
+  useEffect(() => {
+    const saved = readBack();
+    const now = new URL(window.location.href);
+    const was = saved && new URL(saved.url, window.location.origin);
+    const same = !!was && now.pathname === was.pathname && (now.searchParams.get("v") ?? "") === (was.searchParams.get("v") ?? "");
+    const src = same && now.search !== was.search && !["r", "s", "q"].some((k) => now.searchParams.has(k)) ? was : now;
+    const v = src.searchParams.get("v");
+    /* eslint-disable react-hooks/set-state-in-effect -- 주소와 탭 저장소는 수화 뒤에만 읽을 수 있음 */
+    setId(p.views.some((x) => x.id === v) ? v! : p.fallback);
+    setRole(src.searchParams.get("r"));
+    setSort(src.searchParams.get("s") === "pick" ? "pick" : "score");
+    setQ(src.searchParams.get("q") ?? "");
+    /* eslint-enable react-hooks/set-state-in-effect */
+    if (src !== now) window.history.replaceState(null, "", src.pathname + src.search);
+    if (same) requestAnimationFrame(() => window.scrollTo(0, saved.y));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 마운트 때 한 번만 맞춤
   }, []);
 
-  const toggle = (el: HTMLButtonElement, key: string) => {
-    const on = key === open;
-    trigger.current = el;
-    setOpen(on ? null : key);
-    // 넓은 화면은 패널이 열리며 보드 폭이 줄어 고른 카드가 화면 밖으로 밀릴 수 있음
-    if (!on) requestAnimationFrame(() => el.scrollIntoView({ block: "nearest" }));
+  // 기간, 역할군, 정렬, 검색어를 주소에 남겨 뒤로 가기와 공유에서 같은 목록을 보여 줌
+  const keep = (next: { v?: string; r?: string | null; s?: "score" | "pick"; q?: string }) => {
+    const url = new URL(window.location.href);
+    const put = (k: string, val: string | null | undefined, empty: string | null) => (val == null || val === empty ? url.searchParams.delete(k) : url.searchParams.set(k, val));
+    if ("v" in next) put("v", next.v, p.fallback);
+    if ("r" in next) put("r", next.r, null);
+    if ("s" in next) put("s", next.s, "score");
+    if ("q" in next) put("q", next.q, "");
+    window.history.replaceState(null, "", url);
   };
-  const thin = (c: TierCombo) => c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few);
-
   const pick = (next: string) => {
     setId(next);
-    setOpen(null);
-    if (role != null && !p.views.find((v) => v.id === next)?.combos.some((c) => c.roles?.includes(role))) setRole(null);
-    const url = new URL(window.location.href);
-    if (next === p.fallback) url.searchParams.delete("v");
-    else url.searchParams.set("v", next);
-    window.history.replaceState(null, "", url);
+    const lost = role != null && !p.views.find((v) => v.id === next)?.combos.some((c) => c.roles?.includes(role));
+    if (lost) setRole(null);
+    keep({ v: next, ...(lost && { r: null }) });
   };
 
   const roles = [...ROLES, ...new Set(view.combos.flatMap((c) => c.roles ?? []))].filter((r, i, a) => a.indexOf(r) === i && view.combos.some((c) => c.roles?.includes(r)));
@@ -516,7 +266,15 @@ export default function TierBoard(p: Props) {
         <div className="tier-ctl">
           <div className="tabs tier-role" role="group" aria-label="역할군">
             {[null, ...roles].map((r) => (
-              <button key={r ?? "all"} type="button" aria-pressed={role === r} onClick={() => setRole(r)}>
+              <button
+                key={r ?? "all"}
+                type="button"
+                aria-pressed={role === r}
+                onClick={() => {
+                  setRole(r);
+                  keep({ r });
+                }}
+              >
                 {r ?? "전체"}
               </button>
             ))}
@@ -528,12 +286,25 @@ export default function TierBoard(p: Props) {
                 ["pick", "픽률 순"],
               ] as const
             ).map(([k, label]) => (
-              <button key={k} type="button" aria-pressed={sort === k} onClick={() => setSort(k)}>
+              <button
+                key={k}
+                type="button"
+                aria-pressed={sort === k}
+                onClick={() => {
+                  setSort(k);
+                  keep({ s: k });
+                }}
+              >
                 {label}
               </button>
             ))}
           </div>
-          <input className="field sm tier-search" type="search" placeholder="실험체 검색" aria-label="실험체 검색" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="field sm tier-search" type="search" placeholder="실험체 검색" aria-label="실험체 검색" value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              keep({ q: e.target.value });
+            }}
+          />
         </div>
         <details className="tier-how">
           <summary>계산 방법</summary>
@@ -590,7 +361,7 @@ export default function TierBoard(p: Props) {
         if (g === "pick")
           return (
             <section key={g} className="tier-board flat" aria-label="픽률 순">
-              <PickTable list={list} open={open} thin={thin} onToggle={toggle} />
+              <PickTable list={list} thin={thin} href={href} onOpen={saveBack} />
             </section>
           );
         return (
@@ -603,17 +374,8 @@ export default function TierBoard(p: Props) {
             <div className="tier-cards">
               {list.map((c) => {
                 const key = `${c.char}:${c.weapon}`;
-                const on = key === open;
                 return (
-                  <button
-                    key={key}
-                    type="button"
-                    className="tier-card"
-                    data-thin={thin(c) || undefined}
-                    aria-expanded={on}
-                    aria-controls={on ? "tier-dx" : undefined}
-                    onClick={(e) => toggle(e.currentTarget, key)}
-                  >
+                  <Link key={key} href={href(c)} prefetch={false} className="tier-card" data-thin={thin(c) || undefined} onClick={saveBack}>
                     <span className="tier-pw">
                       {/* 새 실험체는 초상 파일을 더하기 전까지 칸만 남김 */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -626,14 +388,13 @@ export default function TierBoard(p: Props) {
                     <small>{c.weaponName}</small>
                     <span className="tier-sc">{signed(c.score)}</span>
                     <small>{int(c.n)}판</small>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
           </section>
         );
       })}
-      {sel && <Drawer key={open} c={sel} routes={p.routes} onClose={close} />}
     </>
   );
 }
