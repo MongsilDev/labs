@@ -530,6 +530,10 @@ describe("순위 막대", () => {
     expect(barLength(s)).toBe(14);
     expect(barWidths(s)).toEqual([10, 4, 0, 0]);
   });
+  it("소수 감점에서 남는 오차로 빈 칸을 만들지 않음", () => {
+    expect(barWidths({ rounds: [r(10.1), r(5.2), r(3)], penalty: 0.3 })).toEqual([10.1, 5.2, 2.7]);
+    expect(barWidths({ rounds: [r(10.1), r(5.2), r(3)], penalty: 3 })).toEqual([10.1, 5.2, 0]);
+  });
   it("감점이 없으면 라운드 점수 그대로", () => {
     const s = { rounds: [r(10), r(0), r(3)], penalty: 0 };
     expect(barWidths(s)).toEqual([10, 0, 3]);

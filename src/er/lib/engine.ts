@@ -48,7 +48,7 @@ export function barWidths(s: { rounds: (TeamRound | null)[]; penalty: number }) 
   let rest = barLength(s);
   return s.rounds.map((r) => {
     const w = r && r.score > 0 ? Math.min(r.score, rest) : 0;
-    rest -= w;
+    rest = round2(rest - w);
     return w;
   });
 }

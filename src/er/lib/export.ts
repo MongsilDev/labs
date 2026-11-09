@@ -220,26 +220,8 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
     });
     const bt = barLength(s);
     if (s.penalty > 0 && bt > 0) {
-      const pw = (Math.min(s.penalty, bt) / max) * barW;
-      const px = colBar + ((bt - Math.min(s.penalty, bt)) / max) * barW;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(px, mid - barH / 2 - 3, pw, barH + 6);
-      ctx.clip();
-      ctx.fillStyle = C.bg;
-      ctx.fillRect(px, mid - barH / 2 - 3, pw, barH + 6);
-      ctx.strokeStyle = C.minus;
-      ctx.lineWidth = 4;
-      for (let k = -barH; k < pw + barH; k += 9) {
-        ctx.beginPath();
-        ctx.moveTo(px + k, mid + barH / 2 + 3);
-        ctx.lineTo(px + k + barH + 6, mid - barH / 2 - 3);
-        ctx.stroke();
-      }
-      ctx.restore();
-      ctx.strokeStyle = C.minus;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(px, mid - barH / 2 - 3, pw, barH + 6);
+      ctx.fillStyle = C.minus;
+      ctx.fillRect(colBar + (bt / max) * barW - 6, mid - barH / 2 - 3, 6, barH + 6);
     }
 
     font(ctx, 600, 28 * scale);

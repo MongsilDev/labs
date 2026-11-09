@@ -399,12 +399,13 @@
   :root[data-theme="light"] .kel-heat td.h.dl {
     color: #000;
   }
+  /* 감점 크기는 감점 열과 글자로 보이고, 막대 끝에는 감점이 있다는 표시만 둠 */
   .bar .pen {
     position: absolute;
     top: -2px;
     bottom: -2px;
-    background: repeating-linear-gradient(135deg, var(--minus) 0 4px, var(--surface) 4px 7px);
-    border: 1.5px solid var(--minus);
+    width: 4px;
+    background: var(--minus);
     border-radius: 2px;
   }
   .legend {
