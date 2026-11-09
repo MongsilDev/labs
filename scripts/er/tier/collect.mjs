@@ -21,6 +21,8 @@ const MAX_PAGES = 80;
 const STEPS = [5, 10, 20, 30, 50];
 const STEP_MS = 60_000;
 const WINDOWS = [7, 3, 1];
+// 패치와 상관없이 날짜로 세는 기간. 수집 기간이 모자라면 탭을 숨김
+const SPANS = [28, 14];
 // bestWeapon 코드와 WeaponTypeInfo 이름. 20과 23은 CharacterMastery의 쌍절곤, 카메라 전용 실험체로 대조, 12와 17은 쓰는 무기 없음
 const WEAPON = {
   1: "Glove", 2: "Tonfa", 3: "Bat", 4: "Whip", 5: "HighAngleFire", 6: "DirectFire", 7: "Bow", 8: "CrossBow",
@@ -33,6 +35,8 @@ const args = process.argv.slice(2);
 const flag = (name) => args.includes(`--${name}`);
 // 이미 받은 최신 경기에서 멈추지 않고 since까지 거슬러 받음
 const BACKFILL = flag("backfill");
+// 수집 없이 DB에 있는 행으로 tier.json만 다시 씀
+const PUBLISH_ONLY = flag("publish");
 const opt = (name, def) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? Number(args[i + 1]) : def;
@@ -420,9 +424,17 @@ function publish(s, nm) {
     const v = view(`patch-${p}`, `${p} 패치`, rows, nm, { patch: p, ready, ...(partial && { partial }) });
     if (v) views.push(v);
   }
+  for (const d of SPANS) {
+    const since = now - d * 86_400_000;
+    if (all[0].t > since) continue;
+    const rows = all.filter((r) => r.t >= since);
+    const ps = [...new Set(rows.map((r) => r.patch))].sort(cmpPatch);
+    const v = view(`${d}d`, `최근 ${d}일`, rows, nm, { patch: cur, days: d, ...(ps.length > 1 && { patches: ps }) });
+    if (v) views.push(v);
+  }
   const curRows = all.filter((r) => r.patch === cur);
   // 짧은 기간은 조합 사이 분산을 추정하기에 표본이 적어 패치 전체의 지표별 k를 씀
-  const k = views.find((v) => v.patch === cur)?.ks;
+  const k = views.find((v) => v.id === `patch-${cur}`)?.ks;
   for (const d of WINDOWS) {
     const rows = curRows.filter((r) => r.t >= now - d * 86_400_000);
     const v = view(`${d}d`, `최근 ${d}일`, rows, nm, { patch: cur, days: d }, k);
@@ -456,7 +468,7 @@ async function once(measure) {
     if (!s) throw new Error("현재 시즌을 찾지 못했습니다.");
     const nm = await names();
     let run = null;
-    if (s.regular && Date.now() < s.end) {
+    if (s.regular && Date.now() < s.end && !PUBLISH_ONLY) {
       const since = Math.max(s.start, Date.now() - opt("days", 11) * 86_400_000);
       run = await collect(s, since, { measure });
       log(`새 행 ${run.added}, 요청 ${stats.sent}, 한도 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);

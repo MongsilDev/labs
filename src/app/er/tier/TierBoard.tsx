@@ -118,6 +118,7 @@ export default function TierBoard(p: Props) {
           <h1 className="text-[28px] font-extrabold tracking-[-0.5px]">실험체 티어</h1>
           <p className="text-[14px] text-fg-3 tabular-nums">
             {p.server} 상위 1,000명, {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}
+            {view.patches && `${view.patches[0]}~${view.patches.at(-1)} 패치, `}
             {int(view.rows)}판, <span className="whitespace-nowrap">{timeKo(p.updatedAt)} 갱신</span>
           </p>
         </div>
@@ -133,7 +134,7 @@ export default function TierBoard(p: Props) {
         </div>
         {p.early && (
           <p className="text-[14px] text-fg-2" role="status">
-            {view.patch === p.early.patch
+            {view.patch === p.early.patch && !view.patches
               ? `${p.early.label} 기록이 ${int(p.publishRows)}판보다 적어 등급이 크게 바뀔 수 있습니다. 지금 ${int(p.early.rows)}판입니다.`
               : `${p.early.label} 표는 ${int(p.publishRows)}판부터 기본으로 보여 줍니다. 지금 ${int(p.early.rows)}판입니다.`}
           </p>

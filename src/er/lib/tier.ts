@@ -29,6 +29,8 @@ export type TierView = {
   ready?: boolean;
   /** 수집 시작 뒤 경기만 담은 패치 */
   partial?: boolean;
+  /** 날짜로 센 기간에 섞인 패치, 둘 이상일 때만 */
+  patches?: string[];
   from: number;
   to: number;
   rows: number;
