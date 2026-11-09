@@ -189,8 +189,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   if (!data || !rows.length) return <KelPage user={user} owner={owner} screen="teams" missing={NO_DATA} />;
   const tabs = (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <KelTabs label="범위" items={scopes} current={scope} href={(s) => href(s, view)} />
-      <KelTabs label="보기" items={VIEWS} current={view} href={(v) => href(scope, v)} />
+      <KelTabs prefetch label="범위" items={scopes} current={scope} href={(s) => href(s, view)} />
+      <KelTabs prefetch label="보기" items={VIEWS} current={view} href={(v) => href(scope, v)} />
     </div>
   );
 

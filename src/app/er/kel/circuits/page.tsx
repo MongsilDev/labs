@@ -81,7 +81,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
         </KelScroll>
       </section>
       <section className="panel p-5 max-[760px]:p-4" aria-label="순위 변화">
-        <KelTabs label="순위 변화" items={VIEWS} current={view} screen="circuits" param="v" />
+        <KelTabs prefetch label="순위 변화" items={VIEWS} current={view} screen="circuits" param="v" />
         <div className="mt-3">
           {view === "sum" ? (
             <BumpChart key={view} rows={season.map((r) => ({ key: r.team.key, ranks: r.ranks }))} labels={CIRCUITS} initial={[]} legend="" suffix="까지" />
