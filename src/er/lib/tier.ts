@@ -5,7 +5,7 @@ export type AuthorBadge = "e" | "d";
 export type TierRoute = [number, number, number, number | null, AuthorBadge?];
 /** [이름, 플레이어 수, 판 수, 평균 RP 획득, 코드] */
 export type TierSplit = [string, number, number, number | null, number?];
-/** 루트 번호별 [이름, 작성자 닉네임, 핵심 특성 코드, 핵심 특성 이름, 전술 스킬 그룹, 전술 스킬 이름] */
+/** 루트 번호별 [이름, 작성자 닉네임, 핵심 특성 코드, 핵심 특성 이름, 전술 스킬 그룹, 전술 스킬 이름]. 게임에서 찾을 수 없는 루트는 모두 null */
 export type TierRouteInfo = [string | null, string | null, number | null, string | null, number | null, string | null];
 
 export type TierCombo = {

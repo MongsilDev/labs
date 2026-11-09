@@ -633,7 +633,11 @@ async function routeMeta(s, ids, nm) {
   const info = {};
   for (const id of ids) {
     const r = getRoute.get(id);
-    if (!r) continue;
+    // 원본은 있는데 routes 행이 없으면 recommend가 404였던 루트. 화면이 아직 받지 않은 루트와 구분하도록 빈 값을 둠
+    if (!r) {
+      if (hasRawRoute.get(id)) info[id] = [null, null, null, null, null, null];
+      continue;
+    }
     const at = r.author ? (rank.get(r.author) ?? null) : null;
     rankRoute.run(at, id);
     const b = at == null ? null : AUTHOR_BADGE.find(([max]) => at <= max)?.[1];

@@ -320,7 +320,7 @@ function Drawer({ c, routes: info, onClose }: { c: TierCombo; routes?: Record<st
                                   {title}
                                 </a>
                               ) : (
-                                <span className="tier-dx-title">루트 {id}</span>
+                                info?.[id]?.every((x) => x == null) && <span className="tier-dx-title tier-dx-gone">찾을 수 없음</span>
                               )}
                               <button type="button" className="tier-dx-copy" aria-label={`루트 번호 ${id} 복사`} onClick={() => copy(id)}>
                                 {id}
