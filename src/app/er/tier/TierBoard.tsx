@@ -87,11 +87,11 @@ function Rp({ g }: { g: number | null }) {
   return <td className={g > 0 ? "g up" : g < 0 ? "g down" : "g"}>{signed(g)}</td>;
 }
 
-function Head({ first }: { first: string }) {
+function Head({ first, hide }: { first: string; hide?: boolean }) {
   return (
     <thead>
       <tr>
-        <th scope="col">{first}</th>
+        <th scope="col">{hide ? <span className="sr-only">{first}</span> : first}</th>
         <th scope="col" className="p">
           플레이어
         </th>
@@ -109,13 +109,13 @@ function Head({ first }: { first: string }) {
   );
 }
 
-function Split({ title, first, list, dn }: { title: string; first: string; list: TierSplit[]; dn: number }) {
+function Split({ title, first, hide, list, dn }: { title: string; first: string; hide?: boolean; list: TierSplit[]; dn: number }) {
   if (!list.length) return null;
   return (
     <section>
       <h3>{title}</h3>
       <table>
-        <Head first={first} />
+        <Head first={first} hide={hide} />
         <tbody>
           {list.map(([name, players, n, g], i) => (
             <tr key={`${name}:${i}`}>
@@ -264,6 +264,8 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
             <dd>{c.pick.toFixed(2)}%</dd>
           </div>
         </dl>
+        {/* 아래 표는 상위 1,000명 본인 판만 세므로 위 판 수(경기 참가자 전원)와 분모가 다름 */}
+        {dn > 0 && (routes.length > 0 || !!c.traits?.length || !!c.tac?.length) && <p className="tier-dx-base">상위 1,000명의 {int(dn)}판 기준</p>}
         {dn > 0 && routes.length > 0 && (
           <section>
             <h3>루트</h3>
@@ -296,7 +298,7 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
           </section>
         )}
         {dn > 0 && <Split title="특성" first="핵심 특성" list={c.traits ?? []} dn={dn} />}
-        {dn > 0 && <Split title="전술 스킬" first="전술 스킬" list={c.tac ?? []} dn={dn} />}
+        {dn > 0 && <Split title="전술 스킬" first="전술 스킬" hide list={c.tac ?? []} dn={dn} />}
         <p className="sr-only" aria-live="polite">
           {copied != null ? "루트 번호를 복사했습니다." : ""}
         </p>
