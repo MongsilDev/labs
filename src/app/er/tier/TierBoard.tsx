@@ -12,6 +12,7 @@ type Props = {
   initial: string;
   fallback: string;
   updatedAt: number;
+  seasonEnd: number;
   patch: string | null;
   server: string;
   thin: number;
@@ -24,6 +25,55 @@ function Weapon({ code, label }: { code: number; label?: string }) {
   const i = WEAPON_SPRITE.indexOf(code);
   if (i < 0) return null;
   return <span className="tier-wg" style={{ ["--i" as string]: i }} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} />;
+}
+
+function Arrow() {
+  return (
+    <>
+      <svg className="tier-arr" viewBox="0 0 12 12" width="12" height="12" aria-hidden>
+        <path d="M2 6h7M6 3l3 3-3 3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span className="sr-only">에서</span>
+    </>
+  );
+}
+
+type Moved = { c: TierCombo; o: TierCombo };
+
+function MovedList({ title, list }: { title: string; list: Moved[] }) {
+  if (!list.length) return null;
+  return (
+    <>
+      <h3>
+        {title} {list.length}
+      </h3>
+      <ul>
+        {list.map(({ c, o }) => (
+          <li key={`${c.char}:${c.weapon}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={28} height={28} loading="lazy" />
+            <span className="truncate">
+              {c.name} {c.weaponName}
+            </span>
+            <span className="tier-mv">
+              <span className="tier-grade sm" data-grade={o.grade}>
+                {o.grade}
+              </span>
+              <Arrow />
+              <span className="tier-grade sm" data-grade={c.grade}>
+                {c.grade}
+              </span>
+            </span>
+            <span className="tier-mv">
+              {signed(o.score)}
+              <Arrow />
+              {signed(c.score)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
 }
 
 const dayKo = (at: number) => new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(at);
@@ -67,6 +117,12 @@ function Detail({ c, id }: { c: TierCombo; id: string }) {
           <dt>플레이어</dt>
           <dd>{int(c.players)}명</dd>
         </div>
+        {c.lead3 != null && (
+          <div>
+            <dt>많이 한 3명</dt>
+            <dd>판의 {c.lead3}%</dd>
+          </div>
+        )}
       </dl>
     </div>
   );
@@ -104,6 +160,16 @@ export default function TierBoard(p: Props) {
   const query = q.trim();
   const shown = view.combos.filter((c) => (weapon == null || c.weapon === weapon) && (!query || c.name.includes(query)));
   const w = p.weights;
+  // 지금 패치 탭에서만 직전 패치와 비교. 점수 차이의 90% 범위에 0이 들어가지 않는 조합
+  const prev = view.id === `patch-${p.patch}` && !view.season ? p.views.find((v) => v.id.startsWith("patch-") && v.id !== view.id && !v.season) : undefined;
+  const moved: Moved[] = prev
+    ? shown
+        .flatMap((c) => {
+          const o = prev.combos.find((x) => x.char === c.char && x.weapon === c.weapon);
+          return o && c.half != null && o.half != null && Math.abs(c.score - o.score) > Math.hypot(c.half, o.half) ? [{ c, o }] : [];
+        })
+        .sort((a, b) => b.c.score - b.o.score - (a.c.score - a.o.score))
+    : [];
 
   return (
     <>
@@ -117,9 +183,10 @@ export default function TierBoard(p: Props) {
         <div className="min-w-0">
           <h1 className="text-[28px] font-extrabold tracking-[-0.5px]">실험체 티어</h1>
           <p className="text-[14px] text-fg-3 tabular-nums">
-            {p.server} 상위 1,000명, {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}
+            {p.server} 상위 1,000명, {view.season && `${view.season}, `}
+            {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}
             {view.patches && `${view.patches[0]}~${view.patches.at(-1)} 패치, `}
-            {int(view.rows)}판, <span className="whitespace-nowrap">{timeKo(p.updatedAt)} 갱신</span>
+            {int(view.rows)}판, <span className="whitespace-nowrap">{view.season ? `${dayKo(view.to)} 경기까지` : `${timeKo(p.updatedAt)} 갱신`}</span>
           </p>
         </div>
       </div>
@@ -128,16 +195,22 @@ export default function TierBoard(p: Props) {
         <div className="tabs" role="tablist" aria-label="기간">
           {p.views.map((v) => (
             <button key={v.id} type="button" role="tab" aria-selected={v.id === view.id} onClick={() => pick(v.id)}>
-              {v.id === `patch-${p.patch}` ? `${v.label} ${kstDay(p.updatedAt) - kstDay(v.from) + 1}일째` : v.label}
+              {v.id === `patch-${p.patch}` && !v.season ? `${v.label} ${kstDay(Math.min(p.updatedAt, p.seasonEnd)) - kstDay(v.from) + 1}일째` : v.label}
             </button>
           ))}
         </div>
-        {p.early && (
+        {p.early && view.patch === p.early.patch && !view.patches && !view.season ? (
           <p className="text-[14px] text-fg-2" role="status">
-            {view.patch === p.early.patch && !view.patches
-              ? `${p.early.label} 기록이 ${int(p.publishRows)}판보다 적어 등급이 크게 바뀔 수 있습니다. 지금 ${int(p.early.rows)}판입니다.`
-              : `${p.early.label} 표는 ${int(p.publishRows)}판부터 기본으로 보여 줍니다. 지금 ${int(p.early.rows)}판입니다.`}
+            {p.early.label} 기록이 {int(p.publishRows)}판보다 적어 등급이 크게 바뀔 수 있습니다. 지금 {int(p.early.rows)}판입니다.
           </p>
+        ) : (
+          // 새 시즌 첫 패치는 판 수와 상관없이 기본이라 이 안내가 없음
+          p.early &&
+          p.fallback !== `patch-${p.early.patch}` && (
+            <p className="text-[14px] text-fg-2" role="status">
+              {p.early.label} 표는 {int(p.publishRows)}판부터 기본으로 보여 줍니다. 지금 {int(p.early.rows)}판입니다.
+            </p>
+          )
         )}
         <div className="tier-ctl">
           <div className="tier-wf" role="group" aria-label="무기">
@@ -163,8 +236,23 @@ export default function TierBoard(p: Props) {
             판 수가 적은 조합은 점수를 그 실험체의 전체 점수에 가깝게 보정합니다.
             <br />
             {p.thin}판 미만인 조합은 흐리게 표시합니다.
+            {prev && (
+              <>
+                <br />
+                패치 비교에는 점수 차이의 90% 범위에 0이 들어가지 않는 조합만 넣습니다.
+              </>
+            )}
           </p>
         </details>
+        {prev && moved.length > 0 && (
+          <details className="tier-how tier-moved">
+            <summary>
+              {prev.patch} 패치보다 크게 바뀐 조합 {moved.length}개
+            </summary>
+            <MovedList title="오른 조합" list={moved.filter((m) => m.c.score > m.o.score)} />
+            <MovedList title="내린 조합" list={moved.filter((m) => m.c.score < m.o.score)} />
+          </details>
+        )}
       </div>
 
       {!shown.length && (
@@ -204,8 +292,9 @@ export default function TierBoard(p: Props) {
                       }}
                     >
                       <span className="tier-pw">
+                        {/* 새 실험체는 초상 파일을 더하기 전까지 칸만 남김 */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" />
+                        <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
                         <span className="tier-wb">
                           <Weapon code={c.weapon} />
                         </span>

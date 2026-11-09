@@ -15,6 +15,8 @@ export type TierCombo = {
   n: number;
   players: number;
   top: number;
+  /** 판을 가장 많이 한 3명의 판 비율 %, 수집기 갱신 전 표에는 없음 */
+  lead3?: number;
   place: number;
   top3: number;
   win: number;
@@ -31,6 +33,8 @@ export type TierView = {
   partial?: boolean;
   /** 날짜로 센 기간에 섞인 패치, 둘 이상일 때만 */
   patches?: string[];
+  /** 지난 시즌 표에서 남긴 탭의 시즌 이름. 화면에서만 붙임 */
+  season?: string;
   from: number;
   to: number;
   rows: number;
@@ -50,6 +54,10 @@ export type TierData = {
   band: { name: string; server: string; floor: number; cut: number | null };
   rule: { cap: number; kMin: number; kMax: number; thin: number; publishRows: number; weights?: { gain: number; place: number; top3: number } };
   views: TierView[];
+  /** 새 시즌 첫 집계 때 남긴 지난 시즌 마지막 표의 패치 탭 */
+  past?: { season: { id: number; name: string; end: number }; views: TierView[] };
+  /** 새 정규 시즌이 시작됐지만 집계할 행이 아직 없을 때 그 시즌 이름 */
+  next?: string;
 };
 
 // scripts/er/tier/score.mjs의 GRADES와 같은 값. 화면 설명용

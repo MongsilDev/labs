@@ -15,8 +15,10 @@ export const metadata: Metadata = {
 export default async function TierPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [user, data, query] = await Promise.all([currentUser(), getTier(), searchParams]);
   const v = Array.isArray(query.v) ? query.v[0] : query.v;
-  const view = data ? pickView(data, v) : null;
+  // 지난 시즌 탭은 뒤에 붙이고 기본값은 늘 지금 시즌
+  const views = data ? [...data.views, ...(data.past?.views.map((x) => ({ ...x, season: data.past!.season.name })) ?? [])] : [];
   const fallback = data ? pickView(data) : null;
+  const view = views.find((x) => x.id === v) ?? fallback;
   const cur = data?.views.find((x) => x.id === `patch-${data.patch}`);
   const early = data?.state === "collecting" && cur && !cur.ready ? { label: cur.label, patch: cur.patch, rows: cur.rows } : undefined;
   return (
@@ -36,14 +38,16 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
           <>
             {data.state === "offseason" && (
               <p className="pt-3 text-[14px] text-fg-2" role="status">
-                시즌이 끝나 {data.season.name}의 마지막 표를 보여 줍니다.
+                {data.next ? `${data.next} 상위 1,000명 기록이 아직 없어 ` : "시즌이 끝나 "}
+                {data.season.name}의 마지막 표를 보여 줍니다.
               </p>
             )}
             <TierBoard
-              views={data.views}
+              views={views}
               initial={view.id}
               fallback={fallback.id}
               updatedAt={data.updatedAt}
+              seasonEnd={data.season.end}
               patch={data.patch}
               server={data.band.server}
               thin={data.rule.thin}

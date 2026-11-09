@@ -20,7 +20,7 @@ const PUBLISH_ROWS = Number(process.env.TIER_PUBLISH_ROWS || 15000);
 const MAX_PAGES = 80;
 const STEPS = [5, 10, 20, 30, 50];
 const STEP_MS = 60_000;
-const WINDOWS = [7, 3, 1];
+const WINDOWS = [7];
 // 패치와 상관없이 날짜로 세는 기간. 수집 기간이 모자라면 탭을 숨김
 const SPANS = [28, 14];
 // bestWeapon 코드와 WeaponTypeInfo 이름. 20과 23은 CharacterMastery의 쌍절곤, 카메라 전용 실험체로 대조, 12와 17은 쓰는 무기 없음
@@ -379,6 +379,7 @@ function view(id, label, rows, nm, extra = {}, k) {
       n: c.n,
       players: c.players,
       top: round(c.top, 2),
+      lead3: round(c.lead3 * 100, 0),
       place: round(c.place, 2),
       top3: round(c.top3 * 100, 1),
       win: round(c.win * 100, 1),
@@ -404,14 +405,17 @@ const prune = db.prepare(`DELETE FROM rows WHERE season <> ? OR t < ?`);
 
 function publish(s, nm) {
   const now = Date.now();
+  const lastFile = join(DIR, "tier.json");
+  const last = existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null;
   const all = s.regular ? selectRows.all(s.id, SERVER, s.start) : [];
-  // 프리 시즌과 새 시즌 첫 경기 전에는 마지막 표를 그대로 두고 상태만 바꿈
+  // 프리 시즌과 새 시즌 첫 집계 전에는 마지막 표를 그대로 두고 상태만 바꿈
   if (!all.length) {
-    const last = join(DIR, "tier.json");
-    if (existsSync(last)) writeTier({ ...JSON.parse(readFileSync(last, "utf8")), state: "offseason", updatedAt: now });
+    if (last) writeTier({ ...last, state: "offseason", updatedAt: now, next: s.regular && last.season?.id !== s.id ? s.name : undefined });
     log("집계할 행이 없어 마지막 표를 유지합니다.");
     return;
   }
+  // 새 시즌 첫 집계 때 지난 시즌 마지막 표의 패치 탭만 남김. 한 시즌 전까지만 둠
+  const past = last && last.season?.id !== s.id ? { season: last.season, views: last.views.filter((v) => v.id.startsWith("patch-")) } : last?.past;
   const patches = [...new Set(all.map((r) => r.patch))].sort(cmpPatch);
   const cur = patches.at(-1);
   const views = [];
@@ -436,6 +440,8 @@ function publish(s, nm) {
   // 짧은 기간은 조합 사이 분산을 추정하기에 표본이 적어 패치 전체의 지표별 k를 씀
   const k = views.find((v) => v.id === `patch-${cur}`)?.ks;
   for (const d of WINDOWS) {
+    // 패치가 d일보다 짧으면 패치 탭과 같은 행이라 만들지 않음
+    if (!curRows.length || curRows[0].t >= now - d * 86_400_000) continue;
     const rows = curRows.filter((r) => r.t >= now - d * 86_400_000);
     const v = view(`${d}d`, `최근 ${d}일`, rows, nm, { patch: cur, days: d }, k);
     if (v) views.push(v);
@@ -453,6 +459,7 @@ function publish(s, nm) {
     rule: { ...RULE, publishRows: PUBLISH_ROWS },
     rate: existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : undefined,
     views,
+    ...(past && { past }),
   };
   writeTier(data);
   const removed = prune.run(s.id, now - KEEP_DAYS * 86_400_000).changes;

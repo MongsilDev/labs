@@ -1376,6 +1376,44 @@
     margin-top: 8px;
     line-height: 1.7;
   }
+  .tier-moved h3 {
+    margin-top: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .tier-moved ul {
+    max-width: 520px;
+    margin-top: 4px;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .tier-moved li {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto 104px;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .tier-moved img {
+    border-radius: 6px;
+  }
+  .tier-mv {
+    display: inline-flex;
+    align-items: center;
+    justify-content: end;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .tier-arr {
+    color: var(--text-3);
+  }
+  .tier-grade.sm {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    font-size: 12px;
+  }
   .tier-board {
     display: grid;
     grid-template-columns: 64px minmax(0, 1fr);

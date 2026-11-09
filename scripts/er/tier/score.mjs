@@ -61,6 +61,7 @@ function summarize(rows, base, cap) {
     raw: rows.reduce((a, r) => a + r.gain - base.gain, 0) / n,
     players: new Set(rows.map((r) => r.player)).size,
     top: Math.max(...countBy(rows, (r) => r.player).values()) / n,
+    lead3: [...countBy(rows, (r) => r.player).values()].sort((a, b) => b - a).slice(0, 3).reduce((a, b) => a + b, 0) / n,
     place: rows.reduce((a, r) => a + r.rank, 0) / n,
     top3: rows.filter((r) => r.rank <= 3).length / n,
     win: rows.filter((r) => r.rank === 1).length / n,
