@@ -69,6 +69,9 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
             { name: "정렬", items: SORTS.map(([k, l]) => ({ href: url({ sort: k }), label: l, on: k === sort })) },
           ]}
         />
+        {!list.length ? (
+          <p className="text-ink-3" role="status">이 기간은 집계가 아직 없습니다.</p>
+        ) : (
         <table className="tbl self-start">
           <thead>
             <tr>
@@ -100,7 +103,7 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
                   <tr key={`${c.char}-${c.weapon}`} style={{ boxShadow: `inset 3px 0 0 var(--g-${g.toLowerCase()})` }}>
                     <td className="l !pl-3.5 text-ink-3">{++rank}</td>
                     <td className="l">
-                      <Link href={`/next/er/tier/${c.char}-${c.weapon}`} className="flex items-center gap-2">
+                      <Link href={`/next/er/tier/${c.char}-${c.weapon}${q.v ? `?v=${encodeURIComponent(q.v)}` : ""}`} className="flex items-center gap-2">
                         <Image className="portrait" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={24} height={24} unoptimized />
                         <span className="font-semibold">{c.name}</span>
                         <span className="text-ink-3">{c.weaponName}</span>
@@ -119,6 +122,7 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
             );
           })}
         </table>
+        )}
       </div>
     </Shell>
   );
