@@ -51,7 +51,7 @@ export default async function NextKelRecords({ searchParams }: { searchParams: P
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">한 게임 기록</h1>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <KelNav here="records" />
         <div className="grid min-w-0 content-start gap-10">
           <nav className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0" aria-label="범위">
@@ -88,7 +88,7 @@ export default async function NextKelRecords({ searchParams }: { searchParams: P
               </table>
             </div>
           </section>
-          <div className="grid gap-10 xl:grid-cols-2">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-10 xl:grid-cols-2">
             <section className="sec min-w-0">
               <h2 className="sec-h">팀 최고 기록</h2>
               <table className="tbl">
@@ -96,13 +96,13 @@ export default async function NextKelRecords({ searchParams }: { searchParams: P
                   <tr>
                     <td className="l text-ink-2">팀 킬</td>
                     <td className="text-[15px] font-black">{rec.teamKills.kills}</td>
-                    <td className="l"><TeamCell g={rec.teamKills} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(rec.teamKills)}, {rec.teamKills.placement}위</span></td>
+                    <td className="l !py-1.5 !whitespace-normal"><TeamCell g={rec.teamKills} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(rec.teamKills)}, {rec.teamKills.placement}위</span></td>
                   </tr>
                   {rec.teamScore.games.map((g) => (
                     <tr key={`${g.gameId}-${g.team}`}>
                       <td className="l text-ink-2">게임 점수</td>
                       <td className="text-[15px] font-black">{fmt(rec.teamScore.value)}</td>
-                      <td className="l"><TeamCell g={g} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(g)}, 순위 점수 {placementPoints(g.placement)}, 킬 점수 {fmt(g.killScore)}</span></td>
+                      <td className="l !py-1.5 !whitespace-normal"><TeamCell g={g} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(g)}, 순위 점수 {placementPoints(g.placement)}, 킬 점수 {fmt(g.killScore)}</span></td>
                     </tr>
                   ))}
                 </tbody>

@@ -61,7 +61,7 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
           {data.band.server} 상위 1,000명 경기 {n(view.rows)}판, {at} 갱신
         </p>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <Rail
           groups={[
             { name: "기간", items: data.views.map((x) => ({ href: url({ v: x.id }), label: x.label, on: x.id === view.id })) },
@@ -72,56 +72,58 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
         {!list.length ? (
           <p className="text-ink-3" role="status">{view.combos.length ? <>이 기간에는 {role} 실험체가 없습니다.<br /><Link href={url({ role: undefined })} className="underline">역할군 전체</Link>로 바꿔주세요.</> : <>이 기간은 집계가 아직 없습니다.<br />다른 기간을 골라주세요.</>}</p>
         ) : (
-        <table className="tbl self-start">
-          <thead>
-            <tr>
-              <th className="l w-10 !pl-3.5">#</th>
-              <th className="l">실험체</th>
-              <th>점수</th>
-              <th className="hidden md:table-cell">90% 범위</th>
-              <th>TOP3</th>
-              <th className="hidden md:table-cell">평균 순위</th>
-              <th className="hidden md:table-cell">승률</th>
-              <th>픽률</th>
-              <th className="hidden sm:table-cell">판</th>
-            </tr>
-          </thead>
-          {GRADES.map((g) => {
-            const rows = list.filter((c) => c.grade === g).sort((a, b) => key(b) - key(a));
-            if (!rows.length) return null;
-            return (
-              <tbody key={g}>
-                <tr className="pointer-events-none">
-                  <td colSpan={9} className="l !h-auto !border-b-0 pt-4 pb-1">
-                    <span className="flex items-center gap-2">
-                      <span className={`grade grade-${g}`}>{g}</span>
-                      <span className="text-[12px] text-ink-3 num">{rows.length}개</span>
-                    </span>
-                  </td>
-                </tr>
-                {rows.map((c) => (
-                  <tr key={`${c.char}-${c.weapon}`} style={{ boxShadow: `inset 3px 0 0 var(--g-${g.toLowerCase()})` }}>
-                    <td className="l !pl-3.5 text-ink-3">{++rank}</td>
-                    <td className="l">
-                      <Link href={`/next/er/tier/${c.char}-${c.weapon}${q.v ? `?v=${encodeURIComponent(q.v)}` : ""}`} className="flex items-center gap-2">
-                        <Image className="portrait" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={24} height={24} unoptimized />
-                        <span className="font-semibold">{c.name}</span>
-                        <span className="text-ink-3">{c.weaponName}</span>
-                      </Link>
+        <div className="scroll-fade -mx-4 min-w-0 self-start px-4 lg:mx-0 lg:px-0">
+          <table className="tbl self-start">
+            <thead>
+              <tr>
+                <th className="l w-10 !pl-3.5">#</th>
+                <th className="l">실험체</th>
+                <th>점수</th>
+                <th className="hidden md:table-cell">90% 범위</th>
+                <th>TOP3</th>
+                <th className="hidden md:table-cell">평균 순위</th>
+                <th className="hidden md:table-cell">승률</th>
+                <th>픽률</th>
+                <th className="hidden sm:table-cell">판</th>
+              </tr>
+            </thead>
+            {GRADES.map((g) => {
+              const rows = list.filter((c) => c.grade === g).sort((a, b) => key(b) - key(a));
+              if (!rows.length) return null;
+              return (
+                <tbody key={g}>
+                  <tr className="pointer-events-none">
+                    <td colSpan={9} className="l !h-auto !border-b-0 pt-4 pb-1">
+                      <span className="flex items-center gap-2">
+                        <span className={`grade grade-${g}`}>{g}</span>
+                        <span className="text-[12px] text-ink-3 num">{rows.length}개</span>
+                      </span>
                     </td>
-                    <td className="font-bold">{signed(c.score)}</td>
-                    <td className="hidden md:table-cell"><Range c={c} lo={lo} hi={hi} /></td>
-                    <td>{c.top3.toFixed(1)}%</td>
-                    <td className="hidden md:table-cell">{c.place.toFixed(2)}</td>
-                    <td className="hidden md:table-cell">{c.win.toFixed(1)}%</td>
-                    <td>{c.pick.toFixed(2)}%</td>
-                    <td className="hidden text-ink-3 sm:table-cell">{n(c.n)}</td>
                   </tr>
-                ))}
-              </tbody>
-            );
-          })}
-        </table>
+                  {rows.map((c) => (
+                    <tr key={`${c.char}-${c.weapon}`} style={{ boxShadow: `inset 3px 0 0 var(--g-${g.toLowerCase()})` }}>
+                      <td className="l !pl-3.5 text-ink-3">{++rank}</td>
+                      <td className="l">
+                        <Link href={`/next/er/tier/${c.char}-${c.weapon}${q.v ? `?v=${encodeURIComponent(q.v)}` : ""}`} className="flex items-center gap-2">
+                          <Image className="portrait" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={24} height={24} unoptimized />
+                          <span className="font-semibold">{c.name}</span>
+                          <span className="text-ink-3">{c.weaponName}</span>
+                        </Link>
+                      </td>
+                      <td className="font-bold">{signed(c.score)}</td>
+                      <td className="hidden md:table-cell"><Range c={c} lo={lo} hi={hi} /></td>
+                      <td>{c.top3.toFixed(1)}%</td>
+                      <td className="hidden md:table-cell">{c.place.toFixed(2)}</td>
+                      <td className="hidden md:table-cell">{c.win.toFixed(1)}%</td>
+                      <td>{c.pick.toFixed(2)}%</td>
+                      <td className="hidden text-ink-3 sm:table-cell">{n(c.n)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              );
+            })}
+          </table>
+        </div>
         )}
       </div>
     </Shell>

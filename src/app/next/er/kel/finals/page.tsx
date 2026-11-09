@@ -73,7 +73,7 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">라운드별 점수</h1>
         <p className="text-[13px] text-ink-3 num">{EVENT_NAME[f.event]} {f.stage}, {played}라운드{champ ? `, 우승 ${TEAM.get(champ)?.name}` : ""}</p>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <KelNav here="finals" />
         <div className="grid min-w-0 content-start gap-8">
           <nav className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0" aria-label="경기">

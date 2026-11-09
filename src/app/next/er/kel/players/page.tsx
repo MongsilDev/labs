@@ -43,7 +43,7 @@ export default async function NextKelPlayers({ searchParams }: { searchParams: P
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">선수 카드</h1>
         <p className="text-[13px] text-ink-3 num">20게임 이상 출전한 {rows.length}명</p>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <KelNav here="players" />
         <div className="scroll-fade -mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
           <table className="tbl min-w-[760px]">

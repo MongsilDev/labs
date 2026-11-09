@@ -38,7 +38,7 @@ export default async function NextKelComps({ searchParams }: { searchParams: Pro
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">많이 등장한 3인 조합</h1>
         <p className="text-[13px] text-ink-3 num">{MIN}번 이상 등장한 조합 {rows.length}개</p>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <KelNav here="comps" />
         <div className="scroll-fade -mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
           <table className="tbl">

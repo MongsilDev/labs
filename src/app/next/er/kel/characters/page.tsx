@@ -39,7 +39,7 @@ export default async function NextKelCharacters({ searchParams }: { searchParams
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">실험체</h1>
         <p className="text-[13px] text-ink-3 num">실험체 {rows.length}명</p>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <KelNav here="characters" />
         <div className="min-w-0">
           <table className="tbl lg:!w-auto">

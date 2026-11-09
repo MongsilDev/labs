@@ -33,7 +33,7 @@ export default async function NextLate({ searchParams }: { searchParams: Promise
           아시아1 상위 1,000명 경기 {n(data.games)}판, {day.format(data.from)}~{day.format(data.to)}
         </p>
       </div>
-      <nav className="mt-5 flex gap-1.5 text-[13px]">
+      <nav className="mt-5 flex flex-wrap gap-1.5 text-[13px]">
         {(Object.keys(SORTS) as (keyof typeof SORTS)[]).map((k) => (
           <Link key={k} href={k === "fin" ? "/next/er/late" : `/next/er/late?s=${k}`} aria-current={k === s ? "page" : undefined} className="shrink-0 border border-rule px-2.5 py-1 text-ink-2 hover:no-underline aria-[current=page]:border-ink aria-[current=page]:text-ink">
             {k === "fin" ? "TOP3 중 1위 비율이 높은 순" : `${min}분 안에 탈락한 비율이 낮은 순`}

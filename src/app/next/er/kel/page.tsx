@@ -31,39 +31,41 @@ export default async function NextKel() {
           {champ ? `, 우승 ${TEAM.get(champ)?.name}` : ""}
         </p>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <KelNav here="home" />
-        <div className="grid content-start gap-10 xl:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] content-start gap-10 xl:grid-cols-2">
           <section className="sec xl:col-span-2">
             <h2 className="sec-h">서킷 순위</h2>
-            <table className="tbl mt-1 lg:!w-auto">
-              <thead>
-                <tr>
-                  <th className="l lg:w-[240px]">팀</th>
-                  {[1, 2, 3, 4].map((i) => (
-                    <th key={i} className="!text-center lg:w-[84px]">서킷 {i}</th>
-                  ))}
-                  <th className="lg:w-[96px]"><span className="text-ink underline decoration-hot decoration-2 underline-offset-4">평균 순위</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {teams.map((t) => (
-                  <tr key={t.key}>
-                    <td className="l">
-                      <span className="flex items-center gap-2 font-semibold">
-                        <Logo team={t} size={24} className="ring-1 ring-rule-2" />
-                        {t.name}
-                        {t.key === champ && <span className="text-[12px] font-bold text-hot">우승</span>}
-                      </span>
-                    </td>
-                    {t.circuits.map((p, i) => (
-                      <td key={i} className="!text-center font-bold" style={{ background: heat(p) }}>{p}</td>
+            <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
+              <table className="tbl mt-1 lg:!w-auto">
+                <thead>
+                  <tr>
+                    <th className="l lg:w-[240px]">팀</th>
+                    {[1, 2, 3, 4].map((i) => (
+                      <th key={i} className="!text-center lg:w-[84px]">서킷 {i}</th>
                     ))}
-                    <td className="font-bold">{avg(t).toFixed(2)}</td>
+                    <th className="lg:w-[96px]"><span className="text-ink underline decoration-hot decoration-2 underline-offset-4">평균 순위</span></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {teams.map((t) => (
+                    <tr key={t.key}>
+                      <td className="l">
+                        <span className="flex items-center gap-2 font-semibold">
+                          <Logo team={t} size={24} className="ring-1 ring-rule-2" />
+                          {t.name}
+                          {t.key === champ && <span className="text-[12px] font-bold text-hot">우승</span>}
+                        </span>
+                      </td>
+                      {t.circuits.map((p, i) => (
+                        <td key={i} className="!text-center font-bold" style={{ background: heat(p) }}>{p}</td>
+                      ))}
+                      <td className="font-bold">{avg(t).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
           <section className="sec">
             <h2 className="sec-h">

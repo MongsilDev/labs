@@ -58,7 +58,7 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
           아시아1 상위 1,000명 경기 {n(data.games)}판, {day.format(data.from)}~{day.format(data.to)}
         </p>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <Rail groups={[{ name: "게임 전 RP", items: data.bands.map((b) => ({ href: `/next/er/rp?rp=${b.lo}`, label: bandName(b.lo, b.hi), on: b === band })) }]} />
         <div className="grid min-w-0 content-start gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
           <section className="sec min-w-0">

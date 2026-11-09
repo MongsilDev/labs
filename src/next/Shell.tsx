@@ -36,7 +36,7 @@ const TK: Sect = {
   ],
 };
 
-const top = "relative shrink-0 px-2 py-3 text-[14px] font-semibold text-ink-2 hover:text-ink hover:no-underline aria-[current=true]:text-ink aria-[current=true]:after:absolute aria-[current=true]:after:inset-x-2 aria-[current=true]:after:bottom-0 aria-[current=true]:after:h-[2px] aria-[current=true]:after:bg-hot";
+const top = "relative shrink-0 px-2 py-3 focus-visible:!-outline-offset-2 text-[14px] font-semibold text-ink-2 hover:text-ink hover:no-underline aria-[current=true]:text-ink aria-[current=true]:after:absolute aria-[current=true]:after:inset-x-2 aria-[current=true]:after:bottom-0 aria-[current=true]:after:h-[2px] aria-[current=true]:after:bg-hot";
 
 function SectLink({ sect, on }: { sect: Sect; on: boolean }) {
   return (
@@ -58,7 +58,7 @@ export default function Shell({ here, children }: { here?: string; children: Rea
           <Link href="/next" className="py-3 text-[16px] font-black tracking-[-0.4px] hover:no-underline">
             labs
           </Link>
-          <nav className="flex min-w-0 flex-1 items-center gap-1" aria-label="사이트">
+          <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]" aria-label="사이트">
             <span className="mr-1 hidden shrink-0 text-[12px] font-semibold text-ink-3 sm:inline">이터널 리턴</span>
             {ER.map((g) => <SectLink key={g.name} sect={g} on={g === sect} />)}
             <span className="mx-2 h-4 w-px shrink-0 bg-rule-2" aria-hidden="true" />
