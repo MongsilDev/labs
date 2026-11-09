@@ -44,6 +44,7 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
               initial={view.id}
               fallback={fallback.id}
               updatedAt={data.updatedAt}
+              patch={data.patch}
               server={data.band.server}
               thin={data.rule.thin}
               publishRows={data.rule.publishRows}

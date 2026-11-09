@@ -27,6 +27,8 @@ export type TierView = {
   patch: string;
   days?: number;
   ready?: boolean;
+  /** 수집 시작 뒤 경기만 담은 패치 */
+  partial?: boolean;
   from: number;
   to: number;
   rows: number;

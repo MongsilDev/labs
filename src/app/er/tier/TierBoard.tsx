@@ -12,6 +12,7 @@ type Props = {
   initial: string;
   fallback: string;
   updatedAt: number;
+  patch: string | null;
   server: string;
   thin: number;
   publishRows: number;
@@ -24,6 +25,9 @@ function Weapon({ code, label }: { code: number; label?: string }) {
   if (i < 0) return null;
   return <span className="tier-wg" style={{ ["--i" as string]: i }} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} />;
 }
+
+const dayKo = (at: number) => new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(at);
+const kstDay = (at: number) => Math.floor((at + 9 * 3_600_000) / 86_400_000);
 
 function columns(grid: Element) {
   return getComputedStyle(grid).gridTemplateColumns.split(" ").length;
@@ -113,7 +117,8 @@ export default function TierBoard(p: Props) {
         <div className="min-w-0">
           <h1 className="text-[28px] font-extrabold tracking-[-0.5px]">실험체 티어</h1>
           <p className="text-[14px] text-fg-3 tabular-nums">
-            {p.server} 상위 1,000명, {int(view.rows)}판, {timeKo(p.updatedAt)} 갱신
+            {p.server} 상위 1,000명, {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}
+            {int(view.rows)}판, <span className="whitespace-nowrap">{timeKo(p.updatedAt)} 갱신</span>
           </p>
         </div>
       </div>
@@ -122,7 +127,7 @@ export default function TierBoard(p: Props) {
         <div className="tabs" role="tablist" aria-label="기간">
           {p.views.map((v) => (
             <button key={v.id} type="button" role="tab" aria-selected={v.id === view.id} onClick={() => pick(v.id)}>
-              {v.label}
+              {v.id === `patch-${p.patch}` ? `${v.label} ${kstDay(p.updatedAt) - kstDay(v.from) + 1}일째` : v.label}
             </button>
           ))}
         </div>

@@ -31,6 +31,8 @@ const WEAPON = {
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(`--${name}`);
+// 이미 받은 최신 경기에서 멈추지 않고 since까지 거슬러 받음
+const BACKFILL = flag("backfill");
 const opt = (name, def) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? Number(args[i + 1]) : def;
@@ -244,7 +246,7 @@ async function collectAccount(s, acc, since, cuts, stop) {
     let done = !g?.next || !list.length;
     for (const y of list) {
       const t = kst(y.startDtm);
-      if (t < since || t <= newest) {
+      if (t < since || (!BACKFILL && t <= newest)) {
         done = true;
         break;
       }
@@ -392,7 +394,9 @@ function writeTier(data) {
   }
 }
 
-const prune = db.prepare(`DELETE FROM rows WHERE season <> ? OR patch NOT IN (?, ?)`);
+// 28일 탭이 패치가 바뀐 뒤에도 남도록 패치 대신 날짜로 지움
+const KEEP_DAYS = 35;
+const prune = db.prepare(`DELETE FROM rows WHERE season <> ? OR t < ?`);
 
 function publish(s, nm) {
   const now = Date.now();
@@ -411,7 +415,9 @@ function publish(s, nm) {
     const rows = all.filter((r) => r.patch === p);
     const ready = rows.length >= PUBLISH_ROWS;
     if (p !== cur && !ready) continue;
-    const v = view(`patch-${p}`, `${p} 패치`, rows, nm, { patch: p, ready });
+    // 가장 오래된 패치는 수집 시작 뒤 경기만 있음
+    const partial = p === patches[0] && rows[0].t > s.start + 86_400_000;
+    const v = view(`patch-${p}`, `${p} 패치`, rows, nm, { patch: p, ready, ...(partial && { partial }) });
     if (v) views.push(v);
   }
   const curRows = all.filter((r) => r.patch === cur);
@@ -437,9 +443,8 @@ function publish(s, nm) {
     views,
   };
   writeTier(data);
-  const keep = patches.slice(-2);
-  const removed = prune.run(s.id, keep[0], keep.at(-1)).changes;
-  log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, 지난 패치 행 ${removed}개 삭제` : ""}`);
+  const removed = prune.run(s.id, now - KEEP_DAYS * 86_400_000).changes;
+  log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, ${KEEP_DAYS}일 지난 행 ${removed}개 삭제` : ""}`);
 }
 
 async function once(measure) {
