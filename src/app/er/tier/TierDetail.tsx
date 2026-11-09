@@ -188,10 +188,7 @@ export default function TierDetail({ who, c, view, views, fallback, routes, item
         <>
           {!!c.routes?.length && (
             <section className="tdx-sec" aria-label="루트">
-              <h2>
-                루트<small>상위 1,000명의 {int(dn)}판</small>
-              </h2>
-              <RouteTable list={c.routes} info={routes} items={items} dn={dn} patch={view.patch} />
+              <RouteTable list={c.routes} dn={dn} top={c.routesTop?.length && c.tn ? { list: c.routesTop, dn: c.tn } : undefined} info={routes} items={items} patch={view.patch} />
             </section>
           )}
           <div className="tdx-cols">

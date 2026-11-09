@@ -48,6 +48,9 @@ export type TierCombo = {
   dn?: number;
   /** 상위 1,000명이 쓴 시작 루트, 쓴 플레이어 수 순. 상위 3개와 2명 이상이 쓴 루트를 20개까지 */
   routes?: TierRoute[];
+  /** 경기 시각의 300위 RP 이상인 판 수와 그 판들의 루트 */
+  tn?: number;
+  routesTop?: TierRoute[];
   /** 판의 1% 이상인 핵심 특성 */
   traits?: TierSplit[];
   /** 판의 1% 이상인 전술 스킬 */

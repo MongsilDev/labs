@@ -221,14 +221,14 @@ async function season() {
   };
 }
 
-/** 매시 순위 스냅숏의 1000위 RP. [시각 ms, RP] 오름차순 */
-function cutSeries(seasonId) {
+/** 매시 순위 스냅숏의 place위 RP. [시각 ms, RP] 오름차순 */
+function cutSeries(seasonId, place = 1000) {
   const out = [];
   for (const line of readFileSync(join(BOT, "data/rank_snapshots.jsonl"), "utf8").split("\n")) {
     if (!line) continue;
     const s = JSON.parse(line);
     if (s.s !== seasonId || !Array.isArray(s.rp) || s.rp.length < 1000) continue;
-    out.push([s.t * 1000, [...s.rp].sort((a, b) => b - a)[999]]);
+    out.push([s.t * 1000, [...s.rp].sort((a, b) => b - a)[place - 1]]);
   }
   return out.sort((a, b) => a[0] - b[0]);
 }
@@ -625,6 +625,8 @@ const MIN_SHARE = 0.01;
 // 루트는 많이 쓴 3개에 더해 2명 이상이 쓴 것을 20개까지 둠. 화면은 5개만 먼저 보여 줌
 const ROUTE_TOP = 3;
 const ROUTE_MAX = 20;
+// 루트 표의 「300위 안」 전환. 경기 시각의 300위 RP 이상인 판만 따로 셈
+const TOP_PLACE = 300;
 const METRIC = ["kills", "assists", "deaths", "damage", "monsters"];
 const METRIC_DIGITS = [2, 2, 2, 0, 1];
 
@@ -640,8 +642,16 @@ function metric(rows) {
   return n ? sum.map((v, i) => round(v / n, METRIC_DIGITS[i])) : undefined;
 }
 
+function routeList(rows) {
+  return split(rows, "route")
+    .sort((a, b) => b[1] - a[1] || b[2] - a[2])
+    .filter((x, i) => i < ROUTE_TOP || x[1] >= 2)
+    .slice(0, ROUTE_MAX);
+}
+
 function detail(rows, nm) {
   if (!rows.length) return {};
+  const top = rows.filter((r) => r.top);
   const keep = (list, name) =>
     list
       .filter((x) => x[2] / rows.length >= MIN_SHARE)
@@ -649,10 +659,8 @@ function detail(rows, nm) {
       .map(([code, ...rest]) => [name(code), ...rest, code]);
   return {
     dn: rows.length,
-    routes: split(rows, "route")
-      .sort((a, b) => b[1] - a[1] || b[2] - a[2])
-      .filter((x, i) => i < ROUTE_TOP || x[1] >= 2)
-      .slice(0, ROUTE_MAX),
+    routes: routeList(rows),
+    ...(top.length && { tn: top.length, routesTop: routeList(top) }),
     traits: keep(split(rows, "trait"), nm.trait),
     tac: keep(split(rows, "tac"), nm.tac),
     metric: metric(rows),
@@ -782,6 +790,11 @@ async function publish(s, nm) {
   const lastFile = join(DIR, "tier.json");
   const last = existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null;
   const all = s.regular ? selectRows.all(s.id, SERVER, s.start, s.id) : [];
+  const cut300 = cutSeries(s.id, TOP_PLACE);
+  for (const r of all) {
+    const c = cutAt(cut300, r.t);
+    r.top = c != null && r.mmr >= c;
+  }
   // 프리 시즌과 새 시즌 첫 집계 전에는 마지막 표를 그대로 두고 상태만 바꿈
   if (!all.length) {
     if (last) writeTier({ ...last, state: "offseason", updatedAt: now, next: s.regular && last.season?.id !== s.id ? s.name : undefined });
@@ -821,13 +834,13 @@ async function publish(s, nm) {
     if (v) views.push(v);
   }
   const combos = [...views, ...(past?.views ?? [])].flatMap((v) => v.combos);
-  const ids = [...new Set(combos.flatMap((c) => (c.routes ?? []).map((x) => x[0])))];
+  const ids = [...new Set(combos.flatMap((c) => [...(c.routes ?? []), ...(c.routesTop ?? [])].map((x) => x[0])))];
   // --publish나 중단된 회차 뒤에도 화면에 오를 루트는 정보를 갖추게 함. 수집 회차에서는 이미 받아 요청이 없음
   if (!abort) await fetchRoutes(s, ids);
   // dak.gg에는 20개로 늘리기 전과 같이 조합마다 상위 3개만 물음
   if (!abort) await fetchDak([...new Set(combos.flatMap((c) => (c.routes ?? []).slice(0, ROUTE_TOP).map((x) => x[0])))]);
   const { badge, info, items } = await routeMeta(s, ids, nm, routeUse(all, new Set(ids)));
-  for (const v of views) for (const c of v.combos) for (const x of c.routes ?? []) if (badge.has(x[0])) x.push(badge.get(x[0]));
+  for (const v of views) for (const c of v.combos) for (const x of [...(c.routes ?? []), ...(c.routesTop ?? [])]) if (badge.has(x[0])) x.push(badge.get(x[0]));
   const ready = views.find((v) => v.patch === cur && v.id.startsWith("patch-"))?.ready;
   const state = !s.regular || now >= s.end ? "offseason" : ready ? "shown" : "collecting";
   const cuts = cutSeries(s.id);

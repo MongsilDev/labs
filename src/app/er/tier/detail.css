@@ -146,6 +146,51 @@
     font-weight: 500;
     color: var(--text-3);
   }
+  .tdx-rh {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 20px;
+    row-gap: 4px;
+    margin: 0 0 6px;
+  }
+  .tdx-rh h2 {
+    margin: 0;
+  }
+  .tdx-seg {
+    display: flex;
+    gap: 16px;
+  }
+  .tdx-seg button {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 0;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-3);
+    cursor: pointer;
+  }
+  .tdx-seg button small {
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .tdx-seg button:hover {
+    color: var(--text-2);
+  }
+  .tdx-seg button[aria-pressed="true"] {
+    color: var(--text);
+    border-bottom-color: currentColor;
+  }
+  .tdx-seg button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
   .tdx-tb {
     width: 100%;
     border-collapse: collapse;

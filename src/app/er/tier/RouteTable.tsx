@@ -26,7 +26,19 @@ export function Rp({ g }: { g: number | null }) {
   return <td className={g > 0 ? "g up" : g < 0 ? "g down" : "g"}>{signed(g)}</td>;
 }
 
-export default function RouteTable({ list, info, items, dn, patch }: { list: TierRoute[]; info?: Record<string, TierRouteInfo>; items?: Record<string, TierItem>; dn: number; patch: string | null }) {
+type Props = {
+  list: TierRoute[];
+  dn: number;
+  /** 300위 안인 판만 센 루트. 없으면 전환을 두지 않음 */
+  top?: { list: TierRoute[]; dn: number };
+  info?: Record<string, TierRouteInfo>;
+  items?: Record<string, TierItem>;
+  patch: string | null;
+};
+
+export default function RouteTable({ list: full, dn: fullDn, top, info, items, patch }: Props) {
+  const [onlyTop, setOnlyTop] = useState(false);
+  const { list, dn } = onlyTop && top ? top : { list: full, dn: fullDn };
   const [all, setAll] = useState(false);
   const [copied, setCopied] = useState<number | null>(null);
 
@@ -48,6 +60,21 @@ export default function RouteTable({ list, info, items, dn, patch }: { list: Tie
   const shown = all ? list : list.slice(0, SHOW);
   return (
     <>
+      <div className="tdx-rh">
+        <h2>
+          루트{!top && <small>상위 1,000명의 {int(fullDn)}판</small>}
+        </h2>
+        {top && (
+          <div className="tdx-seg" role="group" aria-label="루트를 센 범위">
+            <button type="button" aria-pressed={!onlyTop} onClick={() => setOnlyTop(false)}>
+              상위 1,000명<small>{int(fullDn)}판</small>
+            </button>
+            <button type="button" aria-pressed={onlyTop} onClick={() => setOnlyTop(true)}>
+              300위 안<small>{int(top.dn)}판</small>
+            </button>
+          </div>
+        )}
+      </div>
       <table className="tdx-tb tdx-rt">
         <thead>
           <tr>
