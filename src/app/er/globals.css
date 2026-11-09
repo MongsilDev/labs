@@ -1329,17 +1329,22 @@
   .tier-wf button {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 6px;
     border: 1px solid var(--line);
     background: transparent;
-    color: var(--text-2);
+    color: var(--text);
     cursor: pointer;
   }
-  .tier-wf button:hover {
-    border-color: var(--line-strong);
-    color: var(--text);
+  .tier-wf .tier-wg {
+    --s: 26px;
+  }
+  @media (hover: hover) {
+    .tier-wf button:hover {
+      border-color: var(--line-strong);
+      background: var(--field);
+    }
   }
   .tier-wf button[aria-pressed="true"] {
     background: var(--text);
@@ -1395,28 +1400,24 @@
     width: 34px;
     height: 34px;
     border-radius: 8px;
-    border: 1px solid var(--line);
     font-size: 17px;
     font-weight: 800;
-    color: var(--text-3);
+    color: #0a0d14;
   }
   .tier-grade[data-grade="S"] {
-    background: var(--gold);
-    border-color: var(--gold);
-    color: #0a0d14;
+    background: #ff6b6b;
   }
   .tier-grade[data-grade="A"] {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #0a0d14;
+    background: #ffa94d;
   }
   .tier-grade[data-grade="B"] {
-    background: var(--field);
-    border-color: var(--line-strong);
-    color: var(--text);
+    background: #ffd43b;
   }
   .tier-grade[data-grade="C"] {
-    color: var(--text-2);
+    background: #8ce99a;
+  }
+  .tier-grade[data-grade="D"] {
+    background: #74c0fc;
   }
   .tier-cards {
     display: grid;
@@ -1532,8 +1533,15 @@
       border-bottom: 1px solid var(--line);
     }
     .tier-cards {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      padding: 6px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 2px;
+      padding: 4px;
+    }
+    .tier-card {
+      padding: 8px 2px 6px;
+    }
+    .tier-card b {
+      font-size: 13px;
     }
     .tier-pw {
       width: 56px;

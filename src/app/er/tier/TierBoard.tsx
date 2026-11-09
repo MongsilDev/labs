@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
 import { signed, WEAPON_SPRITE, type TierCombo, type TierView } from "@/er/lib/tier";
@@ -23,6 +23,10 @@ function Weapon({ code, label }: { code: number; label?: string }) {
   const i = WEAPON_SPRITE.indexOf(code);
   if (i < 0) return null;
   return <span className="tier-wg" style={{ ["--i" as string]: i }} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} />;
+}
+
+function columns(grid: Element) {
+  return getComputedStyle(grid).gridTemplateColumns.split(" ").length;
 }
 
 function Detail({ c, id }: { c: TierCombo; id: string }) {
@@ -69,6 +73,7 @@ export default function TierBoard(p: Props) {
   const [weapon, setWeapon] = useState<number | null>(null);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
+  const [cols, setCols] = useState(1);
   const view = p.views.find((v) => v.id === id) ?? p.views[0];
 
   const pick = (next: string) => {
@@ -80,6 +85,16 @@ export default function TierBoard(p: Props) {
     else url.searchParams.set("v", next);
     window.history.replaceState(null, "", url);
   };
+
+  useEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const grid = document.querySelector('.tier-card[aria-expanded="true"]')?.parentElement;
+      if (grid) setCols(columns(grid));
+    };
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [open]);
 
   const weapons = WEAPON_SPRITE.filter((code) => view.combos.some((c) => c.weapon === code)).map((code) => [code, view.combos.find((c) => c.weapon === code)!.weaponName] as const);
   const query = q.trim();
@@ -152,7 +167,8 @@ export default function TierBoard(p: Props) {
       {GRADES.map((g) => {
         const list = shown.filter((c) => c.grade === g);
         if (!list.length) return null;
-        const sel = list.find((c) => `${c.char}:${c.weapon}` === open);
+        const at = list.findIndex((c) => `${c.char}:${c.weapon}` === open);
+        const end = at < 0 ? -1 : Math.min(list.length, (Math.floor(at / cols) + 1) * cols) - 1;
         return (
           <section key={g} className="tier-board" aria-label={`${g} 등급`}>
             <div className="tier-gl">
@@ -162,34 +178,38 @@ export default function TierBoard(p: Props) {
               <span className="tabular-nums">{list.length}</span>
             </div>
             <div className="tier-cards">
-              {list.map((c) => {
+              {list.map((c, i) => {
                 const key = `${c.char}:${c.weapon}`;
                 const on = key === open;
                 return (
-                  <button
-                    key={key}
-                    type="button"
-                    className="tier-card"
-                    data-thin={c.n < p.thin || undefined}
-                    aria-expanded={on}
-                    aria-controls={on ? `tier-d-${g}` : undefined}
-                    onClick={() => setOpen(on ? null : key)}
-                  >
-                    <span className="tier-pw">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" />
-                      <span className="tier-wb">
-                        <Weapon code={c.weapon} />
+                  <Fragment key={key}>
+                    <button
+                      type="button"
+                      className="tier-card"
+                      data-thin={c.n < p.thin || undefined}
+                      aria-expanded={on}
+                      aria-controls={on ? `tier-d-${g}` : undefined}
+                      onClick={(e) => {
+                        setCols(columns(e.currentTarget.parentElement!));
+                        setOpen(on ? null : key);
+                      }}
+                    >
+                      <span className="tier-pw">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" />
+                        <span className="tier-wb">
+                          <Weapon code={c.weapon} />
+                        </span>
                       </span>
-                    </span>
-                    <b>{c.name}</b>
-                    <small>{c.weaponName}</small>
-                    <span className="tier-sc">{signed(c.score)}</span>
-                    <small>{int(c.n)}판</small>
-                  </button>
+                      <b>{c.name}</b>
+                      <small>{c.weaponName}</small>
+                      <span className="tier-sc">{signed(c.score)}</span>
+                      <small>{int(c.n)}판</small>
+                    </button>
+                    {i === end && <Detail c={list[at]} id={`tier-d-${g}`} />}
+                  </Fragment>
                 );
               })}
-              {sel && <Detail c={sel} id={`tier-d-${g}`} />}
             </div>
           </section>
         );
