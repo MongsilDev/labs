@@ -16,8 +16,14 @@ import { TEAM } from "@/er/lib/kel";
 import { date, int } from "@/tarkov/lib/format";
 import { PERSONAL } from "@/tarkov/lib/kord";
 import { getMeta } from "@/tarkov/server/db";
+import TierHighlights from "@/er/components/TierHighlights";
+import { compareView, movedCombos, pickView } from "@/er/lib/tier";
+import { getTier } from "@/er/server/tier";
 
 export const dynamic = "force-dynamic";
+
+// 실험체와 등급 사이는 줄바꿈 없는 공백(U+00A0)
+const TIER_DESC = "상위 1,000명이 참가한 경기에서 집계한 실험체 등급과 픽률";
 
 function Title({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -93,7 +99,9 @@ function Day({ date, text }: { date: string; text: string }) {
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 export default async function Hub() {
-  const cut = await getCut();
+  const [cut, tier] = await Promise.all([getCut(), getTier()]);
+  const tierView = tier && pickView(tier);
+  const tierPrev = tier && tierView ? compareView(tier.views, tierView, tier.patch) : undefined;
   const indexed = Number(getMeta("indexed_at")) || null;
   const plus = PERSONAL.filter((p) => (p.points ?? 0) < 0);
   const minus = PERSONAL.filter((p) => (p.points ?? 0) > 0);
@@ -127,6 +135,33 @@ export default async function Hub() {
             }
           >
             {kel && <Highlights data={kel} />}
+          </Tool>
+
+          <Tool
+            game="이터널 리턴"
+            icon="er"
+            href="/er/tier"
+            name="실험체 티어"
+            desc={tier ? `${tier.band.server} ${TIER_DESC}` : TIER_DESC}
+            className="col-span-2 max-[760px]:col-span-1"
+            statsTop
+            stats={tierView ? [{ label: tierView.label, value: `${int(tierView.rows)}판` }] : undefined}
+          >
+            {tier && tierView ? (
+              <TierHighlights
+                combos={tierView.combos}
+                thin={tier.rule.thin}
+                few={tier.rule.few}
+                prev={tierPrev?.patch}
+                moved={tierPrev ? movedCombos(tierView.combos, tierPrev) : []}
+              />
+            ) : (
+              <p className="text-[13px] text-fg-3">
+                지금은 티어 정보를 가져올 수 없습니다.
+                <br />
+                잠시 뒤 다시 열어주세요.
+              </p>
+            )}
           </Tool>
 
           <Tool

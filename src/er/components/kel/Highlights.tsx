@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { go, Head, line, row } from "@/er/components/HubList";
 import { Logo } from "@/er/components/kel/Team";
 import Char from "@/er/components/t/Char";
 import { int } from "@/er/lib/cut";
@@ -7,21 +8,6 @@ import { KEL_SCREENS, playerPath, TEAM } from "@/er/lib/kel";
 import type { highlights } from "@/er/server/kel-stats";
 
 type Data = ReturnType<typeof highlights>;
-
-const line = "border-t border-line-soft py-2 first:border-t-0 first:pt-0";
-const row = "grid min-h-[36px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3";
-const go = "no-underline hover:text-fg";
-
-function Head({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link className={`mb-2 inline-flex items-center gap-0.5 text-[13px] text-fg-3 ${go}`} href={href}>
-      {children}
-      <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M9 6l6 6-6 6" />
-      </svg>
-    </Link>
-  );
-}
 
 // 1024 미만의 최고 기록은 세 칸으로 나누고 칸 안에서 초상, 값, 선수 순서로 쌓음
 const stack = "max-[1024px]:grid-cols-1 max-[1024px]:content-start max-[1024px]:gap-1.5 max-[1024px]:border-t-0 max-[1024px]:py-0";

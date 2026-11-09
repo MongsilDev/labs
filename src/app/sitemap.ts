@@ -12,6 +12,7 @@ const PATHS = [
   "/terms",
   "/er/score",
   "/er/cut",
+  "/er/tier",
   "/er/example/a",
   "/tarkov/players",
   "/tarkov/kord-breach",

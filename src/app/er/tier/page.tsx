@@ -8,8 +8,6 @@ import TierBoard from "./TierBoard";
 
 export const metadata: Metadata = {
   title: "실험체 티어",
-  // 메뉴와 sitemap에 넣기 전까지는 검색에 노출하지 않음
-  robots: { index: false, follow: false },
 };
 
 export default async function TierPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
