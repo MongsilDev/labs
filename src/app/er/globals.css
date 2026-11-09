@@ -457,7 +457,8 @@
     align-items: center;
   }
   .tabs [aria-selected="true"],
-  .tabs [aria-current="page"] {
+  .tabs [aria-current="page"],
+  .tabs [aria-pressed="true"] {
     background: var(--text);
     color: var(--bg);
     border-color: var(--text);
@@ -468,13 +469,15 @@
     padding: 0 14px;
   }
   /* 화면을 바꾸는 탭과 구분되는 정렬 선택 */
-  .tabs.sort a {
+  .tabs.sort a,
+  .tabs.sort button {
     height: 28px;
     padding: 0 10px;
     border-color: transparent;
     font-weight: 500;
   }
-  .tabs.sort [aria-current="page"] {
+  .tabs.sort [aria-current="page"],
+  .tabs.sort [aria-pressed="true"] {
     background: var(--field);
     color: var(--text);
     border-color: transparent;
@@ -1320,36 +1323,8 @@
     align-items: center;
     gap: 10px 16px;
   }
-  .tier-wf {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+  .tier-role {
     flex: 1 1 520px;
-  }
-  .tier-wf button {
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 6px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text);
-    cursor: pointer;
-  }
-  .tier-wf .tier-wg {
-    --s: 26px;
-  }
-  @media (hover: hover) {
-    .tier-wf button:hover {
-      border-color: var(--line-strong);
-      background: var(--field);
-    }
-  }
-  .tier-wf button[aria-pressed="true"] {
-    background: var(--text);
-    border-color: var(--text);
-    color: var(--bg);
   }
   .tier-search {
     flex: 0 1 220px;
@@ -1503,6 +1478,14 @@
     height: 64px;
     margin-bottom: 4px;
   }
+  .tier-cg {
+    position: absolute;
+    left: -4px;
+    top: -4px;
+  }
+  .tier-board.flat {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .tier-pw img {
     width: 100%;
     height: 100%;
@@ -1553,7 +1536,8 @@
       height: 44px;
     }
     .tier-search {
-      flex-basis: 100%;
+      flex: 1 1 0;
+      min-width: 0;
     }
     .tier-board {
       grid-template-columns: minmax(0, 1fr);

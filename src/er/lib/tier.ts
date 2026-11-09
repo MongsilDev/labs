@@ -15,8 +15,10 @@ export type TierCombo = {
   n: number;
   players: number;
   top: number;
-  /** 판을 가장 많이 한 3명의 판 비율 %, 수집기 갱신 전 표에는 없음 */
-  lead3?: number;
+  /** 유효 플레이어 수, 수집기 갱신 전 표에는 없음 */
+  ep?: number;
+  /** 역할군 한국어 이름, 수집기 갱신 전 표에는 없음 */
+  roles?: string[];
   place: number;
   top3: number;
   win: number;
@@ -52,7 +54,7 @@ export type TierData = {
   state: "shown" | "collecting" | "offseason";
   patch: string | null;
   band: { name: string; server: string; floor: number; cut: number | null };
-  rule: { cap: number; kMin: number; kMax: number; thin: number; publishRows: number; weights?: { gain: number; place: number; top3: number } };
+  rule: { cap: number; kMin: number; kMax: number; thin: number; few?: number; publishRows: number; weights?: { gain: number; place: number; top3: number } };
   views: TierView[];
   /** 새 시즌 첫 집계 때 남긴 지난 시즌 마지막 표의 패치 탭 */
   past?: { season: { id: number; name: string; end: number }; views: TierView[] };

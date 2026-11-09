@@ -6,6 +6,7 @@ import { timeKo } from "@/er/lib/format";
 import { signed, WEAPON_SPRITE, type TierCombo, type TierView } from "@/er/lib/tier";
 
 const GRADES: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
+const ROLES = ["탱커", "전사", "암살자", "스킬 딜러", "원거리 딜러", "지원가"];
 
 type Props = {
   views: TierView[];
@@ -16,6 +17,7 @@ type Props = {
   patch: string | null;
   server: string;
   thin: number;
+  few?: number;
   publishRows: number;
   early?: { label: string; patch: string; rows: number };
   weights?: { gain: number; place: number; top3: number };
@@ -53,7 +55,7 @@ function MovedList({ title, list }: { title: string; list: Moved[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={28} height={28} loading="lazy" />
             <span className="truncate">
-              {c.name} {c.weaponName}
+              {c.weaponName} {c.name}
             </span>
             <span className="tier-mv">
               <span className="tier-grade sm" data-grade={o.grade}>
@@ -88,7 +90,7 @@ function Detail({ c, id }: { c: TierCombo; id: string }) {
   return (
     <div className="tier-detail" id={id}>
       <p className="font-bold">
-        {c.name} {c.weaponName}
+        {c.weaponName} {c.name}
       </p>
       <dl>
         {range && (
@@ -102,7 +104,7 @@ function Detail({ c, id }: { c: TierCombo; id: string }) {
           <dd>{c.place.toFixed(2)}</dd>
         </div>
         <div>
-          <dt>TOP3</dt>
+          <dt>TOP 3</dt>
           <dd>{c.top3.toFixed(1)}%</dd>
         </div>
         <div>
@@ -117,12 +119,6 @@ function Detail({ c, id }: { c: TierCombo; id: string }) {
           <dt>플레이어</dt>
           <dd>{int(c.players)}명</dd>
         </div>
-        {c.lead3 != null && (
-          <div>
-            <dt>많이 한 3명</dt>
-            <dd>판의 {c.lead3}%</dd>
-          </div>
-        )}
       </dl>
     </div>
   );
@@ -130,7 +126,8 @@ function Detail({ c, id }: { c: TierCombo; id: string }) {
 
 export default function TierBoard(p: Props) {
   const [id, setId] = useState(p.initial);
-  const [weapon, setWeapon] = useState<number | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [sort, setSort] = useState<"score" | "pick">("score");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const [cols, setCols] = useState(1);
@@ -139,7 +136,7 @@ export default function TierBoard(p: Props) {
   const pick = (next: string) => {
     setId(next);
     setOpen(null);
-    if (weapon != null && !p.views.find((v) => v.id === next)?.combos.some((c) => c.weapon === weapon)) setWeapon(null);
+    if (role != null && !p.views.find((v) => v.id === next)?.combos.some((c) => c.roles?.includes(role))) setRole(null);
     const url = new URL(window.location.href);
     if (next === p.fallback) url.searchParams.delete("v");
     else url.searchParams.set("v", next);
@@ -156,9 +153,13 @@ export default function TierBoard(p: Props) {
     return () => window.removeEventListener("resize", measure);
   }, [open]);
 
-  const weapons = WEAPON_SPRITE.filter((code) => view.combos.some((c) => c.weapon === code)).map((code) => [code, view.combos.find((c) => c.weapon === code)!.weaponName] as const);
-  const query = q.trim();
-  const shown = view.combos.filter((c) => (weapon == null || c.weapon === weapon) && (!query || c.name.includes(query)));
+  const roles = [...ROLES, ...new Set(view.combos.flatMap((c) => c.roles ?? []))].filter((r, i, a) => a.indexOf(r) === i && view.combos.some((c) => c.roles?.includes(r)));
+  // 「석궁 나딘」과 「나딘 석궁」 모두 찾음
+  const query = q.replace(/\s+/g, "");
+  const shown = view.combos.filter(
+    (c) => (role == null || c.roles?.includes(role)) && (!query || `${c.weaponName}${c.name}`.replace(/\s+/g, "").includes(query) || `${c.name}${c.weaponName}`.replace(/\s+/g, "").includes(query)),
+  );
+  const groups: [string, TierCombo[]][] = sort === "pick" ? [["pick", [...shown].sort((a, b) => b.pick - a.pick || b.n - a.n)]] : GRADES.map((g) => [g, shown.filter((c) => c.grade === g)]);
   const w = p.weights;
   // 지금 패치 탭에서만 직전 패치와 비교. 점수 차이의 90% 범위에 0이 들어가지 않는 조합
   const prev = view.id === `patch-${p.patch}` && !view.season ? p.views.find((v) => v.id.startsWith("patch-") && v.id !== view.id && !v.season) : undefined;
@@ -183,7 +184,7 @@ export default function TierBoard(p: Props) {
         <div className="min-w-0">
           <h1 className="text-[28px] font-extrabold tracking-[-0.5px]">실험체 티어</h1>
           <p className="text-[14px] text-fg-3 tabular-nums">
-            {p.server} 상위 1,000명, {view.season && `${view.season}, `}
+            {p.server} 상위 1,000명이 참가한 경기, {view.season && `${view.season}, `}
             {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}
             {view.patches && `${view.patches[0]}~${view.patches.at(-1)} 패치, `}
             {int(view.rows)}판, <span className="whitespace-nowrap">{view.season ? `${dayKo(view.to)} 경기까지` : `${timeKo(p.updatedAt)} 갱신`}</span>
@@ -213,10 +214,22 @@ export default function TierBoard(p: Props) {
           )
         )}
         <div className="tier-ctl">
-          <div className="tier-wf" role="group" aria-label="무기">
-            {weapons.map(([code, name]) => (
-              <button key={code} type="button" title={name} aria-label={name} aria-pressed={weapon === code} onClick={() => setWeapon(weapon === code ? null : code)}>
-                <Weapon code={code} />
+          <div className="tabs tier-role" role="group" aria-label="역할군">
+            {[null, ...roles].map((r) => (
+              <button key={r ?? "all"} type="button" aria-pressed={role === r} onClick={() => setRole(r)}>
+                {r ?? "전체"}
+              </button>
+            ))}
+          </div>
+          <div className="tabs sort" role="group" aria-label="정렬">
+            {(
+              [
+                ["score", "점수 순"],
+                ["pick", "픽률 순"],
+              ] as const
+            ).map(([k, label]) => (
+              <button key={k} type="button" aria-pressed={sort === k} onClick={() => setSort(k)}>
+                {label}
               </button>
             ))}
           </div>
@@ -229,17 +242,27 @@ export default function TierBoard(p: Props) {
             <br />
             {w && (
               <>
-                RP 획득 {w.gain * 100}%, 평균 순위 {w.place * 100}%, TOP3 비율 {w.top3 * 100}%를 합쳐 계산합니다.
+                RP 획득 {w.gain * 100}%, 평균 순위 {w.place * 100}%, TOP 3 비율 {w.top3 * 100}%를 합쳐 계산합니다.
                 <br />
               </>
             )}
-            판 수가 적은 조합은 점수를 그 실험체의 전체 점수에 가깝게 보정합니다.
+            RP 획득, 순위, TOP 3 비율에서는 참가자의 시작 RP 구간 평균을 빼고 계산합니다.
             <br />
-            {p.thin}판 미만인 조합은 흐리게 표시합니다.
+            실험체는 무기마다 따로 점수를 매기고, 판 수가 적은 무기는 점수를 그 실험체의 전체 점수에 가깝게 보정합니다.
+            <br />
+            {p.few ? `${p.thin}판 미만이거나 유효 플레이어가 ${p.few}명 미만인 실험체는 흐리게 표시합니다.` : `${p.thin}판 미만인 실험체는 흐리게 표시합니다.`}
+            {p.few && (
+              <>
+                <br />
+                유효 플레이어는 플레이어마다 자기가 한 판 수를 전체 판 수로 나눈 비율을 제곱해 모두 더한 값의 역수입니다.
+                <br />
+                판이 적은 수의 플레이어에게 몰릴수록 값이 작아집니다.
+              </>
+            )}
             {prev && (
               <>
                 <br />
-                패치 비교에는 점수 차이의 90% 범위에 0이 들어가지 않는 조합만 넣습니다.
+                패치 비교에는 점수 차이의 90% 범위에 0이 포함되지 않는 실험체만 표시합니다.
               </>
             )}
           </p>
@@ -247,33 +270,35 @@ export default function TierBoard(p: Props) {
         {prev && moved.length > 0 && (
           <details className="tier-how tier-moved">
             <summary>
-              {prev.patch} 패치보다 크게 바뀐 조합 {moved.length}개
+              {prev.patch} 패치보다 점수가 크게 바뀐 실험체 {moved.length}개
             </summary>
-            <MovedList title="오른 조합" list={moved.filter((m) => m.c.score > m.o.score)} />
-            <MovedList title="내린 조합" list={moved.filter((m) => m.c.score < m.o.score)} />
+            <MovedList title="강해진 실험체" list={moved.filter((m) => m.c.score > m.o.score)} />
+            <MovedList title="약해진 실험체" list={moved.filter((m) => m.c.score < m.o.score)} />
           </details>
         )}
       </div>
 
       {!shown.length && (
         <p className="panel px-5 py-4" role="status">
-          맞는 조합이 없습니다.
+          조건에 맞는 실험체가 없습니다.
           <br />
-          무기나 검색어를 바꿔주세요.
+          역할군이나 검색어를 바꿔 주세요.
         </p>
       )}
-      {GRADES.map((g) => {
-        const list = shown.filter((c) => c.grade === g);
+      {groups.map(([g, list]) => {
         if (!list.length) return null;
+        const flat = g === "pick";
         const at = list.findIndex((c) => `${c.char}:${c.weapon}` === open);
         const end = at < 0 ? -1 : Math.min(list.length, (Math.floor(at / cols) + 1) * cols) - 1;
         return (
-          <section key={g} className="tier-board" aria-label={`${g} 등급`}>
-            <div className="tier-gl">
-              <span className="tier-grade" data-grade={g}>
-                {g}
-              </span>
-            </div>
+          <section key={g} className={flat ? "tier-board flat" : "tier-board"} aria-label={flat ? "픽률 순" : `${g} 등급`}>
+            {!flat && (
+              <div className="tier-gl">
+                <span className="tier-grade" data-grade={g}>
+                  {g}
+                </span>
+              </div>
+            )}
             <div className="tier-cards">
               {list.map((c, i) => {
                 const key = `${c.char}:${c.weapon}`;
@@ -283,7 +308,7 @@ export default function TierBoard(p: Props) {
                     <button
                       type="button"
                       className="tier-card"
-                      data-thin={c.n < p.thin || undefined}
+                      data-thin={c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few) || undefined}
                       aria-expanded={on}
                       aria-controls={on ? `tier-d-${g}` : undefined}
                       onClick={(e) => {
@@ -298,6 +323,11 @@ export default function TierBoard(p: Props) {
                         <span className="tier-wb">
                           <Weapon code={c.weapon} />
                         </span>
+                        {flat && (
+                          <span className="tier-grade sm tier-cg" data-grade={c.grade}>
+                            {c.grade}
+                          </span>
+                        )}
                       </span>
                       <b>{c.name}</b>
                       <small>{c.weaponName}</small>

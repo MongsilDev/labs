@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimateK, grade, GRADES, playerWeights, RULE, scoreRows } from "../../scripts/er/tier/score.mjs";
+import { bandAdjust, estimateK, grade, GRADES, playerWeights, RULE, scoreRows } from "../../scripts/er/tier/score.mjs";
 import { TIER_BOUNDS } from "@/er/lib/tier";
 
 type Row = { game: number; player: string; char: number; weapon: number; rank: number; gain: number };
@@ -53,6 +53,40 @@ describe("실험체 티어 산식", () => {
     const by = new Map(r.combos.map((c) => [c.key, c]));
     expect(by.get("1:1")!.half).toBeLessThan(by.get("2:1")!.half);
     expect(r.ks).toEqual({ gain: 123, place: 45, top3: 67 });
+  });
+
+  it("시작 RP 구간 평균을 빼면 구간마다 평균이 전체 평균과 같음", () => {
+    const rs = [
+      ...Array.from({ length: 40 }, (_, i) => ({ mmr: 6500, gain: 80 + (i % 2), rank: 2 })),
+      ...Array.from({ length: 60 }, (_, i) => ({ mmr: 9500, gain: 20 + (i % 2), rank: 6 })),
+    ];
+    const out = bandAdjust(rs, RULE.bands!);
+    const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+    const all = mean(rs.map((r) => r.gain));
+    expect(mean(out.slice(0, 40).map((r) => r.gain - r.bg))).toBeCloseTo(all);
+    expect(mean(out.slice(40).map((r) => r.gain - r.bg))).toBeCloseTo(all);
+    expect(mean(out.map((r) => r.bg))).toBeCloseTo(0);
+  });
+
+  it("시작 RP가 낮은 참가자가 많은 조합이 그것만으로 위에 오지 않음", () => {
+    const at = (char: number, mmr: number, gain: number, rank: number) =>
+      Array.from({ length: 300 }, (_, i) => ({ game: char * 10_000 + i, player: `p${char}-${i}`, char, weapon: 1, rank, gain: gain + (i % 2 ? 10 : -10), mmr }));
+    const low = at(1, 6500, 80, 3);
+    const high = at(2, 9500, 20, 6);
+    const plain = scoreRows([...low, ...high], { ...RULE, bands: undefined })!;
+    expect(plain.combos[0].score - plain.combos[1].score).toBeGreaterThan(10);
+    const r = scoreRows([...low, ...high])!;
+    expect(Math.abs(r.combos[0].score - r.combos[1].score)).toBeLessThan(0.5);
+    expect(r.base).toBeCloseTo(plain.base);
+  });
+
+  it("유효 플레이어는 판 비율 제곱합의 역수", () => {
+    const even = rows(1, 1, Array(40).fill(50), (i) => `a${i % 4}`);
+    const lean = rows(2, 1, Array(40).fill(50), (i) => (i < 31 ? "solo" : `b${i}`));
+    const r = scoreRows([...even, ...lean])!;
+    const by = new Map(r.combos.map((c) => [c.key, c]));
+    expect(by.get("1:1")!.ep).toBeCloseTo(4);
+    expect(by.get("2:1")!.ep).toBeCloseTo(1600 / (31 ** 2 + 9));
   });
 
   it("빈 입력은 null", () => {

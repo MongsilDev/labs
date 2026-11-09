@@ -1,13 +1,22 @@
-// in1000 경기 행으로 매기는 실험체와 무기 조합 티어. 계산 방법 설명은 /er/tier 화면 아래쪽
+// 상위 1,000명이 참가한 경기의 참가자 전원 행으로 매기는 실험체와 무기 조합 티어. 계산 방법 설명은 /er/tier 화면 아래쪽
 
 /** weights는 지표별 비중. 12.7 패치 백테스트에서 다음 날 RP는 RP만 쓸 때와 같고 평균 순위와 TOP3는 더 잘 맞힌 비율 */
-export const RULE = { cap: 0.2, kMin: 50, kMax: 2000, thin: 30, weights: { gain: 0.75, place: 0.125, top3: 0.125 } };
+/** bands는 시작 RP 구간 경계. 구간 평균을 빼야 낮은 RP 참가자가 많은 조합이 유리해지지 않음 */
+export const RULE = {
+  cap: 0.2,
+  kMin: 50,
+  kMax: 2000,
+  thin: 30,
+  few: 10,
+  weights: { gain: 0.75, place: 0.125, top3: 0.125 },
+  bands: [7000, 7600, 7800, 8000, 8200, 8400, 8600, 8800, 9000, 9400],
+};
 
-/** 지표마다 클수록 좋은 값 */
+/** 지표마다 클수록 좋은 값. bg, bp, bt는 bandAdjust가 붙인 구간 평균과 전체 평균의 차이 */
 const METRICS = {
-  gain: (r) => r.gain,
-  place: (r) => -r.rank,
-  top3: (r) => (r.rank <= 3 ? 1 : 0),
+  gain: (r) => r.gain - (r.bg ?? 0),
+  place: (r) => -r.rank + (r.bp ?? 0),
+  top3: (r) => (r.rank <= 3 ? 1 : 0) - (r.bt ?? 0),
 };
 const NAMES = Object.keys(METRICS);
 
@@ -18,6 +27,27 @@ export const GRADES = [
   ["B", -0.3],
   ["C", -1.0],
 ];
+
+/** 행마다 시작 RP 구간의 RP 획득, 순위, TOP3 평균에서 전체 평균을 뺀 값을 붙임 */
+export function bandAdjust(rows, bands) {
+  const band = (m) => bands.filter((b) => m >= b).length;
+  const all = { n: 0, gain: 0, rank: 0, top3: 0 };
+  const by = new Map();
+  for (const r of rows) {
+    const b = band(r.mmr);
+    if (!by.has(b)) by.set(b, { n: 0, gain: 0, rank: 0, top3: 0 });
+    for (const o of [all, by.get(b)]) {
+      o.n++;
+      o.gain += r.gain;
+      o.rank += r.rank;
+      o.top3 += r.rank <= 3 ? 1 : 0;
+    }
+  }
+  return rows.map((r) => {
+    const o = by.get(band(r.mmr));
+    return { ...r, bg: o.gain / o.n - all.gain / all.n, bp: o.rank / o.n - all.rank / all.n, bt: o.top3 / o.n - all.top3 / all.n };
+  });
+}
 
 export function grade(z) {
   for (const [g, min] of GRADES) if (z >= min) return g;
@@ -61,7 +91,8 @@ function summarize(rows, base, cap) {
     raw: rows.reduce((a, r) => a + r.gain - base.gain, 0) / n,
     players: new Set(rows.map((r) => r.player)).size,
     top: Math.max(...countBy(rows, (r) => r.player).values()) / n,
-    lead3: [...countBy(rows, (r) => r.player).values()].sort((a, b) => b - a).slice(0, 3).reduce((a, b) => a + b, 0) / n,
+    // 유효 플레이어 수: 플레이어별 판 비율 제곱합의 역수
+    ep: n ** 2 / [...countBy(rows, (r) => r.player).values()].reduce((a, b) => a + b * b, 0),
     place: rows.reduce((a, r) => a + r.rank, 0) / n,
     top3: rows.filter((r) => r.rank <= 3).length / n,
     win: rows.filter((r) => r.rank === 1).length / n,
@@ -127,6 +158,7 @@ function corr(rows, f, g) {
  */
 export function scoreRows(rows, rule = RULE) {
   if (!rows.length) return null;
+  if (rule.bands && rows.every((r) => r.mmr != null)) rows = bandAdjust(rows, rule.bands);
   const base = Object.fromEntries(NAMES.map((name) => [name, rows.reduce((a, r) => a + METRICS[name](r), 0) / rows.length]));
   const games = new Set(rows.map((r) => r.game)).size;
   const combos = [...groupBy(rows, (r) => `${r.char}:${r.weapon}`)].map(([key, rs]) => ({

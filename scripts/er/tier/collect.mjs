@@ -68,9 +68,13 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS rows_t ON rows (season, t);
   CREATE TABLE IF NOT EXISTS accounts (player TEXT PRIMARY KEY, newest INTEGER, checked INTEGER);
+  CREATE TABLE IF NOT EXISTS lobbies (game INTEGER PRIMARY KEY, checked INTEGER);
 `);
 const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 const getAccount = db.prepare(`SELECT newest FROM accounts WHERE player = ?`);
+const openLobbies = db.prepare(`SELECT game, (SELECT count(*) FROM rows x WHERE x.game = r.game) AS n FROM rows r
+  WHERE season = ? AND in1000 = 1 AND t >= ? AND game NOT IN (SELECT game FROM lobbies) GROUP BY game`);
+const putLobby = db.prepare(`INSERT OR REPLACE INTO lobbies VALUES (?, ?)`);
 const putAccount = db.prepare(`INSERT INTO accounts VALUES (?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked`);
 
 class Pace {
@@ -209,9 +213,12 @@ async function names() {
   const ko = (prefix) => new Map([...text.matchAll(new RegExp(`^${prefix}/([^┃\\r\\n]+)┃([^\\r\\n]*)`, "gm"))].map((m) => [m[1], m[2].trim()]));
   const charKo = ko("Character/Name");
   const typeKo = ko("MasteryType");
-  const chars = new Map(((await get("/v2/data/Character"))?.data ?? []).map((c) => [c.code, c.name]));
+  const roleKo = ko("CharArchetype");
+  const data = (await get("/v2/data/Character"))?.data ?? [];
+  const chars = new Map(data.map((c) => [c.code, c.name]));
+  const roles = new Map(data.map((c) => [c.code, [c.charArcheType1, c.charArcheType2].filter((x) => roleKo.has(x)).map((x) => roleKo.get(x))]));
   return {
-    char: (code) => ({ key: chars.get(code) ?? String(code), name: charKo.get(String(code)) ?? chars.get(code) ?? String(code) }),
+    char: (code) => ({ key: chars.get(code) ?? String(code), name: charKo.get(String(code)) ?? chars.get(code) ?? String(code), roles: roles.get(code) ?? [] }),
     weapon: (code) => typeKo.get(WEAPON[code]) ?? `무기 ${code}`,
   };
 }
@@ -227,6 +234,45 @@ async function accounts(s, since) {
   const names = new Set(top.map((x) => x.nickname));
   for (const [name, v] of Object.entries(book)) if (v[3] && v[3] * 1000 >= since) names.add(name);
   return [...names].map((name) => ({ name, uid: book[name]?.[6] ?? null }));
+}
+
+/** 경기 기록 한 사람분을 행으로 넣고 넣은 행 수를 돌려줌 */
+function insertGame(s, y, cuts, player) {
+  if (y.matchingMode !== 3 || y.seasonId !== s.id) return 0;
+  const who = y.nickname ? playerId(s.id, y.nickname) : player;
+  if (!who) return 0;
+  const t = kst(y.startDtm);
+  const patch = `${s.number}.${y.versionMajor}${y.versionMinor ? `.${y.versionMinor}` : ""}`;
+  const cut = cutAt(cuts, t);
+  const in1000 = cut == null || y.mmrBefore == null ? null : y.mmrBefore >= Math.max(cut, RANKED_GATE) ? 1 : 0;
+  const r = insertRow.run(
+    y.gameId, who, s.id, t, patch, y.characterNum, y.bestWeapon, y.traitFirstCore ?? null, y.gameRank,
+    y.mmrGainInGame ?? null, y.mmrLossEntryCost ?? null, y.mmrGain ?? null, y.mmrBefore ?? null,
+    y.playerKill ?? null, y.damageToPlayer ?? null, y.serverName ?? null, cut, in1000,
+  );
+  return Number(r.changes);
+}
+
+/** 상위 1,000명이 참가한 경기에서 아직 받지 않은 참가자를 경기 기록 한 번으로 채움. 확인한 경기는 lobbies에 남김 */
+async function fillLobbies(s, cuts) {
+  const list = openLobbies.all(s.id, Math.max(s.start, Date.now() - KEEP_DAYS * 86_400_000));
+  for (const x of list) if (x.n >= 24) putLobby.run(x.game, Date.now());
+  const queue = list.filter((x) => x.n < 24).map((x) => x.game);
+  const total = queue.length;
+  let added = 0;
+  const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
+    while (!abort) {
+      const game = queue.shift();
+      if (game == null) return;
+      const g = await get(`/v1/games/${game}`);
+      if (g === undefined) continue;
+      for (const y of g?.userGames ?? []) added += insertGame(s, y, cuts, null);
+      putLobby.run(game, Date.now());
+    }
+  });
+  await Promise.all(workers);
+  log(`상위 1,000명이 참가한 경기 ${total}개에서 수집하지 못한 참가자 ${added}행을 추가했습니다`);
+  return { games: total, added };
 }
 
 async function collectAccount(s, acc, since, cuts, stop) {
@@ -255,16 +301,7 @@ async function collectAccount(s, acc, since, cuts, stop) {
         break;
       }
       top = Math.max(top, t);
-      if (y.matchingMode !== 3 || y.seasonId !== s.id) continue;
-      const patch = `${s.number}.${y.versionMajor}${y.versionMinor ? `.${y.versionMinor}` : ""}`;
-      const cut = cutAt(cuts, t);
-      const in1000 = cut == null || y.mmrBefore == null ? null : y.mmrBefore >= Math.max(cut, RANKED_GATE) ? 1 : 0;
-      const r = insertRow.run(
-        y.gameId, y.nickname ? playerId(s.id, y.nickname) : player, s.id, t, patch, y.characterNum, y.bestWeapon, y.traitFirstCore ?? null, y.gameRank,
-        y.mmrGainInGame ?? null, y.mmrLossEntryCost ?? null, y.mmrGain ?? null, y.mmrBefore ?? null,
-        y.playerKill ?? null, y.damageToPlayer ?? null, y.serverName ?? null, cut, in1000,
-      );
-      added += Number(r.changes);
+      added += insertGame(s, y, cuts, player);
     }
     if (done) {
       complete = true;
@@ -329,7 +366,8 @@ async function collect(s, since, { measure }) {
     writeFileSync(RATE, JSON.stringify({ at: Date.now(), limit: result.limit, rps: safe, steps: result.steps }));
   }
   await Promise.all(workers);
-  return { added, accounts: list.length, ...result };
+  const lobbies = measure || abort ? null : await fillLobbies(s, cuts);
+  return { added: added + (lobbies?.added ?? 0), accounts: list.length, lobbies, ...result };
 }
 
 function median(a) {
@@ -349,8 +387,10 @@ function cmpPatch(a, b) {
   return 0;
 }
 
-const selectRows = db.prepare(`SELECT game, player, char, weapon, rank, gain_in AS gain, t, patch FROM rows
-  WHERE season = ? AND in1000 = 1 AND server = ? AND gain_in IS NOT NULL AND t >= ? ORDER BY t`);
+// 상위 1,000명이 한 명이라도 참가한 경기는 참가자 전원을 씀
+const selectRows = db.prepare(`SELECT game, player, char, weapon, rank, gain_in AS gain, mmr_before AS mmr, t, patch FROM rows
+  WHERE season = ? AND server = ? AND gain_in IS NOT NULL AND mmr_before IS NOT NULL AND t >= ?
+  AND game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1) ORDER BY t`);
 
 function view(id, label, rows, nm, extra = {}, k) {
   const r = scoreRows(rows, k ? { ...RULE, k } : RULE);
@@ -379,7 +419,7 @@ function view(id, label, rows, nm, extra = {}, k) {
       n: c.n,
       players: c.players,
       top: round(c.top, 2),
-      lead3: round(c.lead3 * 100, 0),
+      ep: round(c.ep, 1),
       place: round(c.place, 2),
       top3: round(c.top3 * 100, 1),
       win: round(c.win * 100, 1),
@@ -402,12 +442,13 @@ function writeTier(data) {
 // 28일 탭이 패치가 바뀐 뒤에도 남도록 패치 대신 날짜로 지움
 const KEEP_DAYS = 35;
 const prune = db.prepare(`DELETE FROM rows WHERE season <> ? OR t < ?`);
+const pruneLobbies = db.prepare(`DELETE FROM lobbies WHERE game NOT IN (SELECT game FROM rows)`);
 
 function publish(s, nm) {
   const now = Date.now();
   const lastFile = join(DIR, "tier.json");
   const last = existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null;
-  const all = s.regular ? selectRows.all(s.id, SERVER, s.start) : [];
+  const all = s.regular ? selectRows.all(s.id, SERVER, s.start, s.id) : [];
   // 프리 시즌과 새 시즌 첫 집계 전에는 마지막 표를 그대로 두고 상태만 바꿈
   if (!all.length) {
     if (last) writeTier({ ...last, state: "offseason", updatedAt: now, next: s.regular && last.season?.id !== s.id ? s.name : undefined });
@@ -463,6 +504,7 @@ function publish(s, nm) {
   };
   writeTier(data);
   const removed = prune.run(s.id, now - KEEP_DAYS * 86_400_000).changes;
+  pruneLobbies.run();
   log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, ${KEEP_DAYS}일 지난 행 ${removed}개 삭제` : ""}`);
 }
 
