@@ -1,6 +1,5 @@
 import "server-only";
 import { circuitPoints, EVENT_NAME, josa, KEL_TEAMS, QUALIFY, SEEDS } from "@/er/lib/kel";
-import { rng, shuffle } from "@/er/lib/random";
 import { CIRCUIT_STAGES, type Kel } from "./kel";
 
 type Stage = (typeof CIRCUIT_STAGES)[number];
@@ -47,6 +46,26 @@ export function status(input: OddsInput, { circuit: c, done }: View, t: number):
 // 지난 서킷 포인트에 진행 중인 서킷에서 지금 위치로 받을 수 있는 가장 낮은 포인트를 더한 값
 export function guaranteed(input: OddsInput, { circuit: c, done }: View, t: number): number {
   return known(input, c)[t] + pts[c][interval(input, c, done, t)[1]];
+}
+
+function rng(seed: number) {
+  let s = seed >>> 0 || 1;
+  return () => {
+    s ^= s << 13;
+    s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+    return s / 4294967296;
+  };
+}
+
+function shuffle(a: number[], r: () => number): number[] {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = (r() * (i + 1)) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 // 끝나지 않은 단계의 진출 팀과 그 안의 순위는 모두 같은 확률로 뽑음

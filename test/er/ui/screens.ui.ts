@@ -152,7 +152,6 @@ const SCREENS: Screen[] = [
   { name: "점수 계산", path: () => "/er/score" },
   { name: "이터컷 예측", path: () => "/er/cut" },
   { name: "이터컷 예측 RP 주소", path: () => "/er/cut?rp=9050" },
-  { name: "서킷 진출 확률", path: () => "/er/circuit" },
   { name: "실험체 티어", path: () => "/er/tier" },
   { name: "실험체 티어 최근 3일", path: () => "/er/tier?v=3d" },
   { name: "점수 계산 로그인", path: () => "/er/score", login: true },
