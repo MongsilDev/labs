@@ -17,12 +17,10 @@ export async function getRp(): Promise<RpData | null> {
 
 export const MIN_N = 30;
 
-// 순위마다 평균이 0 이상이 되는 첫 처치 구간. 표본이 있는 칸이 모두 0 이상이면 "all", 하나도 없으면 null
-export function breakEven(band: RpBand): (number | "all" | null)[] {
+// 순위마다 평균이 0 이상이 되는 첫 처치 구간. 표본이 모자란 칸은 건너뛰고, 그런 칸이 없으면 null
+export function breakEven(band: RpBand): (number | null)[] {
   return band.cells.map((row) => {
-    const ok = row.map((c, i) => ({ c, i })).filter(({ c }) => c.n >= MIN_N && c.m != null);
-    const i = ok.find(({ c }) => c.m! >= 0)?.i;
-    if (i == null) return null;
-    return ok.every(({ c }) => c.m! >= 0) ? "all" : i;
+    const i = row.findIndex((c) => c.n >= MIN_N && c.m != null && c.m >= 0);
+    return i < 0 ? null : i;
   });
 }

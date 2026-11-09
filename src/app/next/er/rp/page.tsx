@@ -103,7 +103,7 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
                 {even.map((j, i) => (
                   <tr key={i}>
                     <td className="l font-semibold">{i + 1}위</td>
-                    <td className={j == null ? "text-ink-3" : "font-bold"}>{j == null ? "없음" : j === "all" ? "모든 구간" : `${data.tk[j][0]}개부터`}</td>
+                    <td className={j == null ? "text-ink-3" : "font-bold"}>{j == null ? "없음" : `${data.tk[j][0]}개부터`}</td>
                   </tr>
                 ))}
               </tbody>
