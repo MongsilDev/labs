@@ -4,7 +4,7 @@ type Box = { x: number; y: number; w: number; h: number };
 const hit = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 // 겹치는 이름표는 오른쪽, 왼쪽, 위, 아래 순으로 옮기고 자리가 없으면 뺌
-function place(points: { k: string; x: number; y: number; text: string }[], fs: number, box: Box, dots: [number, number][]) {
+export function place(points: { k: string; x: number; y: number; text: string }[], fs: number, box: Box, dots: [number, number][]) {
   const taken: Box[] = dots.map(([x, y]) => ({ x: x - 4, y: y - 4, w: 8, h: 8 }));
   const out = new Map<string, { x: number; y: number; anchor: "start" | "end" | "middle" }>();
   for (const p of points) {

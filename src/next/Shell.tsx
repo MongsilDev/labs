@@ -7,6 +7,7 @@ const ER: Item[] = [
   { key: "meta", href: "/next/er/meta", label: "메타 지도" },
   { key: "cut", href: "/next/er/cut", label: "이터컷" },
   { key: "rp", href: "/next/er/rp", label: "RP 손익" },
+  { key: "late", href: "/next/er/late", label: "초반과 막판" },
   { key: "kel", href: "/next/er/kel", label: "KEL 기록" },
   { key: "score", href: "/next/er/score", label: "대회 점수" },
 ];
