@@ -22,12 +22,10 @@ export default async function NextScore() {
   const rounds = Array.from({ length: res.played }, (_, i) => i + 1);
   return (
     <Shell here="score">
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">대회 점수</h1>
+      <div className="mt-5 grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px]">
         <section className="min-w-0">
-          <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
-            <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">대회 점수</h1>
-          </div>
-          <div className="sec mt-5">
+          <div className="sec">
             <h2 className="sec-h">
               {ex.name}
               <Link className="more" href="/er/example/a">예시 대회 열기</Link>
