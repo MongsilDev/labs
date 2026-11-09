@@ -381,9 +381,10 @@ async function fetchDak(ids) {
     return !!r && JSON.parse(brotliDecompressSync(r.body)).route == null;
   });
   let saved = 0;
+  let asked = 0;
   for (const id of queue) {
     if (abort) break;
-    if (saved) await sleep(DAK_GAP_MS);
+    if (asked++) await sleep(DAK_GAP_MS);
     let res;
     try {
       res = await fetch(`${DAK_API}?id=${id}`, { headers: { "user-agent": "agent-local" }, signal: AbortSignal.timeout(20_000) });
@@ -396,7 +397,17 @@ async function fetchDak(ids) {
       log(`dak.gg가 ${res.status}로 응답해 루트 이름 수집을 멈춥니다`);
       break;
     }
-    const w = res.status === 200 ? (await res.json())?.weaponRoute : null;
+    let w = null;
+    if (res.status === 200) {
+      try {
+        w = (await res.json())?.weaponRoute ?? null;
+      } catch (e) {
+        log("dak.gg 응답을 읽지 못했습니다", e.message);
+        break;
+      }
+      // 404가 아닌데 루트가 비어 있으면 형식이 바뀌었을 수 있어 저장하지 않고 다음 회차에 다시 물음
+      if (!w) continue;
+    }
     putDak.run(id, Date.now(), w?.title || null, w?.userNickname || null, firstTrait(w), w?.tacticalSkillGroupCode ?? null);
     saved++;
   }
