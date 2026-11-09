@@ -1479,8 +1479,7 @@
   .tier-card[data-thin] {
     color: var(--text-3);
   }
-  .tier-card[data-thin] img,
-  .tier-card[data-thin] .tier-wb {
+  .tier-card[data-thin] .tier-pw {
     opacity: 0.4;
   }
   .tier-card b {
