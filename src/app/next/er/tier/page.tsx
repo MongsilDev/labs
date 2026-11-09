@@ -70,7 +70,7 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
           ]}
         />
         {!list.length ? (
-          <p className="text-ink-3" role="status">이 기간은 집계가 아직 없습니다.</p>
+          <p className="text-ink-3" role="status">{view.combos.length ? `이 기간에는 ${role} 실험체가 없습니다.` : "이 기간은 집계가 아직 없습니다."}</p>
         ) : (
         <table className="tbl self-start">
           <thead>
