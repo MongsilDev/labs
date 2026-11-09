@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { createPortal } from "react-dom";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
-import { BADGE, signed, WEAPON_SPRITE, type TierCombo, type TierSplit, type TierView } from "@/er/lib/tier";
+import { BADGE, compareView, movedCombos, signed, WEAPON_SPRITE, type TierCombo, type TierMoved, type TierSplit, type TierView } from "@/er/lib/tier";
 
 const GRADES: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
 const ROLES = ["탱커", "전사", "암살자", "스킬 딜러", "원거리 딜러", "지원가"];
@@ -41,9 +41,7 @@ function Arrow() {
   );
 }
 
-type Moved = { c: TierCombo; o: TierCombo };
-
-function MovedList({ title, list }: { title: string; list: Moved[] }) {
+function MovedList({ title, list }: { title: string; list: TierMoved[] }) {
   if (!list.length) return null;
   return (
     <>
@@ -339,16 +337,8 @@ export default function TierBoard(p: Props) {
   );
   const groups: [string, TierCombo[]][] = sort === "pick" ? [["pick", [...shown].sort((a, b) => b.pick - a.pick || b.n - a.n)]] : GRADES.map((g) => [g, shown.filter((c) => c.grade === g)]);
   const w = p.weights;
-  // 지금 패치 탭에서만 직전 패치와 비교. 점수 차이의 90% 범위에 0이 들어가지 않는 조합
-  const prev = view.id === `patch-${p.patch}` && !view.season ? p.views.find((v) => v.id.startsWith("patch-") && v.id !== view.id && !v.season) : undefined;
-  const moved: Moved[] = prev
-    ? shown
-        .flatMap((c) => {
-          const o = prev.combos.find((x) => x.char === c.char && x.weapon === c.weapon);
-          return o && c.half != null && o.half != null && Math.abs(c.score - o.score) > Math.hypot(c.half, o.half) ? [{ c, o }] : [];
-        })
-        .sort((a, b) => Math.abs(b.c.score - b.o.score) - Math.abs(a.c.score - a.o.score))
-    : [];
+  const prev = compareView(p.views, view, p.patch);
+  const moved = prev ? movedCombos(shown, prev) : [];
 
   return (
     <>

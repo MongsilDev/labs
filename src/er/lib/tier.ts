@@ -105,3 +105,21 @@ export function signed(v: number): string {
   const r = Math.round(v * 10) / 10;
   return r > 0 ? `+${r.toFixed(1)}` : r < 0 ? r.toFixed(1) : "0.0";
 }
+
+export type TierMoved = { c: TierCombo; o: TierCombo };
+
+/** 지금 패치 탭이면 비교할 직전 패치 탭 */
+export function compareView(views: TierView[], view: TierView, patch: string | null): TierView | undefined {
+  if (view.id !== `patch-${patch}` || view.season) return undefined;
+  return views.find((v) => v.id.startsWith("patch-") && v.id !== view.id && !v.season);
+}
+
+/** 점수 차이의 90% 범위에 0이 들어가지 않는 조합. 차이가 큰 순 */
+export function movedCombos(combos: TierCombo[], prev: TierView): TierMoved[] {
+  return combos
+    .flatMap((c) => {
+      const o = prev.combos.find((x) => x.char === c.char && x.weapon === c.weapon);
+      return o && c.half != null && o.half != null && Math.abs(c.score - o.score) > Math.hypot(c.half, o.half) ? [{ c, o }] : [];
+    })
+    .sort((a, b) => Math.abs(b.c.score - b.o.score) - Math.abs(a.c.score - a.o.score));
+}
