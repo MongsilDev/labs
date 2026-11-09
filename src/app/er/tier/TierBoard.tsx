@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
@@ -145,9 +145,24 @@ const CheckIcon = () => (
   </svg>
 );
 
+const NARROW = "(max-width: 1099px)";
+
+function useNarrow() {
+  return useSyncExternalStore(
+    (cb) => {
+      const m = window.matchMedia(NARROW);
+      m.addEventListener("change", cb);
+      return () => m.removeEventListener("change", cb);
+    },
+    () => window.matchMedia(NARROW).matches,
+    () => false,
+  );
+}
+
 function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
+  const narrow = useNarrow();
   const [copied, setCopied] = useState<number | null>(null);
 
   // 조합을 바꾸면 key가 바뀌어 다시 마운트되므로 열릴 때마다 닫기 버튼으로 초점을 옮김
@@ -159,23 +174,27 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
     const esc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    // 1099px 이하는 패널이 화면 전체를 덮으므로 뒤쪽을 inert로 막아 초점과 읽기를 패널 안에 둠
-    const narrow = window.matchMedia("(max-width: 1099px)");
-    const apply = () => {
-      for (const el of document.body.children) if (el !== panel.current && el instanceof HTMLElement) el.inert = narrow.matches;
-      panel.current?.setAttribute("aria-modal", String(narrow.matches));
-    };
-    apply();
-    narrow.addEventListener("change", apply);
     document.documentElement.classList.add("tier-dx-open");
     window.addEventListener("keydown", esc);
     return () => {
-      narrow.removeEventListener("change", apply);
-      for (const el of document.body.children) if (el instanceof HTMLElement) el.inert = false;
       document.documentElement.classList.remove("tier-dx-open");
       window.removeEventListener("keydown", esc);
     };
   }, [onClose]);
+
+  // 1099px 이하는 패널이 화면 전체를 덮으므로 body로 옮기고 뒤쪽을 inert로 막아 초점과 읽기를 패널 안에 둠
+  useEffect(() => {
+    if (!narrow) return;
+    const changed: HTMLElement[] = [];
+    for (const el of document.body.children) {
+      if (el === panel.current || !(el instanceof HTMLElement) || el.inert) continue;
+      el.inert = true;
+      changed.push(el);
+    }
+    return () => {
+      for (const el of changed) el.inert = false;
+    };
+  }, [narrow]);
 
   useEffect(() => {
     if (copied == null) return;
@@ -195,8 +214,8 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
   const range = c.half != null ? `${signed(c.score - c.half)} ~ ${signed(c.score + c.half)}` : null;
   const dn = c.dn ?? 0;
   const routes = c.routes ?? [];
-  return createPortal(
-    <aside ref={panel} id="tier-dx" className="tier-dx" role="dialog" aria-labelledby="tier-dx-h">
+  const body = (
+    <aside ref={panel} id="tier-dx" className="tier-dx" role="dialog" aria-modal={narrow || undefined} aria-labelledby="tier-dx-h">
       <header className="tier-dx-head">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={56} height={56} onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
@@ -282,9 +301,9 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
           {copied != null ? "루트 번호를 복사했습니다." : ""}
         </p>
       </div>
-    </aside>,
-    document.body,
+    </aside>
   );
+  return narrow ? createPortal(body, document.body) : body;
 }
 
 export default function TierBoard(p: Props) {
