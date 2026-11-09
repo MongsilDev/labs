@@ -56,10 +56,8 @@ function Detail({ c, id }: { c: TierCombo; id: string }) {
           <dd>{c.pick.toFixed(2)}%</dd>
         </div>
         <div>
-          <dt>표본</dt>
-          <dd>
-            {int(c.n)}판 {int(c.players)}명
-          </dd>
+          <dt>플레이어</dt>
+          <dd>{int(c.players)}명</dd>
         </div>
       </dl>
     </div>
