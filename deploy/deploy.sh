@@ -30,12 +30,20 @@ echo "==> 이전 이미지 정리"
 docker images --format '{{.Repository}}:{{.Tag}}' | grep '^labs:[0-9]' | sort -r | tail -n +4 | xargs docker image rm >/dev/null || true
 
 echo "==> 확인"
+ready=0
 for _ in $(seq 1 20); do
   if curl -fs -o /dev/null http://127.0.0.1:8745/api/health; then
     echo "  준비됨"
-    exit 0
+    ready=1
+    break
   fi
   sleep 1
 done
-echo "  응답이 없습니다. docker logs labs로 확인해주세요." >&2
-exit 1
+if [ "$ready" != 1 ]; then
+  echo "  응답이 없습니다. docker logs labs로 확인해주세요." >&2
+  exit 1
+fi
+
+# 엣지에 캐시된 HTML이 지난 빌드의 청크를 가리키지 않게 비움
+echo "==> Cloudflare 캐시 비우기"
+sh deploy/purge.sh || true
