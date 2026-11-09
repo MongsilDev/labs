@@ -30,11 +30,11 @@ export default async function NextKelPlayers({ searchParams }: { searchParams: P
     const xs = all.map((p) => v(p, c.k));
     return [c.k, [Math.min(...xs), Math.max(...xs)]] as const;
   }));
-  // 열마다 가장 좋은 값이 가장 진한 칸
+  // 정렬 기준 열만 칠하고, 가장 좋은 값이 가장 진한 칸
   const heat = (c: (typeof COLS)[number], x: number) => {
     const [lo, hi] = range.get(c.k)!;
     const t = hi === lo ? 0 : (x - lo) / (hi - lo);
-    return `color-mix(in srgb, var(--hot) ${Math.round((c.low ? 1 - t : t) * 30)}%, transparent)`;
+    return `color-mix(in srgb, var(--hot) ${Math.round((c.low ? 1 - t : t) * 55)}%, transparent)`;
   };
   const rows = [...all].sort((a, b) => (sort.low ? v(a, sort.k) - v(b, sort.k) : v(b, sort.k) - v(a, sort.k)));
   return (
@@ -64,11 +64,11 @@ export default async function NextKelPlayers({ searchParams }: { searchParams: P
               {rows.map((p) => (
                 <tr key={p.name}>
                   <td className="l sticky left-0 bg-bg">
-                    <PlayerName name={p.name} team={TEAM.get(p.team)} />
+                    <PlayerName name={p.name} team={TEAM.get(p.team)} logoClass="ring-1 ring-rule-2" />
                   </td>
                   <td className="text-ink-3">{p.games}</td>
                   {COLS.map((c) => (
-                    <td key={c.k} className={c === sort ? "font-bold" : ""} style={{ background: heat(c, v(p, c.k)) }}>
+                    <td key={c.k} className={c === sort ? "font-bold" : ""} style={c === sort ? { background: heat(c, v(p, c.k)) } : undefined}>
                       {c.fmt(v(p, c.k))}
                     </td>
                   ))}

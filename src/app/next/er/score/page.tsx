@@ -52,12 +52,15 @@ export default async function NextScore() {
                         </td>
                       ))}
                       <td className="text-ink-2">{s.kills}</td>
-                      <td className="text-[16px] font-black">{s.total}</td>
+                      <td className="text-[16px] font-black">{s.total.toFixed(1)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
+          <div className="mt-10 max-w-[480px]">
+            <OpenCode mine={mine} />
           </div>
         </section>
         <aside className="order-first grid content-start gap-8 lg:order-none lg:border-l lg:border-rule lg:pl-10">
@@ -65,7 +68,6 @@ export default async function NextScore() {
             <h2 id="new-h" className="mb-4 text-[18px] font-black">새 대회</h2>
             <CreateForm loggedIn={Boolean(user)} autoCreate={false} />
           </section>
-          <OpenCode mine={mine} />
         </aside>
       </div>
     </Shell>

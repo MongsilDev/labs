@@ -18,7 +18,8 @@ export default async function NextKel() {
   if (!data) return <Shell here="kel"><p className="text-ink-3" role="status">KEL 기록을 불러오지 못했습니다.</p></Shell>;
   const sum = kelSummary(data);
   const champ = kelChampion(data);
-  const teams = [...KEL_TEAMS].sort((a, b) => a.circuits.reduce((s, x) => s + x, 0) - b.circuits.reduce((s, x) => s + x, 0));
+  const avg = (t: (typeof KEL_TEAMS)[number]) => t.circuits.reduce((s, x) => s + x, 0) / t.circuits.length;
+  const teams = [...KEL_TEAMS].sort((a, b) => avg(a) - avg(b));
   const players = playerStats(data).filter((p) => p.games >= 30).sort((a, b) => b.kpr - a.kpr).slice(0, 8);
   const chars = characterStats(data).rows.sort((a, b) => b.games - a.games).slice(0, 8);
   return (
@@ -35,13 +36,14 @@ export default async function NextKel() {
         <div className="grid content-start gap-10 xl:grid-cols-2">
           <section className="sec xl:col-span-2">
             <h2 className="sec-h">서킷 순위</h2>
-            <table className="tbl mt-1">
+            <table className="tbl mt-1 lg:!w-auto">
               <thead>
                 <tr>
-                  <th className="l">팀</th>
+                  <th className="l lg:w-[240px]">팀</th>
                   {[1, 2, 3, 4].map((i) => (
-                    <th key={i} className="!text-center">서킷 {i}</th>
+                    <th key={i} className="!text-center lg:w-[84px]">서킷 {i}</th>
                   ))}
+                  <th className="lg:w-[96px]"><span className="text-ink underline decoration-hot decoration-2 underline-offset-4">평균 순위</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -49,7 +51,7 @@ export default async function NextKel() {
                   <tr key={t.key}>
                     <td className="l">
                       <span className="flex items-center gap-2 font-semibold">
-                        <Logo team={t} size={24} />
+                        <Logo team={t} size={24} className="ring-1 ring-rule-2" />
                         {t.name}
                         {t.key === champ && <span className="text-[12px] font-bold text-hot">우승</span>}
                       </span>
@@ -57,6 +59,7 @@ export default async function NextKel() {
                     {t.circuits.map((p, i) => (
                       <td key={i} className="!text-center font-bold" style={{ background: heat(p) }}>{p}</td>
                     ))}
+                    <td className="font-bold">{avg(t).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
