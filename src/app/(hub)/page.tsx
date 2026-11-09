@@ -120,26 +120,6 @@ export default async function Hub() {
           <Tool
             game="이터널 리턴"
             icon="er"
-            href="/er/kel"
-            name="KEL 기록"
-            desc="2026 KEL 서킷 순위, 결승 라운드별 점수, 선수와 실험체 기록"
-            className="col-span-2 max-[760px]:col-span-1"
-            statsTop
-            stats={
-              champion
-                ? [{ label: "우승", value: TEAM.get(champion)!.name }]
-                : [
-                    { label: "준결승", value: <Day date="2026-11-07" text="11월 7일" /> },
-                    { label: "결승", value: <Day date="2026-11-08" text="11월 8일" /> },
-                  ]
-            }
-          >
-            {kel && <Highlights data={kel} />}
-          </Tool>
-
-          <Tool
-            game="이터널 리턴"
-            icon="er"
             href="/er/tier"
             name="실험체 티어"
             desc={tier ? `${tier.band.server} ${TIER_DESC}` : TIER_DESC}
@@ -162,6 +142,26 @@ export default async function Hub() {
                 잠시 뒤 다시 열어주세요.
               </p>
             )}
+          </Tool>
+
+          <Tool
+            game="이터널 리턴"
+            icon="er"
+            href="/er/kel"
+            name="KEL 기록"
+            desc="2026 KEL 서킷 순위, 결승 라운드별 점수, 선수와 실험체 기록"
+            className="col-span-2 max-[760px]:col-span-1"
+            statsTop
+            stats={
+              champion
+                ? [{ label: "우승", value: TEAM.get(champion)!.name }]
+                : [
+                    { label: "준결승", value: <Day date="2026-11-07" text="11월 7일" /> },
+                    { label: "결승", value: <Day date="2026-11-08" text="11월 8일" /> },
+                  ]
+            }
+          >
+            {kel && <Highlights data={kel} />}
           </Tool>
 
           <Tool
