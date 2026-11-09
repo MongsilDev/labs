@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { rankBadge } from "@/er/lib/rank";
+import { overlayPlace, rankEmblem } from "@/er/lib/rank";
 import { NICKNAME, parseRank, rankOf } from "@/er/server/rank";
 
 const VIEW = { nickname: "Foo", tier: "메테오라이트 3", mmr: 6842, place: "아시아1 1,284위", serverRank: 1284, serverCode: 10, last: { gain: 38, at: 1794150000 }, updatedAt: 1794150100 };
@@ -10,10 +10,19 @@ describe("티어 방송 화면", () => {
     vi.unstubAllEnvs();
   });
 
-  it("티어 이름을 약자와 색으로 바꿈", () => {
-    expect(rankBadge("메테오라이트 3").short).toBe("M3");
-    expect(rankBadge("데미갓").short).toBe("DG");
-    expect(rankBadge("언랭크").short).toBe("-");
+  it("티어 이름으로 엠블럼 파일을 고름", () => {
+    expect(rankEmblem("메테오라이트 3")).toBe("/img/er/emblem/Meteorite.v1.webp");
+    expect(rankEmblem("데미갓")).toBe("/img/er/emblem/Titan.v1.webp");
+    expect(rankEmblem("언랭크")).toBe("/img/er/emblem/Unrank.v1.webp");
+  });
+
+  it("프리셋 자리에서 x, y만큼 옮기고 화면 밖으로는 못 나감", () => {
+    expect(overlayPlace(undefined)).toEqual({ preset: "t1", left: 4, bottom: 27 });
+    expect(overlayPlace("t2")).toEqual({ preset: "t2", right: 277, top: 13 });
+    expect(overlayPlace("t3", "-10", "5")).toEqual({ preset: "t3", left: 1270, top: 18 });
+    expect(overlayPlace("t1", "-50", "100")).toEqual({ preset: "t1", left: 0, bottom: 0 });
+    expect(overlayPlace("t2", "9999", "abc")).toEqual({ preset: "t2", right: 0, top: 13 });
+    expect(overlayPlace("zz", "1.6")).toEqual({ preset: "t1", left: 6, bottom: 27 });
   });
 
   it("닉네임 형식", () => {
@@ -27,6 +36,8 @@ describe("티어 방송 화면", () => {
     expect(parseRank({ ...VIEW, mmr: "6842" })).toBeNull();
     expect(parseRank({ ...VIEW, last: null })?.last).toBeNull();
     expect(parseRank({ ...VIEW, tier: "골드\u0000 1" })?.tier).toBe("골드 1");
+    expect(parseRank(VIEW)?.recent).toEqual([]);
+    expect(parseRank({ ...VIEW, recent: [1, 4, "2", 0, 3.5, ...Array(12).fill(8)] })?.recent).toEqual([1, 4, ...Array(8).fill(8)]);
   });
 
   it("같은 닉네임은 한 번만 부르고, 실패하면 마지막 값을 씀", async () => {

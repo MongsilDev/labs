@@ -109,7 +109,7 @@ beforeAll(async () => {
     if (url.pathname === "/api/tier") {
       if (url.searchParams.get("n") !== "시험선수") return res.writeHead(404).end();
       const now = Math.floor(Date.now() / 1000);
-      const tier = { nickname: "시험선수", tier: "메테오라이트 3", mmr: 6842, place: "상위 4.2%", serverRank: 1284, serverCode: 10, last: { gain: 38, at: now - 600 }, updatedAt: now };
+      const tier = { nickname: "시험선수", tier: "메테오라이트 3", mmr: 6842, place: "상위 4.2%", serverRank: 1284, serverCode: 10, last: { gain: 38, at: now - 600 }, recent: [1, 4, 2, 7, 3, 1, 5, 2, 6, 3], updatedAt: now };
       return res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(tier));
     }
     if (url.pathname !== "/api/t/channels") return res.writeHead(404).end();
@@ -410,23 +410,38 @@ describe("화면 점검", () => {
     const box = await page.locator(".lv-box").boundingBox();
     const p = await page.evaluate(inspect);
     await ctx.close();
-    expect(box && [Math.round(box.x), Math.round(box.y), Math.round(box.width)]).toEqual([1443, 840, 207]);
+    expect(box && [Math.round(box.x), Math.round(box.y), Math.round(box.width)]).toEqual([1434, 839, 218]);
     expect(box && box.y + box.height).toBeLessThanOrEqual(1080);
     expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
     expect(errors).toEqual([]);
   });
 
-  it("티어 방송 화면은 카드를, 없는 닉네임에는 안내를 표시한다", async () => {
+  it("티어 방송 화면은 프리셋 자리와 크기로 표시하고, 없는 닉네임에는 안내를 표시한다", async () => {
     const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await ctx.newPage();
-    await page.goto(`${base}/er/rank/overlay?n=${encodeURIComponent("시험선수")}`, { waitUntil: "networkidle" });
+    const n = encodeURIComponent("시험선수");
+    const boxes: Record<string, number[]> = {};
+    const problems: Problems[] = [];
+    for (const q of ["p=t1", "p=t2", "p=t3", "p=t3&x=-10&y=5"]) {
+      await page.goto(`${base}/er/rank/overlay?n=${n}&${q}`, { waitUntil: "networkidle" });
+      const b = await page.locator(".tov-p").boundingBox();
+      boxes[q] = b ? [b.x, b.y, b.width, b.height].map(Math.round) : [];
+      problems.push(await page.evaluate(inspect));
+      const loaded = await page.$$eval(".tov-em", (els) => els.every((e) => (e as HTMLImageElement).naturalWidth > 0));
+      expect(loaded, q).toBe(true);
+    }
+    expect(await page.locator(".tov-c").count()).toBe(10);
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    await page.goto(`${base}/er/rank/overlay?n=${n}`, { waitUntil: "networkidle" });
     await expect(page.locator(".tov-tn").textContent()).resolves.toBe("메테오라이트 3");
-    await expect(page.locator(".tov-em").textContent()).resolves.toBe("M3");
-    const p = await page.evaluate(inspect);
+    const big = await page.locator(".tov-p").boundingBox();
     await page.goto(`${base}/er/rank/overlay?n=${encodeURIComponent("없는선수")}`, { waitUntil: "networkidle" });
     await expect(page.locator(".tov-msg").textContent()).resolves.toBe("닉네임을 찾지 못했습니다.");
     await ctx.close();
-    expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
+    expect(boxes).toEqual({ "p=t1": [4, 920, 288, 133], "p=t2": [boxes["p=t2"][0], 13, boxes["p=t2"][2], 32], "p=t3": [1280, 13, 269, 89], "p=t3&x=-10&y=5": [1270, 18, 269, 89] });
+    expect(boxes["p=t2"][0] + boxes["p=t2"][2]).toBe(1643);
+    expect(big && [big.x, big.y, big.width, big.height].map((v) => Math.round((v * 3) / 4))).toEqual([4, 920, 288, 133]);
+    for (const p of problems) expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
   });
 
   it("키보드로 옮긴 초점이 화면에 표시된다", async () => {

@@ -27,6 +27,7 @@ export function parseRank(raw: unknown): RankView | null {
   if (!nickname || !tier || mmr === null) return null;
   const last = d.last as Record<string, unknown> | null;
   const gain = num(last?.gain);
+  const recent = Array.isArray(d.recent) ? d.recent.filter((v): v is number => Number.isInteger(v) && v >= 1 && v < 100).slice(0, 10) : [];
   return {
     nickname,
     tier,
@@ -35,6 +36,7 @@ export function parseRank(raw: unknown): RankView | null {
     serverRank: num(d.serverRank),
     serverCode: num(d.serverCode),
     last: gain === null ? null : { gain, at: num(last?.at) },
+    recent,
     updatedAt: num(d.updatedAt) ?? 0,
   };
 }
