@@ -3,8 +3,8 @@ import type { CardRead } from "@/er/lib/hud";
 import { liveRows, outPlace, parseFrame, suggestTeams, type LiveTeam } from "@/er/lib/live";
 import { applyRead, emptySlots, fixSlot, unfixAll } from "@/er/lib/live-read";
 
-const team = (slot: number, p: Partial<LiveTeam> = {}): LiveTeam => ({ slot, teamId: null, name: null, ts: null, ks: null, out: false, place: null, fixed: false, ...p });
-const cards = (list: Partial<CardRead>[]): CardRead[] => list.map((c, i) => ({ slot: i + 1, ts: null, ks: null, raised: false, out: false, ...c }));
+const team = (slot: number, p: Partial<LiveTeam> = {}): LiveTeam => ({ slot, teamId: null, name: null, ts: null, ks: null, out: false, place: null, fixed: false, color: null, ...p });
+const cards = (list: Partial<CardRead>[]): CardRead[] => list.map((c, i) => ({ slot: i + 1, ts: null, ks: null, raised: false, out: false, color: null, ...c }));
 
 describe("경기 중 값", () => {
   it("모양이 다른 본문은 버림", () => {
@@ -14,6 +14,7 @@ describe("경기 중 값", () => {
     expect(parseFrame({ roundNo: 1, teams: [team(9)] })).toBeNull();
     expect(parseFrame({ roundNo: 1, teams: Array.from({ length: 9 }, (_, i) => team(i + 1)) })).toBeNull();
     expect(parseFrame({ roundNo: 1, teams: [team(1, { ts: -1, name: "  가\u0000나  " })] })?.teams[0]).toMatchObject({ ts: null, name: "가나" });
+    expect(parseFrame({ roundNo: 1, teams: [team(1, { color: "#b92a40" }), team(2, { color: "red" })] })?.teams.map((t) => t.color)).toEqual(["#b92a40", null]);
   });
 
   it("탈락 순위는 TS에서 KS를 뺀 순위 점수로 정함", () => {
@@ -41,11 +42,11 @@ describe("경기 중 값", () => {
     expect(rows[2]).toMatchObject({ out: true, place: 8, ts: 1 });
   });
 
-  it("확정 기록이 그 라운드를 담으면 누적만 보여 줌", () => {
-    const frame = { roundNo: 4, at: 0, teams: [team(1, { teamId: "a", ts: 5 })] };
+  it("확정 기록이 그 라운드를 담으면 누적만 보여 주고 카드 색은 남김", () => {
+    const frame = { roundNo: 4, at: 0, teams: [team(1, { teamId: "a", ts: 5, out: true, place: 3, color: "#b92a40" })] };
     const { rows, live } = liveRows([{ key: "a", name: "A", total: 10 }], frame, 4);
     expect(live).toBe(false);
-    expect(rows[0]).toMatchObject({ total: 10, ts: null });
+    expect(rows[0]).toMatchObject({ total: 10, ts: null, out: false, place: null, color: "#b92a40" });
   });
 
   it("연결하지 않은 카드는 적은 이름이나 번호로 줄을 만들고, 같은 점수는 같은 순위", () => {
@@ -116,5 +117,16 @@ describe("읽기 탭 카드", () => {
     s = unfixAll(s);
     s = applyRead(applyRead(s, cards([{ ts: 3, ks: 2 }])), cards([{ ts: 3, ks: 2 }]));
     expect(s[0].ts).toBe(3);
+  });
+
+  it("팀 색은 다르게 읽힐 때만 바꾸고, 못 읽거나 비슷하면 마지막 색을 유지. 고친 카드도 색은 바꿈", () => {
+    let s = applyRead(emptySlots(), cards([{ ts: 3, ks: 2, color: "#b92a40" }]));
+    expect(s[0].color).toBe("#b92a40");
+    s = applyRead(s, cards([{ ts: 3, ks: 2 }]));
+    expect(s[0].color).toBe("#b92a40");
+    s = applyRead(s, cards([{ ts: 3, ks: 2, color: "#b82944" }]));
+    expect(s[0].color).toBe("#b92a40");
+    s = applyRead(fixSlot(s, 1, { ts: 7 }), cards([{ ts: 3, ks: 2, color: "#bf6c2a" }]));
+    expect(s[0]).toMatchObject({ ts: 7, color: "#bf6c2a" });
   });
 });

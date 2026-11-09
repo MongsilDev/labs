@@ -8,11 +8,12 @@ export type LiveTeam = {
   out: boolean;
   place: number | null;
   fixed: boolean;
+  color: string | null;
 };
 
 export type LiveFrame = { roundNo: number; at: number; teams: LiveTeam[] };
 
-export type LiveRow = { key: string; name: string; rank: number; total: number; ts: number | null; out: boolean; place: number | null };
+export type LiveRow = { key: string; name: string; rank: number; total: number; ts: number | null; out: boolean; place: number | null; color: string | null };
 
 export const SLOTS = 8;
 const MAX_NAME = 24;
@@ -43,6 +44,7 @@ export function parseFrame(raw: unknown): LiveFrame | null {
       out: t.out === true,
       place: typeof place === "number" && Number.isInteger(place) && place >= 1 && place <= SLOTS ? place : null,
       fixed: t.fixed === true,
+      color: typeof t.color === "string" && /^#[0-9a-f]{6}$/.test(t.color) ? t.color : null,
     });
   }
   return { roundNo, at: Date.now(), teams: teams.sort((a, b) => a.slot - b.slot) };
@@ -77,17 +79,19 @@ export function liveRows(standings: { key: string; name: string; total: number }
   const live = !!frame && frame.roundNo > played;
   const byId = new Map<string, LiveTeam>();
   const loose: LiveTeam[] = [];
-  if (live)
+  // 라운드 사이에도 마지막 장면의 카드 색은 남김
+  if (frame)
     for (const t of frame.teams) {
       if (t.teamId && standings.some((s) => s.key === t.teamId)) byId.set(t.teamId, t);
-      else if (t.ts !== null || t.name) loose.push(t);
+      else if (live && (t.ts !== null || t.name)) loose.push(t);
     }
   const rows: Omit<LiveRow, "rank">[] = [
     ...standings.map((s) => {
       const t = byId.get(s.key);
-      return { key: s.key, name: s.name, total: s.total + (t?.ts ?? 0), ts: live ? (t?.ts ?? null) : null, out: !!t?.out, place: t?.out ? t.place : null };
+      const now = live ? t : undefined;
+      return { key: s.key, name: s.name, total: s.total + (now?.ts ?? 0), ts: live ? (now?.ts ?? null) : null, out: !!now?.out, place: now?.out ? now.place : null, color: t?.color ?? null };
     }),
-    ...loose.map((t) => ({ key: `slot:${t.slot}`, name: t.name ?? `${t.slot}번 팀`, total: t.ts ?? 0, ts: t.ts, out: t.out, place: t.out ? t.place : null })),
+    ...loose.map((t) => ({ key: `slot:${t.slot}`, name: t.name ?? `${t.slot}번 팀`, total: t.ts ?? 0, ts: t.ts, out: t.out, place: t.out ? t.place : null, color: t.color })),
   ];
   // 누적이 같으면 기존 순위표 순서를 그대로 둠
   const order = rows.map((r, i) => ({ r, i })).sort((a, b) => b.r.total - a.r.total || a.i - b.i);

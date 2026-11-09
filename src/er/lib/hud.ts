@@ -5,7 +5,7 @@ export const HUD_W = 1920;
 export const HUD_H = 1080;
 
 export type Rgba = { data: Uint8ClampedArray | Uint8Array; width: number; height: number };
-export type CardRead = { slot: number; ts: number | null; ks: number | null; raised: boolean; out: boolean };
+export type CardRead = { slot: number; ts: number | null; ks: number | null; raised: boolean; out: boolean; color: string | null };
 export type Glyphs = Record<string, { p: Float32Array; w: number }>;
 type Blob = { x0: number; x1: number; y0: number; y1: number };
 type Row = { band: Float32Array; w: number; thr: number; items: { b: Blob; dot: boolean }[] };
@@ -17,6 +17,8 @@ const STRIP = { left: 56, right: 178 };
 const BAND = { above: 3, rows: 16 };
 const SKULL_X = [31, 87, 142];
 const SKULL_Y = 924;
+// TS 글자 아래 팀 색 줄. 숫자 윗선에서 15~19줄 아래이고 방송마다 다름
+const COLOR = { dy0: 11, dy1: 22, x0: 4, x1: 164, step: 4, spread: 60 };
 export const GLYPH_W = 8;
 export const GLYPH_H = 12;
 const DIGIT_ROWS = 8;
@@ -210,6 +212,30 @@ export function skull(img: Rgba, cx: number, cy: number): boolean {
   return red / n > 0.18 && white / n > 0.35;
 }
 
+/** 카드 윗줄 아래 팀 색 줄의 색. 가장 밝은 줄을 색 줄로 보고, 색이 고르지 않으면 가려진 것으로 보고 null */
+export function cardColor(img: Rgba, cardX: number, top: number): string | null {
+  const xs: number[] = [];
+  for (let x = cardX + COLOR.x0; x <= cardX + COLOR.x1; x += COLOR.step) xs.push(x);
+  const at = (x: number, y: number) => (y * img.width + x) * 4;
+  let y = -1;
+  let best = -1;
+  for (let dy = COLOR.dy0; dy <= COLOR.dy1; dy++) {
+    let v = 0;
+    for (const x of xs) {
+      const k = at(x, top + dy);
+      v += Math.max(img.data[k], img.data[k + 1], img.data[k + 2]);
+    }
+    if (v > best) {
+      best = v;
+      y = top + dy;
+    }
+  }
+  const mid = (a: number[]) => [...a].sort((p, q) => p - q)[a.length >> 1];
+  const lum = xs.map((x) => lumAt(img, x, y)).sort((p, q) => p - q);
+  if (lum[Math.floor(lum.length * 0.9)] - lum[Math.floor(lum.length * 0.1)] > COLOR.spread) return null;
+  return `#${[0, 1, 2].map((c) => mid(xs.map((x) => img.data[at(x, y) + c])).toString(16).padStart(2, "0")).join("")}`;
+}
+
 export function readCards(img: Rgba, glyphs: Glyphs = GLYPHS, minMargin = MIN_MARGIN): CardRead[] {
   if (img.width !== HUD_W || img.height !== HUD_H) throw new Error(`이미지 크기가 1920x1080이 아닙니다: ${img.width}x${img.height}`);
   return CARD_X.map((x, i) => {
@@ -219,6 +245,7 @@ export function readCards(img: Rgba, glyphs: Glyphs = GLYPHS, minMargin = MIN_MA
     const raised = !normal && !!up;
     const dy = raised ? RAISED : 0;
     const out = SKULL_X.every((sx) => skull(img, x + sx, SKULL_Y + dy));
-    return { slot: i + 1, ts: pair?.ts ?? null, ks: pair?.ks ?? null, raised, out };
+    const color = pair ? cardColor(img, x, DIGIT_TOP + dy) : null;
+    return { slot: i + 1, ts: pair?.ts ?? null, ks: pair?.ks ?? null, raised, out, color };
   });
 }

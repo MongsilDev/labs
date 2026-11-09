@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import { HUD_H, HUD_W, readCards } from "@/er/lib/hud";
+import { cardColor, DIGIT_TOP, HUD_H, HUD_W, readCards } from "@/er/lib/hud";
 
 // 중계 장면은 레포에 넣지 않아서, 장면 폴더가 있는 기기에서만 인식률을 잼
 const DIR = process.env.HUD_FRAMES ?? "/Volumes/SSD/ov291";
@@ -19,6 +19,17 @@ describe("관전 화면 카드 읽기", () => {
   it("카드가 없는 화면에서는 아무 값도 읽지 않음", () => {
     const img = { data: new Uint8ClampedArray(HUD_W * HUD_H * 4), width: HUD_W, height: HUD_H };
     expect(readCards(img).every((c) => c.ts === null && c.ks === null && !c.out)).toBe(true);
+  });
+
+  it("카드 윗줄 아래에서 가장 밝은 줄의 색을 팀 색으로 읽고, 고르지 않으면 버림", () => {
+    const img = { data: new Uint8ClampedArray(HUD_W * HUD_H * 4), width: HUD_W, height: HUD_H };
+    const paint = (y: number, x0: number, x1: number, rgb: number[]) => {
+      for (let x = x0; x <= x1; x++) img.data.set([...rgb, 255], (y * HUD_W + x) * 4);
+    };
+    paint(DIGIT_TOP + 15, 10, 180, [185, 42, 64]);
+    expect(cardColor(img, 10, DIGIT_TOP)).toBe("#b92a40");
+    paint(DIGIT_TOP + 15, 100, 180, [20, 20, 20]);
+    expect(cardColor(img, 10, DIGIT_TOP)).toBeNull();
   });
 
   it("1920x1080이 아닌 이미지는 받지 않음", () => {

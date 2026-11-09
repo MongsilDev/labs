@@ -104,6 +104,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
         out: s.out,
         place: s.place,
         fixed: s.fixed,
+        color: s.color,
       })),
     });
   }, [roundNo, slots, teams, names]);

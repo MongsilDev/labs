@@ -13,13 +13,23 @@ export type Slot = {
   outRun: number;
   missRun: number;
   warn: boolean;
+  color: string | null;
 };
 
 export const emptySlots = (): Slot[] =>
-  Array.from({ length: SLOTS }, (_, i) => ({ slot: i + 1, ts: null, ks: null, out: false, place: null, fixed: false, pend: null, outRun: 0, missRun: 0, warn: false }));
+  Array.from({ length: SLOTS }, (_, i) => ({ slot: i + 1, ts: null, ks: null, out: false, place: null, fixed: false, pend: null, outRun: 0, missRun: 0, warn: false, color: null }));
 
 const keyOf = (ts: number | null, ks: number | null) => `${ts}/${ks}`;
 const MISS_WARN = 3;
+
+// 같은 카드도 장면마다 색이 몇씩 흔들려서, 비슷하면 전에 읽은 색을 둠. 매번 바꾸면 매초 전송함
+const COLOR_NEAR = 40;
+function pickColor(prev: string | null, read: string | null): string | null {
+  if (!read || !prev) return read ?? prev;
+  let d = 0;
+  for (let i = 1; i < 7; i += 2) d += Math.abs(parseInt(prev.slice(i, i + 2), 16) - parseInt(read.slice(i, i + 2), 16));
+  return d <= COLOR_NEAR ? prev : read;
+}
 
 /** 한 번 읽은 결과를 반영. 운영자가 고친 카드는 그대로 두고, 탈락은 두 번 연속 보일 때만 표시하며 한 번 표시하면 되돌리지 않음 */
 export function applyRead(slots: Slot[], cards: CardRead[]): Slot[] {
@@ -27,7 +37,11 @@ export function applyRead(slots: Slot[], cards: CardRead[]): Slot[] {
   const seen = cards.some((c) => c.ts !== null && c.ks !== null);
   const next = slots.map((s) => {
     const c = cards[s.slot - 1];
-    if (!c || s.fixed) return s;
+    if (!c) return s;
+    if (s.fixed) {
+      const color = pickColor(s.color, c.color);
+      return color === s.color ? s : { ...s, color };
+    }
     let { ts, ks, pend, warn, outRun, missRun, out, place } = s;
     if (c.ts !== null && c.ks !== null) {
       missRun = 0;
@@ -55,7 +69,7 @@ export function applyRead(slots: Slot[], cards: CardRead[]): Slot[] {
       out = true;
       place = outPlace(ts, ks, alive);
     }
-    return { ...s, ts, ks, pend, warn, outRun, missRun, out, place };
+    return { ...s, ts, ks, pend, warn, outRun, missRun, out, place, color: pickColor(s.color, c.color) };
   });
   return next;
 }

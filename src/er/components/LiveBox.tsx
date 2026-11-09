@@ -8,7 +8,8 @@ import { viewKey, type TournamentView } from "@/er/lib/view";
 import { useResult } from "./t/TournamentApp";
 
 const ROWS = 8;
-const HEAD = 27;
+const HEAD = 28;
+// 줄마다 위 테두리 1을 포함한 26. 첫 줄 테두리는 헤더 아래로 들어감
 const ROW = 26;
 
 // 1920x1080 방송 화면의 오른쪽 아래 상자. 값은 지난 라운드까지의 누적과 읽기 탭이 보낸 이번 라운드 TS의 합
@@ -72,14 +73,15 @@ export default function LiveBox({ initial, groupIdx, segment }: { initial: Tourn
   const shown = rows.slice(0, ROWS);
   return (
     <div className="lv">
-      <div className="lv-box" style={{ height: `calc(${HEAD + Math.max(1, shown.length) * ROW} * var(--u))` }}>
+      <div className="lv-box" style={{ height: `calc(${HEAD - 1 + Math.max(1, shown.length) * ROW} * var(--u))` }}>
         <div className="lv-hd">
           <span>{head[0]}</span>
           <span>{head[1]}</span>
         </div>
         {shown.map((r, i) => (
-          <div key={r.key} className={`lv-r${r.out ? " out" : ""}`} style={{ top: `calc(${HEAD + i * ROW} * var(--u))` }}>
-            <span>{r.rank}</span>
+          <div key={r.key} className={`lv-r${r.out ? " out" : ""}`} style={{ top: `calc(${HEAD - 1 + i * ROW} * var(--u))` }}>
+            <i style={r.color ? { background: r.color } : undefined} />
+            <span className="k">{r.rank}</span>
             <b>{r.name}</b>
             <span className="t">{num(r.total)}</span>
             <span className="d">{r.out ? (r.place ? `${r.place}위` : "탈락") : live && r.ts !== null ? `+${num(r.ts)}` : ""}</span>

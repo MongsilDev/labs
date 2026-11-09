@@ -1704,60 +1704,83 @@
     inset: 0;
     overflow: hidden;
   }
+  /* 8번 카드 오른쪽 끝 x 1429와 미니맵 왼쪽 x 1656에서 4씩 띄우고, 위아래는 미니맵 지도 y 839~1073에 맞춤 */
   .lv-box {
     position: absolute;
-    left: calc(1443 * var(--u));
-    top: calc(840 * var(--u));
-    width: calc(207 * var(--u));
+    left: calc(1434 * var(--u));
+    top: calc(839 * var(--u));
+    width: calc(218 * var(--u));
     overflow: hidden;
-    background: #0a0d14;
-    border-radius: calc(6 * var(--u));
+    background: #090c11;
+    border-radius: calc(3 * var(--u));
     color: #fff;
   }
+  /* 높이와 글자 크기는 미니맵 헤더와 같음. 첫 줄의 위 테두리를 가리려고 줄보다 위에 둠 */
   .lv-hd {
+    position: relative;
+    z-index: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: calc(27 * var(--u));
-    padding: 0 calc(8 * var(--u));
-    background: #f2f2f2;
-    color: #111;
-    font-size: calc(13 * var(--u));
+    height: calc(28 * var(--u));
+    padding: 0 calc(10 * var(--u));
+    background: #161a21;
+    font-size: calc(14 * var(--u));
     font-weight: 700;
+  }
+  .lv-hd span + span {
+    color: rgb(255 255 255 / 0.55);
+    font-weight: 600;
   }
   .lv-r {
     position: absolute;
     left: 0;
     right: 0;
     display: grid;
-    grid-template-columns: calc(16 * var(--u)) minmax(0, 1fr) calc(44 * var(--u)) calc(38 * var(--u));
-    gap: calc(4 * var(--u));
+    grid-template-columns: calc(3 * var(--u)) calc(22 * var(--u)) minmax(0, 1fr) auto calc(44 * var(--u));
     align-items: center;
     height: calc(26 * var(--u));
-    padding: 0 calc(8 * var(--u));
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
-    font-size: calc(16 * var(--u));
+    border-top: calc(1 * var(--u)) solid #1b1f26;
     font-variant-numeric: tabular-nums;
     transition: top 0.6s ease;
   }
+  .lv-r i {
+    align-self: stretch;
+  }
+  .lv-r .k {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(255 255 255 / 0.07);
+    font-size: calc(13 * var(--u));
+    font-weight: 800;
+  }
   .lv-r b {
+    padding-left: calc(8 * var(--u));
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-weight: 700;
+    font-size: calc(14 * var(--u));
+    font-weight: 650;
   }
   .lv-r .t {
     text-align: right;
-    font-weight: 700;
+    font-size: calc(15 * var(--u));
+    font-weight: 800;
   }
   .lv-r .d {
+    padding-right: calc(10 * var(--u));
     text-align: right;
-    font-size: calc(13 * var(--u));
+    font-size: calc(11 * var(--u));
+    font-weight: 700;
     color: #7ee2a8;
   }
-  .lv-r.out,
+  .lv-r.out {
+    opacity: 0.42;
+  }
   .lv-r.out .d {
-    color: #a3abb8;
+    color: #c3c9d4;
   }
   @media (prefers-reduced-motion: reduce) {
     .lv-r {
