@@ -534,6 +534,11 @@ describe("순위 막대", () => {
     expect(barWidths({ rounds: [r(10.1), r(5.2), r(3)], penalty: 0.3 })).toEqual([10.1, 5.2, 2.7]);
     expect(barWidths({ rounds: [r(10.1), r(5.2), r(3)], penalty: 3 })).toEqual([10.1, 5.2, 0]);
   });
+  it("감점이 총점을 모두 지우면 막대도 없음", () => {
+    const s = { rounds: [r(0.1), r(0.2)], penalty: 0.3 };
+    expect(barLength(s)).toBe(0);
+    expect(barWidths(s)).toEqual([0, 0]);
+  });
   it("감점이 없으면 라운드 점수 그대로", () => {
     const s = { rounds: [r(10), r(0), r(3)], penalty: 0 };
     expect(barWidths(s)).toEqual([10, 0, 3]);

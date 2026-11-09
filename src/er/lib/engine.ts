@@ -42,7 +42,7 @@ export type TeamRound = {
 
 export const barTotal = (s: { rounds: (TeamRound | null)[] }) => s.rounds.reduce((a, r) => a + Math.max(0, r?.score ?? 0), 0);
 /** 막대 길이. 감점을 뺀 총점에서 끝나고, 감점 표시는 그 안쪽 끝에 그림 */
-export const barLength = (s: { rounds: (TeamRound | null)[]; penalty: number }) => Math.max(0, barTotal(s) - s.penalty);
+export const barLength = (s: { rounds: (TeamRound | null)[]; penalty: number }) => Math.max(0, round2(barTotal(s) - s.penalty));
 /** 라운드마다 막대 칸 폭. 감점만큼 마지막 라운드부터 잘라 합이 barLength가 됨 */
 export function barWidths(s: { rounds: (TeamRound | null)[]; penalty: number }) {
   let rest = barLength(s);

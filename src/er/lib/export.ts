@@ -221,7 +221,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
     const bt = barLength(s);
     if (s.penalty > 0 && bt > 0) {
       ctx.fillStyle = C.minus;
-      ctx.fillRect(colBar + (bt / max) * barW - 6, mid - barH / 2 - 3, 6, barH + 6);
+      ctx.fillRect(Math.max(colBar, colBar + (bt / max) * barW - 6), mid - barH / 2 - 3, 6, barH + 6);
     }
 
     font(ctx, 600, 28 * scale);

@@ -17,7 +17,7 @@ export default function Bar({ s, max, rounds, height = 16, labels = true }: { s:
       {s.penalty > 0 && len > 0 && (
         <i
           className="pen"
-          style={{ left: `calc(${len * scale}% - 4px)` }}
+          style={{ left: `max(0px, calc(${len * scale}% - 4px))` }}
           title={`감점 ${fmt(s.penalty)}점`}
         />
       )}
