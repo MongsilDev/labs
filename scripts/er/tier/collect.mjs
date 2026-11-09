@@ -651,7 +651,7 @@ function routeList(rows) {
 
 function detail(rows, nm) {
   if (!rows.length) return {};
-  const top = rows.filter((r) => r.top);
+  const top = rows.filter((r) => r.top300);
   const keep = (list, name) =>
     list
       .filter((x) => x[2] / rows.length >= MIN_SHARE)
@@ -793,7 +793,7 @@ async function publish(s, nm) {
   const cut300 = cutSeries(s.id, TOP_PLACE);
   for (const r of all) {
     const c = cutAt(cut300, r.t);
-    r.top = c != null && r.mmr >= c;
+    r.top300 = c != null && r.mmr >= c;
   }
   // 프리 시즌과 새 시즌 첫 집계 전에는 마지막 표를 그대로 두고 상태만 바꿈
   if (!all.length) {
@@ -837,8 +837,8 @@ async function publish(s, nm) {
   const ids = [...new Set(combos.flatMap((c) => [...(c.routes ?? []), ...(c.routesTop ?? [])].map((x) => x[0])))];
   // --publish나 중단된 회차 뒤에도 화면에 오를 루트는 정보를 갖추게 함. 수집 회차에서는 이미 받아 요청이 없음
   if (!abort) await fetchRoutes(s, ids);
-  // dak.gg에는 20개로 늘리기 전과 같이 조합마다 상위 3개만 물음
-  if (!abort) await fetchDak([...new Set(combos.flatMap((c) => (c.routes ?? []).slice(0, ROUTE_TOP).map((x) => x[0])))]);
+  // dak.gg에는 조합마다 전체와 300위 안의 상위 3개만 요청함
+  if (!abort) await fetchDak([...new Set(combos.flatMap((c) => [...(c.routes ?? []).slice(0, ROUTE_TOP), ...(c.routesTop ?? []).slice(0, ROUTE_TOP)].map((x) => x[0])))]);
   const { badge, info, items } = await routeMeta(s, ids, nm, routeUse(all, new Set(ids)));
   for (const v of views) for (const c of v.combos) for (const x of [...(c.routes ?? []), ...(c.routesTop ?? [])]) if (badge.has(x[0])) x.push(badge.get(x[0]));
   const ready = views.find((v) => v.patch === cur && v.id.startsWith("patch-"))?.ready;
