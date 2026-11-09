@@ -20,7 +20,7 @@ function Flow({ cum, focus, W = 1000, H = 300 }: { cum: Record<string, number[]>
   const n = Object.values(cum)[0].length;
   const max = Math.max(...Object.values(cum).flat());
   const step = max > 200 ? 50 : 20;
-  const top = Math.ceil(max / step) * step;
+  const top = Math.max(step, Math.ceil(max / step) * step);
   const x = (i: number) => L + (i * (W - L - R)) / Math.max(1, n - 1);
   const y = (v: number) => T + (1 - v / top) * (H - T - B);
   const ticks = Array.from({ length: top / step + 1 }, (_, i) => i * step);

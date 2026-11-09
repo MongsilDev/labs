@@ -22,7 +22,8 @@ export default async function NextKelComps({ searchParams }: { searchParams: Pro
   const { s } = await searchParams;
   const data = kelData();
   const all = data ? comps(data, MIN) : [];
-  if (!all.length) return <Shell here="kel"><p className="text-ink-3" role="status">KEL 기록을 불러오지 못했습니다.<br />잠시 뒤 다시 열어주세요.</p></Shell>;
+  if (!data) return <Shell here="kel"><p className="text-ink-3" role="status">KEL 기록을 불러오지 못했습니다.<br />잠시 뒤 다시 열어주세요.</p></Shell>;
+  if (!all.length) return <Shell here="kel"><p className="text-ink-3" role="status">아직 {MIN}번 이상 등장한 3인 조합이 없습니다.</p></Shell>;
   const sort = COLS.find((c) => c.k === s) ?? COLS[0];
   const rows = [...all].sort((a, b) => (sort.low ? a[sort.k] - b[sort.k] : b[sort.k] - a[sort.k]) || b.count - a.count);
   const xs = all.map((r) => r[sort.k]);
