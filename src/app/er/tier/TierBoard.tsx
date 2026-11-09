@@ -116,8 +116,8 @@ function Split({ title, first, list, dn }: { title: string; first: string; list:
       <table>
         <Head first={first} />
         <tbody>
-          {list.map(([name, players, n, g]) => (
-            <tr key={name}>
+          {list.map(([name, players, n, g], i) => (
+            <tr key={`${name}:${i}`}>
               <td className="nm">{name}</td>
               <td className="p">{int(players)}명</td>
               <td className="n">{int(n)}</td>

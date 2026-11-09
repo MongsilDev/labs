@@ -91,6 +91,10 @@ const getAccount = db.prepare(`SELECT newest FROM accounts WHERE player = ?`);
 const openGames = db.prepare(`SELECT game, max(coalesce(in1000, 0)) AS top FROM rows
   WHERE season = ? AND t >= ? AND game NOT IN (SELECT game FROM raw.games) GROUP BY game ORDER BY max(t) DESC`);
 const putRaw = db.prepare(`INSERT OR REPLACE INTO raw.games VALUES (?, ?, ?, ?, ?)`);
+// 원본을 저장한 뒤 상위 1,000명이 새로 들어와 참가자 행이 모자란 경기
+const shortGames = db.prepare(`SELECT g.game, g.body FROM raw.games g
+  WHERE g.season = ? AND g.t >= ? AND g.game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1)
+  AND g.n > (SELECT count(*) FROM rows x WHERE x.game = g.game)`);
 const getRoute = db.prepare(`SELECT author FROM routes WHERE route = ?`);
 const putRoute = db.prepare(`INSERT OR REPLACE INTO routes VALUES (?, ?, ?, ?, ?)`);
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
@@ -290,13 +294,14 @@ function insertGame(s, y, cuts, player) {
 /** 참가자 닉네임과 같은 문자열 값을 모두 playerId로 바꿈. 처치 기록의 killDetail 필드도 닉네임을 담음 */
 function scrub(season, list) {
   const ids = new Map(list.filter((y) => y.nickname).map((y) => [y.nickname, playerId(season, y.nickname)]));
+  const hashed = new Set(ids.values());
   const walk = (v) =>
     Array.isArray(v) ? v.map(walk) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : typeof v === "string" && ids.has(v) ? ids.get(v) : v;
   return list.map((y) => {
     const { nickname, ...rest } = walk(y);
     // 기록이 빠진 참가자에게 처치된 경우에도 닉네임이 남지 않게 함
     for (const [k, d] of [["killer", "killDetail"], ["killer2", "killDetail2"], ["killer3", "killDetail3"]]) {
-      if (rest[k] === "player" && typeof rest[d] === "string" && rest[d] && !/^[0-9a-f]{16}$/.test(rest[d])) rest[d] = playerId(season, rest[d]);
+      if (rest[k] === "player" && typeof rest[d] === "string" && rest[d] && !hashed.has(rest[d])) rest[d] = playerId(season, rest[d]);
     }
     return { player: nickname ?? null, ...rest };
   });
@@ -311,7 +316,8 @@ function saveRaw(s, game, list) {
 /** rows에 있고 raw에 없는 경기를 받아 원본을 남김. 상위 1,000명이 참가한 경기는 빠진 참가자 행도 넣고, 있던 행은 루트와 전술 스킬을 채움 */
 async function fillGames(s, cuts) {
   // TIER_FILL_MAX는 사본 DB로 시험할 때 받을 경기 수를 줄이는 값
-  const queue = openGames.all(s.id, Math.max(s.start, Date.now() - KEEP_DAYS * 86_400_000)).slice(0, Number(process.env.TIER_FILL_MAX) || undefined);
+  const since = Math.max(s.start, Date.now() - KEEP_DAYS * 86_400_000);
+  const queue = openGames.all(s.id, since).slice(0, Number(process.env.TIER_FILL_MAX) || undefined);
   const total = queue.length;
   let added = 0;
   let saved = 0;
@@ -329,6 +335,9 @@ async function fillGames(s, cuts) {
     }
   });
   await Promise.all(workers);
+  if (!abort) {
+    for (const r of shortGames.all(s.id, since, s.id)) for (const y of JSON.parse(brotliDecompressSync(r.body))) added += insertGame(s, y, cuts, y.player);
+  }
   log(`경기 ${total}개 가운데 ${saved}개의 원본을 저장했고, 상위 1,000명 경기에서 빠진 참가자 ${added}행을 추가했습니다`);
   return { games: total, saved, added };
 }
