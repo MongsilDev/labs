@@ -387,6 +387,11 @@
   :root[data-theme="light"] .tdx-old {
     color: #7a5c00;
   }
+  /* 상세는 표가 --bg 위에 놓여 공용 --minus, --up이 4.5:1에 모자람 */
+  :root[data-theme="light"] .tdx {
+    --minus: #c42b2b;
+    --up: #13733a;
+  }
   .tdx-more {
     display: block;
     width: 100%;
