@@ -3,6 +3,7 @@ import Shell from "@/next/Shell";
 import KelNav from "@/next/KelNav";
 import { Logo } from "@/er/components/kel/Team";
 import { EVENT_NAME, TEAM } from "@/er/lib/kel";
+import { fmt } from "@/er/lib/format";
 import { gameScore, standings } from "@/er/lib/kel-calc";
 import { kelData } from "@/er/server/kel";
 import { scoreStages } from "@/er/server/kel-stats";
@@ -10,7 +11,6 @@ import { scoreStages } from "@/er/server/kel-stats";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "라운드별 점수" };
 
-const int = (v: number) => Math.round(v).toLocaleString("ko-KR");
 // 라운드 순위가 1위면 가장 진하고 8위 아래로는 칠하지 않음
 const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (place - 1) * 8)}%, transparent)`;
 
@@ -42,7 +42,7 @@ function Flow({ cum, focus, W = 1000, H = 300 }: { cum: Record<string, number[]>
         const last = cum[k].at(-1)!;
         return (
           <g key={k}>
-            <title>{`${TEAM.get(k)?.name} ${int(last)}점`}</title>
+            <title>{`${TEAM.get(k)?.name} ${fmt(last)}점`}</title>
             <polyline points={cum[k].map((v, i) => `${x(i)},${y(v)}`).join(" ")} fill="none" stroke={color} strokeWidth={f < 0 ? 1.5 : 2.5} />
             {f >= 0 && (
               <text x={W - R + 8} y={y(last) + 4 + (f === 1 && Math.abs(y(last) - y(cum[focus[0]].at(-1)!)) < 14 ? 14 : 0)} fontSize="12" fontWeight="700" fill={color}>{TEAM.get(k)?.name}</text>
@@ -115,19 +115,24 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
                         const e = rounds[r]?.[row.key];
                         return (
                           <td key={r} className="!text-center max-sm:!px-1" style={e ? { background: heat(e.placement) } : undefined} title={e ? `${e.placement}위, 킬 점수 ${e.killScore}` : undefined}>
-                            {e ? int(gameScore(e)) : ""}
+                            {e ? fmt(gameScore(e)) : ""}
                             {held(row.key, r) && <span className="ml-0.5 align-super text-[10px] text-hot" aria-label="체크포인트">●</span>}
                           </td>
                         );
                       })}
-                      <td className="hidden text-ink-2 md:table-cell">{int(row.killScore)}</td>
-                      <td className="hidden md:table-cell">{row.penalty ? <span className="text-down">-{int(row.penalty)}</span> : ""}</td>
-                      <td className="font-bold max-sm:!pl-1">{int(row.total)}</td>
+                      <td className="hidden text-ink-2 md:table-cell">{fmt(row.killScore)}</td>
+                      <td className="hidden md:table-cell">{row.penalty ? <span className="text-down">-{fmt(row.penalty)}</span> : ""}</td>
+                      <td className="font-bold max-sm:!pl-1">{fmt(row.total)}</td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+            {f.stage === "결승" && (
+              <p className="mt-2 text-[12px] text-ink-3">
+                <span className="text-hot">●</span> 체크포인트에 도달한 라운드
+              </p>
+            )}
           </div>
           <section className="sec min-w-0">
             <h2 className="sec-h">누적 점수</h2>

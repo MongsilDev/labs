@@ -3,6 +3,7 @@ import Shell from "@/next/Shell";
 import KelNav from "@/next/KelNav";
 import Char from "@/er/components/t/Char";
 import { Logo, PlayerName } from "@/er/components/kel/Team";
+import { fmt } from "@/er/lib/format";
 import { TEAM } from "@/er/lib/kel";
 import { placementPoints } from "@/er/lib/kel-calc";
 import { kelData, type KelRow, type TeamGame } from "@/er/server/kel";
@@ -100,8 +101,8 @@ export default async function NextKelRecords({ searchParams }: { searchParams: P
                   {rec.teamScore.games.map((g) => (
                     <tr key={`${g.gameId}-${g.team}`}>
                       <td className="l text-ink-2">게임 점수</td>
-                      <td className="text-[15px] font-black">{int(rec.teamScore.value)}</td>
-                      <td className="l"><TeamCell g={g} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(g)}, 순위 점수 {placementPoints(g.placement)}, 킬 점수 {int(g.killScore)}</span></td>
+                      <td className="text-[15px] font-black">{fmt(rec.teamScore.value)}</td>
+                      <td className="l"><TeamCell g={g} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(g)}, 순위 점수 {placementPoints(g.placement)}, 킬 점수 {fmt(g.killScore)}</span></td>
                     </tr>
                   ))}
                 </tbody>
