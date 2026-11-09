@@ -79,11 +79,15 @@ db.exec(`
 // route와 tac은 11-09에 더한 열. 기존 행은 raw에서 채움
 const rowCols = new Set(db.prepare(`PRAGMA table_info(rows)`).all().map((c) => c.name));
 for (const c of ["route", "tac"]) if (!rowCols.has(c)) db.exec(`ALTER TABLE rows ADD COLUMN ${c} INTEGER`);
+// 작성자 닉네임은 게임 안 루트 목록에서 공개되는 값이라 이 표에만 평문으로 둠. 경기 원본과 rows는 playerId
+const routeCols = new Set(db.prepare(`PRAGMA table_info(routes)`).all().map((c) => c.name));
+for (const [c, t] of [["title", "TEXT"], ["nick", "TEXT"], ["trait", "INTEGER"], ["tac", "INTEGER"]]) if (!routeCols.has(c)) db.exec(`ALTER TABLE routes ADD COLUMN ${c} ${t}`);
 // /v1/games 응답 원본. 경기마다 한 번만 받고 쓸 값은 여기서 다시 고름
 db.prepare(`ATTACH DATABASE ? AS raw`).run(join(DIR, "raw.sqlite"));
 db.exec(`
   PRAGMA raw.journal_mode = WAL;
   CREATE TABLE IF NOT EXISTS raw.games (game INTEGER PRIMARY KEY, season INTEGER NOT NULL, t INTEGER NOT NULL, n INTEGER NOT NULL, body BLOB NOT NULL);
+  CREATE TABLE IF NOT EXISTS raw.routes (route INTEGER PRIMARY KEY, t INTEGER NOT NULL, body BLOB NOT NULL);
 `);
 const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 const fillRoute = db.prepare(`UPDATE rows SET route = ?, tac = ? WHERE game = ? AND player = ? AND route IS NULL`);
@@ -95,8 +99,16 @@ const putRaw = db.prepare(`INSERT OR REPLACE INTO raw.games VALUES (?, ?, ?, ?, 
 const shortGames = db.prepare(`SELECT g.game, g.body FROM raw.games g
   WHERE g.season = ? AND g.t >= ? AND g.game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1)
   AND g.n > (SELECT count(*) FROM rows x WHERE x.game = g.game)`);
-const getRoute = db.prepare(`SELECT author FROM routes WHERE route = ?`);
-const putRoute = db.prepare(`INSERT OR REPLACE INTO routes VALUES (?, ?, ?, ?, ?)`);
+const getRoute = db.prepare(`SELECT author, title, nick, trait, tac FROM routes WHERE route = ?`);
+const putRoute = db.prepare(`INSERT INTO routes (route, author, version, checked, title, nick, trait, tac) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  ON CONFLICT(route) DO UPDATE SET author = excluded.author, version = excluded.version, checked = excluded.checked,
+  title = excluded.title, nick = excluded.nick, trait = excluded.trait, tac = excluded.tac`);
+// 화면 루트 표는 상위 1,000명 행에서만 고르므로 로비 참가자 루트는 받지 않음
+const openRoutes = db.prepare(
+  `SELECT route FROM rows WHERE season = ? AND in1000 = 1 AND route > 0 AND route NOT IN (SELECT route FROM raw.routes) GROUP BY route ORDER BY COUNT(*) DESC`,
+);
+const putRawRoute = db.prepare(`INSERT OR REPLACE INTO raw.routes VALUES (?, ?, ?)`);
+const hasRawRoute = db.prepare(`SELECT 1 FROM raw.routes WHERE route = ?`);
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
 const putAccount = db.prepare(`INSERT INTO accounts VALUES (?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked`);
 
@@ -303,10 +315,51 @@ function scrub(season, list) {
   });
 }
 
+function pack(value) {
+  const json = Buffer.from(JSON.stringify(value));
+  return brotliCompressSync(json, { params: { [zlib.BROTLI_PARAM_QUALITY]: 9, [zlib.BROTLI_PARAM_SIZE_HINT]: json.length } });
+}
+
 function saveRaw(s, game, list) {
-  const json = Buffer.from(JSON.stringify(scrub(s.id, list)));
-  const body = brotliCompressSync(json, { params: { [zlib.BROTLI_PARAM_QUALITY]: 9, [zlib.BROTLI_PARAM_SIZE_HINT]: json.length } });
-  putRaw.run(game, s.id, list[0] ? kst(list[0].startDtm) : 0, list.length, body);
+  putRaw.run(game, s.id, list[0] ? kst(list[0].startDtm) : 0, list.length, pack(scrub(s.id, list)));
+}
+
+/** recommend 응답에서 routes 표 값을 고름. traitCodes 첫 값이 핵심 특성 */
+function keepRoute(id, w) {
+  let trait = null;
+  try {
+    trait = JSON.parse(w?.traitCodes ?? "[]")[0] ?? null;
+  } catch {
+    trait = null;
+  }
+  const nick = w?.userNickname || null;
+  putRoute.run(id, nick ? playerId(0, nick) : null, w?.version ?? null, Date.now(), w?.title || null, nick, trait, w?.tacticalSkillGroupCode ?? null);
+}
+
+/** 루트의 recommend 응답을 한 번만 받아 raw.routes에 남김. only가 없으면 rows에 나온 루트 전부. userNum은 영구 계정 번호라 빼고 저장 */
+async function fetchRoutes(s, only) {
+  // TIER_ROUTE_MAX는 사본 DB로 시험할 때 받을 루트 수를 줄이는 값
+  const queue = (only ? only.filter((id) => !hasRawRoute.get(id)) : openRoutes.all(s.id).map((r) => r.route)).slice(0, Number(process.env.TIER_ROUTE_MAX) || undefined);
+  const total = queue.length;
+  let saved = 0;
+  const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
+    while (!abort) {
+      const id = queue.shift();
+      if (id == null) return;
+      const r = await get(`/v1/weaponRoutes/recommend/${id}`);
+      // 본문 code가 200이 아닌 일시 오류는 저장하지 않아 다음 회차에 다시 받음
+      if (r === undefined || (r && r.code !== 200)) continue;
+      const w = r?.result?.recommendWeaponRoute ? { ...r.result.recommendWeaponRoute } : null;
+      if (w) delete w.userNum;
+      putRawRoute.run(id, Date.now(), pack({ route: w, desc: r?.result?.recommendWeaponRouteDesc ?? null }));
+      // 지워진 루트는 다시 받지 않게 원본만 남기고 예전 작성자 행은 그대로 둠
+      if (w) keepRoute(id, w);
+      saved++;
+    }
+  });
+  await Promise.all(workers);
+  if (total) log(`루트 ${total}개 가운데 ${saved}개의 정보를 저장했습니다`);
+  return saved;
 }
 
 /** rows에 있고 raw에 없는 경기를 받아 원본을 남김. 상위 1,000명이 참가한 경기는 빠진 참가자 행도 넣고, 있던 행은 루트와 전술 스킬을 채움 */
@@ -345,8 +398,15 @@ function rebuild() {
   for (const r of db.prepare(`SELECT game, body FROM raw.games`).iterate()) {
     for (const y of JSON.parse(brotliDecompressSync(r.body))) if (y.player) n += Number(fillRoute.run(y.routeIdOfStart ?? null, y.tacticalSkillGroup ?? null, r.game, y.player).changes);
   }
+  let r = 0;
+  for (const x of db.prepare(`SELECT route, body FROM raw.routes`).iterate()) {
+    const w = JSON.parse(brotliDecompressSync(x.body)).route;
+    if (!w) continue;
+    keepRoute(x.route, w);
+    r++;
+  }
   db.exec("COMMIT");
-  log(`raw에서 루트와 전술 스킬 ${n}행을 채웠습니다`);
+  log(`raw에서 루트와 전술 스킬 ${n}행, 루트 정보 ${r}개를 채웠습니다`);
 }
 
 async function collectAccount(s, acc, since, cuts, stop) {
@@ -441,6 +501,7 @@ async function collect(s, since, { measure }) {
   }
   await Promise.all(workers);
   const lobbies = measure || abort ? null : await fillGames(s, cuts);
+  if (!measure && !abort) await fetchRoutes(s);
   return { added: added + (lobbies?.added ?? 0), accounts: list.length, lobbies, ...result };
 }
 
@@ -493,7 +554,7 @@ function detail(rows, nm) {
     list
       .filter((x) => x[2] / rows.length >= MIN_SHARE)
       .sort((a, b) => b[2] - a[2] || b[1] - a[1])
-      .map(([code, ...rest]) => [name(code), ...rest]);
+      .map(([code, ...rest]) => [name(code), ...rest, code]);
   return {
     dn: rows.length,
     routes: split(rows, "route")
@@ -563,32 +624,23 @@ function writeTier(data) {
 const KEEP_DAYS = 35;
 const prune = db.prepare(`DELETE FROM rows WHERE season <> ? OR t < ?`);
 
-/** 화면에 올라가는 루트의 작성자를 받아 두고 지금 순위로 배지를 정함. 작성자는 닉네임 대신 playerId로 저장 */
-async function badges(s, ids) {
+/** 화면에 올라가는 루트의 이름, 작성자, 핵심 특성, 전술 스킬과 지금 순위로 정한 작성자 배지 */
+async function routeMeta(s, ids, nm) {
   const top = topRanks.length ? topRanks : ((await get(`/v1/rank/top/${s.id}/3/10`))?.topRanks ?? []);
   // 루트는 시즌을 넘어 쓰이므로 작성자 키에 시즌을 넣지 않음
   const rank = new Map(top.map((x) => [playerId(0, x.nickname), x.rank]));
-  const queue = ids.filter((id) => !getRoute.get(id));
-  const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
-    while (!abort) {
-      const id = queue.shift();
-      if (id == null) return;
-      const r = await get(`/v1/weaponRoutes/recommend/${id}`);
-      if (r === undefined) continue;
-      const w = r?.result?.recommendWeaponRoute;
-      putRoute.run(id, w?.userNickname ? playerId(0, w.userNickname) : null, null, w?.version ?? null, Date.now());
-    }
-  });
-  await Promise.all(workers);
-  const out = new Map();
+  const badge = new Map();
+  const info = {};
   for (const id of ids) {
-    const author = getRoute.get(id)?.author;
-    const at = author ? (rank.get(author) ?? null) : null;
+    const r = getRoute.get(id);
+    if (!r) continue;
+    const at = r.author ? (rank.get(r.author) ?? null) : null;
     rankRoute.run(at, id);
     const b = at == null ? null : AUTHOR_BADGE.find(([max]) => at <= max)?.[1];
-    if (b) out.set(id, b);
+    if (b) badge.set(id, b);
+    info[id] = [r.title, r.nick, r.trait, r.trait ? nm.trait(r.trait) : null, r.tac, r.tac ? nm.tac(r.tac) : null];
   }
-  return out;
+  return { badge, info };
 }
 
 async function publish(s, nm) {
@@ -634,8 +686,10 @@ async function publish(s, nm) {
     const v = view(`${d}d`, `최근 ${d}일`, rows, nm, { patch: cur, days: d }, k);
     if (v) views.push(v);
   }
-  const ids = [...new Set(views.flatMap((v) => v.combos.flatMap((c) => (c.routes ?? []).map((x) => x[0]))))];
-  const badge = await badges(s, ids);
+  const ids = [...new Set([...views, ...(past?.views ?? [])].flatMap((v) => v.combos.flatMap((c) => (c.routes ?? []).map((x) => x[0]))))];
+  // --publish나 중단된 회차 뒤에도 화면에 오를 루트는 정보를 갖추게 함. 수집 회차에서는 이미 받아 요청이 없음
+  if (!abort) await fetchRoutes(s, ids);
+  const { badge, info } = await routeMeta(s, ids, nm);
   for (const v of views) for (const c of v.combos) for (const x of c.routes ?? []) if (badge.has(x[0])) x.push(badge.get(x[0]));
   const ready = views.find((v) => v.patch === cur && v.id.startsWith("patch-"))?.ready;
   const state = !s.regular || now >= s.end ? "offseason" : ready ? "shown" : "collecting";
@@ -650,6 +704,7 @@ async function publish(s, nm) {
     rule: { ...RULE, publishRows: PUBLISH_ROWS },
     rate: existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : undefined,
     views,
+    routes: info,
     ...(past && { past }),
   };
   writeTier(data);
