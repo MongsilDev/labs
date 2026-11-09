@@ -1,4 +1,4 @@
-import { barTotal, type GroupResult } from "@/er/lib/engine";
+import { barLength, type GroupResult } from "@/er/lib/engine";
 import { fmt, num } from "@/er/lib/format";
 import type { Mode, Rules } from "@/er/lib/rules";
 import Bar, { Legend } from "./Bar";
@@ -19,7 +19,7 @@ export function Delta({ d }: { d: number }) {
 
 export default function Standings({ result, rules, mode, label }: { result: GroupResult; rules: Rules; mode: Mode; label: string }) {
   const { standings, played } = result;
-  const max = Math.max(1, ...standings.map(barTotal));
+  const max = Math.max(1, ...standings.map(barLength));
   const advance = rules.advance;
   const killLabel = rules.tiebreak === "kills" ? "킬" : "킬 점수";
   const anyPenalty = standings.some((s) => s.penalty > 0);

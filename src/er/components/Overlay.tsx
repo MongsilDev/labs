@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api } from "@/er/lib/client";
 import { num } from "@/er/lib/format";
 import { viewKey, type TournamentView } from "@/er/lib/view";
-import { barTotal } from "@/er/lib/engine";
+import { barLength } from "@/er/lib/engine";
 import Bar from "./t/Bar";
 import { useResult } from "./t/TournamentApp";
 
@@ -65,7 +65,7 @@ export default function Overlay({
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, [scale, rows.length, view.version]);
-  const max = Math.max(1, ...result.standings.map(barTotal));
+  const max = Math.max(1, ...result.standings.map(barLength));
   const status = result.ended ? "최종 순위" : result.played ? `${result.played}라운드 종료` : "경기 전";
   return (
     <div ref={box} className={`ov${side === "left" ? " left" : ""}${rows.length > 12 ? " dense" : ""}`} style={{ zoom: scale, ["--n" as string]: rows.length, ["--zoom-fix" as string]: scale }}>

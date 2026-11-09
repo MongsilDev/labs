@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeGroup, type GroupInput } from "../../src/er/lib/engine";
+import { barLength, barWidths, computeGroup, type GroupInput } from "../../src/er/lib/engine";
 import { parseRoundCsv } from "../../src/er/lib/parse";
 import { standingsCsv } from "../../src/er/lib/export";
 import { clampRules, PLACEMENT_POINTS, presetRules, type Mode } from "../../src/er/lib/rules";
@@ -520,5 +520,18 @@ describe("규칙 정리", () => {
     expect(bans("toString")).toBe("strict");
     expect(bans(undefined)).toBe("strict");
     expect(presetRules("masters").bans).toBe("strict");
+  });
+});
+
+describe("순위 막대", () => {
+  const r = (score: number) => ({ score }) as never;
+  it("감점만큼 마지막 라운드부터 잘라 막대가 총점에서 끝남", () => {
+    const s = { rounds: [r(10), r(5), null, r(3)], penalty: 4 };
+    expect(barLength(s)).toBe(14);
+    expect(barWidths(s)).toEqual([10, 4, 0, 0]);
+  });
+  it("감점이 없으면 라운드 점수 그대로", () => {
+    const s = { rounds: [r(10), r(0), r(3)], penalty: 0 };
+    expect(barWidths(s)).toEqual([10, 0, 3]);
   });
 });

@@ -1,21 +1,23 @@
-import { barTotal, type Standing } from "@/er/lib/engine";
+import { barLength, barWidths, type Standing } from "@/er/lib/engine";
 import { fmt, num, rampColor, rampTextClass } from "@/er/lib/format";
 
 export default function Bar({ s, max, rounds, height = 16, labels = true }: { s: Standing; max: number; rounds: number; height?: number; labels?: boolean }) {
   const scale = max > 0 ? 100 / max : 0;
+  const len = barLength(s);
+  const widths = barWidths(s);
   return (
     <div className="bar" style={{ height }} aria-hidden="true">
       {s.rounds.map((r, i) =>
-        r && r.score > 0 ? (
-          <s key={i} className={rampTextClass(i, rounds)} style={{ width: `${r.score * scale}%`, background: rampColor(i, rounds) }} title={`${i + 1}라운드 ${num(r.score)}점`}>
-            {labels && r.score * scale > 9 ? num(r.score) : ""}
+        r && widths[i] > 0 ? (
+          <s key={i} className={rampTextClass(i, rounds)} style={{ width: `${widths[i] * scale}%`, background: rampColor(i, rounds) }} title={`${i + 1}라운드 ${num(r.score)}점`}>
+            {labels && widths[i] * scale > 9 ? num(r.score) : ""}
           </s>
         ) : null,
       )}
-      {s.penalty > 0 && barTotal(s) > 0 && (
+      {s.penalty > 0 && len > 0 && (
         <i
           className="pen"
-          style={{ left: `${Math.max(0, barTotal(s) - s.penalty) * scale}%`, width: `${Math.min(s.penalty, barTotal(s)) * scale}%` }}
+          style={{ left: `${Math.max(0, len - s.penalty) * scale}%`, width: `${Math.min(s.penalty, len) * scale}%` }}
           title={`감점 ${fmt(s.penalty)}점`}
         />
       )}

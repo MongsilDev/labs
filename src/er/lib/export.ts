@@ -1,5 +1,5 @@
 import { toCsv } from "./csv";
-import { barTotal, type GroupResult } from "./engine";
+import { barLength, barWidths, type GroupResult } from "./engine";
 import { dateKo, fmt, num, rampDarkText } from "./format";
 import { MODE_LABEL, scoreLabel, type Mode, type Rules } from "./rules";
 
@@ -158,7 +158,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
   const rowH = Math.min(84, (footerTop - 20 - rowsTop) / n);
   const scale = rowH / 84;
   const barW = colWins - 100 - colBar;
-  const max = Math.max(1, ...standings.map(barTotal));
+  const max = Math.max(1, ...standings.map(barLength));
 
   standings.forEach((s, i) => {
     const y = rowsTop + i * rowH;
@@ -204,9 +204,10 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
 
     const barH = Math.max(10, 30 * scale);
     let x = colBar;
+    const widths = barWidths(s);
     s.rounds.forEach((r, j) => {
-      if (!r || r.score <= 0) return;
-      const w = (r.score / max) * barW;
+      if (!r || widths[j] <= 0) return;
+      const w = (widths[j] / max) * barW;
       ctx.fillStyle = ramp(j, played);
       ctx.fillRect(x, mid - barH / 2, Math.max(0, w - 2), barH);
       if (w > 44 && scale > 0.6) {
@@ -217,7 +218,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
       }
       x += w;
     });
-    const bt = barTotal(s);
+    const bt = barLength(s);
     if (s.penalty > 0 && bt > 0) {
       const pw = (Math.min(s.penalty, bt) / max) * barW;
       const px = colBar + ((bt - Math.min(s.penalty, bt)) / max) * barW;

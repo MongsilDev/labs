@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Bar from "@/er/components/t/Bar";
-import { barTotal, computeGroup } from "@/er/lib/engine";
+import { barLength, computeGroup } from "@/er/lib/engine";
 import { exampleView } from "@/er/lib/example";
 import { num } from "@/er/lib/format";
 
@@ -24,7 +24,7 @@ function exampleResult() {
 export default function ExampleBoard({ rows = 4, bare }: { rows?: number; bare?: boolean }) {
   const { name, res } = exampleResult();
   const top = res.standings.slice(0, rows);
-  const max = Math.max(1, ...res.standings.map(barTotal));
+  const max = Math.max(1, ...res.standings.map(barLength));
   return (
     <section className={bare ? "" : "panel px-5 py-[18px]"} aria-labelledby={bare ? undefined : "ex-h"} aria-label={bare ? name : undefined}>
       {!bare && (
