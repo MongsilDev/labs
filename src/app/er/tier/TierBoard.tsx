@@ -171,6 +171,8 @@ const CheckIcon = () => (
 );
 
 const NARROW = "(max-width: 1099px)";
+// dak.gg 루트 페이지의 작성자 링크와 같은 형식. 닉네임은 encodeURIComponent
+const DAK = "https://dak.gg/er";
 
 function useNarrow() {
   return useSyncExternalStore(
@@ -313,9 +315,13 @@ function Drawer({ c, routes: info, onClose }: { c: TierCombo; routes?: Record<st
                           </span>
                           <span className="tier-dx-rn">
                             <span className="tier-dx-l1">
-                              <span className="tier-dx-title" title={title ?? undefined}>
-                                {title ?? `루트 ${id}`}
-                              </span>
+                              {title ? (
+                                <a className="tier-dx-title" href={`${DAK}/routes/${id}`} target="_blank" rel="noopener noreferrer" title={title}>
+                                  {title}
+                                </a>
+                              ) : (
+                                <span className="tier-dx-title">루트 {id}</span>
+                              )}
                               <button type="button" className="tier-dx-copy" aria-label={`루트 번호 ${id} 복사`} onClick={() => copy(id)}>
                                 {id}
                                 {copied === id ? <CheckIcon /> : <CopyIcon />}
@@ -330,7 +336,11 @@ function Drawer({ c, routes: info, onClose }: { c: TierCombo; routes?: Record<st
                                     {BADGE[b].label}
                                   </span>
                                 )}
-                                {nick && <span className="tier-dx-by">{nick}</span>}
+                                {nick && (
+                                  <a className="tier-dx-by" href={`${DAK}/players/${encodeURIComponent(nick)}`} target="_blank" rel="noopener noreferrer">
+                                    {nick}
+                                  </a>
+                                )}
                               </span>
                             )}
                           </span>

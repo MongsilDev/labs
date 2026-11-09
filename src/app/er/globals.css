@@ -1870,6 +1870,16 @@
     color: var(--text-2);
     white-space: nowrap;
   }
+  a.tier-dx-title,
+  a.tier-dx-by {
+    text-decoration: none;
+    text-underline-offset: 2px;
+  }
+  a.tier-dx-title:hover,
+  a.tier-dx-by:hover {
+    color: var(--text);
+    text-decoration: underline;
+  }
   .tier-dx-copy {
     display: inline-flex;
     flex: none;
