@@ -1,6 +1,6 @@
 import Shell from "@/next/Shell";
 import Rail from "@/next/Rail";
-import { breakEven, getRp, MIN_N } from "@/next/rp";
+import { breakEven, getRp, MIN_N, type RpHour } from "@/next/rp";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "RP 손익" };
@@ -12,17 +12,22 @@ const bandName = (lo: number, hi: number) => (hi >= 99999 ? `${n(lo)} 이상` : 
 // 양수는 초록, 음수는 빨강. 60 RP에서 가장 진함
 const tint = (v: number) => `color-mix(in srgb, var(${v >= 0 ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(v) / 60, 1) * 55)}%, transparent)`;
 
-function Hours({ hours, w: W = 720, h: H = 180, every = 3 }: { hours: { h: number; gain: number; ci: number }[]; w?: number; h?: number; every?: number }) {
+// viewBox 폭을 실제 그려지는 폭에 맞춰 글자가 표 머리와 같은 12px로 보이게 함
+function Hours({ hours, w: W = 1100, h: H = 200, every = 3 }: { hours: RpHour[]; w?: number; h?: number; every?: number }) {
   const L = 34, B = 22, T = 8;
-  const lim = 4;
+  const ext = Math.max(...hours.map((d) => Math.abs(d.gain) + d.ci));
+  const step = ext > 8 ? 5 : 2;
+  const lim = Math.ceil(ext / step) * step;
+  const ticks: number[] = [];
+  for (let v = -lim; v <= lim; v += step) ticks.push(v);
   const x = (h: number) => L + (h + 0.5) * ((W - L) / 24);
   const y = (v: number) => T + ((lim - v) / (2 * lim)) * (H - T - B);
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="시간대별 평균 RP 변화와 95% 범위">
-      {[-4, -2, 0, 2, 4].map((v) => (
+      {ticks.map((v) => (
         <g key={v}>
           <line x1={L} x2={W} y1={y(v)} y2={y(v)} stroke={v === 0 ? "var(--rule-2)" : "var(--rule)"} />
-          <text x={L - 6} y={y(v) + 4} textAnchor="end" fontSize="11" fill="var(--ink-3)" className="num">{signed(v)}</text>
+          <text x={L - 6} y={y(v) + 4} textAnchor="end" fontSize="12" fill="var(--ink-3)" className="num">{signed(v)}</text>
         </g>
       ))}
       {hours.map((d) => (
@@ -30,7 +35,7 @@ function Hours({ hours, w: W = 720, h: H = 180, every = 3 }: { hours: { h: numbe
           <title>{`${d.h}시, 평균 ${signed(d.gain)}, 95% 범위 ±${d.ci}`}</title>
           <line x1={x(d.h)} x2={x(d.h)} y1={y(d.gain + d.ci)} y2={y(d.gain - d.ci)} stroke="var(--ink-3)" strokeWidth="2" />
           <circle cx={x(d.h)} cy={y(d.gain)} r="3.5" fill="var(--ink)" />
-          {d.h % every === 0 && <text x={x(d.h)} y={H - 6} textAnchor="middle" fontSize="11" fill="var(--ink-3)" className="num">{d.h}시</text>}
+          {d.h % every === 0 && <text x={x(d.h)} y={H - 6} textAnchor="middle" fontSize="12" fill="var(--ink-3)" className="num">{d.h}시</text>}
         </g>
       ))}
     </svg>
@@ -59,7 +64,7 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
           <section className="sec min-w-0">
             <h2 className="sec-h">
               순위와 팀 처치에 따른 평균 RP
-              <small className="num">입장료 {band.entry}, 평균 팀 처치 {band.tkAvg}</small>
+              <small className="num">입장료 {band.entry}, 평균 팀 처치 {band.tkAvg.toFixed(1)}</small>
             </h2>
             <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
               <table className="tbl">
@@ -107,10 +112,10 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
           <section className="sec min-w-0 xl:col-span-2">
             <h2 className="sec-h">
               시간대별 평균 RP
-              <small>8,000~9,199 RP</small>
+              <small className="num">{bandName(band.lo, band.hi)} RP</small>
             </h2>
-            <div className="hidden sm:block"><Hours hours={data.hours} /></div>
-            <div className="sm:hidden"><Hours hours={data.hours} w={360} h={200} every={6} /></div>
+            <div className="hidden sm:block"><Hours hours={band.hours} /></div>
+            <div className="sm:hidden"><Hours hours={band.hours} w={360} h={200} every={6} /></div>
           </section>
         </div>
       </div>

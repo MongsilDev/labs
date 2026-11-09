@@ -2,8 +2,9 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export type Cell = { n: number; m: number | null; ci: number | null };
-export type RpBand = { lo: number; hi: number; n: number; entry: number; tkAvg: number; cells: Cell[][] };
-export type RpData = { from: number; to: number; games: number; rows: number; tk: [number, number][]; bands: RpBand[]; hours: { h: number; gain: number; ci: number; n: number; lobby: number }[] };
+export type RpHour = { h: number; gain: number; ci: number; n: number };
+export type RpBand = { lo: number; hi: number; n: number; entry: number; tkAvg: number; cells: Cell[][]; hours: RpHour[] };
+export type RpData = { from: number; to: number; games: number; rows: number; tk: [number, number][]; bands: RpBand[] };
 
 // 시제품은 원본에서 미리 계산한 파일을 읽음. 수집기에 넣을지는 결정 뒤에 정함
 export async function getRp(): Promise<RpData | null> {
