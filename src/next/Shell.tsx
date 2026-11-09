@@ -3,7 +3,7 @@ import Link from "next/link";
 type Item = { href: string; label: string; key: string };
 type Sect = { name: string; items: Item[] };
 
-// 휴대폰 폭에서 아홉 항목이 넘쳐 위 줄은 묶음, 아래 줄은 현재 묶음의 화면만 보임
+// lg 아래에서는 아홉 항목이 넘쳐 위 줄은 묶음, 아래 줄은 현재 묶음의 화면만 보임
 const ER: Sect[] = [
   {
     name: "실험체",
@@ -38,6 +38,24 @@ const TK: Sect = {
 
 const top = "relative shrink-0 px-2 py-3 focus-visible:!-outline-offset-2 text-[14px] font-semibold text-ink-2 hover:text-ink hover:no-underline aria-[current=true]:text-ink aria-[current=true]:after:absolute aria-[current=true]:after:inset-x-2 aria-[current=true]:after:bottom-0 aria-[current=true]:after:h-[2px] aria-[current=true]:after:bg-hot";
 
+function Wide({ name, items, here }: { name: string; items: Item[]; here?: string }) {
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <span className="mr-2 text-[12px] font-semibold text-ink-3">{name}</span>
+      {items.map((i) => (
+        <Link
+          key={i.key}
+          href={i.href}
+          aria-current={i.key === here ? "page" : undefined}
+          className="relative px-2 py-3 text-[14px] font-semibold text-ink-2 hover:text-ink hover:no-underline aria-[current=page]:text-ink aria-[current=page]:after:absolute aria-[current=page]:after:inset-x-2 aria-[current=page]:after:bottom-0 aria-[current=page]:after:h-[2px] aria-[current=page]:after:bg-hot"
+        >
+          {i.label}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function SectLink({ sect, on }: { sect: Sect; on: boolean }) {
   return (
     <Link href={sect.items[0].href} aria-current={on ? "true" : undefined} className={top}>
@@ -58,7 +76,12 @@ export default function Shell({ here, children }: { here?: string; children: Rea
           <Link href="/next" className="py-3 text-[16px] font-black tracking-[-0.4px] hover:no-underline">
             labs
           </Link>
-          <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]" aria-label="사이트">
+          <nav className="hidden min-w-0 flex-1 items-center gap-6 lg:flex" aria-label="사이트">
+            <Wide name="이터널 리턴" items={ER.flatMap((g) => g.items)} here={here} />
+            <span className="h-4 w-px shrink-0 bg-rule-2" aria-hidden="true" />
+            <Wide name="타르코프" items={TK.items} here={here} />
+          </nav>
+          <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] lg:hidden" aria-label="사이트">
             <span className="mr-1 hidden shrink-0 text-[12px] font-semibold text-ink-3 sm:inline">이터널 리턴</span>
             {ER.map((g) => <SectLink key={g.name} sect={g} on={g === sect} />)}
             <span className="mx-2 h-4 w-px shrink-0 bg-rule-2" aria-hidden="true" />
@@ -69,7 +92,7 @@ export default function Shell({ here, children }: { here?: string; children: Rea
           </Link>
         </div>
         {sect && (
-          <nav className="mx-auto flex max-w-[1320px] gap-5 overflow-x-auto px-4 [scrollbar-width:none] lg:px-6" aria-label={`${sect.name} 화면`}>
+          <nav className="mx-auto flex max-w-[1320px] gap-5 overflow-x-auto px-4 [scrollbar-width:none] lg:px-6 lg:hidden" aria-label={`${sect.name} 화면`}>
             {sect.items.map((i) => (
               <Link
                 key={i.key}
