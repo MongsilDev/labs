@@ -1438,8 +1438,10 @@
     font-variant-numeric: tabular-nums;
     cursor: pointer;
   }
-  .tier-card:hover {
-    background: var(--field);
+  @media (hover: hover) {
+    .tier-card:hover {
+      background: var(--field);
+    }
   }
   .tier-card[aria-expanded="true"] {
     background: var(--field);
