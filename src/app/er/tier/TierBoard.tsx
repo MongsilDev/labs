@@ -168,7 +168,7 @@ export default function TierBoard(p: Props) {
           const o = prev.combos.find((x) => x.char === c.char && x.weapon === c.weapon);
           return o && c.half != null && o.half != null && Math.abs(c.score - o.score) > Math.hypot(c.half, o.half) ? [{ c, o }] : [];
         })
-        .sort((a, b) => b.c.score - b.o.score - (a.c.score - a.o.score))
+        .sort((a, b) => Math.abs(b.c.score - b.o.score) - Math.abs(a.c.score - a.o.score))
     : [];
 
   return (
