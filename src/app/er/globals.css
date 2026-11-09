@@ -182,9 +182,6 @@
     padding: 24px;
     max-width: 1280px;
   }
-  .wrap.wide {
-    max-width: 1680px;
-  }
   :where(.wrap.slim) > :where(:not(.dim, .toast-area, .drop-overlay)) {
     max-width: 712px;
   }

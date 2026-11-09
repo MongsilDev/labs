@@ -10,9 +10,6 @@
   align-items: center;
   gap: 14px;
 }
-.site-foot-in.wide {
-  max-width: 1680px;
-}
 .site-top-in {
   min-height: 56px;
 }
@@ -138,9 +135,6 @@
 .site-foot .site-foot-in {
   padding: 0;
   max-width: 1232px;
-}
-.site-foot .site-foot-in.wide {
-  max-width: 1632px;
 }
 .site-foot-in {
   min-height: 64px;

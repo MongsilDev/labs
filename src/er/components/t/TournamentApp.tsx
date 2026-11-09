@@ -212,7 +212,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
   }
 
   return (
-    <main id="main" className="wrap wide pt-[18px]">
+    <main id="main" className="wrap pt-[18px]">
       {operator || (preview && view.role) ? (
         <div className="mb-[18px] flex flex-wrap items-center gap-2.5 rounded-lg border border-line bg-surface px-3.5 py-2.5" role="region" aria-label="운영 도구">
           <span className="flex items-center gap-2 text-[13px] text-fg-2">
