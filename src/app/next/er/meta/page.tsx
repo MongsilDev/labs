@@ -83,7 +83,7 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
       <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_400px]">
         <figure className="m-0">
           <div className="hidden lg:block">
-            <MetaMap list={list} median={median} label={label} />
+            <MetaMap list={list} median={median} label={label} h={800} />
           </div>
           <div className="lg:hidden">
             <MetaMap list={list} median={median} label={label} w={358} h={440} fs={11} />

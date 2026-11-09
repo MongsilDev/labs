@@ -3,15 +3,15 @@ import Link from "next/link";
 type Item = { href: string; label: string; key: string };
 
 const ER: Item[] = [
-  { key: "tier", href: "/er/tier", label: "실험체 티어" },
+  { key: "tier", href: "/next/er/tier", label: "실험체 티어" },
   { key: "meta", href: "/next/er/meta", label: "메타 지도" },
   { key: "cut", href: "/next/er/cut", label: "이터컷" },
-  { key: "kel", href: "/er/kel", label: "KEL 기록" },
-  { key: "score", href: "/er/score", label: "대회 점수" },
+  { key: "kel", href: "/next/er/kel", label: "KEL 기록" },
+  { key: "score", href: "/next/er/score", label: "대회 점수" },
 ];
 const TK: Item[] = [
-  { key: "players", href: "/tarkov/players", label: "계정 조회" },
-  { key: "kord", href: "/tarkov/kord-breach", label: "KORD BREACH" },
+  { key: "players", href: "/next/tarkov/players", label: "계정 조회" },
+  { key: "kord", href: "/next/tarkov/kord-breach", label: "KORD BREACH" },
 ];
 
 function Group({ name, items, here }: { name: string; items: Item[]; here?: string }) {

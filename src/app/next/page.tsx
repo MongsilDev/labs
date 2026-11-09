@@ -34,9 +34,9 @@ export default async function NextHub() {
       <div className="grid gap-x-10 gap-y-10 lg:grid-cols-12">
         <section className="sec lg:col-span-7">
           <h2 className="sec-h">
-            <Link href="/er/tier">실험체 티어</Link>
+            <Link href="/next/er/tier">실험체 티어</Link>
             {view && <small className="num">{view.label}, {n(view.rows)}판</small>}
-            <Link className="more" href="/er/tier">전체 {view?.combos.length ?? 0}개</Link>
+            <Link className="more" href="/next/er/tier">전체 {view?.combos.length ?? 0}개</Link>
           </h2>
           <table className="tbl mt-1">
             <thead>
