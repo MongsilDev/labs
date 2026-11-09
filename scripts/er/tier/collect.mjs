@@ -1,11 +1,12 @@
 // 아시아1 in1000 경기 기록 수집과 티어 집계. 호스트에서 실행, 원시 행은 TIER_DIR SQLite, 집계는 TIER_OUT/tier.json
-// 사용: node scripts/er/tier/collect.mjs [--measure] [--rps 10] [--days 7] [--every 180] [--once]
+// 사용: node scripts/er/tier/collect.mjs [--measure] [--rps 10] [--days 7] [--every 180] [--once] [--rebuild]
 import { execFileSync } from "node:child_process";
 import { createHmac, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
 import { RULE, scoreRows } from "./score.mjs";
 
 const HOME = homedir();
@@ -16,6 +17,11 @@ const API = "https://open-api.bser.io";
 const SERVER = "Asia";
 const RANKED_GATE = 8300;
 const SEASON_NAME_OFFSET = 9;
+// 루트 작성자 배지. 시즌 12 랭크 보상 안내(playeternalreturn.com/posts/news/3921)의 이터니티 TOP 300, 데미갓 TOP 301~1,000이고 시즌마다 이 값만 고침
+const AUTHOR_BADGE = [
+  [300, "e"],
+  [1000, "d"],
+];
 const PUBLISH_ROWS = Number(process.env.TIER_PUBLISH_ROWS || 15000);
 const MAX_PAGES = 80;
 const STEPS = [5, 10, 20, 30, 50];
@@ -63,18 +69,31 @@ db.exec(`
     game INTEGER NOT NULL, player TEXT NOT NULL, season INTEGER NOT NULL, t INTEGER NOT NULL, patch TEXT NOT NULL,
     char INTEGER NOT NULL, weapon INTEGER NOT NULL, trait INTEGER, rank INTEGER NOT NULL,
     gain_in INTEGER, fee INTEGER, gain INTEGER, mmr_before INTEGER, kills INTEGER, damage INTEGER,
-    server TEXT, cut INTEGER, in1000 INTEGER,
+    server TEXT, cut INTEGER, in1000 INTEGER, route INTEGER, tac INTEGER,
     PRIMARY KEY (game, player)
   );
   CREATE INDEX IF NOT EXISTS rows_t ON rows (season, t);
   CREATE TABLE IF NOT EXISTS accounts (player TEXT PRIMARY KEY, newest INTEGER, checked INTEGER);
-  CREATE TABLE IF NOT EXISTS lobbies (game INTEGER PRIMARY KEY, checked INTEGER);
+  CREATE TABLE IF NOT EXISTS routes (route INTEGER PRIMARY KEY, author TEXT, author_rank INTEGER, version TEXT, checked INTEGER);
 `);
-const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+// route와 tac은 11-09에 더한 열. 기존 행은 raw에서 채움
+const rowCols = new Set(db.prepare(`PRAGMA table_info(rows)`).all().map((c) => c.name));
+for (const c of ["route", "tac"]) if (!rowCols.has(c)) db.exec(`ALTER TABLE rows ADD COLUMN ${c} INTEGER`);
+// /v1/games 응답 원본. 경기마다 한 번만 받고 쓸 값은 여기서 다시 고름
+db.prepare(`ATTACH DATABASE ? AS raw`).run(join(DIR, "raw.sqlite"));
+db.exec(`
+  PRAGMA raw.journal_mode = WAL;
+  CREATE TABLE IF NOT EXISTS raw.games (game INTEGER PRIMARY KEY, season INTEGER NOT NULL, t INTEGER NOT NULL, n INTEGER NOT NULL, body BLOB NOT NULL);
+`);
+const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+const fillRoute = db.prepare(`UPDATE rows SET route = ?, tac = ? WHERE game = ? AND player = ? AND route IS NULL`);
 const getAccount = db.prepare(`SELECT newest FROM accounts WHERE player = ?`);
-const openLobbies = db.prepare(`SELECT game, (SELECT count(*) FROM rows x WHERE x.game = r.game) AS n FROM rows r
-  WHERE season = ? AND in1000 = 1 AND t >= ? AND game NOT IN (SELECT game FROM lobbies) GROUP BY game`);
-const putLobby = db.prepare(`INSERT OR REPLACE INTO lobbies VALUES (?, ?)`);
+const openGames = db.prepare(`SELECT game, max(coalesce(in1000, 0)) AS top FROM rows
+  WHERE season = ? AND t >= ? AND game NOT IN (SELECT game FROM raw.games) GROUP BY game ORDER BY max(t) DESC`);
+const putRaw = db.prepare(`INSERT OR REPLACE INTO raw.games VALUES (?, ?, ?, ?, ?)`);
+const getRoute = db.prepare(`SELECT author FROM routes WHERE route = ?`);
+const putRoute = db.prepare(`INSERT OR REPLACE INTO routes VALUES (?, ?, ?, ?, ?)`);
+const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
 const putAccount = db.prepare(`INSERT INTO accounts VALUES (?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked`);
 
 class Pace {
@@ -214,18 +233,32 @@ async function names() {
   const charKo = ko("Character/Name");
   const typeKo = ko("MasteryType");
   const roleKo = ko("CharArchetype");
+  const traitKo = ko("Trait/Name");
+  const skillKo = ko("Skill/Group/Name");
+  // 전술 스킬 그룹 이름은 시작 스킬 코드의 천 단위 그룹 번호로 찾음. 120은 아이콘 번호에 이름이 없음
+  const sets = new Map(((await get("/v2/data/TacticalSkillSet"))?.data ?? []).map((x) => [x.code, Number(x.skillCode)]));
+  const tacKo = new Map(
+    ((await get("/v2/data/TacticalSkillSetGroup"))?.data ?? []).map((g) => {
+      const sk = sets.get(g.startCode);
+      return [g.group, skillKo.get(String(Math.floor(sk / 1000) * 1000)) ?? skillKo.get(String(g.icon ?? "").split("_").pop())];
+    }),
+  );
   const data = (await get("/v2/data/Character"))?.data ?? [];
   const chars = new Map(data.map((c) => [c.code, c.name]));
   const roles = new Map(data.map((c) => [c.code, [c.charArcheType1, c.charArcheType2].filter((x) => roleKo.has(x)).map((x) => roleKo.get(x))]));
   return {
     char: (code) => ({ key: chars.get(code) ?? String(code), name: charKo.get(String(code)) ?? chars.get(code) ?? String(code), roles: roles.get(code) ?? [] }),
     weapon: (code) => typeKo.get(WEAPON[code]) ?? `무기 ${code}`,
+    trait: (code) => traitKo.get(String(code)) ?? `특성 ${code}`,
+    tac: (code) => tacKo.get(code) ?? `전술 스킬 ${code}`,
   };
 }
 
 /** 지금 1000명과 since 뒤 1000위 안에 든 적 있는 계정. 닉네임은 uid를 찾는 데만 쓰고 저장하지 않음 */
+let topRanks = [];
 async function accounts(s, since) {
   const top = (await get(`/v1/rank/top/${s.id}/3/10`))?.topRanks ?? [];
+  topRanks = top;
   let book = {};
   try {
     const b = JSON.parse(readFileSync(join(BOT, "data/rank_history.json"), "utf8"));
@@ -249,30 +282,66 @@ function insertGame(s, y, cuts, player) {
     y.gameId, who, s.id, t, patch, y.characterNum, y.bestWeapon, y.traitFirstCore ?? null, y.gameRank,
     y.mmrGainInGame ?? null, y.mmrLossEntryCost ?? null, y.mmrGain ?? null, y.mmrBefore ?? null,
     y.playerKill ?? null, y.damageToPlayer ?? null, y.serverName ?? null, cut, in1000,
+    y.routeIdOfStart ?? null, y.tacticalSkillGroup ?? null,
   );
   return Number(r.changes);
 }
 
-/** 상위 1,000명이 참가한 경기에서 아직 받지 않은 참가자를 경기 기록 한 번으로 채움. 확인한 경기는 lobbies에 남김 */
-async function fillLobbies(s, cuts) {
-  const list = openLobbies.all(s.id, Math.max(s.start, Date.now() - KEEP_DAYS * 86_400_000));
-  for (const x of list) if (x.n >= 24) putLobby.run(x.game, Date.now());
-  const queue = list.filter((x) => x.n < 24).map((x) => x.game);
+/** 참가자 닉네임과 같은 문자열 값을 모두 playerId로 바꿈. 처치 기록의 killDetail 필드도 닉네임을 담음 */
+function scrub(season, list) {
+  const ids = new Map(list.filter((y) => y.nickname).map((y) => [y.nickname, playerId(season, y.nickname)]));
+  const walk = (v) =>
+    Array.isArray(v) ? v.map(walk) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : typeof v === "string" && ids.has(v) ? ids.get(v) : v;
+  return list.map((y) => {
+    const { nickname, ...rest } = walk(y);
+    // 기록이 빠진 참가자에게 처치된 경우에도 닉네임이 남지 않게 함
+    for (const [k, d] of [["killer", "killDetail"], ["killer2", "killDetail2"], ["killer3", "killDetail3"]]) {
+      if (rest[k] === "player" && typeof rest[d] === "string" && rest[d] && !/^[0-9a-f]{16}$/.test(rest[d])) rest[d] = playerId(season, rest[d]);
+    }
+    return { player: nickname ?? null, ...rest };
+  });
+}
+
+function saveRaw(s, game, list) {
+  const json = Buffer.from(JSON.stringify(scrub(s.id, list)));
+  const body = brotliCompressSync(json, { params: { [zlib.BROTLI_PARAM_QUALITY]: 9, [zlib.BROTLI_PARAM_SIZE_HINT]: json.length } });
+  putRaw.run(game, s.id, list[0] ? kst(list[0].startDtm) : 0, list.length, body);
+}
+
+/** rows에 있고 raw에 없는 경기를 받아 원본을 남김. 상위 1,000명이 참가한 경기는 빠진 참가자 행도 넣고, 있던 행은 루트와 전술 스킬을 채움 */
+async function fillGames(s, cuts) {
+  // TIER_FILL_MAX는 사본 DB로 시험할 때 받을 경기 수를 줄이는 값
+  const queue = openGames.all(s.id, Math.max(s.start, Date.now() - KEEP_DAYS * 86_400_000)).slice(0, Number(process.env.TIER_FILL_MAX) || undefined);
   const total = queue.length;
   let added = 0;
+  let saved = 0;
   const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
     while (!abort) {
-      const game = queue.shift();
-      if (game == null) return;
-      const g = await get(`/v1/games/${game}`);
+      const x = queue.shift();
+      if (!x) return;
+      const g = await get(`/v1/games/${x.game}`);
       if (g === undefined) continue;
-      for (const y of g?.userGames ?? []) added += insertGame(s, y, cuts, null);
-      putLobby.run(game, Date.now());
+      const list = g?.userGames ?? [];
+      if (x.top) for (const y of list) added += insertGame(s, y, cuts, null);
+      for (const y of list) if (y.nickname) fillRoute.run(y.routeIdOfStart ?? null, y.tacticalSkillGroup ?? null, x.game, playerId(s.id, y.nickname));
+      saveRaw(s, x.game, list);
+      saved++;
     }
   });
   await Promise.all(workers);
-  log(`상위 1,000명이 참가한 경기 ${total}개에서 수집하지 못한 참가자 ${added}행을 추가했습니다`);
-  return { games: total, added };
+  log(`경기 ${total}개 가운데 ${saved}개의 원본을 저장했고, 상위 1,000명 경기에서 빠진 참가자 ${added}행을 추가했습니다`);
+  return { games: total, saved, added };
+}
+
+/** API 없이 raw만 읽어 route와 tac이 빈 행을 채움 */
+function rebuild() {
+  let n = 0;
+  db.exec("BEGIN");
+  for (const r of db.prepare(`SELECT game, body FROM raw.games`).iterate()) {
+    for (const y of JSON.parse(brotliDecompressSync(r.body))) if (y.player) n += Number(fillRoute.run(y.routeIdOfStart ?? null, y.tacticalSkillGroup ?? null, r.game, y.player).changes);
+  }
+  db.exec("COMMIT");
+  log(`raw에서 루트와 전술 스킬 ${n}행을 채웠습니다`);
 }
 
 async function collectAccount(s, acc, since, cuts, stop) {
@@ -366,7 +435,7 @@ async function collect(s, since, { measure }) {
     writeFileSync(RATE, JSON.stringify({ at: Date.now(), limit: result.limit, rps: safe, steps: result.steps }));
   }
   await Promise.all(workers);
-  const lobbies = measure || abort ? null : await fillLobbies(s, cuts);
+  const lobbies = measure || abort ? null : await fillGames(s, cuts);
   return { added: added + (lobbies?.added ?? 0), accounts: list.length, lobbies, ...result };
 }
 
@@ -388,13 +457,58 @@ function cmpPatch(a, b) {
 }
 
 // 상위 1,000명이 한 명이라도 참가한 경기는 참가자 전원을 씀
-const selectRows = db.prepare(`SELECT game, player, char, weapon, rank, gain_in AS gain, mmr_before AS mmr, t, patch FROM rows
+const selectRows = db.prepare(`SELECT game, player, char, weapon, rank, gain_in AS gain, mmr_before AS mmr, t, patch, in1000, route, tac, trait, gain AS net FROM rows
   WHERE season = ? AND server = ? AND gain_in IS NOT NULL AND mmr_before IS NOT NULL AND t >= ?
   AND game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1) ORDER BY t`);
+
+/** 상위 1,000명 행을 루트, 특성, 전술 스킬별로 나눔. [코드, 플레이어 수, 판 수, 평균 RP 획득] */
+function split(rows, key) {
+  const m = new Map();
+  for (const r of rows) {
+    const k = r[key];
+    if (!k) continue;
+    let g = m.get(k);
+    if (!g) m.set(k, (g = { n: 0, sum: 0, got: 0, players: new Set() }));
+    g.n++;
+    g.players.add(r.player);
+    if (r.net != null) {
+      g.sum += r.net;
+      g.got++;
+    }
+  }
+  return [...m].map(([code, g]) => [code, g.players.size, g.n, g.got ? round(g.sum / g.got, 1) : null]);
+}
+
+// 판의 1% 미만인 특성과 전술 스킬은 화면에 넣지 않음
+const MIN_SHARE = 0.01;
+
+function detail(rows, nm) {
+  if (!rows.length) return {};
+  const keep = (list, name) =>
+    list
+      .filter((x) => x[2] / rows.length >= MIN_SHARE)
+      .sort((a, b) => b[2] - a[2] || b[1] - a[1])
+      .map(([code, ...rest]) => [name(code), ...rest]);
+  return {
+    dn: rows.length,
+    routes: split(rows, "route")
+      .sort((a, b) => b[1] - a[1] || b[2] - a[2])
+      .slice(0, 3),
+    traits: keep(split(rows, "trait"), nm.trait),
+    tac: keep(split(rows, "tac"), nm.tac),
+  };
+}
 
 function view(id, label, rows, nm, extra = {}, k) {
   const r = scoreRows(rows, k ? { ...RULE, k } : RULE);
   if (!r) return null;
+  const top = new Map();
+  for (const x of rows) {
+    if (x.in1000 !== 1) continue;
+    const key = `${x.char}:${x.weapon}`;
+    if (!top.has(key)) top.set(key, []);
+    top.get(key).push(x);
+  }
   return {
     id,
     label,
@@ -424,6 +538,7 @@ function view(id, label, rows, nm, extra = {}, k) {
       top3: round(c.top3 * 100, 1),
       win: round(c.win * 100, 1),
       pick: round(c.pick * 100, 2),
+      ...detail(top.get(`${c.char}:${c.weapon}`) ?? [], nm),
     })),
   };
 }
@@ -442,9 +557,36 @@ function writeTier(data) {
 // 28일 탭이 패치가 바뀐 뒤에도 남도록 패치 대신 날짜로 지움
 const KEEP_DAYS = 35;
 const prune = db.prepare(`DELETE FROM rows WHERE season <> ? OR t < ?`);
-const pruneLobbies = db.prepare(`DELETE FROM lobbies WHERE game NOT IN (SELECT game FROM rows)`);
 
-function publish(s, nm) {
+/** 화면에 올라가는 루트의 작성자를 받아 두고 지금 순위로 배지를 정함. 작성자는 닉네임 대신 playerId로 저장 */
+async function badges(s, ids) {
+  const top = topRanks.length ? topRanks : ((await get(`/v1/rank/top/${s.id}/3/10`))?.topRanks ?? []);
+  // 루트는 시즌을 넘어 쓰이므로 작성자 키에 시즌을 넣지 않음
+  const rank = new Map(top.map((x) => [playerId(0, x.nickname), x.rank]));
+  const queue = ids.filter((id) => !getRoute.get(id));
+  const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
+    while (!abort) {
+      const id = queue.shift();
+      if (id == null) return;
+      const r = await get(`/v1/weaponRoutes/recommend/${id}`);
+      if (r === undefined) continue;
+      const w = r?.result?.recommendWeaponRoute;
+      putRoute.run(id, w?.userNickname ? playerId(0, w.userNickname) : null, null, w?.version ?? null, Date.now());
+    }
+  });
+  await Promise.all(workers);
+  const out = new Map();
+  for (const id of ids) {
+    const author = getRoute.get(id)?.author;
+    const at = author ? (rank.get(author) ?? null) : null;
+    rankRoute.run(at, id);
+    const b = at == null ? null : AUTHOR_BADGE.find(([max]) => at <= max)?.[1];
+    if (b) out.set(id, b);
+  }
+  return out;
+}
+
+async function publish(s, nm) {
   const now = Date.now();
   const lastFile = join(DIR, "tier.json");
   const last = existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null;
@@ -487,6 +629,9 @@ function publish(s, nm) {
     const v = view(`${d}d`, `최근 ${d}일`, rows, nm, { patch: cur, days: d }, k);
     if (v) views.push(v);
   }
+  const ids = [...new Set(views.flatMap((v) => v.combos.flatMap((c) => (c.routes ?? []).map((x) => x[0]))))];
+  const badge = await badges(s, ids);
+  for (const v of views) for (const c of v.combos) for (const x of c.routes ?? []) if (badge.has(x[0])) x.push(badge.get(x[0]));
   const ready = views.find((v) => v.patch === cur && v.id.startsWith("patch-"))?.ready;
   const state = !s.regular || now >= s.end ? "offseason" : ready ? "shown" : "collecting";
   const cuts = cutSeries(s.id);
@@ -504,7 +649,6 @@ function publish(s, nm) {
   };
   writeTier(data);
   const removed = prune.run(s.id, now - KEEP_DAYS * 86_400_000).changes;
-  pruneLobbies.run();
   log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, ${KEEP_DAYS}일 지난 행 ${removed}개 삭제` : ""}`);
 }
 
@@ -523,11 +667,16 @@ async function once(measure) {
       log(`새 행 ${run.added}, 요청 ${stats.sent}, 한도 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
       writeFileSync(join(DIR, "status.json"), JSON.stringify({ at: Date.now(), abort, ...run, stats: { ...stats, lat: undefined } }));
     }
-    if (!abort) publish(s, nm);
+    if (!abort) await publish(s, nm);
   } finally {
     unwatch();
   }
   return !abort;
+}
+
+if (flag("rebuild")) {
+  rebuild();
+  process.exit(0);
 }
 
 const every = opt("every", 0);
