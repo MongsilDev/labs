@@ -291,19 +291,15 @@ function insertGame(s, y, cuts, player) {
   return Number(r.changes);
 }
 
-/** 참가자 닉네임과 같은 문자열 값을 모두 playerId로 바꿈. 처치 기록의 killDetail 필드도 닉네임을 담음 */
+/** 닉네임을 playerId로 바꿈. 11-09 원본 확인에서 닉네임을 담은 필드는 nickname과 처치자 killDetail 세 개뿐 */
 function scrub(season, list) {
   const ids = new Map(list.filter((y) => y.nickname).map((y) => [y.nickname, playerId(season, y.nickname)]));
-  const hashed = new Set(ids.values());
-  const walk = (v) =>
-    Array.isArray(v) ? v.map(walk) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : typeof v === "string" && ids.has(v) ? ids.get(v) : v;
-  return list.map((y) => {
-    const { nickname, ...rest } = walk(y);
-    // 기록이 빠진 참가자에게 처치된 경우에도 닉네임이 남지 않게 함
+  return list.map(({ nickname, ...rest }) => {
+    // 금지구역 처치는 killDetail에 지역 이름이 들어 있어 그대로 둠. 기록이 빠진 참가자에게 처치된 경우도 바꿈
     for (const [k, d] of [["killer", "killDetail"], ["killer2", "killDetail2"], ["killer3", "killDetail3"]]) {
-      if (rest[k] === "player" && typeof rest[d] === "string" && rest[d] && !hashed.has(rest[d])) rest[d] = playerId(season, rest[d]);
+      if (rest[k] === "player" && typeof rest[d] === "string" && rest[d]) rest[d] = ids.get(rest[d]) ?? playerId(season, rest[d]);
     }
-    return { player: nickname ?? null, ...rest };
+    return { player: nickname ? ids.get(nickname) : null, ...rest };
   });
 }
 

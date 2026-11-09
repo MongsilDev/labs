@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
 import { BADGE, signed, WEAPON_SPRITE, type TierCombo, type TierSplit, type TierView } from "@/er/lib/tier";
@@ -146,6 +147,7 @@ const CheckIcon = () => (
 
 function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLElement>(null);
   const [copied, setCopied] = useState<number | null>(null);
 
   // 조합을 바꾸면 key가 바뀌어 다시 마운트되므로 열릴 때마다 닫기 버튼으로 초점을 옮김
@@ -157,9 +159,19 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
     const esc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
+    // 1099px 이하는 패널이 화면 전체를 덮으므로 뒤쪽을 inert로 막아 초점과 읽기를 패널 안에 둠
+    const narrow = window.matchMedia("(max-width: 1099px)");
+    const apply = () => {
+      for (const el of document.body.children) if (el !== panel.current && el instanceof HTMLElement) el.inert = narrow.matches;
+      panel.current?.setAttribute("aria-modal", String(narrow.matches));
+    };
+    apply();
+    narrow.addEventListener("change", apply);
     document.documentElement.classList.add("tier-dx-open");
     window.addEventListener("keydown", esc);
     return () => {
+      narrow.removeEventListener("change", apply);
+      for (const el of document.body.children) if (el instanceof HTMLElement) el.inert = false;
       document.documentElement.classList.remove("tier-dx-open");
       window.removeEventListener("keydown", esc);
     };
@@ -183,8 +195,8 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
   const range = c.half != null ? `${signed(c.score - c.half)} ~ ${signed(c.score + c.half)}` : null;
   const dn = c.dn ?? 0;
   const routes = c.routes ?? [];
-  return (
-    <aside id="tier-dx" className="tier-dx" role="dialog" aria-labelledby="tier-dx-h">
+  return createPortal(
+    <aside ref={panel} id="tier-dx" className="tier-dx" role="dialog" aria-labelledby="tier-dx-h">
       <header className="tier-dx-head">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={56} height={56} onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
@@ -270,7 +282,8 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
           {copied != null ? "루트 번호를 복사했습니다." : ""}
         </p>
       </div>
-    </aside>
+    </aside>,
+    document.body,
   );
 }
 
@@ -285,7 +298,8 @@ export default function TierBoard(p: Props) {
   const sel = open ? view.combos.find((c) => `${c.char}:${c.weapon}` === open) : undefined;
   const close = useCallback(() => {
     setOpen(null);
-    trigger.current?.focus({ preventScroll: true });
+    // 좁은 화면은 패널이 사라지며 inert가 풀린 뒤에야 카드에 초점을 줄 수 있음
+    requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
   }, []);
 
   const pick = (next: string) => {
