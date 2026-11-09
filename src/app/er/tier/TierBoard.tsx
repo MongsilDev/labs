@@ -113,7 +113,7 @@ export default function TierBoard(p: Props) {
         <div className="min-w-0">
           <h1 className="text-[28px] font-extrabold tracking-[-0.5px]">실험체 티어</h1>
           <p className="text-[14px] text-fg-3 tabular-nums">
-            상위 1,000위 이터니티와 데미갓, {p.server}, {int(view.rows)}판, {timeKo(p.updatedAt)} 갱신
+            {p.server} 상위 1,000명, {int(view.rows)}판, {timeKo(p.updatedAt)} 갱신
           </p>
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function TierBoard(p: Props) {
         {p.early && (
           <p className="text-[14px] text-fg-2" role="status">
             {view.patch === p.early.patch
-              ? `${p.early.label} 표본이 ${int(p.publishRows)}판보다 적어 등급이 크게 바뀔 수 있습니다. 지금 ${int(p.early.rows)}판입니다.`
+              ? `${p.early.label} 기록이 ${int(p.publishRows)}판보다 적어 등급이 크게 바뀔 수 있습니다. 지금 ${int(p.early.rows)}판입니다.`
               : `${p.early.label} 표는 ${int(p.publishRows)}판부터 기본으로 보여 줍니다. 지금 ${int(p.early.rows)}판입니다.`}
           </p>
         )}
@@ -146,10 +146,14 @@ export default function TierBoard(p: Props) {
         <details className="tier-how">
           <summary>계산 방법</summary>
           <p>
-            {w
-              ? `점수는 한 판에 얻는 RP를 ${w.gain * 100}%, 평균 순위와 TOP3 비율을 ${w.place * 100}%씩 반영해, 평균보다 RP를 얼마나 더 얻는지로 나타냅니다.`
-              : "점수는 한 판에 얻는 RP가 평균보다 얼마나 많은지를 나타냅니다."}
+            점수는 평균보다 한 판에 RP를 얼마나 더 얻는지를 나타냅니다.
             <br />
+            {w && (
+              <>
+                RP 획득 {w.gain * 100}%, 평균 순위 {w.place * 100}%, TOP3 비율 {w.top3 * 100}%를 합쳐 계산합니다.
+                <br />
+              </>
+            )}
             판 수가 적은 조합은 점수를 그 실험체의 전체 점수에 가깝게 보정합니다.
             <br />
             {p.thin}판 미만인 조합은 흐리게 표시합니다.
@@ -175,7 +179,6 @@ export default function TierBoard(p: Props) {
               <span className="tier-grade" data-grade={g}>
                 {g}
               </span>
-              <span className="tabular-nums">{list.length}</span>
             </div>
             <div className="tier-cards">
               {list.map((c, i) => {

@@ -1387,12 +1387,8 @@
   .tier-gl {
     display: grid;
     place-items: center;
-    align-content: center;
-    gap: 6px;
     border-right: 1px solid var(--line);
     background: var(--field);
-    color: var(--text-3);
-    font-size: 12px;
   }
   .tier-grade {
     display: inline-grid;
@@ -1525,9 +1521,7 @@
       grid-template-columns: minmax(0, 1fr);
     }
     .tier-gl {
-      grid-auto-flow: column;
       justify-content: start;
-      gap: 10px;
       padding: 8px 12px;
       border-right: 0;
       border-bottom: 1px solid var(--line);
