@@ -40,6 +40,8 @@
     --gold-text: #ffd621;
     --minus: #ff6b6b;
     --up: #4ade80;
+    --eternity: #f472b6;
+    --demigod: #e2b979;
     --on-status: #111;
     --ramp-a: #0f5c66;
     --ramp-b: #26f1f6;
@@ -69,6 +71,8 @@
     --gold-text: #8a6d00;
     --minus: #d93a3a;
     --up: #15803d;
+    --eternity: #be185d;
+    --demigod: #92400e;
     --on-status: #fff;
     --ramp-a: #6fd6dd;
     --ramp-b: #0a5f66;
@@ -1509,26 +1513,216 @@
   .tier-wb .tier-wg {
     --s: 14px;
   }
-  .tier-detail {
-    grid-column: 1 / -1;
-    padding: 12px 14px;
-    border-radius: 10px;
-    background: var(--field);
-    font-size: 14px;
-  }
-  .tier-detail dl {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 22px;
-    margin-top: 6px;
+  /* 실험체 상세. 넓은 화면은 오른쪽 패널, 1099px 이하는 화면 전체 */
+  .tier-dx {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 60;
+    width: min(720px, 50vw);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--surface);
+    border-left: 1px solid var(--line);
+    box-shadow: -24px 0 48px rgb(0 0 0 / 0.35);
     font-variant-numeric: tabular-nums;
   }
-  .tier-detail dt {
+  html.tier-dx-open body {
+    padding-right: min(720px, 50vw);
+  }
+  .tier-dx-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .tier-dx-head img {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background: var(--field);
+    object-fit: cover;
+  }
+  .tier-dx-head h2 {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .tier-dx-x {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    margin-left: auto;
+    flex: none;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--field);
+    color: var(--text-2);
+    cursor: pointer;
+  }
+  .tier-dx-x:hover {
+    color: var(--text);
+  }
+  .tier-dx-body {
+    display: grid;
+    gap: 28px;
+    padding: 20px 24px 32px;
+  }
+  .tier-dx-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .tier-dx-tiles > div {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--field);
+  }
+  .tier-dx-tiles > div:nth-child(-n + 2) {
+    grid-column: span 2;
+  }
+  .tier-dx-tiles dt {
     font-size: 12px;
     color: var(--text-3);
   }
-  .tier-detail dd {
+  .tier-dx-tiles dd {
+    margin-top: 4px;
+    font-size: 18px;
     font-weight: 700;
+    white-space: nowrap;
+  }
+  .tier-dx-tiles small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+  }
+  .tier-dx h3 {
+    margin-bottom: 8px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .tier-dx table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 14px;
+  }
+  .tier-dx th {
+    padding: 0 8px 8px;
+    border-bottom: 1px solid var(--line);
+    color: var(--text-3);
+    font-size: 12px;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .tier-dx td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--text-2);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .tier-dx :is(th, td):first-child {
+    padding-left: 0;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+  }
+  .tier-dx :is(th, td):last-child {
+    padding-right: 0;
+  }
+  .tier-dx th.p {
+    width: 88px;
+  }
+  .tier-dx th.n {
+    width: 64px;
+  }
+  .tier-dx th.r {
+    width: 80px;
+  }
+  .tier-dx th.g {
+    width: 88px;
+  }
+  .tier-dx td.nm {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .tier-dx td.up {
+    color: var(--up);
+    font-weight: 600;
+  }
+  .tier-dx td.down {
+    color: var(--minus);
+    font-weight: 600;
+  }
+  /* 번호 폭을 고정해 배지 시작 위치를 줄마다 맞춤. 루트 번호는 5자리까지 */
+  .tier-dx-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 88px;
+    height: 30px;
+    padding: 0 9px 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
+    background: var(--field);
+    color: var(--text);
+    font: inherit;
+    font-weight: 700;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  .tier-dx-copy svg {
+    flex: none;
+    color: var(--text-3);
+  }
+  .tier-dx-copy:hover {
+    border-color: var(--text-3);
+  }
+  .tier-dx-b {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 6px;
+    padding: 2px 7px 2px 4px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
+  .tier-dx-b img {
+    width: 14px;
+    height: 16px;
+    object-fit: contain;
+  }
+  .tier-dx-b[data-b="e"] {
+    color: var(--eternity);
+    background: color-mix(in srgb, var(--eternity) 14%, transparent);
+  }
+  .tier-dx-b[data-b="d"] {
+    color: var(--demigod);
+    background: color-mix(in srgb, var(--demigod) 14%, transparent);
+  }
+  @media (max-width: 1099px) {
+    .tier-dx {
+      width: 100%;
+      border-left: 0;
+      box-shadow: none;
+    }
+    html.tier-dx-open {
+      overflow: hidden;
+    }
+    html.tier-dx-open body {
+      padding-right: 0;
+    }
   }
   @media (max-width: 600px) {
     .tier-emblems img {
@@ -1562,6 +1756,42 @@
     .tier-pw {
       width: 56px;
       height: 56px;
+    }
+    .tier-dx-head {
+      padding: 12px 16px;
+    }
+    .tier-dx-head img {
+      width: 44px;
+      height: 44px;
+    }
+    .tier-dx-head h2 {
+      font-size: 18px;
+    }
+    .tier-dx-body {
+      gap: 24px;
+      padding: 16px;
+    }
+    .tier-dx-tiles {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .tier-dx-tiles > div:nth-child(-n + 2) {
+      grid-column: auto;
+    }
+    .tier-dx th,
+    .tier-dx td {
+      padding-inline: 6px;
+    }
+    .tier-dx th.p {
+      width: 60px;
+    }
+    .tier-dx th.n {
+      width: 56px;
+    }
+    .tier-dx th.g {
+      width: 64px;
+    }
+    .tier-dx .r {
+      display: none;
     }
   }
 

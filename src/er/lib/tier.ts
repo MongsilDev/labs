@@ -1,5 +1,11 @@
 // scripts/er/tier/collect.mjs가 쓰는 tier.json 형식
 
+export type AuthorBadge = "e" | "d";
+/** [루트 번호, 플레이어 수, 판 수, 평균 RP 획득, 작성자 배지] */
+export type TierRoute = [number, number, number, number | null, AuthorBadge?];
+/** [이름, 플레이어 수, 판 수, 평균 RP 획득] */
+export type TierSplit = [string, number, number, number | null];
+
 export type TierCombo = {
   char: number;
   key: string;
@@ -23,6 +29,20 @@ export type TierCombo = {
   top3: number;
   win: number;
   pick: number;
+  /** 상위 1,000명 행 수. 아래 세 표의 비율 분모이고 수집기 갱신 전 표에는 없음 */
+  dn?: number;
+  /** 상위 1,000명이 쓴 시작 루트, 쓴 플레이어 수 순 3개 */
+  routes?: TierRoute[];
+  /** 판의 1% 이상인 핵심 특성 */
+  traits?: TierSplit[];
+  /** 판의 1% 이상인 전술 스킬 */
+  tac?: TierSplit[];
+};
+
+// 배지를 다는 순위 기준은 scripts/er/tier/collect.mjs의 AUTHOR_BADGE
+export const BADGE: Record<AuthorBadge, { label: string; img: string }> = {
+  e: { label: "이터니티", img: "/img/er/rank/badge/Immortal.v1.png" },
+  d: { label: "데미갓", img: "/img/er/rank/badge/Titan.v1.png" },
 };
 
 export type TierView = {

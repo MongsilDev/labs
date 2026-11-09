@@ -1,9 +1,9 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
-import { signed, WEAPON_SPRITE, type TierCombo, type TierView } from "@/er/lib/tier";
+import { BADGE, signed, WEAPON_SPRITE, type TierCombo, type TierSplit, type TierView } from "@/er/lib/tier";
 
 const GRADES: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
 const ROLES = ["탱커", "전사", "암살자", "스킬 딜러", "원거리 딜러", "지원가"];
@@ -81,46 +81,196 @@ function MovedList({ title, list }: { title: string; list: Moved[] }) {
 const dayKo = (at: number) => new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(at);
 const kstDay = (at: number) => Math.floor((at + 9 * 3_600_000) / 86_400_000);
 
-function columns(grid: Element) {
-  return getComputedStyle(grid).gridTemplateColumns.split(" ").length;
+function Rp({ g }: { g: number | null }) {
+  if (g == null) return <td className="g">-</td>;
+  return <td className={g > 0 ? "g up" : g < 0 ? "g down" : "g"}>{signed(g)}</td>;
 }
 
-function Detail({ c, id }: { c: TierCombo; id: string }) {
-  const range = c.half != null ? `${signed(c.score - c.half)} ~ ${signed(c.score + c.half)}` : null;
+function Head({ first }: { first: string }) {
   return (
-    <div className="tier-detail" id={id}>
-      <p className="font-bold">
-        {c.weaponName} {c.name}
-      </p>
-      <dl>
-        {range && (
+    <thead>
+      <tr>
+        <th scope="col">{first}</th>
+        <th scope="col" className="p">
+          플레이어
+        </th>
+        <th scope="col" className="n">
+          판
+        </th>
+        <th scope="col" className="r">
+          비율
+        </th>
+        <th scope="col" className="g">
+          RP 획득
+        </th>
+      </tr>
+    </thead>
+  );
+}
+
+function Split({ title, first, list, dn }: { title: string; first: string; list: TierSplit[]; dn: number }) {
+  if (!list.length) return null;
+  return (
+    <section>
+      <h3>{title}</h3>
+      <table>
+        <Head first={first} />
+        <tbody>
+          {list.map(([name, players, n, g]) => (
+            <tr key={name}>
+              <td className="nm">{name}</td>
+              <td className="p">{int(players)}명</td>
+              <td className="n">{int(n)}</td>
+              <td className="r">{((n / dn) * 100).toFixed(1)}%</td>
+              <Rp g={g} />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+const CopyIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+    <rect x="5" y="5" width="9" height="9" rx="2" />
+    <path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <path d="M3 8.5l3.2 3L13 4.5" />
+  </svg>
+);
+
+function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const [copied, setCopied] = useState<number | null>(null);
+
+  // 조합을 바꾸면 key가 바뀌어 다시 마운트되므로 열릴 때마다 닫기 버튼으로 초점을 옮김
+  useEffect(() => {
+    closeRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.documentElement.classList.add("tier-dx-open");
+    window.addEventListener("keydown", esc);
+    return () => {
+      document.documentElement.classList.remove("tier-dx-open");
+      window.removeEventListener("keydown", esc);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (copied == null) return;
+    const t = setTimeout(() => setCopied(null), 1500);
+    return () => clearTimeout(t);
+  }, [copied]);
+
+  const copy = async (id: number) => {
+    try {
+      await navigator.clipboard.writeText(String(id));
+      setCopied(id);
+    } catch {
+      setCopied(null);
+    }
+  };
+
+  const range = c.half != null ? `${signed(c.score - c.half)} ~ ${signed(c.score + c.half)}` : null;
+  const dn = c.dn ?? 0;
+  const routes = c.routes ?? [];
+  return (
+    <aside id="tier-dx" className="tier-dx" role="dialog" aria-labelledby="tier-dx-h">
+      <header className="tier-dx-head">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={56} height={56} onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+        <h2 id="tier-dx-h">
+          {c.weaponName} {c.name}
+        </h2>
+        <span className="tier-grade sm" data-grade={c.grade}>
+          {c.grade}
+        </span>
+        <button ref={closeRef} type="button" className="tier-dx-x" aria-label="닫기" onClick={onClose}>
+          <svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path d="M3 3l10 10M13 3L3 13" />
+          </svg>
+        </button>
+      </header>
+      <div className="tier-dx-body">
+        <dl className="tier-dx-tiles">
           <div>
-            <dt>90% 범위</dt>
-            <dd>{range}</dd>
+            <dt>점수</dt>
+            <dd>
+              {signed(c.score)}
+              {range && <small>90% 범위 {range}</small>}
+            </dd>
           </div>
+          <div>
+            <dt>판</dt>
+            <dd>
+              {int(c.n)}
+              <small>플레이어 {int(c.players)}명</small>
+            </dd>
+          </div>
+          <div>
+            <dt>평균 순위</dt>
+            <dd>{c.place.toFixed(2)}</dd>
+          </div>
+          <div>
+            <dt>TOP 3</dt>
+            <dd>{c.top3.toFixed(1)}%</dd>
+          </div>
+          <div>
+            <dt>승률</dt>
+            <dd>{c.win.toFixed(1)}%</dd>
+          </div>
+          <div>
+            <dt>픽률</dt>
+            <dd>{c.pick.toFixed(2)}%</dd>
+          </div>
+        </dl>
+        {dn > 0 && routes.length > 0 && (
+          <section>
+            <h3>루트</h3>
+            <table>
+              <Head first="번호" />
+              <tbody>
+                {routes.map(([id, players, n, g, b]) => (
+                  <tr key={id}>
+                    <td>
+                      <button type="button" className="tier-dx-copy" aria-label={`루트 번호 ${id} 복사`} onClick={() => copy(id)}>
+                        {id}
+                        {copied === id ? <CheckIcon /> : <CopyIcon />}
+                      </button>
+                      {b && (
+                        <span className="tier-dx-b" data-b={b}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={BADGE[b].img} alt="" width={14} height={16} />
+                          {BADGE[b].label}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p">{int(players)}명</td>
+                    <td className="n">{int(n)}</td>
+                    <td className="r">{((n / dn) * 100).toFixed(1)}%</td>
+                    <Rp g={g} />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
         )}
-        <div>
-          <dt>평균 순위</dt>
-          <dd>{c.place.toFixed(2)}</dd>
-        </div>
-        <div>
-          <dt>TOP 3</dt>
-          <dd>{c.top3.toFixed(1)}%</dd>
-        </div>
-        <div>
-          <dt>승률</dt>
-          <dd>{c.win.toFixed(1)}%</dd>
-        </div>
-        <div>
-          <dt>픽률</dt>
-          <dd>{c.pick.toFixed(2)}%</dd>
-        </div>
-        <div>
-          <dt>플레이어</dt>
-          <dd>{int(c.players)}명</dd>
-        </div>
-      </dl>
-    </div>
+        {dn > 0 && <Split title="특성" first="핵심 특성" list={c.traits ?? []} dn={dn} />}
+        {dn > 0 && <Split title="전술 스킬" first="전술 스킬" list={c.tac ?? []} dn={dn} />}
+        <p className="sr-only" aria-live="polite">
+          {copied != null ? "루트 번호를 복사했습니다." : ""}
+        </p>
+      </div>
+    </aside>
   );
 }
 
@@ -130,8 +280,13 @@ export default function TierBoard(p: Props) {
   const [sort, setSort] = useState<"score" | "pick">("score");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
-  const [cols, setCols] = useState(1);
+  const trigger = useRef<HTMLButtonElement | null>(null);
   const view = p.views.find((v) => v.id === id) ?? p.views[0];
+  const sel = open ? view.combos.find((c) => `${c.char}:${c.weapon}` === open) : undefined;
+  const close = useCallback(() => {
+    setOpen(null);
+    trigger.current?.focus({ preventScroll: true });
+  }, []);
 
   const pick = (next: string) => {
     setId(next);
@@ -142,16 +297,6 @@ export default function TierBoard(p: Props) {
     else url.searchParams.set("v", next);
     window.history.replaceState(null, "", url);
   };
-
-  useEffect(() => {
-    if (!open) return;
-    const measure = () => {
-      const grid = document.querySelector('.tier-card[aria-expanded="true"]')?.parentElement;
-      if (grid) setCols(columns(grid));
-    };
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [open]);
 
   const roles = [...ROLES, ...new Set(view.combos.flatMap((c) => c.roles ?? []))].filter((r, i, a) => a.indexOf(r) === i && view.combos.some((c) => c.roles?.includes(r)));
   // 「석궁 나딘」과 「나딘 석궁」 모두 찾음
@@ -288,8 +433,6 @@ export default function TierBoard(p: Props) {
       {groups.map(([g, list]) => {
         if (!list.length) return null;
         const flat = g === "pick";
-        const at = list.findIndex((c) => `${c.char}:${c.weapon}` === open);
-        const end = at < 0 ? -1 : Math.min(list.length, (Math.floor(at / cols) + 1) * cols) - 1;
         return (
           <section key={g} className={flat ? "tier-board flat" : "tier-board"} aria-label={flat ? "픽률 순" : `${g} 등급`}>
             {!flat && (
@@ -300,48 +443,50 @@ export default function TierBoard(p: Props) {
               </div>
             )}
             <div className="tier-cards">
-              {list.map((c, i) => {
+              {list.map((c) => {
                 const key = `${c.char}:${c.weapon}`;
                 const on = key === open;
                 return (
-                  <Fragment key={key}>
-                    <button
-                      type="button"
-                      className="tier-card"
-                      data-thin={c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few) || undefined}
-                      aria-expanded={on}
-                      aria-controls={on ? `tier-d-${g}` : undefined}
-                      onClick={(e) => {
-                        setCols(columns(e.currentTarget.parentElement!));
-                        setOpen(on ? null : key);
-                      }}
-                    >
-                      <span className="tier-pw">
-                        {/* 새 실험체는 초상 파일을 더하기 전까지 칸만 남김 */}
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
-                        <span className="tier-wb">
-                          <Weapon code={c.weapon} />
-                        </span>
-                        {flat && (
-                          <span className="tier-grade sm tier-cg" data-grade={c.grade}>
-                            {c.grade}
-                          </span>
-                        )}
+                  <button
+                    key={key}
+                    type="button"
+                    className="tier-card"
+                    data-thin={c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few) || undefined}
+                    aria-expanded={on}
+                    aria-controls={on ? "tier-dx" : undefined}
+                    onClick={(e) => {
+                      trigger.current = e.currentTarget;
+                      setOpen(on ? null : key);
+                      // 넓은 화면은 패널이 열리며 보드 폭이 줄어 고른 카드가 화면 밖으로 밀릴 수 있음
+                      const card = e.currentTarget;
+                      if (!on) requestAnimationFrame(() => card.scrollIntoView({ block: "nearest" }));
+                    }}
+                  >
+                    <span className="tier-pw">
+                      {/* 새 실험체는 초상 파일을 더하기 전까지 칸만 남김 */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+                      <span className="tier-wb">
+                        <Weapon code={c.weapon} />
                       </span>
-                      <b>{c.name}</b>
-                      <small>{c.weaponName}</small>
-                      <span className="tier-sc">{signed(c.score)}</span>
-                      <small>{int(c.n)}판</small>
-                    </button>
-                    {i === end && <Detail c={list[at]} id={`tier-d-${g}`} />}
-                  </Fragment>
+                      {flat && (
+                        <span className="tier-grade sm tier-cg" data-grade={c.grade}>
+                          {c.grade}
+                        </span>
+                      )}
+                    </span>
+                    <b>{c.name}</b>
+                    <small>{c.weaponName}</small>
+                    <span className="tier-sc">{signed(c.score)}</span>
+                    <small>{int(c.n)}판</small>
+                  </button>
                 );
               })}
             </div>
           </section>
         );
       })}
+      {sel && <Drawer key={open} c={sel} onClose={close} />}
     </>
   );
 }
