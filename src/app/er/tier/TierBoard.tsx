@@ -306,6 +306,65 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
   return narrow ? createPortal(body, document.body) : body;
 }
 
+// 줄 어디를 눌러도 이름 버튼을 누른 것과 같음. 키보드는 이름 버튼으로 엶
+function PickTable({ list, open, thin, onToggle }: { list: TierCombo[]; open: string | null; thin: (c: TierCombo) => boolean; onToggle: (el: HTMLButtonElement, key: string) => void }) {
+  return (
+    <table className="kel-table tier-table">
+      <thead>
+        <tr>
+          <th className="tier-no">#</th>
+          <th className="l">실험체</th>
+          <th className="tier-gc">등급</th>
+          <th className="tier-pk" aria-sort="descending">
+            픽률
+            <svg viewBox="0 0 10 6" aria-hidden="true">
+              <path d="M1 1l4 4 4-4" />
+            </svg>
+          </th>
+          <th className="tier-s">점수</th>
+          <th className="tier-x">승률</th>
+          <th className="tier-x">TOP 3</th>
+          <th className="tier-x">평균 순위</th>
+        </tr>
+      </thead>
+      <tbody>
+        {list.map((c, i) => {
+          const key = `${c.char}:${c.weapon}`;
+          const on = key === open;
+          return (
+            <tr key={key} data-on={on || undefined} data-thin={thin(c) || undefined} onClick={(e) => onToggle(e.currentTarget.querySelector("button")!, key)}>
+              <td className="tier-no">{i + 1}</td>
+              <td className="l">
+                <span className="tier-who">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={36} height={36} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+                  <button type="button" aria-expanded={on} aria-controls={on ? "tier-dx" : undefined}>
+                    <b>{c.name}</b>
+                    <small>{c.weaponName}</small>
+                  </button>
+                </span>
+              </td>
+              <td className="tier-gc">
+                <span className="tier-grade sm" data-grade={c.grade}>
+                  {c.grade}
+                </span>
+              </td>
+              <td className="tier-pk">
+                <b>{c.pick.toFixed(2)}%</b>
+                <small>{int(c.n)}판</small>
+              </td>
+              <td className="tier-s">{signed(c.score)}</td>
+              <td className="tier-x">{c.win.toFixed(1)}%</td>
+              <td className="tier-x">{c.top3.toFixed(1)}%</td>
+              <td className="tier-x">{c.place.toFixed(2)}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 export default function TierBoard(p: Props) {
   const [id, setId] = useState(p.initial);
   const [role, setRole] = useState<string | null>(null);
@@ -320,6 +379,15 @@ export default function TierBoard(p: Props) {
     // 좁은 화면은 패널이 사라지며 inert가 풀린 뒤에야 카드에 초점을 줄 수 있음
     requestAnimationFrame(() => trigger.current?.focus({ preventScroll: true }));
   }, []);
+
+  const toggle = (el: HTMLButtonElement, key: string) => {
+    const on = key === open;
+    trigger.current = el;
+    setOpen(on ? null : key);
+    // 넓은 화면은 패널이 열리며 보드 폭이 줄어 고른 카드가 화면 밖으로 밀릴 수 있음
+    if (!on) requestAnimationFrame(() => el.scrollIntoView({ block: "nearest" }));
+  };
+  const thin = (c: TierCombo) => c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few);
 
   const pick = (next: string) => {
     setId(next);
@@ -457,16 +525,19 @@ export default function TierBoard(p: Props) {
       )}
       {groups.map(([g, list]) => {
         if (!list.length) return null;
-        const flat = g === "pick";
+        if (g === "pick")
+          return (
+            <section key={g} className="tier-board flat" aria-label="픽률 순">
+              <PickTable list={list} open={open} thin={thin} onToggle={toggle} />
+            </section>
+          );
         return (
-          <section key={g} className={flat ? "tier-board flat" : "tier-board"} aria-label={flat ? "픽률 순" : `${g} 등급`}>
-            {!flat && (
-              <div className="tier-gl">
-                <span className="tier-grade" data-grade={g}>
-                  {g}
-                </span>
-              </div>
-            )}
+          <section key={g} className="tier-board" aria-label={`${g} 등급`}>
+            <div className="tier-gl">
+              <span className="tier-grade" data-grade={g}>
+                {g}
+              </span>
+            </div>
             <div className="tier-cards">
               {list.map((c) => {
                 const key = `${c.char}:${c.weapon}`;
@@ -476,16 +547,10 @@ export default function TierBoard(p: Props) {
                     key={key}
                     type="button"
                     className="tier-card"
-                    data-thin={c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few) || undefined}
+                    data-thin={thin(c) || undefined}
                     aria-expanded={on}
                     aria-controls={on ? "tier-dx" : undefined}
-                    onClick={(e) => {
-                      trigger.current = e.currentTarget;
-                      setOpen(on ? null : key);
-                      // 넓은 화면은 패널이 열리며 보드 폭이 줄어 고른 카드가 화면 밖으로 밀릴 수 있음
-                      const card = e.currentTarget;
-                      if (!on) requestAnimationFrame(() => card.scrollIntoView({ block: "nearest" }));
-                    }}
+                    onClick={(e) => toggle(e.currentTarget, key)}
                   >
                     <span className="tier-pw">
                       {/* 새 실험체는 초상 파일을 더하기 전까지 칸만 남김 */}
@@ -494,11 +559,6 @@ export default function TierBoard(p: Props) {
                       <span className="tier-wb">
                         <Weapon code={c.weapon} />
                       </span>
-                      {flat && (
-                        <span className="tier-grade sm tier-cg" data-grade={c.grade}>
-                          {c.grade}
-                        </span>
-                      )}
                     </span>
                     <b>{c.name}</b>
                     <small>{c.weaponName}</small>
