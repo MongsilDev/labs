@@ -1545,7 +1545,7 @@
     opacity: 0.55;
   }
   .tier-table th.tier-pk {
-    color: var(--accent);
+    color: var(--accent-text);
   }
   .tier-table th.tier-pk svg {
     display: inline-block;
