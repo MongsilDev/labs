@@ -70,9 +70,9 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
         const x = sx(c.pick), y = sy(c.score), k = key(c), at = spots.get(k);
         const color = `var(--g-${c.grade.toLowerCase()})`;
         return (
-          <g key={k} className="group outline-none" tabIndex={0}>
+          <g key={k} className="group">
             <title>{`${c.name} ${c.weaponName}, 점수 ${c.score > 0 ? "+" : ""}${c.score}, 픽률 ${c.pick}%, ${c.n}판`}</title>
-            {c.half != null && <line className="opacity-0 group-hover:opacity-100 group-focus:opacity-100" x1={x} x2={x} y1={sy(c.score + c.half)} y2={sy(c.score - c.half)} stroke={color} strokeOpacity="0.5" strokeWidth="2" />}
+            {c.half != null && <line className="opacity-0 group-hover:opacity-100" x1={x} x2={x} y1={sy(c.score + c.half)} y2={sy(c.score - c.half)} stroke={color} strokeOpacity="0.5" strokeWidth="2" />}
             <circle cx={x} cy={y} r={at ? fs * 0.42 : fs * 0.33} fill={color} stroke="var(--bg)" strokeWidth="1.5" />
             {at && (
               <text x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)" paintOrder="stroke" stroke="var(--bg)" strokeWidth="3">

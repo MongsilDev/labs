@@ -42,7 +42,7 @@ export default function LateMap({ rows, early, fin, cut, w: W = 760, h: H = 520,
       {rows.map((r) => {
         const x = sx(r.early), y = sy(r.fin), k = key(r), at = spots.get(k);
         return (
-          <g key={k} className="outline-none" tabIndex={0}>
+          <g key={k}>
             <title>{`${r.name} ${r.weaponName}, ${Math.round(cut / 60)}분 안에 탈락 ${r.early.toFixed(1)}%, TOP3 중 1위 ${r.fin.toFixed(1)}%, ${r.n.toLocaleString("ko-KR")}판`}</title>
             <circle cx={x} cy={y} r={at ? fs * 0.42 : fs * 0.33} fill={at ? "var(--ink)" : "var(--ink-3)"} stroke="var(--bg)" strokeWidth="1.5" />
             {at && (

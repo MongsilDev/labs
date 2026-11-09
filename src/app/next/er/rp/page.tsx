@@ -9,8 +9,8 @@ const n = (v: number) => v.toLocaleString("ko-KR");
 const signed = (v: number) => (v > 0 ? `+${v}` : `${v}`);
 const range = ([a, z]: [number, number]) => (z >= 99 ? `${a}+` : `${a}~${z}`);
 const bandName = (lo: number, hi: number) => (hi >= 99999 ? `${n(lo)} 이상` : `${n(lo)}~${n(hi - 1)}`);
-// 양수는 초록, 음수는 빨강. 60 RP에서 가장 진함
-const tint = (v: number) => `color-mix(in srgb, var(${v >= 0 ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(v) / 60, 1) * 55)}%, transparent)`;
+// 양수는 초록, 음수는 빨강. 60 RP에서 가장 진하고, 50%를 넘으면 어두운 테마 초록 칸의 글자 대비가 4.5 아래로 떨어짐
+const tint = (v: number) => `color-mix(in srgb, var(${v >= 0 ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(v) / 60, 1) * 50)}%, transparent)`;
 
 // viewBox 폭을 실제 그려지는 폭에 맞춰 글자가 표 머리와 같은 12px로 보이게 함
 function Hours({ hours, w: W = 1100, h: H = 200, every = 3 }: { hours: RpHour[]; w?: number; h?: number; every?: number }) {

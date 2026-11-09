@@ -70,7 +70,8 @@ export default async function NextCut({ searchParams }: { searchParams: Promise<
             <span>흐린 선 순위표 컷</span>
             <span>점선과 음영 종료 예상</span>
           </p>
-          <div className="mt-3">
+          {/* CutChart는 폭을 잰 뒤 높이를 300 또는 360으로 정해서 그 높이를 미리 잡아 둠 */}
+          <div className="mt-3 min-h-[300px] sm:min-h-[360px]">
             <CutChart data={data} />
           </div>
         </section>
