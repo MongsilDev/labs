@@ -13,8 +13,6 @@ type Props = {
   fallback: string;
   routes?: Record<string, TierRouteInfo>;
   items?: Record<string, TierItem>;
-  thin: number;
-  few?: number;
 };
 
 const metricText = (v: number, i: number) => (i === 3 ? int(Math.round(v)) : v.toFixed(i === 4 ? 1 : 2));
@@ -102,11 +100,10 @@ function Metric({ name, m, base }: { name: string; m?: TierMetric; base?: TierMe
   );
 }
 
-export default function TierDetail({ who, c, view, views, fallback, routes, items, thin, few }: Props) {
+export default function TierDetail({ who, c, view, views, fallback, routes, items }: Props) {
   const dn = c?.dn ?? 0;
   const art = halfArt(who.key);
   const range = c?.half != null ? `${signed(c.score - c.half)} ~ ${signed(c.score + c.half)}` : null;
-  const isThin = !!c && (c.n < thin || (few != null && c.ep != null && c.ep < few));
   return (
     <>
       <section className="tdx-hero" data-grade={c?.grade}>
@@ -165,11 +162,6 @@ export default function TierDetail({ who, c, view, views, fallback, routes, item
             </div>
           </dl>
         )}
-        {isThin && (
-          <p className="tdx-thin" role="note">
-            판 수가 적어 점수가 크게 바뀔 수 있습니다.
-          </p>
-        )}
       </section>
 
       <nav className="tabs tdx-tabs" aria-label="기간">
@@ -189,6 +181,8 @@ export default function TierDetail({ who, c, view, views, fallback, routes, item
       ) : !dn ? (
         <p className="tdx-empty" role="status">
           상위 1,000명이 직접 플레이한 판이 없어 루트와 특성 기록이 없습니다.
+          <br />
+          다른 기간을 골라 주세요.
         </p>
       ) : (
         <>

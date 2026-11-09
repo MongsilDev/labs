@@ -69,7 +69,7 @@ export default function RouteTable({ list, info, items, dn, patch }: { list: Tie
           </tr>
         </thead>
         <tbody>
-          {shown.map(([id, players, n, g, b], i) => {
+          {shown.map(([id, players, n, g, b]) => {
             const x = info?.[id];
             const [rawTitle, nick, trait, traitName, tac, tacName, codes, paths, ver] = x ?? [];
             const title = rawTitle?.trim();
@@ -78,7 +78,6 @@ export default function RouteTable({ list, info, items, dn, patch }: { list: Tie
               <tr key={id}>
                 <td className="l">
                   <div className="tdx-r">
-                    <span className="tdx-no">{i + 1}</span>
                     <span className="tdx-build">
                       <Icon src={traitIcon(trait)} alt={traitName} />
                       <Icon src={tacIcon(tac)} alt={tacName} />

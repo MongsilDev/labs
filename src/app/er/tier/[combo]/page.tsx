@@ -51,8 +51,6 @@ export default async function TierComboPage({ params, searchParams }: Props) {
             fallback={fallback.id}
             routes={data.routes}
             items={data.items}
-            thin={data.rule.thin}
-            few={data.rule.few}
           />
         )}
       </main>

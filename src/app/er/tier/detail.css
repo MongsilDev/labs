@@ -117,11 +117,6 @@
     line-height: 1.1;
     letter-spacing: -0.5px;
   }
-  .tdx-thin {
-    margin: 0;
-    font-size: 13px;
-    color: var(--text-2);
-  }
   .tdx-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -222,15 +217,9 @@
   }
   .tdx-r {
     display: grid;
-    grid-template-columns: 22px auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: 12px;
-  }
-  .tdx-no {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-3);
-    text-align: center;
   }
   .tdx-build {
     display: flex;
@@ -394,6 +383,10 @@
     font-weight: 600;
     color: var(--gold-text);
   }
+  /* 공용 --gold-text는 밝은 바탕에서 4.5:1에 모자라 이 글자만 어둡게 씀 */
+  :root[data-theme="light"] .tdx-old {
+    color: #7a5c00;
+  }
   .tdx-more {
     display: block;
     width: 100%;
@@ -475,7 +468,8 @@
     }
     .tdx-stats {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      /* 점수 칸은 90% 범위가 한 줄에 들어가게 조금 넓힘 */
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
       align-items: start;
       gap: 14px 12px;
       max-width: none;
@@ -529,12 +523,9 @@
       grid-column: 4;
     }
     .tdx-r {
-      grid-template-columns: 16px auto minmax(0, 1fr);
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 10px;
       align-items: start;
-    }
-    .tdx-no {
-      padding-top: 8px;
     }
     .tdx-build .tdx-ic {
       width: 30px;
