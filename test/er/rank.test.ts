@@ -37,6 +37,9 @@ describe("티어 방송 화면", () => {
     expect(parseRank({ ...VIEW, last: null })?.last).toBeNull();
     expect(parseRank({ ...VIEW, tier: "골드\u0000 1" })?.tier).toBe("골드 1");
     expect(parseRank(VIEW)?.recent).toEqual([]);
+    expect(parseRank({ ...VIEW, place: "상위 2.10%" })?.place).toBe("상위 2.1%");
+    expect(parseRank({ ...VIEW, place: "상위 0.01%" })?.place).toBe("상위 0.1%");
+    expect(parseRank(VIEW)?.place).toBe("아시아1 1,284위");
     expect(parseRank({ ...VIEW, recent: [1, 4, "2", 0, 3.5, ...Array(12).fill(8)] })?.recent).toEqual([1, 4, ...Array(8).fill(8)]);
   });
 

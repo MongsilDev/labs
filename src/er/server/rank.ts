@@ -17,6 +17,8 @@ const pending = (g.__rankPending ??= new Map());
 
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const str = (v: unknown, max = 40) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, max) : "");
+// 몽실봇은 디스코드 명령과 같은 소수 두 자리 문구를 보냄
+const placeText = (v: string) => v.replace(/^상위 (\d+(?:\.\d+)?)%$/, (_, n) => `상위 ${Math.max(Number(n), 0.1).toFixed(1)}%`);
 
 export function parseRank(raw: unknown): RankView | null {
   const d = raw as Record<string, unknown> | null;
@@ -32,7 +34,7 @@ export function parseRank(raw: unknown): RankView | null {
     nickname,
     tier,
     mmr,
-    place: str(d.place),
+    place: placeText(str(d.place)),
     serverRank: num(d.serverRank),
     serverCode: num(d.serverCode),
     last: gain === null ? null : { gain, at: num(last?.at) },
