@@ -7,6 +7,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
+import { dakStopped } from "./dakstop.mjs";
 import { RULE, scoreRows } from "./score.mjs";
 
 const HOME = homedir();
@@ -383,6 +384,9 @@ async function fetchRoutes(s, only) {
 }
 
 const DAK_API = process.env.TIER_DAK_API || "https://er.dakgg.io/api/v1/routes";
+// 이 파일이 있으면 적힌 시각까지 dak.gg에 요청하지 않음. dak.gg가 거절하면 하루 뒤 시각으로 만듦
+const DAK_STOP = join(DIR, "dak-stopped");
+const DAK_STOP_MS = 86_400_000;
 const DAK_GAP_MS = 3000;
 
 /** 화면 루트 가운데 recommend가 404였던 것만 dak.gg에 하나씩 물어 이름, 작성자, 핵심 특성, 전술 스킬을 남김. 좋아요나 승률 같은 수치는 받지 않음 */
@@ -392,6 +396,11 @@ async function fetchDak(ids) {
     const r = getRawRoute.get(id);
     return !!r && JSON.parse(brotliDecompressSync(r.body)).route == null;
   });
+  if (!queue.length) return;
+  if (dakStopped(existsSync(DAK_STOP) ? readFileSync(DAK_STOP, "utf8") : null, Date.now())) {
+    log(`dak-stopped 파일이 있어 루트 ${queue.length}개를 dak.gg에 요청하지 않습니다`);
+    return;
+  }
   let saved = 0;
   let asked = 0;
   for (const id of queue) {
@@ -404,9 +413,10 @@ async function fetchDak(ids) {
       log("dak.gg 요청 실패", e.message);
       break;
     }
-    // 한도나 서버 오류면 이번 회차는 멈추고 남은 루트는 다음 회차에 물음
+    // 한도나 서버 오류면 멈추고 남은 루트는 하루 뒤 회차부터 요청함
     if (res.status !== 200 && res.status !== 404) {
-      log(`dak.gg가 ${res.status}로 응답해 루트 이름 수집을 멈춥니다`);
+      writeFileSync(DAK_STOP, new Date(Date.now() + DAK_STOP_MS).toISOString());
+      log(`dak.gg가 ${res.status}로 응답해 하루 동안 루트 이름 수집을 멈춥니다`);
       break;
     }
     let w = null;
@@ -423,7 +433,7 @@ async function fetchDak(ids) {
     putDak.run(id, Date.now(), w?.title || null, w?.userNickname || null, firstTrait(w), w?.tacticalSkillGroupCode ?? null);
     saved++;
   }
-  if (queue.length) log(`dak.gg에 루트 ${queue.length}개의 정보를 요청해 ${saved}개를 저장했습니다`);
+  log(`dak.gg에 루트 ${queue.length}개의 정보를 요청해 ${saved}개를 저장했습니다`);
 }
 
 /** rows에 있고 raw에 없는 경기를 받아 원본을 남김. 상위 1,000명이 참가한 경기는 빠진 참가자 행도 넣고, 있던 행은 루트와 전술 스킬을 채움 */
