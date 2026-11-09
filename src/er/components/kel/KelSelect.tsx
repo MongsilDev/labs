@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 export default function KelSelect({ label, items, current, className = "" }: { label: string; items: readonly (readonly [string, string])[]; current: string; className?: string }) {
   const router = useRouter();
   return (
-    <select className={`field ${className}`} aria-label={label} value={current} onChange={(e) => router.push(e.target.value)}>
+    // 서버 응답 전에도 고른 값을 보여 주려고 비제어로 두고, 주소가 바뀌면 key로 새로 그림
+    <select key={current} className={`field ${className}`} aria-label={label} defaultValue={current} onChange={(e) => router.push(e.target.value)}>
       {items.map(([href, name]) => (
         <option key={href} value={href}>
           {name}
