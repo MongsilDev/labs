@@ -59,7 +59,7 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
           <section className="sec min-w-0">
             <h2 className="sec-h">
               순위와 팀 처치에 따른 평균 RP
-              <small className="num">입장료 {band.entry}</small>
+              <small className="num">입장료 {band.entry}, 평균 팀 처치 {band.tkAvg}</small>
             </h2>
             <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
               <table className="tbl">
