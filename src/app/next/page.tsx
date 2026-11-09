@@ -18,7 +18,8 @@ const n = (v: number) => v.toLocaleString("ko-KR");
 
 export default async function NextHub() {
   const [cut, tier] = await Promise.all([getCut(), getTier()]);
-  const view = tier ? pickView(tier) : null;
+  const picked = tier ? pickView(tier) : null;
+  const view = picked?.combos.length ? picked : null;
   const top = view ? [...view.combos].sort((a, b) => b.score - a.score).slice(0, 12) : [];
   const map = view ? spots(view).list : [];
   const hidden = map.filter((c) => c.sure && !c.popular).sort((a, b) => b.score - a.score).slice(0, 3);

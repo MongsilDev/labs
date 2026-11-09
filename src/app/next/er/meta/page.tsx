@@ -55,13 +55,13 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
   const { v } = await searchParams;
   const data = await getTier();
   const view = data ? pickView(data, v) : null;
-  if (!data || !view) return <Shell here="meta"><p className="text-ink-3">집계가 아직 없습니다.</p></Shell>;
+  if (!data || !view || !view.combos.length) return <Shell here="meta"><p className="text-ink-3">집계가 아직 없습니다.</p></Shell>;
   const { list, median } = spots(view);
   const strong = list.filter((c) => c.sure && c.popular).sort((a, b) => b.score - a.score);
   const hidden = list.filter((c) => c.sure && !c.popular).sort((a, b) => b.score - a.score);
   const trap = list.filter((c) => c.weak && c.popular).sort((a, b) => b.pick - a.pick);
   const label = new Set([...hidden, ...trap].map((c) => `${c.char}-${c.weapon}`));
-  const at = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }).format(data.updatedAt);
+  const at = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(data.updatedAt);
   return (
     <Shell here="meta">
       <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
