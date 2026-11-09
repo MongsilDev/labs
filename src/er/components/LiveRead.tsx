@@ -249,7 +249,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
         </h2>
         <p className="mt-1.5 text-[13px] text-fg-3" role="status">
           {source
-            ? `${source === "screen" ? "공유한 화면" : source === "video" ? "녹화 영상" : "사진"}${size ? `(${size.width}x${size.height})` : ""}${ended ? "은 라운드가 끝나서 읽지 않습니다." : source === "image" ? "을 읽었습니다." : "을 1초마다 읽고 있습니다."}`
+            ? `${source === "screen" ? "공유한 " : ""}${size ? `${size.width}x${size.height} ` : ""}${source === "screen" ? "화면" : source === "video" ? "녹화 영상" : "사진"}${ended ? "은 라운드가 끝나서 읽지 않습니다." : source === "image" ? "을 읽었습니다." : "을 1초마다 읽고 있습니다."}`
             : "공유한 화면이 없습니다."}
         </p>
         {wide && <p className="mt-1 text-[13px] text-minus">화면 비율이 16:9가 아니라 카드 위치가 맞지 않을 수 있습니다. 게임을 테두리 없는 창 모드로 바꿔주세요.</p>}
