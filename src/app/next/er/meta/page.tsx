@@ -55,8 +55,8 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
   const { v } = await searchParams;
   const data = await getTier();
   const view = data ? pickView(data, v) : null;
-  if (!data || !view || !view.combos.length) return <Shell here="meta"><p className="text-ink-3">집계가 아직 없습니다.</p></Shell>;
-  const { list, median } = spots(view);
+  if (!data || !view) return <Shell here="meta"><p className="text-ink-3">집계가 아직 없습니다.</p></Shell>;
+  const { list, median } = view.combos.length ? spots(view) : { list: [], median: 0 };
   const strong = list.filter((c) => c.sure && c.popular).sort((a, b) => b.score - a.score);
   const hidden = list.filter((c) => c.sure && !c.popular).sort((a, b) => b.score - a.score);
   const trap = list.filter((c) => c.weak && c.popular).sort((a, b) => b.pick - a.pick);
@@ -77,6 +77,9 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
           ))}
         </nav>
       </div>
+      {!view.combos.length ? (
+        <p className="mt-5 text-ink-3">이 기간은 집계가 아직 없습니다.</p>
+      ) : (
       <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_400px]">
         <figure className="m-0">
           <div className="hidden lg:block">
@@ -92,6 +95,7 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
           <Rows title="많이 쓰지만 약함" rows={trap} empty="90% 범위가 0보다 낮은 조합이 없습니다." />
         </div>
       </div>
+      )}
     </Shell>
   );
 }
