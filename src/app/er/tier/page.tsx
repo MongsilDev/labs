@@ -42,6 +42,7 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
             )}
             <TierBoard
               views={views}
+              routes={data.routes}
               initial={view.id}
               fallback={fallback.id}
               updatedAt={data.updatedAt}

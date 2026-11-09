@@ -3,8 +3,10 @@
 export type AuthorBadge = "e" | "d";
 /** [루트 번호, 플레이어 수, 판 수, 평균 RP 획득, 작성자 배지] */
 export type TierRoute = [number, number, number, number | null, AuthorBadge?];
-/** [이름, 플레이어 수, 판 수, 평균 RP 획득] */
-export type TierSplit = [string, number, number, number | null];
+/** [이름, 플레이어 수, 판 수, 평균 RP 획득, 코드] */
+export type TierSplit = [string, number, number, number | null, number?];
+/** 루트 번호별 [이름, 작성자 닉네임, 핵심 특성 코드, 핵심 특성 이름, 전술 스킬 그룹, 전술 스킬 이름] */
+export type TierRouteInfo = [string | null, string | null, number | null, string | null, number | null, string | null];
 
 export type TierCombo = {
   char: number;
@@ -45,6 +47,18 @@ export const BADGE: Record<AuthorBadge, { label: string; img: string }> = {
   d: { label: "데미갓", img: "/img/er/rank/badge/Titan.v1.png" },
 };
 
+// public/img/er/trait, tac에 팬키트 아이콘이 있는 코드. 망각과 추진력은 팬키트에 없음
+const TRAIT_ICON = new Set([7000201, 7000401, 7000501, 7000601, 7000701, 7100101, 7100201, 7100401, 7100501, 7200101, 7200201, 7200301, 7200501, 7211301, 7300101, 7300201, 7300301]);
+const TAC_ICON = new Set([30, 40, 50, 60, 70, 80, 90, 110, 120, 130, 150, 160, 170, 190]);
+
+export function traitIcon(code: number | null | undefined): string | null {
+  return code && TRAIT_ICON.has(code) ? `/img/er/trait/${code}.v1.webp` : null;
+}
+
+export function tacIcon(code: number | null | undefined): string | null {
+  return code && TAC_ICON.has(code) ? `/img/er/tac/${code}.v1.webp` : null;
+}
+
 export type TierView = {
   id: string;
   label: string;
@@ -76,6 +90,7 @@ export type TierData = {
   band: { name: string; server: string; floor: number; cut: number | null };
   rule: { cap: number; kMin: number; kMax: number; thin: number; few?: number; publishRows: number; weights?: { gain: number; place: number; top3: number } };
   views: TierView[];
+  routes?: Record<string, TierRouteInfo>;
   /** 새 시즌 첫 집계 때 남긴 지난 시즌 마지막 표의 패치 탭 */
   past?: { season: { id: number; name: string; end: number }; views: TierView[] };
   /** 새 정규 시즌이 시작됐지만 집계할 행이 아직 없을 때 그 시즌 이름 */

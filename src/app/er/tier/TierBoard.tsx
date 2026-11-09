@@ -4,13 +4,27 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { createPortal } from "react-dom";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
-import { BADGE, compareView, movedCombos, signed, WEAPON_SPRITE, type TierCombo, type TierMoved, type TierSplit, type TierView } from "@/er/lib/tier";
+import {
+  BADGE,
+  compareView,
+  movedCombos,
+  signed,
+  tacIcon,
+  traitIcon,
+  WEAPON_SPRITE,
+  type TierCombo,
+  type TierMoved,
+  type TierRouteInfo,
+  type TierSplit,
+  type TierView,
+} from "@/er/lib/tier";
 
 const GRADES: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
 const ROLES = ["탱커", "전사", "암살자", "스킬 딜러", "원거리 딜러", "지원가"];
 
 type Props = {
   views: TierView[];
+  routes?: Record<string, TierRouteInfo>;
   initial: string;
   fallback: string;
   updatedAt: number;
@@ -85,16 +99,18 @@ function Rp({ g }: { g: number | null }) {
   return <td className={g > 0 ? "g up" : g < 0 ? "g down" : "g"}>{signed(g)}</td>;
 }
 
-function Head({ first, hide }: { first: string; hide?: boolean }) {
+function Head({ title }: { title: string }) {
   return (
     <thead>
       <tr>
-        <th scope="col">{hide ? <span className="sr-only">{first}</span> : first}</th>
+        <th scope="col" className="t">
+          {title}
+        </th>
         <th scope="col" className="p">
           플레이어
         </th>
         <th scope="col" className="n">
-          판
+          판 수
         </th>
         <th scope="col" className="r">
           비율
@@ -107,17 +123,28 @@ function Head({ first, hide }: { first: string; hide?: boolean }) {
   );
 }
 
-function Split({ title, first, hide, list, dn }: { title: string; first: string; hide?: boolean; list: TierSplit[]; dn: number }) {
+function Icon({ src, alt = "" }: { src: string | null; alt?: string | null }) {
+  // 팬키트에 없는 아이콘은 자리만 남겨 이름 시작 위치를 맞춤
+  if (!src) return <span className="tier-dx-ic" aria-hidden="true" />;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img className="tier-dx-ic" src={src} alt={alt ?? ""} title={alt || undefined} width={32} height={32} loading="lazy" />;
+}
+
+function Split({ title, icon, list, dn }: { title: string; icon: (code?: number) => string | null; list: TierSplit[]; dn: number }) {
   if (!list.length) return null;
   return (
     <section>
-      <h3>{title}</h3>
       <table>
-        <Head first={first} hide={hide} />
+        <Head title={title} />
         <tbody>
-          {list.map(([name, players, n, g], i) => (
+          {list.map(([name, players, n, g, code], i) => (
             <tr key={`${name}:${i}`}>
-              <td className="nm">{name}</td>
+              <td className="nm">
+                <span className="tier-dx-name">
+                  <Icon src={icon(code)} />
+                  {name}
+                </span>
+              </td>
               <td className="p">{int(players)}명</td>
               <td className="n">{int(n)}</td>
               <td className="r">{((n / dn) * 100).toFixed(1)}%</td>
@@ -157,7 +184,7 @@ function useNarrow() {
   );
 }
 
-function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
+function Drawer({ c, routes: info, onClose }: { c: TierCombo; routes?: Record<string, TierRouteInfo>; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
   const narrow = useNarrow();
@@ -215,8 +242,13 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
   const body = (
     <aside ref={panel} id="tier-dx" className="tier-dx" role="dialog" aria-modal={narrow || undefined} aria-labelledby="tier-dx-h">
       <header className="tier-dx-head">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={56} height={56} onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+        <span className="tier-dx-pw">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={56} height={56} onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+          <span className="tier-wb">
+            <Weapon code={c.weapon} />
+          </span>
+        </span>
         <h2 id="tier-dx-h">
           {c.weaponName} {c.name}
         </h2>
@@ -239,7 +271,7 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
             </dd>
           </div>
           <div>
-            <dt>판</dt>
+            <dt>판 수</dt>
             <dd>
               {int(c.n)}
               <small>플레이어 {int(c.players)}명</small>
@@ -266,37 +298,57 @@ function Drawer({ c, onClose }: { c: TierCombo; onClose: () => void }) {
         {dn > 0 && (routes.length > 0 || !!c.traits?.length || !!c.tac?.length) && <p className="tier-dx-base">상위 1,000명의 {int(dn)}판 기준</p>}
         {dn > 0 && routes.length > 0 && (
           <section>
-            <h3>루트</h3>
             <table>
-              <Head first="번호" />
+              <Head title="루트" />
               <tbody>
-                {routes.map(([id, players, n, g, b]) => (
-                  <tr key={id}>
-                    <td>
-                      <button type="button" className="tier-dx-copy" aria-label={`루트 번호 ${id} 복사`} onClick={() => copy(id)}>
-                        {id}
-                        {copied === id ? <CheckIcon /> : <CopyIcon />}
-                      </button>
-                      {b && (
-                        <span className="tier-dx-b" data-b={b}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={BADGE[b].img} alt="" width={14} height={16} />
-                          {BADGE[b].label}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p">{int(players)}명</td>
-                    <td className="n">{int(n)}</td>
-                    <td className="r">{((n / dn) * 100).toFixed(1)}%</td>
-                    <Rp g={g} />
-                  </tr>
-                ))}
+                {routes.map(([id, players, n, g, b]) => {
+                  const [title, nick, trait, traitName, tac, tacName] = info?.[id] ?? [];
+                  return (
+                    <tr key={id}>
+                      <td className="nm">
+                        <div className="tier-dx-rt">
+                          <span className="tier-dx-build">
+                            <Icon src={traitIcon(trait)} alt={traitName} />
+                            <Icon src={tacIcon(tac)} alt={tacName} />
+                          </span>
+                          <span className="tier-dx-rn">
+                            <span className="tier-dx-l1">
+                              <span className="tier-dx-title" title={title ?? undefined}>
+                                {title ?? `루트 ${id}`}
+                              </span>
+                              <button type="button" className="tier-dx-copy" aria-label={`루트 번호 ${id} 복사`} onClick={() => copy(id)}>
+                                {id}
+                                {copied === id ? <CheckIcon /> : <CopyIcon />}
+                              </button>
+                            </span>
+                            {(b || nick) && (
+                              <span className="tier-dx-meta">
+                                {b && (
+                                  <span className="tier-dx-b" data-b={b}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={BADGE[b].img} alt="" width={14} height={16} />
+                                    {BADGE[b].label}
+                                  </span>
+                                )}
+                                {nick && <span className="tier-dx-by">{nick}</span>}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p">{int(players)}명</td>
+                      <td className="n">{int(n)}</td>
+                      <td className="r">{((n / dn) * 100).toFixed(1)}%</td>
+                      <Rp g={g} />
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </section>
         )}
-        {dn > 0 && <Split title="특성" first="핵심 특성" list={c.traits ?? []} dn={dn} />}
-        {dn > 0 && <Split title="전술 스킬" first="전술 스킬" hide list={c.tac ?? []} dn={dn} />}
+        {dn > 0 && <Split title="핵심 특성" icon={traitIcon} list={c.traits ?? []} dn={dn} />}
+        {dn > 0 && <Split title="전술 스킬" icon={tacIcon} list={c.tac ?? []} dn={dn} />}
         <p className="sr-only" aria-live="polite">
           {copied != null ? "루트 번호를 복사했습니다." : ""}
         </p>
@@ -571,7 +623,7 @@ export default function TierBoard(p: Props) {
           </section>
         );
       })}
-      {sel && <Drawer key={open} c={sel} onClose={close} />}
+      {sel && <Drawer key={open} c={sel} routes={p.routes} onClose={close} />}
     </>
   );
 }
