@@ -89,6 +89,8 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS raw.games (game INTEGER PRIMARY KEY, season INTEGER NOT NULL, t INTEGER NOT NULL, n INTEGER NOT NULL, body BLOB NOT NULL);
   CREATE TABLE IF NOT EXISTS raw.routes (route INTEGER PRIMARY KEY, t INTEGER NOT NULL, body BLOB NOT NULL);
 `);
+// recommend가 404인 루트를 dak.gg에서 받은 값. 모든 칸이 null인 행은 dak.gg에도 없던 루트라 다시 묻지 않음
+db.exec(`CREATE TABLE IF NOT EXISTS dak_routes (route INTEGER PRIMARY KEY, t INTEGER NOT NULL, title TEXT, nick TEXT, trait INTEGER, tac INTEGER)`);
 const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 const fillRoute = db.prepare(`UPDATE rows SET route = ?, tac = ? WHERE game = ? AND player = ? AND route IS NULL`);
 const getAccount = db.prepare(`SELECT newest FROM accounts WHERE player = ?`);
@@ -109,6 +111,9 @@ const openRoutes = db.prepare(
 );
 const putRawRoute = db.prepare(`INSERT OR REPLACE INTO raw.routes VALUES (?, ?, ?)`);
 const hasRawRoute = db.prepare(`SELECT 1 FROM raw.routes WHERE route = ?`);
+const getRawRoute = db.prepare(`SELECT body FROM raw.routes WHERE route = ?`);
+const getDak = db.prepare(`SELECT title, nick, trait, tac FROM dak_routes WHERE route = ?`);
+const putDak = db.prepare(`INSERT OR REPLACE INTO dak_routes VALUES (?, ?, ?, ?, ?, ?)`);
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
 const putAccount = db.prepare(`INSERT INTO accounts VALUES (?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked`);
 
@@ -324,16 +329,19 @@ function saveRaw(s, game, list) {
   putRaw.run(game, s.id, list[0] ? kst(list[0].startDtm) : 0, list.length, pack(scrub(s.id, list)));
 }
 
-/** recommend 응답에서 routes 표 값을 고름. traitCodes 첫 값이 핵심 특성 */
-function keepRoute(id, w) {
-  let trait = null;
+/** 루트 응답의 traitCodes 첫 값이 핵심 특성 */
+function firstTrait(w) {
   try {
-    trait = JSON.parse(w?.traitCodes ?? "[]")[0] ?? null;
+    return JSON.parse(w?.traitCodes ?? "[]")[0] ?? null;
   } catch {
-    trait = null;
+    return null;
   }
+}
+
+/** recommend 응답에서 routes 표 값을 고름 */
+function keepRoute(id, w) {
   const nick = w?.userNickname || null;
-  putRoute.run(id, nick ? playerId(0, nick) : null, w?.version ?? null, Date.now(), w?.title || null, nick, trait, w?.tacticalSkillGroupCode ?? null);
+  putRoute.run(id, nick ? playerId(0, nick) : null, w?.version ?? null, Date.now(), w?.title || null, nick, firstTrait(w), w?.tacticalSkillGroupCode ?? null);
 }
 
 /** 루트의 recommend 응답을 한 번만 받아 raw.routes에 남김. only가 없으면 rows에 나온 루트 전부. userNum은 영구 계정 번호라 빼고 저장 */
@@ -360,6 +368,39 @@ async function fetchRoutes(s, only) {
   await Promise.all(workers);
   if (total) log(`루트 ${total}개 가운데 ${saved}개의 정보를 저장했습니다`);
   return saved;
+}
+
+const DAK_API = process.env.TIER_DAK_API || "https://er.dakgg.io/api/v1/routes";
+const DAK_GAP_MS = 3000;
+
+/** 화면 루트 가운데 recommend가 404였던 것만 dak.gg에 하나씩 물어 이름, 작성자, 핵심 특성, 전술 스킬을 남김. 좋아요나 승률 같은 수치는 받지 않음 */
+async function fetchDak(ids) {
+  const queue = ids.filter((id) => {
+    if (getDak.get(id)) return false;
+    const r = getRawRoute.get(id);
+    return !!r && JSON.parse(brotliDecompressSync(r.body)).route == null;
+  });
+  let saved = 0;
+  for (const id of queue) {
+    if (abort) break;
+    if (saved) await sleep(DAK_GAP_MS);
+    let res;
+    try {
+      res = await fetch(`${DAK_API}?id=${id}`, { headers: { "user-agent": "agent-local" }, signal: AbortSignal.timeout(20_000) });
+    } catch (e) {
+      log("dak.gg 요청 실패", e.message);
+      break;
+    }
+    // 한도나 서버 오류면 이번 회차는 멈추고 남은 루트는 다음 회차에 물음
+    if (res.status !== 200 && res.status !== 404) {
+      log(`dak.gg가 ${res.status}로 응답해 루트 이름 수집을 멈춥니다`);
+      break;
+    }
+    const w = res.status === 200 ? (await res.json())?.weaponRoute : null;
+    putDak.run(id, Date.now(), w?.title || null, w?.userNickname || null, firstTrait(w), w?.tacticalSkillGroupCode ?? null);
+    saved++;
+  }
+  if (queue.length) log(`dak.gg에 루트 ${queue.length}개의 정보를 요청해 ${saved}개를 저장했습니다`);
 }
 
 /** rows에 있고 raw에 없는 경기를 받아 원본을 남김. 상위 1,000명이 참가한 경기는 빠진 참가자 행도 넣고, 있던 행은 루트와 전술 스킬을 채움 */
@@ -632,7 +673,12 @@ async function routeMeta(s, ids, nm) {
   const badge = new Map();
   const info = {};
   for (const id of ids) {
-    const r = getRoute.get(id);
+    const own = getRoute.get(id);
+    const d = getDak.get(id);
+    // dak.gg 값은 게임에서 받은 칸이 비어 있을 때만 씀
+    const r = d
+      ? { author: own?.author ?? (d.nick ? playerId(0, d.nick) : null), title: own?.title ?? d.title, nick: own?.nick ?? d.nick, trait: own?.trait ?? d.trait, tac: own?.tac ?? d.tac }
+      : own;
     // 원본은 있는데 routes 행이 없으면 recommend가 404였던 루트. 화면이 아직 받지 않은 루트와 구분하도록 빈 값을 둠
     if (!r) {
       if (hasRawRoute.get(id)) info[id] = [null, null, null, null, null, null];
@@ -693,6 +739,7 @@ async function publish(s, nm) {
   const ids = [...new Set([...views, ...(past?.views ?? [])].flatMap((v) => v.combos.flatMap((c) => (c.routes ?? []).map((x) => x[0]))))];
   // --publish나 중단된 회차 뒤에도 화면에 오를 루트는 정보를 갖추게 함. 수집 회차에서는 이미 받아 요청이 없음
   if (!abort) await fetchRoutes(s, ids);
+  if (!abort) await fetchDak(ids);
   const { badge, info } = await routeMeta(s, ids, nm);
   for (const v of views) for (const c of v.combos) for (const x of c.routes ?? []) if (badge.has(x[0])) x.push(badge.get(x[0]));
   const ready = views.find((v) => v.patch === cur && v.id.startsWith("patch-"))?.ready;
