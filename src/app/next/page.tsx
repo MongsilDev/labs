@@ -83,7 +83,7 @@ export default async function NextHub() {
             <Link href="/next/er/meta">메타 지도</Link>
           </h2>
           {view && (
-            <div className="mt-2">
+            <div className="mt-2 max-w-[420px]">
               <MetaMap list={list} median={median} label={label} w={380} h={300} />
             </div>
           )}
