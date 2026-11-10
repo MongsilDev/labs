@@ -32,7 +32,7 @@
     --ink: #ededed;
     --ink-2: #a6a6a6;
     --ink-3: #8a8a8a;
-    --hot: #7fb3e6;
+    --hot: #2997ff;
     --up: #5fd38d;
     --down: #ff6b6b;
     --g-s: #ff5c5c;
@@ -41,7 +41,7 @@
     --g-c: #6cc29a;
     --g-d: #8a94a6;
     --et: #e84c7d;
-    --dg: #4c8ff0;
+    --dg: #9d60ff;
   }
   :root[data-theme="light"] {
     color-scheme: light;
@@ -52,7 +52,7 @@
     --ink: #141414;
     --ink-2: #4d4d4d;
     --ink-3: #6b6b6b;
-    --hot: #0f4c81;
+    --hot: #0066cc;
     --up: #15803d;
     --down: #b91c1c;
     --g-s: #c81e1e;
@@ -61,9 +61,9 @@
     --g-c: #0f7a52;
     --g-d: #5b6475;
     --et: #c42f63;
-    --dg: #2563c9;
+    --dg: #6423ac;
   }
-  :root { --text: var(--ink); --text-2: var(--ink-2); --text-3: var(--ink-3); --line: var(--rule); --line-soft: var(--rule); --line-strong: var(--rule-2); --surface: var(--row); --field: var(--bg); --hover: var(--row); --minus: var(--g-s); --accent: var(--hot); }
+  :root { --text: var(--ink); --text-2: var(--ink-2); --text-3: var(--ink-3); --line: var(--rule); --line-soft: var(--rule); --line-strong: var(--rule-2); --surface: var(--row); --field: var(--bg); --hover: var(--row); --minus: var(--g-s); --accent: var(--hot); --hot-fill: #0071e3; }
   html { background: var(--bg); color: var(--ink); font-family: var(--font-sans); -webkit-text-size-adjust: 100%; }
   /* 내용이 짧은 화면에서도 푸터가 화면 아래에 붙게 함 */
   body { margin: 0; font-size: 14px; line-height: 1.45; min-height: 100dvh; display: flex; flex-direction: column; word-break: keep-all; overflow-wrap: break-word; }
@@ -110,7 +110,7 @@
 .scroll-fade { overflow-x: auto; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 14px; border: 1px solid var(--rule-2); border-radius: 2px; background: var(--bg); font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; text-decoration: none; }
 .btn:hover:not(:disabled) { border-color: var(--ink-3); }
-.btn.primary { background: var(--hot); border-color: var(--hot); color: var(--bg); }
+.btn.primary { background: var(--hot-fill); border-color: var(--hot-fill); color: #fff; }
 .btn.discord { background: #5865f2; border-color: #5865f2; color: #fff; }
 .btn:disabled { background: var(--row); color: var(--ink-3); cursor: not-allowed; }
 .btn.sm { height: 30px; padding: 0 10px; font-size: 13px; }
@@ -145,7 +145,7 @@
 .seg small { font-size: 11px; font-weight: 500; color: var(--ink-3); }
 .seg label:has(input:checked) { background: var(--ink); color: var(--bg); }
 .seg label:has(input:checked) small { color: inherit; opacity: 0.7; }
-.seg label:has(input:focus-visible) { outline: 2px solid var(--hot); outline-offset: -2px; }
+.seg label:has(input:focus-visible) { z-index: 1; outline: 2px solid var(--hot); outline-offset: 2px; }
 /* KORD 카드는 모서리를 없애고 가로선 목록으로 */
 .kord .kb-card { border-radius: 0; border-width: 0 0 1px; border-color: var(--rule); background: transparent; }
 .kord .kb-bar { border-radius: 0; background: transparent; border-width: 2px 0 1px; border-color: var(--ink) transparent var(--rule); }

@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "2026 KEL" };
 
 // 1위가 가장 진하고 13위부터는 칠하지 않음. 60%를 넘으면 어두운 테마에서 글자 대비가 4.5 아래로 떨어짐
-const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 50 - (place - 1) * 5)}%, transparent)`;
+const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (place - 1) * 5)}%, transparent)`;
 
 export default async function NextKel() {
   const data = kelData();

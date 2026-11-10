@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "대회 점수" };
 
 // 1위 칸이 가장 진하고 아래로 갈수록 옅어짐
-const heat = (p: number | null) => (p == null ? undefined : `color-mix(in srgb, var(--hot) ${Math.max(0, 50 - (p - 1) * 8)}%, transparent)`);
+const heat = (p: number | null) => (p == null ? undefined : `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (p - 1) * 8)}%, transparent)`);
 
 export default async function NextScore() {
   const user = await currentUser();

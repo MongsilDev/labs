@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "라운드별 점수" };
 
 // 라운드 순위가 1위면 가장 진하고 8위 아래로는 칠하지 않음
-const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 50 - (place - 1) * 8)}%, transparent)`;
+const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (place - 1) * 8)}%, transparent)`;
 
 // 모든 팀의 누적 점수 선. 1위와 2위만 진하게 그림
 function Flow({ cum, focus, W = 1000, H = 300 }: { cum: Record<string, number[]>; focus: string[]; W?: number; H?: number }) {
