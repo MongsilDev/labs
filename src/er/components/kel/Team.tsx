@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { LOGO_CDN, playerPath, teamPath, type KelTeam } from "@/er/lib/kel";
 
-export const plate = (team: KelTeam) => (team.dark ? "#1d2431" : "#e9edf3");
+export const plate = (team: KelTeam) => (team.dark ? "#242424" : "#ededed");
 export const logoUrl = (team: KelTeam) => `${LOGO_CDN}/${team.key}.png`;
 
 export function Logo({ team, size = 24, label = false, className = "" }: { team: KelTeam; size?: number; label?: boolean; className?: string }) {
