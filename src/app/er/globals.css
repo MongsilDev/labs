@@ -1356,7 +1356,7 @@
     width: var(--s);
     height: var(--s);
     background: currentColor;
-    mask: url(/img/er/weapons.v1.png) no-repeat;
+    mask: url(/img/er/weapons.v2.png) no-repeat;
     mask-size: calc(var(--s) * 23) var(--s);
     mask-position: calc(var(--i) * var(--s) * -1) 0;
   }

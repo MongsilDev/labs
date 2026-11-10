@@ -167,7 +167,8 @@ export function pickView(data: TierData, id?: string): TierView | null {
   return patches.find((v) => v.ready) ?? patches[0] ?? data.views[0] ?? null;
 }
 
-// public/img/er/weapons.v1.png에 무기 아이콘을 놓은 순서. 무기 코드
+// public/img/er/weapons.v2.png에 무기 아이콘을 놓은 순서. 무기 코드
+// 팬키트 원본에서 활, 석궁, 권총, 레이피어 칸만 획을 굵게 함
 export const WEAPON_SPRITE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25];
 
 export function signed(v: number): string {
