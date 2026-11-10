@@ -47,7 +47,7 @@ export default async function Page({ params, searchParams }: P) {
   }
   return (
     <>
-      <Header user={user} crumb="점수 계산" />
+      <Header user={user} crumb="대회 점수" />
       <TournamentApp initial={view} groupIdx={idx} basePath={`/er/t/${view.code}`} created={q.created === "1"} />
       <Footer />
     </>

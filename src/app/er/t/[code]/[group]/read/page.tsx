@@ -22,7 +22,7 @@ export default async function Page({ params }: { params: Promise<{ code: string;
   if (idx < 0) notFound();
   return (
     <>
-      <Header user={user} crumb="점수 계산" />
+      <Header user={user} crumb="대회 점수" />
       <LiveRead initial={view} groupIdx={idx} segment={group} />
       <Footer />
     </>

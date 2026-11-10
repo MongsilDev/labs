@@ -1,0 +1,47 @@
+/* 첫 화면 시안. 첫 진입 때 한 번만 짧게 올라오고, 동작 줄이기 설정이면 움직이지 않음 */
+@keyframes hub-in { from { opacity: 0; transform: translateY(10px); } }
+.hub-in { animation: hub-in .4s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--d, 0) * 60ms); }
+@media (prefers-reduced-motion: reduce) { .hub-in { animation: none; } }
+
+/* 시안 A: 1위 실험체 무대. 그림은 상세 화면처럼 줄이기만 하고 네 변을 흐리게 지움 */
+.hub-stage { position: relative; display: grid; align-content: end; gap: 28px; min-height: 500px; margin-top: 8px; isolation: isolate; }
+.hub-stage-art { position: absolute; z-index: -1; right: 4%; bottom: 0; width: auto; height: 500px; pointer-events: none; user-select: none; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 70%, transparent 98%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 70%, transparent 98%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.hub-stage-face { position: absolute; z-index: -1; right: 12%; bottom: 120px; width: 122px; height: 122px; border-radius: 2px; }
+.hub-stage-art[hidden], .hub-stage-face[hidden] { display: none; }
+.hub-stage-id { display: grid; justify-items: start; max-width: 60%; }
+.hub-stage-wn { font-size: 18px; font-weight: 600; color: var(--ink-2); }
+.hub-stage-name { margin-top: 6px; font-size: 136px; line-height: .92; font-weight: 800; letter-spacing: -0.04em; color: var(--ink); }
+.hub-stage-name[data-long] { font-size: 96px; }
+.hub-stage-name:hover { text-decoration: none; }
+.hub-stage-stats { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 32px; margin-top: 24px; }
+.hub-stage-stats dt { font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.hub-stage-stats dd { margin: 4px 0 0; font-size: 22px; font-weight: 700; line-height: 1; }
+.hub-stage-score dd { font-size: 44px; font-weight: 800; letter-spacing: -1px; }
+.hub-stage-pick { display: flex; gap: 12px; }
+.hub-stage-pick button { display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--ink-3); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.hub-stage-pick img { width: 56px; height: 56px; border-radius: 2px; background: var(--row); opacity: .55; outline: 1px solid var(--rule-2); outline-offset: 2px; }
+.hub-stage-pick button:hover img { opacity: 1; }
+.hub-stage-pick button[aria-pressed="true"] { color: var(--ink); }
+.hub-stage-pick button[aria-pressed="true"] img { opacity: 1; outline: 2px solid var(--hot); }
+@media (max-width: 767px) {
+  .hub-stage { min-height: 0; padding-top: 150px; gap: 20px; }
+  .hub-stage-art { right: -16px; top: 0; bottom: auto; height: 300px; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 45%, transparent 80%), linear-gradient(to right, transparent, #000 40%); mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 45%, transparent 80%), linear-gradient(to right, transparent, #000 40%); }
+  .hub-stage-face { top: 16px; right: 0; bottom: auto; width: 96px; height: 96px; }
+  .hub-stage-id { max-width: none; }
+  .hub-stage-wn { font-size: 15px; }
+  .hub-stage-name, .hub-stage-name[data-long] { font-size: 56px; }
+  .hub-stage-stats { gap: 8px 20px; margin-top: 16px; }
+  .hub-stage-stats dd { font-size: 17px; }
+  .hub-stage-score dd { font-size: 32px; }
+  .hub-stage-pick { justify-content: space-between; }
+}
+
+/* 시안 C: 구역 제목과 숫자를 키운 브랜드형 */
+.hub-c .sec-h { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+.hub-c .sec-h small { font-size: 13px; letter-spacing: 0; }
+.hub-c .sec-h a.more { font-size: 13px; letter-spacing: 0; }
+@media (min-width: 640px) { .hub-c .sec-h { font-size: 26px; } }
+
+/* 시안 C 아래쪽은 가는 테두리 카드를 크기 다르게 붙인 벤토 그리드 */
+.hub-bento > .sec { border: 1px solid var(--rule-2); border-radius: 2px; padding: 20px; }
+@media (max-width: 767px) { .hub-bento > .sec { padding: 16px; } }

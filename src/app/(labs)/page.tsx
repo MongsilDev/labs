@@ -1,139 +1,28 @@
-import Image from "next/image";
-import Link from "next/link";
 import Live from "@/next/Live";
-import RowLinks from "@/next/RowLinks";
-import Weapon from "@/next/Weapon";
-import CutMini from "@/er/components/cut/CutMini";
-import { Logo } from "@/er/components/kel/Team";
-import { int as rp, TIERS, tens } from "@/er/lib/cut";
-import { fmt } from "@/er/lib/format";
-import { EVENT_NAME, TEAM } from "@/er/lib/kel";
-import { getCut } from "@/er/server/cut";
-import { kelData } from "@/er/server/kel";
-import { scoreStages } from "@/er/server/kel-stats";
-import { comboPath, pickView, signed } from "@/er/lib/tier";
-import { getTier } from "@/er/server/tier";
-import HubSearch from "@/tarkov/components/players/HubSearch";
-import { getMeta } from "@/tarkov/server/db";
+import HubScore from "@/next/HubScore";
+import { CutSection, KelSection, OverlaySection, TarkovSection, TierHead, TierMissing, TierRows } from "@/next/HubParts";
+import { hubData } from "@/next/hub";
 
 export const dynamic = "force-dynamic";
 
-const n = (v: number) => v.toLocaleString("ko-KR");
-
 export default async function Hub() {
-  const [cut, tier] = await Promise.all([getCut(), getTier()]);
-  const picked = tier ? pickView(tier) : null;
-  const view = picked?.combos.length ? picked : null;
-  const combos = view ? [...view.combos].sort((a, b) => b.score - a.score) : [];
-  const kel = kelData();
-  const final = kel ? scoreStages(kel).at(-1) : undefined;
-  const accounts = Number(getMeta("accounts")) || 0;
+  const h = await hubData();
   return (
-    <Live>
+    <Live user={h.user}>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2 lg:gap-x-16">
         {/* 헤더 경계선 바로 아래라 첫 줄 구역은 윗선을 그리지 않음 */}
         <section className="sec border-t-0! pt-0!">
-          <h2 className="sec-h">
-            <Link href="/er/tier">실험체 티어</Link>
-            {view && <small className="num">{view.label}, {n(view.rows)}판</small>}
-            <Link className="more" href="/er/tier">전체 {combos.length}개</Link>
-          </h2>
-          {view ? (
-            <ol className="mt-1">
-              {combos.slice(0, 5).map((c, i) => (
-                <li key={`${c.char}-${c.weapon}`} className="border-b border-rule">
-                  <Link href={comboPath(c)} className="flex h-11 items-center gap-2.5 font-semibold hover:bg-row hover:no-underline">
-                    <span className="w-3.5 font-normal text-ink-3 num">{i + 1}</span>
-                    <Image className="size-7 flex-none rounded-[2px] bg-row object-cover" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={28} height={28} unoptimized />
-                    <Weapon code={c.weapon} name={c.weaponName} />
-                    <span className="-ml-1 truncate">{c.name}</span>
-                    <b className="ml-auto font-black num">{signed(c.score)}</b>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="py-3 text-ink-3">실험체 티어를 불러오지 못했습니다.</p>
-          )}
+          <TierHead h={h} />
+          {h.view ? <TierRows list={h.combos.slice(0, 5)} /> : <TierMissing />}
         </section>
-
-        <section className="sec lg:border-t-0! lg:pt-0!">
-          <h2 className="sec-h">
-            <Link href="/er/cut">이터컷</Link>
-            {cut && <small>{cut.season.name}</small>}
-            <Link className="more" href="/er/cut">내 RP 진단</Link>
-          </h2>
-          {cut ? (
-            <div className="mt-3 grid items-end gap-x-10 gap-y-2 sm:max-lg:grid-cols-[auto_minmax(0,1fr)]">
-              <dl className="grid grid-cols-2 gap-x-8">
-                {TIERS.map(({ key, name, color }) => {
-                  const t = cut.tiers[key];
-                  const end = t.forecast?.[t.forecast.length - 1];
-                  return (
-                    <div key={key}>
-                      <dt className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-3 num">
-                        <span className="h-3 w-1" style={{ background: color }} aria-hidden="true" />
-                        {name} {n(t.place)}위
-                      </dt>
-                      <dd className="m-0 mt-1.5 text-[38px] leading-none font-bold tracking-[-1px] num sm:text-[44px]">
-                        {t.estimated ? <span className="mr-1 text-[18px] font-bold tracking-normal text-ink-3">약</span> : null}
-                        {t.cut != null ? rp(t.cut) : "-"}
-                      </dd>
-                      {end && <p className="mt-2 text-[13px] text-ink-2 num">종료 예상 {tens(end[1])}</p>}
-                    </div>
-                  );
-                })}
-              </dl>
-              <CutMini data={cut} />
-            </div>
-          ) : (
-            <p className="py-3 text-ink-3">이터컷을 불러오지 못했습니다.</p>
-          )}
-        </section>
+        <CutSection h={h} className="lg:border-t-0! lg:pt-0!" body="mt-3 grid items-end gap-x-10 gap-y-2 sm:max-lg:grid-cols-[auto_minmax(0,1fr)]" />
       </div>
 
-      <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-3 lg:gap-x-12">
-        <section className="sec">
-          <h2 className="sec-h">
-            <Link href="/er/kel">2026 KEL</Link>
-            {final && <small>{EVENT_NAME[final.event]} {final.stage}</small>}
-          </h2>
-          {final ? (
-            <ol className="mt-1">
-              {final.state.rows.slice(0, 3).map((row, i) => {
-                const t = TEAM.get(row.key)!;
-                return (
-                  <li key={row.key} className="border-b border-rule">
-                    <Link href="/er/kel/finals" className="flex h-11 items-center gap-2.5 font-semibold hover:bg-row hover:no-underline">
-                      <span className="w-3.5 font-normal text-ink-3 num">{i + 1}</span>
-                      <Logo team={t} size={24} className="ring-1 ring-rule-2" />
-                      {t.name}
-                      <b className="ml-auto font-black num">{fmt(row.total)}</b>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ol>
-          ) : (
-            <p className="py-3 text-ink-3">KEL 기록을 불러오지 못했습니다.</p>
-          )}
-        </section>
-
-        <section className="sec">
-          <h2 className="sec-h">오버레이</h2>
-          <RowLinks items={[{ href: "/er/overlay", label: "랭크 오버레이" }, { href: "/er/score", label: "대회 오버레이" }]} />
-        </section>
-
-        <section className="sec">
-          <h2 className="sec-h">
-            <Link href="/tarkov/players">타르코프 계정 조회</Link>
-            <small className="num">계정 {n(accounts)}개</small>
-          </h2>
-          <div className="mt-3">
-            <HubSearch />
-          </div>
-          <RowLinks items={[{ href: "/tarkov/kord-breach", label: "KORD BREACH 특성 시뮬레이터" }]} />
-        </section>
+      <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-10 md:grid-cols-2 md:gap-x-12 xl:grid-cols-4">
+        <KelSection h={h} />
+        <HubScore mine={h.mine} preview={false} />
+        <OverlaySection />
+        <TarkovSection h={h} />
       </div>
     </Live>
   );

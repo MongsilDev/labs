@@ -1,6 +1,5 @@
 import Live from "@/next/Live";
 import CopyField from "@/next/CopyField";
-import RowLinks from "@/next/RowLinks";
 import { overlayPlace, PRESETS, type PresetKey } from "@/er/lib/rank";
 
 export const metadata = { title: "오버레이" };
@@ -74,7 +73,6 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
             </div>
           )}
         </section>
-        <RowLinks className="self-start" items={[{ href: "/er/score", label: "대회 오버레이" }]} />
       </div>
     </Live>
   );

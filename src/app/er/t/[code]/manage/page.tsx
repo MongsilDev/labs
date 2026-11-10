@@ -22,7 +22,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
   const data = members(view.code, user);
   return (
     <>
-      <Header user={user} crumb="점수 계산" />
+      <Header user={user} crumb="대회 점수" />
       <Manage
         view={view}
         me={user.id}

@@ -149,9 +149,10 @@ const SID = { other: OTHER_SID, empty: EMPTY.sid, fail: FAILING.sid } as const;
 
 const SCREENS: Screen[] = [
   { name: "Labs", path: () => "/" },
+  { name: "Labs 로그인", path: () => "/", login: true },
   { name: "오버레이", path: () => "/er/overlay" },
   { name: "오버레이 주소", path: () => "/er/overlay?n=%EB%AA%BD%EC%8B%A4" },
-  { name: "점수 계산", path: () => "/er/score" },
+  { name: "대회 점수", path: () => "/er/score" },
   { name: "이터컷 예측", path: () => "/er/cut" },
   { name: "이터컷 예측 RP 주소", path: () => "/er/cut?rp=9050" },
   { name: "실험체 티어", path: () => "/er/tier" },
@@ -160,7 +161,7 @@ const SCREENS: Screen[] = [
   { name: "실험체 상세", path: () => "/er/tier/tsubame-directfire" },
   { name: "실험체 상세 기록 없는 기간", path: () => "/er/tier/tsubame-directfire?v=1d" },
   { name: "없는 실험체 상세", path: () => "/er/tier/nobody-glove", status: 404 },
-  { name: "점수 계산 로그인", path: () => "/er/score", login: true },
+  { name: "대회 점수 로그인", path: () => "/er/score", login: true },
   { name: "처리방침", path: () => "/privacy" },
   { name: "예시 대회 선수 기록", path: () => "/er/example/a", tab: "선수 기록" },
   { name: "대회 보기", path: () => `/er/t/${code}/a` },
@@ -290,6 +291,23 @@ describe("화면 점검", () => {
       }
     }
   }
+
+  it("첫 화면 대회 점수는 로그인하면 내 대회를 보이고, 6자리가 아닌 코드는 안내한 뒤 맞는 코드로 대회를 연다", async () => {
+    const { page, errors } = await open(SCREENS.find((x) => x.name === "Labs 로그인")!, 390, "dark");
+    try {
+      await expect(page.locator(`#hub-score-h ~ ul a[href="/er/t/${code}/a"]`).count()).resolves.toBe(1);
+      const go = page.locator("form:has(#hub-code) button");
+      await page.fill("#hub-code", "abc");
+      await go.click();
+      await expect(page.locator("#hub-code-msg").textContent()).resolves.toBe("받은 대회 코드를 다시 확인해주세요.");
+      await page.fill("#hub-code", code.toLowerCase());
+      await go.click();
+      await page.waitForURL(`**/er/t/${code}/a`);
+      expect(errors).toEqual([]);
+    } finally {
+      await page.context().close();
+    }
+  });
 
   it("이터컷 예측에 RP를 넣으면 진단이 좁은 화면 안에 나온다", async () => {
     const screen = SCREENS.find((x) => x.name === "이터컷 예측")!;
