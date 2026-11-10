@@ -1517,7 +1517,7 @@
     container-type: inline-size;
     overflow-x: auto;
   }
-  /* 픽률 순 표. 상세 패널이 열려 보드가 좁아지는 때도 있어 열 숨김은 보드 폭 기준 */
+  /* 목록 보기 표. 상세 패널이 열려 보드가 좁아지는 때도 있어 열 숨김은 보드 폭 기준 */
   .tier-table {
     font-variant-numeric: tabular-nums;
   }
@@ -1564,10 +1564,10 @@
     box-shadow: inset 0 0 0 1px var(--line-strong);
     color: var(--text-3);
   }
-  .tier-table th.tier-pk {
+  .tier-table th[aria-sort] {
     color: var(--accent-text);
   }
-  .tier-table th.tier-pk svg {
+  .tier-table th[aria-sort] svg {
     display: inline-block;
     width: 8px;
     height: 5px;
@@ -1579,6 +1579,8 @@
   }
   .tier-table td.tier-pk {
     color: var(--text);
+  }
+  .tier-table td.on {
     background: color-mix(in oklab, var(--accent) 7%, transparent);
   }
   .tier-pk b {

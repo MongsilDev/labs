@@ -15,7 +15,7 @@ const ER: Sect[] = [
     name: "랭크",
     items: [
       { href: "/er/cut", label: "이터컷" },
-      { href: "/er/overlay", label: "방송 화면" },
+      { href: "/er/overlay", label: "오버레이" },
     ],
   },
   {

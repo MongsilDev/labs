@@ -5,7 +5,7 @@ import { currentUser } from "@/er/server/auth";
 import { openView } from "@/er/server/http";
 import { groupIndex } from "@/er/lib/view";
 
-export const metadata: Metadata = { title: "경기 중 방송 화면", robots: { index: false } };
+export const metadata: Metadata = { title: "경기 중 오버레이", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 const transparent = <style>{"html,body{background:transparent!important;overflow:hidden}"}</style>;

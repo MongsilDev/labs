@@ -4,7 +4,7 @@ import CopyField from "@/next/CopyField";
 import { overlayPlace, PRESETS, type PresetKey } from "@/er/lib/rank";
 import { BASE_URL } from "@/er/server/auth";
 
-export const metadata = { title: "방송 화면" };
+export const metadata = { title: "오버레이" };
 
 const NAMES: [PresetKey, string][] = [["t1", "왼쪽 아래"], ["t2", "오른쪽 위 한 줄"], ["t3", "오른쪽 위"]];
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
@@ -22,10 +22,10 @@ export default async function NextOverlay({ searchParams }: { searchParams: Prom
   const url = `${BASE_URL}/er/rank/overlay?n=${encodeURIComponent(nick)}&p=${preset}${x || y ? `&x=${x}&y=${y}` : ""}`;
   return (
     <Shell here="overlay">
-      <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">방송 화면</h1>
+      <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">오버레이</h1>
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="sec" aria-labelledby="rank-h">
-          <h2 id="rank-h" className="sec-h">랭크 방송 화면</h2>
+          <h2 id="rank-h" className="sec-h">랭크 오버레이</h2>
           <form className="mt-4 grid max-w-[560px] gap-5" noValidate>
             <div>
               <label className="lbl" htmlFor="n">닉네임</label>
@@ -65,7 +65,7 @@ export default async function NextOverlay({ searchParams }: { searchParams: Prom
           </form>
           {nick && (
             <div className="mt-8 max-w-[560px]">
-              <CopyField key={url} label="방송 화면 주소" value={url} />
+              <CopyField key={url} label="오버레이 주소" value={url} />
               <dl className="mt-2 flex gap-3 text-[13px]">
                 <dt className="text-ink-3">브라우저 소스 크기</dt>
                 <dd className="m-0 font-semibold num">1920 x 1080</dd>
@@ -74,7 +74,7 @@ export default async function NextOverlay({ searchParams }: { searchParams: Prom
           )}
         </section>
         <section className="sec self-start" aria-labelledby="t-h">
-          <h2 id="t-h" className="sec-h">대회 방송 화면</h2>
+          <h2 id="t-h" className="sec-h">대회 오버레이</h2>
           <Link href="/next/er/score" className="mt-2 flex h-11 items-center border-y border-rule font-semibold hover:bg-row hover:no-underline">
             대회 점수
           </Link>

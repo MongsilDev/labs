@@ -124,7 +124,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
         const r = await fetch(`/api/live/${initial.code}/${segment}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: b, cache: "no-store" });
         const d = (await r.json().catch(() => ({}))) as { error?: string };
         if (r.status !== 429) lastSent.current = b;
-        setSent(r.ok ? { ok: true, text: `${clock.format(new Date())}에 방송 화면에 반영했습니다.` } : { ok: false, text: d.error ?? "점수를 방송 화면에 보내지 못했습니다." });
+        setSent(r.ok ? { ok: true, text: `${clock.format(new Date())}에 점수를 오버레이에 반영했습니다.` } : { ok: false, text: d.error ?? "점수를 오버레이에 보내지 못했습니다." });
       } catch {
         setSent({ ok: false, text: "서버에 연결하지 못했습니다. 인터넷 연결을 확인해주세요." });
       } finally {
@@ -398,7 +398,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
 
       <section className={BOX} aria-labelledby="ov-h">
         <h2 className={H2} id="ov-h">
-          방송 화면 주소
+          오버레이 주소
         </h2>
         <div className="mt-2.5 flex min-w-0 items-center gap-2">
           <code className="min-w-0 flex-1 truncate text-[13px] text-fg-2" translate="no">

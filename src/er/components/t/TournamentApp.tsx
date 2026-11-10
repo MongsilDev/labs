@@ -309,8 +309,8 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
             </button>
           )}
           {!example && (
-            <button type="button" className="btn" onClick={() => copy(`${origin}/er/t/${view.code}/${segment}/overlay`, "방송 화면 주소를 복사했습니다.")}>
-              방송 화면 주소 복사
+            <button type="button" className="btn" onClick={() => copy(`${origin}/er/t/${view.code}/${segment}/overlay`, "오버레이 주소를 복사했습니다.")}>
+              오버레이 주소 복사
             </button>
           )}
           <ExportMenu disabled={result.played === 0} onBoard={exportBoard} onPlayers={exportPlayers} onCsv={exportCsv} hasPlayers={result.players.length > 0} />

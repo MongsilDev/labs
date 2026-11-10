@@ -149,8 +149,8 @@ const SID = { other: OTHER_SID, empty: EMPTY.sid, fail: FAILING.sid } as const;
 
 const SCREENS: Screen[] = [
   { name: "Labs", path: () => "/" },
-  { name: "방송 화면", path: () => "/er/overlay" },
-  { name: "방송 화면 주소", path: () => "/er/overlay?n=%EB%AA%BD%EC%8B%A4" },
+  { name: "오버레이", path: () => "/er/overlay" },
+  { name: "오버레이 주소", path: () => "/er/overlay?n=%EB%AA%BD%EC%8B%A4" },
   { name: "점수 계산", path: () => "/er/score" },
   { name: "이터컷 예측", path: () => "/er/cut" },
   { name: "이터컷 예측 RP 주소", path: () => "/er/cut?rp=9050" },
@@ -402,7 +402,7 @@ describe("화면 점검", () => {
     await up.page.context().close();
   });
 
-  it("방송 화면은 1920x1080 안에 들어간다", async () => {
+  it("오버레이는 1920x1080 안에 들어간다", async () => {
     const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await ctx.newPage();
     await page.goto(`${base}/er/t/${code}/a/overlay?scale=2`, { waitUntil: "networkidle" });
@@ -427,7 +427,7 @@ describe("화면 점검", () => {
     expect(errors).toEqual([]);
   });
 
-  it("랭크 방송 화면은 프리셋 자리와 크기로 표시하고, 없는 닉네임에는 안내를 표시한다", async () => {
+  it("랭크 오버레이는 프리셋 자리와 크기로 표시하고, 없는 닉네임에는 안내를 표시한다", async () => {
     const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await ctx.newPage();
     const n = encodeURIComponent("시험선수");

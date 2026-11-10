@@ -4,7 +4,7 @@ import { NICKNAME, parseRank, rankOf } from "@/er/server/rank";
 
 const VIEW = { nickname: "Foo", tier: "메테오라이트 3", mmr: 6842, place: "아시아1 1,284위", serverRank: 1284, serverCode: 10, last: { gain: 38, at: 1794150000 }, updatedAt: 1794150100 };
 
-describe("랭크 방송 화면", () => {
+describe("랭크 오버레이", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();

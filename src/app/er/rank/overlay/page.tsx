@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import RankOverlay from "@/er/components/RankOverlay";
 import { overlayPlace } from "@/er/lib/rank";
 
-export const metadata: Metadata = { title: "랭크 방송 화면", robots: { index: false } };
+export const metadata: Metadata = { title: "랭크 오버레이", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ n?: string; p?: string; x?: string; y?: string; scale?: string }> }) {

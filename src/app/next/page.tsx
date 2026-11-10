@@ -125,14 +125,14 @@ export default async function NextHub() {
 
         <section className="sec">
           <h2 className="sec-h">
-            <Link href="/next/er/overlay">랭크 방송 화면</Link>
+            <Link href="/next/er/overlay">랭크 오버레이</Link>
           </h2>
           <form action="/next/er/overlay" className="mt-3 flex gap-2" noValidate>
             <input className="field" name="n" placeholder="닉네임" aria-label="닉네임" autoComplete="off" spellCheck={false} maxLength={32} />
             <button className="btn primary flex-none">주소 만들기</button>
           </form>
           <Link href="/next/er/score" className="mt-3 flex h-11 items-center border-y border-rule font-semibold hover:bg-row hover:no-underline">
-            대회 방송 화면
+            대회 오버레이
           </Link>
         </section>
 
