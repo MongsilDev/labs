@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { dateKo } from "@/er/lib/format";
 import Shell from "@/next/Shell";
 import Recent from "@/tarkov/components/players/Recent";
 import SearchBox from "@/tarkov/components/players/SearchBox";
-import { date, int } from "@/tarkov/lib/format";
+import { int } from "@/tarkov/lib/format";
 import { getMeta } from "@/tarkov/server/db";
 
 export const dynamic = "force-dynamic";
@@ -25,12 +26,12 @@ export default async function NextPlayers({ searchParams }: { searchParams: Prom
         <dl className="grid content-start gap-5 border-t-2 border-ink pt-4 lg:mt-[52px]">
           <div>
             <dt className="text-[12px] font-semibold text-ink-3">찾을 수 있는 계정</dt>
-            <dd className="m-0 mt-1 text-[34px] leading-none font-black num">{indexed ? `${int(count)}명` : "준비 중"}</dd>
+            <dd className="m-0 mt-1 text-[34px] leading-none font-black num">{indexed ? `${int(count)}개` : "준비 중"}</dd>
           </div>
           {indexed && (
             <div>
               <dt className="text-[12px] font-semibold text-ink-3">이름 목록 기준</dt>
-              <dd className="m-0 mt-1 text-[15px] font-semibold num">{date(indexed)}</dd>
+              <dd className="m-0 mt-1 text-[15px] font-semibold num">{dateKo(indexed)}</dd>
             </div>
           )}
           <Link className="link justify-self-start" href="/tarkov/criteria">판정 기준</Link>

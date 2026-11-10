@@ -56,7 +56,7 @@ export default async function NextKelRecords({ searchParams }: { searchParams: P
         <div className="grid min-w-0 content-start gap-10">
           <nav className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0" aria-label="범위">
             {scopes.map(([k, name]) => (
-              <Link key={k} href={k === "season" ? "/next/er/kel/records" : `/next/er/kel/records?s=${k}`} aria-current={k === scope ? "page" : undefined} className="shrink-0 border border-rule px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:no-underline aria-[current=page]:border-ink aria-[current=page]:text-ink">
+              <Link key={k} href={k === "season" ? "/next/er/kel/records" : `/next/er/kel/records?s=${k}`} aria-current={k === scope ? "page" : undefined} className="opt shrink-0">
                 {name}
               </Link>
             ))}
@@ -91,18 +91,19 @@ export default async function NextKelRecords({ searchParams }: { searchParams: P
           <div className="grid grid-cols-[minmax(0,1fr)] gap-10 xl:grid-cols-2">
             <section className="sec min-w-0">
               <h2 className="sec-h">팀 최고 기록</h2>
-              <table className="tbl">
+              {/* 두 줄 칸이 있는 표는 모든 칸을 첫 줄 높이에 맞춤 */}
+              <table className="tbl [&_td]:!h-auto [&_td]:!py-2 [&_td]:align-top [&_td]:!leading-[22px]">
                 <tbody>
                   <tr>
                     <td className="l text-ink-2">팀 킬</td>
                     <td className="text-[15px] font-black">{rec.teamKills.kills}</td>
-                    <td className="l !py-1.5 !whitespace-normal"><TeamCell g={rec.teamKills} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(rec.teamKills)}, {rec.teamKills.placement}위</span></td>
+                    <td className="l !whitespace-normal"><TeamCell g={rec.teamKills} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(rec.teamKills)}, {rec.teamKills.placement}위</span></td>
                   </tr>
                   {rec.teamScore.games.map((g) => (
                     <tr key={`${g.gameId}-${g.team}`}>
                       <td className="l text-ink-2">게임 점수</td>
                       <td className="text-[15px] font-black">{fmt(rec.teamScore.value)}</td>
-                      <td className="l !py-1.5 !whitespace-normal"><TeamCell g={g} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(g)}, 순위 점수 {placementPoints(g.placement)}, 킬 점수 {fmt(g.killScore)}</span></td>
+                      <td className="l !whitespace-normal"><TeamCell g={g} /><span className="mt-0.5 block text-[12px] text-ink-3">{gameLabel(g)}, 순위 점수 {placementPoints(g.placement)}, 킬 점수 {fmt(g.killScore)}</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -110,7 +111,7 @@ export default async function NextKelRecords({ searchParams }: { searchParams: P
             </section>
             <section className="sec min-w-0">
               <h2 className="sec-h">가한 피해 상위 {rec.damage.length}개</h2>
-              <table className="tbl">
+              <table className="tbl [&_td]:!h-auto [&_td]:!py-2 [&_td]:align-top [&_td]:!leading-[22px]">
                 <tbody>
                   {rec.damage.map(({ r, rank }) => (
                     <tr key={`${r.gameId}-${r.player}`}>

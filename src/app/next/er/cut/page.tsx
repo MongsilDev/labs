@@ -27,7 +27,7 @@ export default async function NextCut({ searchParams }: { searchParams: Promise<
         </p>
       </div>
 
-      <dl className="mt-4 grid border-y-2 border-ink lg:grid-cols-2">
+      <dl className="mt-4 grid border-t-2 border-ink lg:grid-cols-2">
         {TIERS.map(({ key, name, color }, i) => {
           const t = data.tiers[key];
           const end = t.forecast?.[t.forecast.length - 1];
@@ -48,11 +48,11 @@ export default async function NextCut({ searchParams }: { searchParams: Promise<
                 <>
                   <div>
                     <dt className="text-[12px] font-semibold text-ink-3">종료 예상</dt>
-                    <dd className="m-0 mt-1 text-[26px] leading-none font-black tracking-[-1px] num sm:text-[34px]" style={{ color }}>{tens(end[1])}</dd>
+                    <dd className="m-0 mt-2.5 text-[20px] leading-none font-bold num">{tens(end[1])}</dd>
                   </div>
                   <div>
                     <dt className="text-[12px] font-semibold text-ink-3">범위</dt>
-                    <dd className="m-0 mt-2.5 text-[16px] font-bold text-ink-2 num">{tens(end[2])}~{tens(end[3])}</dd>
+                    <dd className="m-0 mt-2.5 text-[20px] leading-none font-bold text-ink-2 num">{tens(end[2])}~{tens(end[3])}</dd>
                   </div>
                 </>
               )}
@@ -62,7 +62,7 @@ export default async function NextCut({ searchParams }: { searchParams: Promise<
         })}
       </dl>
 
-      <div className="mt-8 grid gap-x-10 gap-y-10 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
+      <div className="mt-4 grid gap-x-10 gap-y-10 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
         <section className="sec self-start lg:col-span-8" aria-labelledby="chart-h">
           <h2 className="sec-h" id="chart-h">컷 추이</h2>
           <p className="mt-1 flex flex-wrap gap-x-4 text-[12px] text-ink-3">
@@ -78,7 +78,7 @@ export default async function NextCut({ searchParams }: { searchParams: Promise<
         <div className="grid content-start gap-10 lg:col-span-4 lg:row-span-2">
           <section className="sec" aria-labelledby="check-h">
             <h2 className="sec-h mb-3" id="check-h">내 RP 진단</h2>
-            <RpCheck data={data} initial={rpParam(query.rp)} />
+            <div className="rpcheck"><RpCheck data={data} initial={rpParam(query.rp)} /></div>
           </section>
           <section className="sec" aria-labelledby="decay-h">
             <h2 className="sec-h mb-3" id="decay-h">휴면 강등 일정</h2>

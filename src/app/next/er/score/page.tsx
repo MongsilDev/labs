@@ -38,7 +38,7 @@ export default async function NextScore() {
                     <th className="l">팀</th>
                     {rounds.map((r) => <th key={r} className="!text-center">R{r}</th>)}
                     <th>처치</th>
-                    <th>총점</th>
+                    <th className="pin-r" aria-sort="descending">총점</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -52,20 +52,20 @@ export default async function NextScore() {
                         </td>
                       ))}
                       <td className="text-ink-2">{s.kills}</td>
-                      <td className="text-[16px] font-black">{s.total.toFixed(1)}</td>
+                      <td className="pin-r text-[16px] font-black">{s.total.toFixed(1)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
-          <div className="mt-10 max-w-[480px]">
+          <div className="sec mt-10 max-w-[480px] [&_section+section]:mt-8">
             <OpenCode mine={mine} />
           </div>
         </section>
-        <aside className="order-first grid content-start gap-8 lg:order-none lg:border-l lg:border-rule lg:pl-10">
-          <section aria-labelledby="new-h">
-            <h2 id="new-h" className="mb-4 text-[18px] font-black">새 대회</h2>
+        <aside className="grid content-start gap-8">
+          <section className="sec" aria-labelledby="new-h">
+            <h2 id="new-h" className="sec-h mb-4">새 대회</h2>
             <CreateForm loggedIn={Boolean(user)} autoCreate={false} />
           </section>
         </aside>

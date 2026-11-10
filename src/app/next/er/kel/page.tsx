@@ -3,6 +3,7 @@ import { Logo } from "@/er/components/kel/Team";
 import Link from "next/link";
 import Shell from "@/next/Shell";
 import KelNav from "@/next/KelNav";
+import { dateKo } from "@/er/lib/format";
 import { KEL_TEAMS, TEAM } from "@/er/lib/kel";
 import { kelData, kelSummary } from "@/er/server/kel";
 import { characterStats, kelChampion, playerStats } from "@/er/server/kel-stats";
@@ -10,14 +11,17 @@ import { characterStats, kelChampion, playerStats } from "@/er/server/kel-stats"
 export const dynamic = "force-dynamic";
 export const metadata = { title: "2026 KEL" };
 
-// 1위가 가장 진하고 13위가 가장 옅은 칸
-const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 70 - (place - 1) * 6)}%, transparent)`;
+// 1위가 가장 진하고 13위부터는 칠하지 않음. 60%를 넘으면 어두운 테마에서 글자 대비가 4.5 아래로 떨어짐
+const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (place - 1) * 5)}%, transparent)`;
 
 export default async function NextKel() {
   const data = kelData();
   if (!data) return <Shell here="kel"><p className="text-ink-3" role="status">KEL 기록을 불러오지 못했습니다.<br />잠시 뒤 다시 열어주세요.</p></Shell>;
   const sum = kelSummary(data);
   const champ = kelChampion(data);
+  // 다른 화면의 기간 표기와 같은 형식. 같은 해면 끝 날짜의 연도를 뺌
+  const first = Date.parse(sum.first), last = Date.parse(sum.last);
+  const span = sum.first.slice(0, 4) === sum.last.slice(0, 4) ? `${dateKo(first)}~${new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(last)}` : `${dateKo(first)}~${dateKo(last)}`;
   const avg = (t: (typeof KEL_TEAMS)[number]) => t.circuits.reduce((s, x) => s + x, 0) / t.circuits.length;
   const teams = [...KEL_TEAMS].sort((a, b) => avg(a) - avg(b));
   const players = playerStats(data).filter((p) => p.games >= 30).sort((a, b) => b.kpr - a.kpr).slice(0, 8);
@@ -27,7 +31,7 @@ export default async function NextKel() {
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">2026 KEL</h1>
         <p className="text-[13px] text-ink-3 num">
-          {sum.games.toLocaleString("ko-KR")}게임, {sum.first}~{sum.last}
+          {sum.games.toLocaleString("ko-KR")}게임, {span}
           {champ ? `, 우승 ${TEAM.get(champ)?.name}` : ""}
         </p>
       </div>
@@ -37,14 +41,14 @@ export default async function NextKel() {
           <section className="sec xl:col-span-2">
             <h2 className="sec-h">서킷 순위</h2>
             <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
-              <table className="tbl mt-1 lg:!w-auto">
+              <table className="tbl mt-1">
                 <thead>
                   <tr>
-                    <th className="l lg:w-[240px]">팀</th>
+                    <th className="l">팀</th>
                     {[1, 2, 3, 4].map((i) => (
                       <th key={i} className="!text-center lg:w-[84px]">서킷 {i}</th>
                     ))}
-                    <th className="lg:w-[96px]"><span className="text-ink underline decoration-hot decoration-2 underline-offset-4">평균 순위</span></th>
+                    <th className="lg:w-[112px]" aria-sort="ascending">평균 순위</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -54,7 +58,7 @@ export default async function NextKel() {
                         <span className="flex items-center gap-2 font-semibold">
                           <Logo team={t} size={24} className="ring-1 ring-rule-2" />
                           {t.name}
-                          {t.key === champ && <span className="text-[12px] font-bold text-hot">우승</span>}
+                          {t.key === champ && <span className="text-[12px] font-bold text-ink-2">우승</span>}
                         </span>
                       </td>
                       {t.circuits.map((p, i) => (
@@ -90,7 +94,7 @@ export default async function NextKel() {
           <section className="sec">
             <h2 className="sec-h">
               많이 쓴 실험체
-              <Link className="more" href="/er/kel/characters">실험체 전체</Link>
+              <Link className="more" href="/next/er/kel/characters">실험체 전체</Link>
             </h2>
             <table className="tbl mt-1">
               <thead>

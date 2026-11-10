@@ -26,16 +26,6 @@ export default async function NextKelPlayers({ searchParams }: { searchParams: P
   const sort = COLS.find((c) => c.k === s) ?? COLS[0];
   const all = playerStats(data).filter((p) => p.games >= 20);
   const v = (p: PlayerStat, k: keyof PlayerStat) => p[k] as number;
-  const range = new Map(COLS.map((c) => {
-    const xs = all.map((p) => v(p, c.k));
-    return [c.k, [Math.min(...xs), Math.max(...xs)]] as const;
-  }));
-  // 정렬 기준 열만 칠하고, 가장 좋은 값이 가장 진한 칸
-  const heat = (c: (typeof COLS)[number], x: number) => {
-    const [lo, hi] = range.get(c.k)!;
-    const t = hi === lo ? 0 : (x - lo) / (hi - lo);
-    return `color-mix(in srgb, var(--hot) ${Math.round((c.low ? 1 - t : t) * 55)}%, transparent)`;
-  };
   const rows = [...all].sort((a, b) => (sort.low ? v(a, sort.k) - v(b, sort.k) : v(b, sort.k) - v(a, sort.k)));
   return (
     <Shell here="kel">
@@ -52,8 +42,8 @@ export default async function NextKelPlayers({ searchParams }: { searchParams: P
                 <th className="l sticky left-0 bg-bg">선수</th>
                 <th>게임</th>
                 {COLS.map((c) => (
-                  <th key={c.k}>
-                    <Link href={`/next/er/kel/players?s=${c.k}`} aria-current={c === sort ? "true" : undefined} className="text-ink-3 hover:no-underline aria-[current=true]:text-ink aria-[current=true]:underline aria-[current=true]:decoration-hot aria-[current=true]:decoration-2 aria-[current=true]:underline-offset-4">
+                  <th key={c.k} aria-sort={c === sort ? (c.low ? "ascending" : "descending") : undefined}>
+                    <Link href={`/next/er/kel/players?s=${c.k}`} aria-current={c === sort ? "true" : undefined} className="hover:no-underline">
                       {c.label}
                     </Link>
                   </th>
@@ -68,7 +58,7 @@ export default async function NextKelPlayers({ searchParams }: { searchParams: P
                   </td>
                   <td className="text-ink-3">{p.games}</td>
                   {COLS.map((c) => (
-                    <td key={c.k} className={c === sort ? "font-bold" : ""} style={c === sort ? { background: heat(c, v(p, c.k)) } : undefined}>
+                    <td key={c.k} className={c === sort ? "font-bold" : ""}>
                       {c.fmt(v(p, c.k))}
                     </td>
                   ))}

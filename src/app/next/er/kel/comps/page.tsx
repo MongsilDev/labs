@@ -3,6 +3,7 @@ import Shell from "@/next/Shell";
 import KelNav from "@/next/KelNav";
 import Char from "@/er/components/t/Char";
 import { Logo } from "@/er/components/kel/Team";
+import { characterName } from "@/er/lib/format";
 import { TEAM } from "@/er/lib/kel";
 import { kelData } from "@/er/server/kel";
 import { comps } from "@/er/server/kel-stats";
@@ -26,12 +27,6 @@ export default async function NextKelComps({ searchParams }: { searchParams: Pro
   if (!all.length) return <Shell here="kel"><p className="text-ink-3" role="status">아직 {MIN}번 이상 등장한 3인 조합이 없습니다.</p></Shell>;
   const sort = COLS.find((c) => c.k === s) ?? COLS[0];
   const rows = [...all].sort((a, b) => (sort.low ? a[sort.k] - b[sort.k] : b[sort.k] - a[sort.k]) || b.count - a.count);
-  const xs = all.map((r) => r[sort.k]);
-  const lo = Math.min(...xs), hi = Math.max(...xs);
-  const heat = (x: number) => {
-    const t = hi === lo ? 0 : (x - lo) / (hi - lo);
-    return `color-mix(in srgb, var(--hot) ${Math.round((sort.low ? 1 - t : t) * 55)}%, transparent)`;
-  };
   return (
     <Shell here="kel">
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
@@ -46,8 +41,8 @@ export default async function NextKelComps({ searchParams }: { searchParams: Pro
               <tr>
                 <th className="l">조합</th>
                 {COLS.map((c) => (
-                  <th key={c.k} className="sm:w-[88px]">
-                    <Link href={`/next/er/kel/comps${c === COLS[0] ? "" : `?s=${c.k}`}`} aria-current={c === sort ? "true" : undefined} className="text-ink-3 hover:no-underline aria-[current=true]:text-ink aria-[current=true]:underline aria-[current=true]:decoration-hot aria-[current=true]:decoration-2 aria-[current=true]:underline-offset-4">
+                  <th key={c.k} className="sm:w-[88px]" aria-sort={c === sort ? (c.low ? "ascending" : "descending") : undefined}>
+                    <Link href={`/next/er/kel/comps${c === COLS[0] ? "" : `?s=${c.k}`}`} aria-current={c === sort ? "true" : undefined} className="hover:no-underline">
                       {c.label}
                     </Link>
                   </th>
@@ -59,12 +54,17 @@ export default async function NextKelComps({ searchParams }: { searchParams: Pro
               {rows.map((r) => (
                 <tr key={r.characters.join("|")}>
                   <td className="l">
-                    <span className="grid gap-1 font-semibold sm:flex sm:flex-wrap sm:gap-x-4">
+                    {/* 좁은 폭에서는 이름을 빼고 한 줄에 둠 */}
+                    <span className="flex gap-1.5 sm:hidden">
+                      {r.characters.map((c) => <Char key={c} name={c} label="" size={28} />)}
+                      <span className="sr-only">{r.characters.map(characterName).join(", ")}</span>
+                    </span>
+                    <span className="hidden flex-wrap gap-x-4 font-semibold sm:flex">
                       {r.characters.map((c) => <Char key={c} name={c} size={24} />)}
                     </span>
                   </td>
                   {COLS.map((c) => (
-                    <td key={c.k} className={c === sort ? "font-bold" : ""} style={c === sort ? { background: heat(r[c.k]) } : undefined}>{c.fmt(r)}</td>
+                    <td key={c.k} className={c === sort ? "font-bold" : ""}>{c.fmt(r)}</td>
                   ))}
                   <td className="l hidden md:table-cell">
                     <span className="flex gap-3 text-ink-2">

@@ -14,7 +14,7 @@ export const metadata = { title: "라운드별 점수" };
 // 라운드 순위가 1위면 가장 진하고 8위 아래로는 칠하지 않음
 const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (place - 1) * 8)}%, transparent)`;
 
-// 모든 팀의 누적 점수 선. 1위와 2위만 색을 칠함
+// 모든 팀의 누적 점수 선. 1위와 2위만 진하게 그림
 function Flow({ cum, focus, W = 1000, H = 300 }: { cum: Record<string, number[]>; focus: string[]; W?: number; H?: number }) {
   const L = 40, R = W < 500 ? 96 : 120, T = 10, B = 26;
   const n = Object.values(cum)[0].length;
@@ -38,7 +38,7 @@ function Flow({ cum, focus, W = 1000, H = 300 }: { cum: Record<string, number[]>
       ))}
       {keys.map((k) => {
         const f = focus.indexOf(k);
-        const color = f === 0 ? "var(--hot)" : f === 1 ? "var(--ink)" : "var(--rule-2)";
+        const color = f === 0 ? "var(--ink)" : f === 1 ? "var(--ink-3)" : "var(--rule-2)";
         const last = cum[k].at(-1)!;
         return (
           <g key={k}>
@@ -78,23 +78,23 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
         <div className="grid min-w-0 content-start gap-8">
           <nav className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0" aria-label="경기">
             {list.map((x) => (
-              <Link key={x.key} href={x === list.at(-1) ? "/next/er/kel/finals" : `/next/er/kel/finals?f=${x.key}`} aria-current={x === f ? "page" : undefined} className="shrink-0 border border-rule px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:no-underline aria-[current=page]:border-ink aria-[current=page]:text-ink">
+              <Link key={x.key} href={x === list.at(-1) ? "/next/er/kel/finals" : `/next/er/kel/finals?f=${x.key}`} aria-current={x === f ? "page" : undefined} className="opt shrink-0">
                 {EVENT_NAME[x.event]} {x.stage}
               </Link>
             ))}
           </nav>
           <div className="scroll-fade -mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-            <table className="tbl lg:!w-auto">
+            <table className="tbl">
               <thead>
                 <tr>
                   <th className="l hidden w-8 sm:table-cell">#</th>
-                  <th className="l sticky left-0 bg-bg lg:w-[220px]">팀</th>
+                  <th className="l sticky left-0 bg-bg">팀</th>
                   {Array.from({ length: played }, (_, r) => (
                     <th key={r} className="!text-center max-sm:!px-1 lg:w-[60px]" title={f.weather[r] || undefined}>{r + 1}R</th>
                   ))}
                   <th className="hidden md:table-cell lg:w-[76px]">킬 점수</th>
                   <th className="hidden md:table-cell lg:w-[64px]">감점</th>
-                  <th className="lg:w-[76px]"><span className="text-ink underline decoration-hot decoration-2 underline-offset-4">합계</span></th>
+                  <th className="pin-r lg:w-[76px]" aria-sort="descending">합계</th>
                 </tr>
               </thead>
               <tbody>
@@ -108,7 +108,7 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
                           <Logo team={t} size={22} className="ring-1 ring-rule-2" />
                           <span className="sm:hidden">{t.short}</span>
                           <span className="hidden truncate sm:inline">{t.name}</span>
-                          {champ === row.key && <span className="text-[12px] font-bold text-hot">우승</span>}
+                          {champ === row.key && <span className="text-[12px] font-bold text-ink-2">우승</span>}
                         </span>
                       </td>
                       {Array.from({ length: played }, (_, r) => {
@@ -116,21 +116,21 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
                         return (
                           <td key={r} className="!text-center max-sm:!px-1" style={e ? { background: heat(e.placement) } : undefined} title={e ? `${e.placement}위, 킬 점수 ${e.killScore}` : undefined}>
                             {e ? fmt(gameScore(e)) : ""}
-                            {held(row.key, r) && <span className="ml-0.5 align-super text-[10px] text-hot" aria-label="체크포인트">●</span>}
+                            {held(row.key, r) && <span className="ml-0.5 align-super text-[10px]" aria-label="체크포인트">●</span>}
                           </td>
                         );
                       })}
                       <td className="hidden text-ink-2 md:table-cell">{fmt(row.killScore)}</td>
                       <td className="hidden md:table-cell">{row.penalty ? <span className="text-down">-{fmt(row.penalty)}</span> : ""}</td>
-                      <td className="font-bold max-sm:!pl-1">{fmt(row.total)}</td>
+                      <td className="pin-r font-bold">{fmt(row.total)}</td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
             {f.stage === "결승" && (
-              <p className="mt-2 text-[12px] text-ink-3">
-                <span className="text-hot">●</span> 체크포인트에 도달한 라운드
+              <p className="sticky left-4 mt-2 w-fit text-[12px] text-ink-3 lg:left-0">
+                ● 체크포인트에 도달한 라운드
               </p>
             )}
           </div>

@@ -9,7 +9,7 @@ export const metadata = { title: "서킷별 순위" };
 
 const CIRCUITS = KEL_EVENTS.filter((e) => /^c\d$/.test(e.key));
 const CUTS: Record<number, string> = { [SEEDS]: "결승 직행", [QUALIFY]: "준결승 진출" };
-const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 70 - (place - 1) * 6)}%, transparent)`;
+const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (place - 1) * 5)}%, transparent)`;
 
 // 서킷이 끝날 때마다의 누적 순위. 위쪽이 1위
 function Path({ ranks, n }: { ranks: number[]; n: number }) {
@@ -20,7 +20,7 @@ function Path({ ranks, n }: { ranks: number[]; n: number }) {
     <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="ml-auto block" role="img" aria-label={`누적 순위 ${ranks.join(", ")}위`}>
       <line x1={4} x2={W - 4} y1={y(1)} y2={y(1)} stroke="var(--rule)" />
       <polyline points={ranks.map((r, i) => `${x(i)},${y(r)}`).join(" ")} fill="none" stroke="var(--ink-2)" strokeWidth="1.5" />
-      <circle cx={x(ranks.length - 1)} cy={y(ranks.at(-1)!)} r="3" fill="var(--hot)" />
+      <circle cx={x(ranks.length - 1)} cy={y(ranks.at(-1)!)} r="3" fill="var(--ink)" />
     </svg>
   );
 }
@@ -36,16 +36,16 @@ export default async function NextKelCircuits() {
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <KelNav here="circuits" />
         <div className="min-w-0">
-          <table className="tbl lg:!w-auto">
+          <table className="tbl">
             <thead>
               <tr>
                 <th className="l w-8">#</th>
-                <th className="l lg:w-[240px]">팀</th>
+                <th className="l">팀</th>
                 {CIRCUITS.map((c, i) => (
                   <th key={c.key} className="!text-center lg:w-[76px]" title={`${c.name}, ${c.dates}`}><span className="hidden sm:inline">서킷 </span>{i + 1}</th>
                 ))}
                 <th className="hidden md:table-cell lg:w-[128px]">누적 순위</th>
-                <th className="lg:w-[96px]"><span className="text-ink underline decoration-hot decoration-2 underline-offset-4">포인트</span></th>
+                <th className="lg:w-[96px]" aria-sort="descending">포인트</th>
               </tr>
             </thead>
             <tbody>
