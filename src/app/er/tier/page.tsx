@@ -45,7 +45,8 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
               views={views}
               initial={view.id}
               initialRole={one("r") ?? null}
-              initialSort={one("s") === "pick" ? "pick" : "score"}
+              initialSort={one("s")}
+              initialDir={one("d")}
               initialQuery={one("q") ?? ""}
               fallback={fallback.id}
               updatedAt={data.updatedAt}

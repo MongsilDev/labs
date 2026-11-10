@@ -30,43 +30,41 @@ export default async function Hub() {
   const accounts = Number(getMeta("accounts")) || 0;
   return (
     <Live>
-      {/* 헤더 경계선 바로 아래라 첫 구역은 윗선을 그리지 않음 */}
-      <section className="sec border-t-0! pt-0!">
-        <h2 className="sec-h">
-          <Link href="/er/tier">실험체 티어</Link>
-          {view && <small className="num">{view.label}, {n(view.rows)}판</small>}
-          <Link className="more" href="/er/tier">전체 {combos.length}개</Link>
-        </h2>
-        {view ? (
-          // 열 수 x 두 줄만 남겨 어느 폭에서도 마지막 줄이 꽉 참
-          <ul className="mt-3 grid grid-cols-4 gap-x-2.5 gap-y-4 sm:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 max-sm:[&>li:nth-child(n+9)]:hidden sm:max-lg:[&>li:nth-child(n+13)]:hidden lg:max-xl:[&>li:nth-child(n+17)]:hidden">
-            {combos.slice(0, 20).map((c) => (
-              <li key={`${c.char}-${c.weapon}`} className="min-w-0">
-                <Link href={comboPath(c)} className="group block hover:no-underline">
-                  <Image className="block aspect-square h-auto w-full rounded-[2px] bg-row object-cover group-hover:outline-2 group-hover:outline-hot" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={96} height={96} unoptimized />
-                  <b className="mt-1.5 flex min-w-0 items-center gap-1 text-[14px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2 lg:gap-x-16">
+        {/* 헤더 경계선 바로 아래라 첫 줄 구역은 윗선을 그리지 않음 */}
+        <section className="sec border-t-0! pt-0!">
+          <h2 className="sec-h">
+            <Link href="/er/tier">실험체 티어</Link>
+            {view && <small className="num">{view.label}, {n(view.rows)}판</small>}
+            <Link className="more" href="/er/tier">전체 {combos.length}개</Link>
+          </h2>
+          {view ? (
+            <ol className="mt-1">
+              {combos.slice(0, 5).map((c, i) => (
+                <li key={`${c.char}-${c.weapon}`} className="border-b border-rule">
+                  <Link href={comboPath(c)} className="flex h-11 items-center gap-2.5 font-semibold hover:bg-row hover:no-underline">
+                    <span className="w-3.5 font-normal text-ink-3 num">{i + 1}</span>
+                    <Image className="size-7 flex-none rounded-[2px] bg-row object-cover" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={28} height={28} unoptimized />
                     <Weapon code={c.weapon} name={c.weaponName} />
-                    <span className="truncate">{c.name}</span>
-                  </b>
-                  <span className="text-[13px] font-semibold text-ink-2 num">{signed(c.score)}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="py-3 text-ink-3">실험체 티어를 불러오지 못했습니다.</p>
-        )}
-      </section>
+                    <span className="-ml-1 truncate">{c.name}</span>
+                    <b className="ml-auto font-black num">{signed(c.score)}</b>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="py-3 text-ink-3">실험체 티어를 불러오지 못했습니다.</p>
+          )}
+        </section>
 
-      <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2 lg:gap-x-16">
-        <section className="sec">
+        <section className="sec lg:border-t-0! lg:pt-0!">
           <h2 className="sec-h">
             <Link href="/er/cut">이터컷</Link>
             {cut && <small>{cut.season.name}</small>}
             <Link className="more" href="/er/cut">내 RP 진단</Link>
           </h2>
           {cut ? (
-            <div className="mt-3 grid items-end gap-x-10 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)]">
+            <div className="mt-3 grid items-end gap-x-10 gap-y-2 sm:max-lg:grid-cols-[auto_minmax(0,1fr)]">
               <dl className="grid grid-cols-2 gap-x-8">
                 {TIERS.map(({ key, name, color }) => {
                   const t = cut.tiers[key];
@@ -92,7 +90,9 @@ export default async function Hub() {
             <p className="py-3 text-ink-3">이터컷을 불러오지 못했습니다.</p>
           )}
         </section>
+      </div>
 
+      <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-3 lg:gap-x-12">
         <section className="sec">
           <h2 className="sec-h">
             <Link href="/er/kel">2026 KEL</Link>

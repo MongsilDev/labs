@@ -26,11 +26,12 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="sec" aria-labelledby="rank-h">
           <h2 id="rank-h" className="sec-h">랭크 오버레이</h2>
-          <form className="mt-4 grid max-w-[560px] gap-5" noValidate>
-            <div>
+          <form className="mt-4 grid max-w-[560px] gap-6" noValidate>
+            <div className="relative">
               <label className="lbl" htmlFor="n">닉네임</label>
               <input id="n" name="n" className="field" defaultValue={nick} autoComplete="off" spellCheck={false} maxLength={32} aria-describedby="n-msg" />
-              <p id="n-msg" className="mt-1.5 min-h-[19px] text-[13px] text-minus" role="alert">{asked && !nick ? "닉네임을 입력해주세요." : ""}</p>
+              {/* 오류 줄은 입력 사이 간격 안에 겹쳐 그려 비었을 때 자리를 차지하지 않음 */}
+              <p id="n-msg" className="absolute top-full left-0 mt-1 text-[13px] leading-4 text-minus" role="alert">{asked && !nick ? "닉네임을 입력해주세요." : ""}</p>
             </div>
             <fieldset className="m-0 border-0 p-0">
               <legend className="lbl p-0">위치</legend>
@@ -73,10 +74,7 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
             </div>
           )}
         </section>
-        <section className="sec self-start" aria-labelledby="t-h">
-          <h2 id="t-h" className="sec-h">대회 오버레이</h2>
-          <RowLinks items={[{ href: "/er/score", label: "대회 점수" }]} />
-        </section>
+        <RowLinks className="self-start" items={[{ href: "/er/score", label: "대회 오버레이" }]} />
       </div>
     </Live>
   );

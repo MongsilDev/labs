@@ -2,19 +2,43 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type MouseEvent, useEffect, useState } from "react";
+import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
-import { comboPath, compareView, movedCombos, signed, WEAPON_SPRITE, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
+import { comboPath, compareView, movedCombos, signed, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
 import { Weapon, WeaponText } from "./parts";
 
-const GRADES: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
 // 상세로 떠날 때 목록 주소와 스크롤 위치를 남기는 탭 단위 저장소 키. 30분이 지나면 쓰지 않음
 const BACK = "tier:back";
 const BACK_MS = 30 * 60_000;
-// 카드와 목록 중 고른 보기는 브라우저에 남김. HTML을 엣지에 캐시하므로 쿠키로 서버에서 그리지 않음
-const MODE = "labs-tier-mode";
-type Mode = "card" | "list";
+
+type SortKey = "score" | "pick" | "win" | "top3" | "place";
+type Dir = "asc" | "desc";
+// 헤더로 정렬하는 숫자 열. 평균 순위만 작을수록 좋아 처음 누르면 오름차순
+const COLS: { key: SortKey; label: string; cls?: string; first: Dir; val: (c: TierCombo) => number; show: (c: TierCombo) => ReactNode }[] = [
+  { key: "score", label: "점수", first: "desc", val: (c) => c.score, show: (c) => signed(c.score) },
+  {
+    key: "pick",
+    label: "픽률",
+    cls: "tier-pk",
+    first: "desc",
+    val: (c) => c.pick,
+    show: (c) => (
+      <>
+        <b>{c.pick.toFixed(2)}%</b>
+        <small>{int(c.n)}판</small>
+      </>
+    ),
+  },
+  { key: "win", label: "승률", first: "desc", val: (c) => c.win, show: (c) => `${c.win.toFixed(1)}%` },
+  { key: "top3", label: "TOP 3", first: "desc", val: (c) => c.top3, show: (c) => `${c.top3.toFixed(1)}%` },
+  { key: "place", label: "평균 순위", first: "asc", val: (c) => c.place, show: (c) => c.place.toFixed(2) },
+];
+// 예전 ?s=pick 주소도 픽률 정렬로 열림
+function parseSort(s?: string | null, d?: string | null): [SortKey, Dir] {
+  const col = COLS.find((c) => c.key === s) ?? COLS[0];
+  return [col.key, d === "asc" || d === "desc" ? d : col.first];
+}
 
 // 수정 키나 가운데 버튼으로 새 탭에 열면 이 탭은 떠나지 않으므로 남기지 않음
 function saveBack(e?: MouseEvent<HTMLElement>) {
@@ -39,7 +63,8 @@ type Props = {
   views: TierView[];
   initial: string;
   initialRole: string | null;
-  initialSort: "score" | "pick";
+  initialSort?: string;
+  initialDir?: string;
   initialQuery: string;
   fallback: string;
   updatedAt: number;
@@ -104,14 +129,9 @@ const dayKo = (at: number) => new Intl.DateTimeFormat("ko-KR", { month: "long", 
 const kstDay = (at: number) => Math.floor((at + 9 * 3_600_000) / 86_400_000);
 
 // 줄 어디를 눌러도 이름 링크를 누른 것과 같음. 키보드는 이름 링크로 엶
-const SortArrow = () => (
-  <svg viewBox="0 0 10 6" aria-hidden="true">
-    <path d="M1 1l4 4 4-4" />
-  </svg>
-);
-
-function RankTable({ list, sort, thin, href, onOpen }: { list: TierCombo[]; sort: "score" | "pick"; thin: (c: TierCombo) => boolean; href: (c: TierCombo) => string; onOpen: (e?: MouseEvent<HTMLElement>) => void }) {
+function RankTable({ list, sort, dir, onSort, thin, href, onOpen }: { list: TierCombo[]; sort: SortKey; dir: Dir; onSort: (k: SortKey) => void; thin: (c: TierCombo) => boolean; href: (c: TierCombo) => string; onOpen: (e?: MouseEvent<HTMLElement>) => void }) {
   const router = useRouter();
+  const cls = (k: SortKey, base?: string) => [base, sort === k && "on"].filter(Boolean).join(" ") || undefined;
   return (
     <table className="kel-table tier-table">
       <thead>
@@ -119,17 +139,17 @@ function RankTable({ list, sort, thin, href, onOpen }: { list: TierCombo[]; sort
           <th className="tier-no">#</th>
           <th className="l">실험체</th>
           <th className="tier-gc">등급</th>
-          <th className="tier-pk" aria-sort={sort === "pick" ? "descending" : undefined}>
-            픽률
-            {sort === "pick" && <SortArrow />}
-          </th>
-          <th className="tier-s" aria-sort={sort === "score" ? "descending" : undefined}>
-            점수
-            {sort === "score" && <SortArrow />}
-          </th>
-          <th className="tier-x">승률</th>
-          <th className="tier-x">TOP 3</th>
-          <th className="tier-x">평균 순위</th>
+          {COLS.map((col) => (
+            <th key={col.key} aria-sort={sort === col.key ? (dir === "asc" ? "ascending" : "descending") : undefined}>
+              <button type="button" onClick={() => onSort(col.key)}>
+                {col.label}
+                <svg viewBox="0 0 8 12" aria-hidden="true">
+                  {(sort !== col.key || dir === "asc") && <path d="M1 4.5 4 1.5l3 3" />}
+                  {(sort !== col.key || dir === "desc") && <path d="M1 7.5l3 3 3-3" />}
+                </svg>
+              </button>
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
@@ -164,14 +184,11 @@ function RankTable({ list, sort, thin, href, onOpen }: { list: TierCombo[]; sort
                   {c.grade}
                 </span>
               </td>
-              <td className={sort === "pick" ? "tier-pk on" : "tier-pk"}>
-                <b>{c.pick.toFixed(2)}%</b>
-                <small>{int(c.n)}판</small>
-              </td>
-              <td className={sort === "score" ? "tier-s on" : "tier-s"}>{signed(c.score)}</td>
-              <td className="tier-x">{c.win.toFixed(1)}%</td>
-              <td className="tier-x">{c.top3.toFixed(1)}%</td>
-              <td className="tier-x">{c.place.toFixed(2)}</td>
+              {COLS.map((col) => (
+                <td key={col.key} className={cls(col.key, col.cls)}>
+                  {col.show(c)}
+                </td>
+              ))}
             </tr>
           );
         })}
@@ -183,9 +200,8 @@ function RankTable({ list, sort, thin, href, onOpen }: { list: TierCombo[]; sort
 export default function TierBoard(p: Props) {
   const [id, setId] = useState(p.initial);
   const [role, setRole] = useState<string | null>(p.initialRole);
-  const [sort, setSort] = useState<"score" | "pick">(p.initialSort);
+  const [[sort, dir], setOrder] = useState<[SortKey, Dir]>(() => parseSort(p.initialSort, p.initialDir));
   const [q, setQ] = useState(p.initialQuery);
-  const [mode, setMode] = useState<Mode>("card");
   const view = p.views.find((v) => v.id === id) ?? p.views[0];
   const thin = (c: TierCombo) => c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few);
   const href = (c: TierCombo) => comboPath(c, view.id === p.fallback ? null : view.id);
@@ -197,16 +213,13 @@ export default function TierBoard(p: Props) {
     const now = new URL(window.location.href);
     const was = saved && new URL(saved.url, window.location.origin);
     const same = !!was && now.pathname === was.pathname && (now.searchParams.get("v") ?? "") === (was.searchParams.get("v") ?? "");
-    const src = same && now.search !== was.search && !["r", "s", "q"].some((k) => now.searchParams.has(k)) ? was : now;
+    const src = same && now.search !== was.search && !["r", "s", "d", "q"].some((k) => now.searchParams.has(k)) ? was : now;
     const v = src.searchParams.get("v");
     /* eslint-disable react-hooks/set-state-in-effect -- 주소와 탭 저장소는 수화 뒤에만 읽을 수 있음 */
     setId(p.views.some((x) => x.id === v) ? v! : p.fallback);
     setRole(src.searchParams.get("r"));
-    setSort(src.searchParams.get("s") === "pick" ? "pick" : "score");
+    setOrder(parseSort(src.searchParams.get("s"), src.searchParams.get("d")));
     setQ(src.searchParams.get("q") ?? "");
-    try {
-      setMode(localStorage.getItem(MODE) === "list" ? "list" : "card");
-    } catch {}
     /* eslint-enable react-hooks/set-state-in-effect */
     if (src !== now) window.history.replaceState(null, "", src.pathname + src.search);
     if (same) requestAnimationFrame(() => window.scrollTo(0, saved.y));
@@ -214,14 +227,22 @@ export default function TierBoard(p: Props) {
   }, []);
 
   // 기간, 역할군, 정렬, 검색어를 주소에 남겨 뒤로 가기와 공유에서 같은 목록을 보여 줌
-  const keep = (next: { v?: string; r?: string | null; s?: "score" | "pick"; q?: string }) => {
+  const keep = (next: { v?: string; r?: string | null; s?: SortKey; d?: Dir | null; q?: string }) => {
     const url = new URL(window.location.href);
     const put = (k: string, val: string | null | undefined, empty: string | null) => (val == null || val === empty ? url.searchParams.delete(k) : url.searchParams.set(k, val));
     if ("v" in next) put("v", next.v, p.fallback);
     if ("r" in next) put("r", next.r, null);
     if ("s" in next) put("s", next.s, "score");
+    if ("d" in next) put("d", next.d, null);
     if ("q" in next) put("q", next.q, "");
     window.history.replaceState(null, "", url);
+  };
+  // 같은 열을 다시 누르면 방향만 바꿈. 주소에는 그 열의 기본 방향과 다를 때만 남김
+  const order = (k: SortKey) => {
+    const col = COLS.find((c) => c.key === k)!;
+    const d: Dir = k === sort ? (dir === "asc" ? "desc" : "asc") : col.first;
+    setOrder([k, d]);
+    keep({ s: k, d: d === col.first ? null : d });
   };
   const pick = (next: string) => {
     setId(next);
@@ -236,34 +257,11 @@ export default function TierBoard(p: Props) {
   const shown = view.combos.filter(
     (c) => (role == null || c.roles?.includes(role)) && (!query || `${c.weaponName}${c.name}`.replace(/\s+/g, "").includes(query) || `${c.name}${c.weaponName}`.replace(/\s+/g, "").includes(query)),
   );
-  const ordered = sort === "pick" ? [...shown].sort((a, b) => b.pick - a.pick || b.n - a.n) : [...shown].sort((a, b) => b.score - a.score);
+  const by = COLS.find((c) => c.key === sort)!;
+  const ordered = [...shown].sort((a, b) => (dir === "asc" ? 1 : -1) * (by.val(a) - by.val(b)) || b.n - a.n);
   const w = p.weights;
   const prev = compareView(p.views, view, p.patch);
   const moved = prev ? movedCombos(shown, prev) : [];
-
-  const card = (c: TierCombo) => {
-    const key = `${c.char}:${c.weapon}`;
-    return (
-      <Link key={key} href={href(c)} prefetch={false} className="tier-card" data-thin={thin(c) || undefined} onClick={saveBack}>
-        <span className="tier-pw">
-          {/* 새 실험체는 초상 파일을 더하기 전까지 칸만 남김 */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
-          {WEAPON_SPRITE.includes(c.weapon) && (
-            <span className="tier-wb">
-              <Weapon code={c.weapon} label={c.weaponName} />
-            </span>
-          )}
-        </span>
-        <b>
-          <WeaponText code={c.weapon} label={c.weaponName} />
-          {c.name}
-        </b>
-        <span className="tier-sc">{signed(c.score)}</span>
-        <small>{sort === "pick" ? `${c.pick.toFixed(2)}%` : `${int(c.n)}판`}</small>
-      </Link>
-    );
-  };
 
   return (
     <>
@@ -319,48 +317,6 @@ export default function TierBoard(p: Props) {
                 }}
               >
                 {r ?? "전체"}
-              </button>
-            ))}
-          </div>
-          <div className="tabs sort" role="group" aria-label="정렬">
-            {(
-              [
-                ["score", "점수 순"],
-                ["pick", "픽률 순"],
-              ] as const
-            ).map(([k, label]) => (
-              <button
-                key={k}
-                type="button"
-                aria-pressed={sort === k}
-                onClick={() => {
-                  setSort(k);
-                  keep({ s: k });
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="tabs sort" role="group" aria-label="보기">
-            {(
-              [
-                ["card", "카드"],
-                ["list", "목록"],
-              ] as const
-            ).map(([k, label]) => (
-              <button
-                key={k}
-                type="button"
-                aria-pressed={mode === k}
-                onClick={() => {
-                  setMode(k);
-                  try {
-                    localStorage.setItem(MODE, k);
-                  } catch {}
-                }}
-              >
-                {label}
               </button>
             ))}
           </div>
@@ -421,32 +377,11 @@ export default function TierBoard(p: Props) {
           역할군이나 검색어를 바꿔 주세요.
         </p>
       )}
-      {mode === "list" && shown.length > 0 && (
-        <section className="tier-board flat" aria-label="목록">
-          <RankTable list={ordered} sort={sort} thin={thin} href={href} onOpen={saveBack} />
-        </section>
+      {shown.length > 0 && (
+        <div className="tier-board">
+          <RankTable list={ordered} sort={sort} dir={dir} onSort={order} thin={thin} href={href} onOpen={saveBack} />
+        </div>
       )}
-      {mode === "card" && sort === "pick" && shown.length > 0 && (
-        <section className="tier-board flat" aria-label="픽률 순">
-          <div className="tier-cards">{ordered.map(card)}</div>
-        </section>
-      )}
-      {mode === "card" &&
-        sort === "score" &&
-        GRADES.map((g) => {
-          const list = ordered.filter((c) => c.grade === g);
-          if (!list.length) return null;
-          return (
-            <section key={g} className="tier-board" aria-label={`${g} 등급`}>
-              <div className="tier-gl">
-                <span className="tier-grade" data-grade={g}>
-                  {g}
-                </span>
-              </div>
-              <div className="tier-cards">{list.map(card)}</div>
-            </section>
-          );
-        })}
     </>
   );
 }

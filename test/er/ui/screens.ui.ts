@@ -259,7 +259,7 @@ async function open(screen: Screen, width: number, theme: "dark" | "light"): Pro
   const res = await page.goto(base + screen.path(), { waitUntil: "networkidle" });
   if (screen.tab) await page.getByRole("tab", { name: screen.tab }).click();
   if (screen.card) {
-    await page.locator(".tier-card").first().click();
+    await page.locator(".tier-who a").first().click();
     await page.waitForURL(/\/er\/tier\/[a-z]+-[a-z]+/);
     await page.locator(".tdx-hero").waitFor();
   }

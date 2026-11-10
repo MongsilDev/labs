@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 // 링크 행은 오른쪽 화살표와 가로선으로 일반 글자와 달라 보이게 그림
-export default function RowLinks({ items }: { items: { href: string; label: string }[] }) {
+export default function RowLinks({ items, className = "mt-2" }: { items: { href: string; label: string }[]; className?: string }) {
   return (
-    <ul className="mt-2 border-t border-rule">
+    <ul className={`border-t border-rule ${className}`}>
       {items.map((it) => (
         <li key={it.href} className="border-b border-rule">
           <Link href={it.href} className="group flex h-12 items-center gap-3 font-semibold hover:bg-row hover:no-underline">
