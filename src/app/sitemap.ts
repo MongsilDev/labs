@@ -13,7 +13,6 @@ const PATHS = [
   "/er/score",
   "/er/cut",
   "/er/tier",
-  // 개편 배포에서 /next/er/overlay가 옮겨 오는 주소
   "/er/overlay",
   "/er/example/a",
   "/tarkov/players",

@@ -8,7 +8,10 @@ export const metadata = { title: "방송 화면" };
 
 const NAMES: [PresetKey, string][] = [["t1", "왼쪽 아래"], ["t2", "오른쪽 위 한 줄"], ["t3", "오른쪽 위"]];
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
-const px = (v: string | undefined) => Math.round(Number(v)) || 0;
+const px = (v: string | undefined) => {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) ? n : 0;
+};
 
 export default async function NextOverlay({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const q = await searchParams;
@@ -21,8 +24,8 @@ export default async function NextOverlay({ searchParams }: { searchParams: Prom
     <Shell here="overlay">
       <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">방송 화면</h1>
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <section className="sec" aria-labelledby="tier-h">
-          <h2 id="tier-h" className="sec-h">티어 방송 화면</h2>
+        <section className="sec" aria-labelledby="rank-h">
+          <h2 id="rank-h" className="sec-h">랭크 방송 화면</h2>
           <form className="mt-4 grid max-w-[560px] gap-5" noValidate>
             <div>
               <label className="lbl" htmlFor="n">닉네임</label>

@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Shell from "@/next/Shell";
 import Filters from "@/next/Filters";
-import { pickView, signed, WEAPON_SPRITE, type TierCombo } from "@/er/lib/tier";
+import { pickView, signed, type TierCombo } from "@/er/lib/tier";
+import Weapon from "@/next/Weapon";
 import { getTier } from "@/er/server/tier";
 
 export const dynamic = "force-dynamic";
@@ -29,13 +30,6 @@ function Range({ c, lo, hi }: { c: TierCombo; lo: number; hi: number }) {
       <circle cx={x(c.score)} cy="6" r="3" fill={`var(--g-${c.grade.toLowerCase()})`} />
     </svg>
   );
-}
-
-// 스프라이트에 아직 없는 새 무기는 아이콘 대신 글자로 적음
-function Weapon({ code, name }: { code: number; name: string }) {
-  const i = WEAPON_SPRITE.indexOf(code);
-  if (i < 0) return <span className="text-ink-3">{name}</span>;
-  return <span className="wg" style={{ ["--i" as string]: i }} role="img" aria-label={name} title={name} />;
 }
 
 export default async function NextTier({ searchParams }: { searchParams: Promise<{ v?: string; role?: string; sort?: string }> }) {

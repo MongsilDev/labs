@@ -149,6 +149,8 @@ const SID = { other: OTHER_SID, empty: EMPTY.sid, fail: FAILING.sid } as const;
 
 const SCREENS: Screen[] = [
   { name: "Labs", path: () => "/" },
+  { name: "방송 화면", path: () => "/er/overlay" },
+  { name: "방송 화면 주소", path: () => "/er/overlay?n=%EB%AA%BD%EC%8B%A4" },
   { name: "점수 계산", path: () => "/er/score" },
   { name: "이터컷 예측", path: () => "/er/cut" },
   { name: "이터컷 예측 RP 주소", path: () => "/er/cut?rp=9050" },

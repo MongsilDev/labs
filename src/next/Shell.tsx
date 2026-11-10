@@ -88,10 +88,16 @@ export default function Shell({ here, children }: { here?: string; children: Rea
         )}
       </header>
       <main id="main" className="mx-auto w-full max-w-[1320px] px-4 pt-5 pb-16 lg:px-6">{children}</main>
-      <footer className="mx-auto flex w-full max-w-[1320px] gap-4 border-t border-rule px-4 py-5 text-[12px] text-ink-3 lg:px-6">
-        <Link href="/terms">이용약관</Link>
-        <Link href="/privacy">개인정보 처리방침</Link>
-      </footer>
+      <Foot />
     </>
+  );
+}
+
+export function Foot() {
+  return (
+    <footer className="mx-auto flex w-full max-w-[1320px] gap-4 border-t border-rule px-4 py-5 text-[12px] text-ink-3 lg:px-6">
+      <Link href="/terms">이용약관</Link>
+      <Link href="/privacy">개인정보 처리방침</Link>
+    </footer>
   );
 }
