@@ -31,7 +31,7 @@ export default async function NextKel() {
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">2026 KEL</h1>
         <p className="text-[13px] text-ink-3 num">
-          {sum.games.toLocaleString("ko-KR")}게임, {span}
+          {sum.games.toLocaleString("ko-KR")}게임{span && `, ${span}`}
           {champ ? `, 우승 ${TEAM.get(champ)?.name}` : ""}
         </p>
       </div>
