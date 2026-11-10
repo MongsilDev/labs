@@ -177,10 +177,11 @@
     --et: #c42f63;
     --dg: #9c6a12;
   }
+  /* 헤더(.site-top-in)와 같은 1320px 폭이라 본문 왼쪽 끝이 로고와 맞음 */
   .wrap {
     margin: 0 auto;
     padding: 24px;
-    max-width: 1280px;
+    max-width: 1320px;
   }
   :where(.wrap.slim) > :where(:not(.dim, .toast-area, .drop-overlay)) {
     max-width: 712px;
@@ -1015,7 +1016,7 @@
     width: 90px;
   }
 
-  /* 운영자 두 열 화면은 본문 1280px 안에서 순위표 칸이 약 880px라 기타 열을 숨김 */
+  /* 운영자 두 열 화면은 본문 1320px 안에서 순위표 칸이 약 920px라 기타 열을 숨김 */
   .cols .stand .c-extra {
     display: none;
   }

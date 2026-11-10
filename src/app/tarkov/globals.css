@@ -82,10 +82,11 @@ a {
   outline-offset: 2px;
 }
 
+/* 헤더(.site-top-in)와 같은 1320px 폭이라 본문 왼쪽 끝이 로고와 맞음 */
 .wrap {
   margin: 0 auto;
   padding: 24px;
-  max-width: 1280px;
+  max-width: 1320px;
 }
 body > main {
   flex: 1 0 auto;
