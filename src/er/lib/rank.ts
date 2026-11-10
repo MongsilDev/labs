@@ -46,7 +46,7 @@ export const PRESETS: Record<PresetKey, Preset> = {
   t3: { x0: 1280, y0: 13, x1: 1548, y1: 101, anchor: "tl" },
 };
 
-export type Place = { preset: PresetKey; left?: number; right?: number; top?: number; bottom?: number };
+export type Place = { preset: PresetKey; left?: number; right?: number; top?: number; bottom?: number; scale?: number };
 
 const int = (v: string | undefined) => {
   const n = Math.round(Number(v));
@@ -55,7 +55,9 @@ const int = (v: string | undefined) => {
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 /** 프리셋 자리에 x, y만큼 옮긴 위치. 1920 기준 픽셀이고 패널이 화면 밖으로 나가지 않게 막음 */
-export function overlayPlace(p: string | undefined, x?: string, y?: string): Place {
+export function overlayPlace(p: string | undefined, x?: string, y?: string, scale?: string): Place {
+  // p 없이 scale만 있는 주소는 소스를 카드 크기로 잡던 프리셋 이전 설정이라 왼쪽 위에 그 배율로 그림
+  if (p === undefined && scale !== undefined) return { preset: "t1", left: 8, top: 8, scale: clamp(Number(scale) || 1, 0.5, 3) };
   const preset: PresetKey = p === "t2" || p === "t3" ? p : "t1";
   const g = PRESETS[preset];
   const dx = clamp(int(x), -g.x0, 1919 - g.x1);

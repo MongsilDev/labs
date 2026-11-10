@@ -4,7 +4,7 @@ import { NICKNAME, parseRank, rankOf } from "@/er/server/rank";
 
 const VIEW = { nickname: "Foo", tier: "메테오라이트 3", mmr: 6842, place: "아시아1 1,284위", serverRank: 1284, serverCode: 10, last: { gain: 38, at: 1794150000 }, updatedAt: 1794150100 };
 
-describe("티어 방송 화면", () => {
+describe("랭크 방송 화면", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
@@ -23,6 +23,9 @@ describe("티어 방송 화면", () => {
     expect(overlayPlace("t1", "-50", "100")).toEqual({ preset: "t1", left: 0, bottom: 0 });
     expect(overlayPlace("t2", "9999", "abc")).toEqual({ preset: "t2", right: 0, top: 13 });
     expect(overlayPlace("zz", "1.6")).toEqual({ preset: "t1", left: 6, bottom: 27 });
+    expect(overlayPlace(undefined, undefined, undefined, "1.5")).toEqual({ preset: "t1", left: 8, top: 8, scale: 1.5 });
+    expect(overlayPlace(undefined, undefined, undefined, "9")).toEqual({ preset: "t1", left: 8, top: 8, scale: 3 });
+    expect(overlayPlace("t2", undefined, undefined, "2")).toEqual({ preset: "t2", right: 277, top: 13 });
   });
 
   it("닉네임 형식", () => {

@@ -427,7 +427,7 @@ describe("화면 점검", () => {
     expect(errors).toEqual([]);
   });
 
-  it("티어 방송 화면은 프리셋 자리와 크기로 표시하고, 없는 닉네임에는 안내를 표시한다", async () => {
+  it("랭크 방송 화면은 프리셋 자리와 크기로 표시하고, 없는 닉네임에는 안내를 표시한다", async () => {
     const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await ctx.newPage();
     const n = encodeURIComponent("시험선수");
@@ -442,6 +442,9 @@ describe("화면 점검", () => {
       expect(loaded, q).toBe(true);
     }
     expect(await page.locator(".tov-c").count()).toBe(10);
+    // 프리셋 이전 주소는 p 없이 scale만 있고, 소스를 카드 크기로 잡아 둠
+    await page.goto(`${base}/er/rank/overlay?n=${n}&scale=1.5`, { waitUntil: "networkidle" });
+    const old = await page.locator(".tov-p").boundingBox();
     await page.setViewportSize({ width: 2560, height: 1440 });
     await page.goto(`${base}/er/rank/overlay?n=${n}`, { waitUntil: "networkidle" });
     await expect(page.locator(".tov-tn").textContent()).resolves.toBe("메테오라이트 3");
@@ -451,6 +454,7 @@ describe("화면 점검", () => {
     await ctx.close();
     expect(boxes).toEqual({ "p=t1": [4, 920, 288, 133], "p=t2": [boxes["p=t2"][0], 13, boxes["p=t2"][2], 32], "p=t3": [1280, 13, 269, 89], "p=t3&x=-10&y=5": [1270, 18, 269, 89] });
     expect(boxes["p=t2"][0] + boxes["p=t2"][2]).toBe(1643);
+    expect(old && [old.x, old.y, old.width, old.height].map(Math.round)).toEqual([12, 12, 432, 200]);
     expect(big && [big.x, big.y, big.width, big.height].map((v) => Math.round((v * 3) / 4))).toEqual([4, 920, 288, 133]);
     for (const p of problems) expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
   });

@@ -1722,7 +1722,7 @@
     border-radius: 5px;
   }
 
-  /* 티어 방송 화면. 브라우저 소스는 방송 화면 전체 크기이고 자리와 크기는 1920 기준 프리셋 */
+  /* 랭크 방송 화면. 브라우저 소스는 방송 화면 전체 크기이고 자리와 크기는 1920 기준 프리셋 */
   .tov {
     --u: calc(100vw / 1920);
     position: fixed;
@@ -1880,6 +1880,16 @@
   }
   .tov-t3 .tov-em {
     height: calc(38 * var(--u));
+  }
+  /* 언랭크는 RP 줄이 없어 티어 이름만 칸 가운데에 두고 t1, t2처럼 굵게 씀 */
+  .tov-t3 .tov-m {
+    align-self: center;
+  }
+  .tov-t3 .tov-m b:only-child {
+    font-size: calc(18 * var(--u));
+    font-weight: 800;
+    line-height: calc(22 * var(--u));
+    color: #fff;
   }
   .tov-t3 .tov-m b,
   .tov-d span {

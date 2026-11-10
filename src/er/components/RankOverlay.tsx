@@ -5,6 +5,7 @@ import { isRanked, rankEmblem, type Place, type RankView } from "@/er/lib/rank";
 
 const EVERY = 60_000;
 const GAIN_FOR = 12 * 3_600_000;
+const BASE_GAP = 4 * 3_600_000;
 const BASE_FOR = 12 * 3_600_000;
 
 type State = { data: RankView | null; error: string | null; today: number };
@@ -14,13 +15,20 @@ const u = (n: number | undefined) => (n === undefined ? undefined : `calc(${n} *
 const num = (v: number) => v.toLocaleString("ko-KR");
 const signed = (v: number) => (v > 0 ? `+${num(v)}` : num(v));
 
-// 이번 방송 RP의 기준값. OBS가 소스를 다시 불러와도 이어지게 브라우저에 12시간 동안 기억
+// 이번 방송 RP의 기준값. OBS가 소스를 다시 불러와도 이어지게 브라우저에 기억하고,
+// 조회가 4시간 넘게 끊기거나 OBS를 켜 둔 채 기준을 잡은 지 12시간이 지나면 새 방송으로 봄
 function sessionGain(nickname: string, mmr: number): number {
   const key = `tov-base:${nickname.toLowerCase()}`;
   try {
-    const saved = JSON.parse(localStorage.getItem(key) ?? "null") as { mmr: number; at: number } | null;
-    if (saved && typeof saved.mmr === "number" && Date.now() - saved.at < BASE_FOR) return mmr - saved.mmr;
-    localStorage.setItem(key, JSON.stringify({ mmr, at: Date.now() }));
+    const saved = JSON.parse(localStorage.getItem(key) ?? "null") as { mmr: number; at: number; since?: number } | null;
+    const now = Date.now();
+    // since가 없는 값은 배포 전 형식이고 그때는 at이 기준을 잡은 시각
+    const since = saved?.since ?? saved?.at;
+    // 배치 전 RP 0을 기준으로 두면 방송 중 배치를 마쳤을 때 RP 전체가 이번 방송으로 잡힘
+    const keep = saved && typeof saved.mmr === "number" && saved.mmr > 0 && typeof since === "number" && now - saved.at < BASE_GAP && now - since < BASE_FOR;
+    const base = keep ? { mmr: saved.mmr, since } : { mmr, since: now };
+    localStorage.setItem(key, JSON.stringify({ ...base, at: now }));
+    return mmr - base.mmr;
   } catch {}
   return 0;
 }
@@ -43,9 +51,12 @@ function useTween(value: number): number {
   return shown;
 }
 
-function Emblem({ tier }: { tier: string }) {
+// 배치 전 계정은 RP가 0이고 휘장은 NO DATA 카드뿐이라 휘장, RP, 이번 방송을 그리지 않음
+const ranked = (d: RankView) => d.mmr > 0 || isRanked(d.tier);
+
+function Emblem({ data }: { data: RankView }) {
   // eslint-disable-next-line @next/next/no-img-element
-  return <img className="tov-em" src={rankEmblem(tier)} alt="" />;
+  return ranked(data) ? <img className="tov-em" src={rankEmblem(data.tier)} alt="" /> : null;
 }
 
 function Gain({ data }: { data: RankView }) {
@@ -78,11 +89,11 @@ function T1({ data, style }: ViewProps) {
   return (
     <div className="tov-p tov-t1" style={style}>
       <div className="tov-hd">
-        <Emblem tier={data.tier} />
+        <Emblem data={data} />
         <div className="tov-m">
           <div className="tov-n">{data.nickname}</div>
           <div className="tov-tn">{data.tier}</div>
-          {(data.mmr > 0 || isRanked(data.tier)) && (
+          {ranked(data) && (
             <div className="tov-rp">
               {num(data.mmr)} RP
               <Gain data={data} />
@@ -99,9 +110,9 @@ function T1({ data, style }: ViewProps) {
 function T2({ data, style }: ViewProps) {
   return (
     <div className="tov-p tov-t2" style={style}>
-      <Emblem tier={data.tier} />
+      <Emblem data={data} />
       <b>{data.tier}</b>
-      {(data.mmr > 0 || isRanked(data.tier)) && <span className="tov-rp">{num(data.mmr)} RP</span>}
+      {ranked(data) && <span className="tov-rp">{num(data.mmr)} RP</span>}
       <Gain data={data} />
     </div>
   );
@@ -112,15 +123,17 @@ function T3({ data, style, today: value }: ViewProps) {
   return (
     <div className="tov-p tov-t3" style={style}>
       <div className="tov-hd">
-        <Emblem tier={data.tier} />
+        <Emblem data={data} />
         <div className="tov-m">
           <b>{data.tier}</b>
-          {(data.mmr > 0 || isRanked(data.tier)) && <span>{num(data.mmr)} RP</span>}
+          {ranked(data) && <span>{num(data.mmr)} RP</span>}
         </div>
-        <div className="tov-d">
-          <span>이번 방송</span>
-          <b className={today < 0 ? "dn" : undefined}>{signed(today)}</b>
-        </div>
+        {ranked(data) && (
+          <div className="tov-d">
+            <span>이번 방송</span>
+            <b className={today < 0 ? "dn" : undefined}>{signed(today)}</b>
+          </div>
+        )}
       </div>
       {data.recent.length > 0 && <Recent list={data.recent} />}
     </div>
@@ -160,7 +173,7 @@ export default function RankOverlay({ nickname, place }: { nickname: string; pla
   const { data, error, today } = state;
   const View = VIEWS[place.preset];
   return (
-    <div className="tov">
+    <div className="tov" style={place.scale ? ({ "--u": `${place.scale}px` } as CSSProperties) : undefined}>
       {data ? (
         <View data={data} style={style} today={today} />
       ) : (
