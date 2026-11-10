@@ -96,7 +96,8 @@
 .tbl.stick thead th { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 0; box-shadow: inset 0 -1px 0 var(--rule-2); }
 /* 좁은 폭에서 합계 열을 오른쪽에 남김. 감싼 요소의 좌우 여백 16px만큼 더 밀어 여백으로 뒤 칸이 비치지 않게 함 */
 @media (max-width: 1023px) {
-  .tbl .pin-r { position: sticky; right: -16px; z-index: 1; background: var(--bg); box-shadow: inset 1px 0 0 var(--rule-2); padding-left: 10px; padding-right: 16px; }
+  /* :last-child 규칙의 padding-right: 0보다 앞서도록 선택자를 겹쳐 씀 */
+  .tbl .pin-r, .tbl .pin-r:last-child { position: sticky; right: -16px; z-index: 1; background: var(--bg); box-shadow: inset 1px 0 0 var(--rule-2); padding-left: 10px; padding-right: 16px; }
 }
 .portrait { width: 24px; height: 24px; border-radius: 2px; object-fit: cover; background: var(--row); }
 .field { height: 40px; padding: 0 12px; border: 1px solid var(--rule-2); border-radius: 2px; background: var(--bg); color: var(--ink); font: inherit; font-size: 15px; width: 100%; min-width: 0; }

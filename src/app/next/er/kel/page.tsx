@@ -21,7 +21,7 @@ export default async function NextKel() {
   const champ = kelChampion(data);
   // 다른 화면의 기간 표기와 같은 형식. 같은 해면 끝 날짜의 연도를 뺌
   const first = Date.parse(sum.first), last = Date.parse(sum.last);
-  const span = sum.first.slice(0, 4) === sum.last.slice(0, 4) ? `${dateKo(first)}~${new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(last)}` : `${dateKo(first)}~${dateKo(last)}`;
+  const span = !first || !last ? "" : sum.first.slice(0, 4) === sum.last.slice(0, 4) ? `${dateKo(first)}~${new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(last)}` : `${dateKo(first)}~${dateKo(last)}`;
   const avg = (t: (typeof KEL_TEAMS)[number]) => t.circuits.reduce((s, x) => s + x, 0) / t.circuits.length;
   const teams = [...KEL_TEAMS].sort((a, b) => avg(a) - avg(b));
   const players = playerStats(data).filter((p) => p.games >= 30).sort((a, b) => b.kpr - a.kpr).slice(0, 8);

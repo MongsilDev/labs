@@ -31,7 +31,7 @@ export default async function NextPlayers({ searchParams }: { searchParams: Prom
           {indexed && (
             <div>
               <dt className="text-[12px] font-semibold text-ink-3">이름 목록 기준</dt>
-              <dd className="m-0 mt-1 text-[15px] font-semibold num">{dateKo(indexed)}</dd>
+              <dd className="m-0 mt-1 text-[15px] font-semibold num">{indexed ? dateKo(indexed) : "-"}</dd>
             </div>
           )}
           <Link className="link justify-self-start" href="/tarkov/criteria">판정 기준</Link>

@@ -50,11 +50,11 @@ export default async function NextOverlay({ searchParams }: { searchParams: Prom
             </fieldset>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="lbl" htmlFor="x">오른쪽으로 px</label>
+                <label className="lbl" htmlFor="x">가로 이동 px</label>
                 <input id="x" name="x" className="field num" type="number" inputMode="numeric" defaultValue={x} />
               </div>
               <div>
-                <label className="lbl" htmlFor="y">아래로 px</label>
+                <label className="lbl" htmlFor="y">세로 이동 px</label>
                 <input id="y" name="y" className="field num" type="number" inputMode="numeric" defaultValue={y} />
               </div>
             </div>
@@ -70,9 +70,9 @@ export default async function NextOverlay({ searchParams }: { searchParams: Prom
             </div>
           )}
         </section>
-        <section className="sec self-start" aria-labelledby="t-h">
-          <h2 id="t-h" className="sec-h">대회 순위</h2>
-          <p className="mt-3 text-ink-2">대회 방송 화면 주소는 대회 화면에서 복사합니다.</p>
+        <section id="t" className="sec self-start" aria-labelledby="t-h">
+          <h2 id="t-h" className="sec-h">대회 방송 화면</h2>
+          <p className="mt-3 text-ink-2">주소는 대회 화면에서 복사합니다.</p>
           <Link href="/next/er/score" className="mt-3 flex h-11 items-center border-y border-rule font-semibold hover:bg-row hover:no-underline">
             대회 점수
           </Link>

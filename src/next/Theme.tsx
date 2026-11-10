@@ -1,11 +1,23 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTheme } from "@/components/ThemeToggle";
 
 const COLOR = { dark: "#121212", light: "#fafaf9" };
 
 export default function Theme() {
   const theme = useTheme();
+  // notFound() 응답은 오류 셸을 브라우저에서 그려 layout의 테마 스크립트가 실행되지 않음
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("labs-theme");
+      if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+    } catch {}
+  }, []);
+  // layout의 theme-color는 어두운 값 하나라 저장된 테마로 열었을 때도 여기서 맞춤
+  useEffect(() => {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", COLOR[theme]);
+  }, [theme]);
   const next = theme === "light" ? "dark" : "light";
   const label = next === "light" ? "밝은 테마로 바꾸기" : "어두운 테마로 바꾸기";
   return (
@@ -20,7 +32,6 @@ export default function Theme() {
         try {
           localStorage.setItem("labs-theme", next);
         } catch {}
-        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", COLOR[next]);
       }}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">

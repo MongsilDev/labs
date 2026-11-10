@@ -128,6 +128,9 @@ export default async function NextHub() {
             <input className="field" name="n" placeholder="닉네임" aria-label="닉네임" autoComplete="off" spellCheck={false} maxLength={32} />
             <button className="btn primary flex-none">주소 만들기</button>
           </form>
+          <Link href="/next/er/overlay#t" className="mt-3 flex h-11 items-center border-y border-rule font-semibold hover:bg-row hover:no-underline">
+            대회 방송 화면
+          </Link>
         </section>
 
         <section className="sec">
