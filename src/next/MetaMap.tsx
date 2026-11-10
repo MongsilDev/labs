@@ -4,8 +4,8 @@ type Box = { x: number; y: number; w: number; h: number };
 const hit = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 // 겹치는 이름표는 오른쪽, 왼쪽, 위, 아래 순으로 옮기고 자리가 없으면 뺌
-export function place(points: { k: string; x: number; y: number; text: string }[], fs: number, box: Box, dots: [number, number][]) {
-  const taken: Box[] = dots.map(([x, y]) => ({ x: x - 4, y: y - 4, w: 8, h: 8 }));
+export function place(points: { k: string; x: number; y: number; text: string }[], fs: number, box: Box, dots: [number, number][], fixed: Box[] = []) {
+  const taken: Box[] = [...fixed, ...dots.map(([x, y]) => ({ x: x - 4, y: y - 4, w: 8, h: 8 }))];
   const out = new Map<string, { x: number; y: number; anchor: "start" | "end" | "middle" }>();
   for (const p of points) {
     const w = p.text.length * fs * 0.92, h = fs + 2;
@@ -45,7 +45,11 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
     .filter((c) => label.has(key(c)))
     .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
     .map((c) => ({ k: key(c), x: sx(c.pick), y: sy(c.score), text: `${c.name} ${c.weaponName}` }));
-  const spots = place(named, fs, { x: L, y: T, w: W - L - R, h: H - T - B }, list.map((c) => [sx(c.pick), sy(c.score)]));
+  // 사분면 이름이 차지한 자리. 이름표가 그 위에 놓이지 않게 함
+  const cw = (text: string) => text.length * fs * 0.92;
+  const QUADS: [string, "start" | "end", number][] = [["많이 쓰고 강함", "end", T + fs], ["적게 쓰지만 강함", "start", T + fs], ["많이 쓰지만 약함", "end", H - B - 6]];
+  const fixed = QUADS.map(([text, anchor, y]) => ({ x: anchor === "end" ? W - R - 4 - cw(text) : L + 6, y: y - fs, w: cw(text), h: fs + 4 }));
+  const spots = place(named, fs, { x: L, y: T, w: W - L - R, h: H - T - B }, list.map((c) => [sx(c.pick), sy(c.score)]), fixed);
   const q = { fontSize: fs, fontWeight: 700, fill: "var(--ink-3)" };
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="실험체별 점수와 픽률">
@@ -63,9 +67,9 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
       <line x1={L} x2={W - R} y1={zy} y2={zy} stroke="var(--rule-2)" />
       <line x1={mx} x2={mx} y1={T} y2={H - B} stroke="var(--rule-2)" strokeDasharray="3 3" />
       <text x={mx} y={H - 4} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">중앙값 {median}%</text>
-      <text x={W - R - 4} y={T + fs} textAnchor="end" {...q}>많이 쓰고 강함</text>
-      <text x={L + 6} y={T + fs} {...q}>적게 쓰지만 강함</text>
-      <text x={W - R - 4} y={H - B - 6} textAnchor="end" {...q}>많이 쓰지만 약함</text>
+      {QUADS.map(([text, anchor, y]) => (
+        <text key={text} x={anchor === "end" ? W - R - 4 : L + 6} y={y} textAnchor={anchor} {...q}>{text}</text>
+      ))}
       {list.map((c) => {
         const x = sx(c.pick), y = sy(c.score), k = key(c), at = spots.get(k);
         const color = `var(--g-${c.grade.toLowerCase()})`;
