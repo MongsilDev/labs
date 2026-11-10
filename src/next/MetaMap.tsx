@@ -51,6 +51,7 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
   const q = { fontSize: fs, fontWeight: 700, fill: "var(--ink-3)" };
   // 그려진 글자 폭의 어림값. 한글은 글자 크기만큼, 공백과 영문과 기호는 그보다 좁음
   const tw = (text: string) => [...text].reduce((w, ch) => w + (ch === " " ? 0.28 : /[\u3131-\uD7A3]/.test(ch) ? 0.93 : 0.62), 0) * fs;
+  const labels = named.flatMap((p) => { const at = spots.get(p.k); return at ? [{ k: p.k, text: p.text, at }] : []; });
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="실험체별 점수와 픽률">
       <text x={4} y={fs} fontSize={fs} fill="var(--ink-3)">점수</text>
@@ -70,6 +71,10 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
       {QUADS.map(([text, anchor, y]) => (
         <text key={text} x={anchor === "end" ? W - R - 4 : L + 6} y={y} textAnchor={anchor} {...q}>{text}</text>
       ))}
+      {/* 눈금선이 글자를 지나가지 않게 이름표 자리를 바탕색으로 덮음. 점보다 먼저 그려 이웃 점을 가리지 않음 */}
+      {labels.map(({ k, text, at }) => (
+        <rect key={k} x={at.anchor === "start" ? at.x - 2 : at.x - tw(text) - 2} y={at.y - fs} width={tw(text) + 4} height={fs + 4} fill="var(--bg)" />
+      ))}
       {list.map((c) => {
         const x = sx(c.pick), y = sy(c.score), k = key(c), at = spots.get(k);
         const color = `var(--g-${c.grade.toLowerCase()})`;
@@ -78,18 +83,12 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
             <title>{`${c.name} ${c.weaponName}, 점수 ${c.score > 0 ? "+" : ""}${c.score}, 픽률 ${c.pick}%, ${c.n}판`}</title>
             {c.half != null && <line className="opacity-0 group-hover:opacity-100" x1={x} x2={x} y1={sy(c.score + c.half)} y2={sy(c.score - c.half)} stroke={color} strokeOpacity="0.5" strokeWidth="2" />}
             <circle cx={x} cy={y} r={at ? fs * 0.42 : fs * 0.33} fill={color} stroke="var(--bg)" strokeWidth="1.5" />
-            {at && (
-              <>
-                {/* 눈금선이 글자를 지나가지 않게 이름표 뒤를 바탕색으로 덮음 */}
-                <rect x={at.anchor === "start" ? at.x - 2 : at.x - tw(`${c.name} ${c.weaponName}`) - 2} y={at.y - fs} width={tw(`${c.name} ${c.weaponName}`) + 4} height={fs + 4} fill="var(--bg)" />
-                <text x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)">
-                  {c.name} {c.weaponName}
-                </text>
-              </>
-            )}
           </g>
         );
       })}
+      {labels.map(({ k, text, at }) => (
+        <text key={k} x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)" paintOrder="stroke" stroke="var(--bg)" strokeWidth="3">{text}</text>
+      ))}
     </svg>
   );
 }
