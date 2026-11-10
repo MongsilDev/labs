@@ -1714,6 +1714,14 @@
     }
   }
 
+  /* 시안 화면(next.css)은 같은 클래스로 모서리를 2px로 바꿈 */
+  .er-char {
+    border-radius: 9999px;
+  }
+  .kel-logo {
+    border-radius: 5px;
+  }
+
   /* 티어 방송 화면. 브라우저 소스는 방송 화면 전체 크기이고 자리와 크기는 1920 기준 프리셋 */
   .tov {
     --u: calc(100vw / 1920);

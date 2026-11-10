@@ -6,7 +6,7 @@ export const logoUrl = (team: KelTeam) => `${LOGO_CDN}/${team.key}.png`;
 
 export function Logo({ team, size = 24, label = false, className = "" }: { team: KelTeam; size?: number; label?: boolean; className?: string }) {
   return (
-    <span className={`kel-logo inline-grid flex-none place-items-center rounded-[5px] p-[2px] ${className}`} style={{ width: size, height: size, background: plate(team) }} title={team.name}>
+    <span className={`kel-logo inline-grid flex-none place-items-center p-[2px] ${className}`} style={{ width: size, height: size, background: plate(team) }} title={team.name}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img className="size-full object-contain" src={logoUrl(team)} alt={label ? team.name : ""} width={size} height={size} loading="lazy" />
     </span>
