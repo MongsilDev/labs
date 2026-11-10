@@ -13,7 +13,7 @@ export default function RpHours({ hours, w: W = 1100, h: H = 200, every = 3 }: {
   const L = 34, B = 22, T = 8;
   const ext = Math.max(...hours.map((d) => Math.abs(d.gain) + d.ci));
   const step = ext > 8 ? 5 : 2;
-  const lim = Math.ceil(ext / step) * step;
+  const lim = Math.max(step, Math.ceil(ext / step) * step);
   const ticks: number[] = [];
   for (let v = -lim; v <= lim; v += step) ticks.push(v);
   const bw = (W - L) / 24;
