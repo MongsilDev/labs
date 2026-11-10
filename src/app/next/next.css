@@ -151,6 +151,8 @@
 }
 /* 운영 부품의 실험체 이미지와 팀 로고, 진단 카드 모서리를 시안의 2px에 맞춤 */
 .er-char, .kel-logo { border-radius: 2px; }
+/* 그림이 앞에 오는 이름은 줄의 기준선이 그림 아래쪽이 되어 같은 행 숫자보다 위로 올라감 */
+.tbl td .inline-flex { vertical-align: middle; }
 .rpcheck .grid-cols-2 { grid-template-columns: minmax(0, 1fr); gap: 0; }
 .rpcheck section { border: 0; border-top: 1px solid var(--rule-2); border-radius: 0; padding: 12px 0 4px; }
 /* 필터와 화면 이동. 유틸리티로 폭마다 모양을 바꾸려고 components 층에 둠 */

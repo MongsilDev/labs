@@ -46,7 +46,7 @@ export default async function NextKel() {
                   <tr>
                     <th className="l">팀</th>
                     {[1, 2, 3, 4].map((i) => (
-                      <th key={i} className="!text-center lg:w-[84px]">서킷 {i}</th>
+                      <th key={i} className="!text-center lg:w-[84px]"><span className="hidden sm:inline">서킷 </span>{i}</th>
                     ))}
                     <th className="lg:w-[112px]" aria-sort="ascending">평균 순위</th>
                   </tr>
