@@ -1479,8 +1479,12 @@
   .tier-card[data-thin] {
     color: var(--text-3);
   }
-  .tier-card[data-thin] .tier-pw {
+  .tier-card[data-thin] .tier-pw img {
     opacity: 0.4;
+  }
+  /* 무기 글자가 없어 배지가 유일한 무기 표시라, 흐린 카드에서도 배지는 흐리게 하지 않고 색만 낮춤 */
+  .tier-card[data-thin] .tier-wb {
+    color: var(--text-3);
   }
   .tier-card b {
     font-size: 14px;
@@ -1606,10 +1610,14 @@
   }
   /* 이름 앞에 놓는 무기 아이콘 */
   .tier-wi .tier-wg {
+    --s: 18px;
     display: inline-block;
     margin-right: 5px;
-    vertical-align: -3px;
+    vertical-align: -4px;
     color: var(--text-2);
+  }
+  .tier-table tr[data-thin] .tier-wi .tier-wg {
+    color: inherit;
   }
   @container (max-width: 600px) {
     .tier-table .tier-x {
@@ -1637,19 +1645,19 @@
   }
   .tier-wb {
     position: absolute;
-    right: -6px;
-    bottom: -6px;
+    right: -8px;
+    bottom: -8px;
     display: grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: 1px solid var(--line-strong);
     background: var(--bg);
     color: var(--text);
   }
   .tier-wb .tier-wg {
-    --s: 14px;
+    --s: 18px;
   }
   @media (max-width: 600px) {
     .tier-emblems img {
@@ -1683,6 +1691,15 @@
     .tier-pw {
       width: 56px;
       height: 56px;
+    }
+    .tier-wb {
+      right: -7px;
+      bottom: -7px;
+      width: 26px;
+      height: 26px;
+    }
+    .tier-wb .tier-wg {
+      --s: 16px;
     }
   }
 
