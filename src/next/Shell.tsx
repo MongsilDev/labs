@@ -95,9 +95,11 @@ export default function Shell({ here, children }: { here?: string; children: Rea
 
 export function Foot() {
   return (
-    <footer className="mx-auto flex w-full max-w-[1320px] gap-4 border-t border-rule px-4 py-5 text-[12px] text-ink-3 lg:px-6">
-      <Link href="/terms">이용약관</Link>
-      <Link href="/privacy">개인정보 처리방침</Link>
+    <footer className="mx-auto w-full max-w-[1320px] px-4 lg:px-6">
+      <div className="flex gap-4 border-t border-rule py-5 text-[12px] text-ink-3">
+        <Link href="/terms">이용약관</Link>
+        <Link href="/privacy">개인정보 처리방침</Link>
+      </div>
     </footer>
   );
 }
