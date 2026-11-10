@@ -1604,6 +1604,13 @@
     font-size: 14px;
     line-height: 1.3;
   }
+  /* 이름 앞에 놓는 무기 아이콘 */
+  .tier-wi .tier-wg {
+    display: inline-block;
+    margin-right: 5px;
+    vertical-align: -3px;
+    color: var(--text-2);
+  }
   @container (max-width: 600px) {
     .tier-table .tier-x {
       display: none;

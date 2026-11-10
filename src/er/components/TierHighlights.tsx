@@ -2,6 +2,7 @@ import Link from "next/link";
 import { go, Head, line, row } from "@/er/components/HubList";
 import { int } from "@/er/lib/cut";
 import { signed, type TierCombo, type TierMoved } from "@/er/lib/tier";
+import { Weapon } from "@/app/er/tier/parts";
 
 const HREF = "/er/tier";
 
@@ -11,9 +12,9 @@ function Combo({ c, value, sub }: { c: TierCombo; value: string; sub: string }) 
       <Link className={`${row} ${go}`} href={HREF}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="size-9 rounded-[10px] bg-field object-cover" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={36} height={36} loading="lazy" />
-        <span className="grid min-w-0">
-          <span className="truncate text-[14px] font-bold">{c.name}</span>
-          <span className="truncate text-[12px] text-fg-3">{c.weaponName}</span>
+        <span className="tier-wi min-w-0 truncate text-[14px] font-bold">
+          <Weapon code={c.weapon} label={c.weaponName} />
+          {c.name}
         </span>
         <span className="grid justify-items-end">
           <span className="text-[16px] leading-tight font-extrabold tabular-nums">{value}</span>

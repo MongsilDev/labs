@@ -141,8 +141,10 @@ function PickTable({ list, thin, href, onOpen }: { list: TierCombo[]; thin: (c: 
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={36} height={36} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
                   <Link href={href(c)} prefetch={false} onClick={onOpen}>
-                    <b>{c.name}</b>
-                    <small>{c.weaponName}</small>
+                    <b className="tier-wi">
+                      <Weapon code={c.weapon} label={c.weaponName} />
+                      {c.name}
+                    </b>
                   </Link>
                 </span>
               </td>
@@ -383,11 +385,10 @@ export default function TierBoard(p: Props) {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
                       <span className="tier-wb">
-                        <Weapon code={c.weapon} />
+                        <Weapon code={c.weapon} label={c.weaponName} />
                       </span>
                     </span>
                     <b>{c.name}</b>
-                    <small>{c.weaponName}</small>
                     <span className="tier-sc">{signed(c.score)}</span>
                     <small>{int(c.n)}판</small>
                   </Link>
