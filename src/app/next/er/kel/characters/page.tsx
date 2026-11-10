@@ -12,7 +12,7 @@ export const metadata = { title: "실험체" };
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 // 평균 순위와 1위 비율은 표본이 적으면 비우고 정렬에서 맨 아래로 보냄
 const COLS: { k: "games" | "avgPlace" | "winRate"; label: string; fmt: (r: CharacterStat) => string; low?: boolean; min?: boolean }[] = [
-  { k: "games", label: "등장", fmt: (r) => `${r.games}` },
+  { k: "games", label: "게임", fmt: (r) => `${r.games}` },
   { k: "avgPlace", label: "평균 순위", fmt: (r) => r.avgPlace.toFixed(2), low: true, min: true },
   { k: "winRate", label: "1위 비율", fmt: (r) => pct(r.winRate), min: true },
 ];
