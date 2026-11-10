@@ -55,7 +55,7 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">RP 손익</h1>
         <p className="text-[13px] text-ink-3 num">
-          아시아1 상위 1,000명 경기 {n(data.games)}판, {day.format(data.from)}~{day.format(data.to)}
+          아시아1 상위 1,000명 {n(data.games)}경기, {day.format(data.from)}~{day.format(data.to)}
         </p>
       </div>
       <Filters groups={[{ name: "게임 전 RP", items: data.bands.map((b) => ({ href: `/next/er/rp?rp=${b.lo}`, label: bandName(b.lo, b.hi), on: b === band })) }]} />
@@ -70,11 +70,11 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
               <table className="tbl">
                 <thead>
                   <tr>
-                    <th className="l w-12 sm:w-16" rowSpan={2}>순위</th>
+                    <th className="l w-12 !align-bottom sm:w-16" rowSpan={2}>순위</th>
                     <th colSpan={data.tk.length} className="!h-7 !text-center">팀 처치</th>
                   </tr>
                   <tr>
-                    {data.tk.map((t) => <th key={t[0]} className="!text-center">{range(t)}</th>)}
+                    {data.tk.map((t) => <th key={t[0]} className="!h-8 !py-0 !text-center">{range(t)}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -99,11 +99,18 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
           <section className="sec">
             <h2 className="sec-h">본전이 되는 팀 처치</h2>
             <table className="tbl">
+              {/* 옆 표의 두 줄 헤더와 같은 높이 */}
+              <thead>
+                <tr>
+                  <th className="l !align-bottom xl:h-[62px]">순위</th>
+                  <th className="!align-bottom">팀 처치</th>
+                </tr>
+              </thead>
               <tbody>
                 {even.map((j, i) => (
                   <tr key={i}>
                     <td className="l font-semibold">{i + 1}위</td>
-                    <td className={j == null ? "text-ink-3" : "font-bold"}>{j == null ? "없음" : `${data.tk[j][0]}개부터`}</td>
+                    <td className={j == null ? "text-ink-3" : "font-bold"}>{j == null ? "없음" : `${data.tk[j][0]} 이상`}</td>
                   </tr>
                 ))}
               </tbody>

@@ -19,7 +19,7 @@ export default function LateMap({ rows, early, fin, cut, w: W = 760, h: H = 520,
   const named = [...rows]
     .sort((a, b) => z(b, early, fin) - z(a, early, fin))
     .slice(0, labels)
-    .map((r) => ({ k: key(r), x: sx(r.early), y: sy(r.fin), text: `${r.name} ${r.weaponName}` }));
+    .map((r) => ({ k: key(r), x: sx(r.early), y: sy(r.fin), text: `${r.weaponName} ${r.name}` }));
   const spots = place(named, fs, { x: L, y: T, w: W - L - R, h: H - T - B }, rows.map((r) => [sx(r.early), sy(r.fin)]));
   const q = { fontSize: fs, fontWeight: 700, fill: "var(--ink-3)" };
   return (
@@ -44,11 +44,11 @@ export default function LateMap({ rows, early, fin, cut, w: W = 760, h: H = 520,
         const x = sx(r.early), y = sy(r.fin), k = key(r), at = spots.get(k);
         return (
           <g key={k}>
-            <title>{`${r.name} ${r.weaponName}, ${Math.round(cut / 60)}분 안에 탈락 ${r.early.toFixed(1)}%, TOP3 중 1위 ${r.fin.toFixed(1)}%, ${r.n.toLocaleString("ko-KR")}판`}</title>
+            <title>{`${r.weaponName} ${r.name}, ${Math.round(cut / 60)}분 안에 탈락 ${r.early.toFixed(1)}%, TOP3 중 1위 ${r.fin.toFixed(1)}%, ${r.n.toLocaleString("ko-KR")}판`}</title>
             <circle cx={x} cy={y} r={at ? fs * 0.42 : fs * 0.33} fill={at ? "var(--ink)" : "var(--ink-3)"} stroke="var(--bg)" strokeWidth="1.5" />
             {at && (
               <text x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)" paintOrder="stroke" stroke="var(--bg)" strokeWidth="3">
-                {r.name} {r.weaponName}
+                {r.weaponName} {r.name}
               </text>
             )}
           </g>

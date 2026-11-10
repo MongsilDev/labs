@@ -23,11 +23,11 @@ export default async function NextCombo({ params, searchParams }: { params: Prom
         <Image className="size-16 rounded-[2px] object-cover" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={64} height={64} unoptimized />
         <div>
           <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">
-            {c.name} <span className="text-ink-3">{c.weaponName}</span>
+            <span className="text-ink-3">{c.weaponName}</span> {c.name}
           </h1>
           <p className="mt-1 text-[13px] text-ink-3 num">{view.label}, {c.n.toLocaleString("ko-KR")}판</p>
         </div>
-        <dl className="ml-auto grid grid-cols-4 gap-x-8 gap-y-1 num">
+        <dl className="grid grid-cols-[repeat(4,auto)] justify-between gap-x-5 gap-y-1 num max-sm:w-full sm:ml-auto sm:gap-x-8">
           {[
             ["등급", <span key="g" className={`grade grade-${c.grade}`}>{c.grade}</span>],
             ["점수", signed(c.score)],

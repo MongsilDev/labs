@@ -64,7 +64,7 @@ export default async function NextHub() {
                   </li>
                 ))}
               </ul>
-              <ul className="mt-4 flex gap-5 border-t border-rule pt-3 text-[13px] text-ink-2 num">
+              <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-rule pt-3 text-[13px] text-ink-2 num max-sm:justify-between max-sm:gap-x-2">
                 {GRADES.map((g) => (
                   <li key={g} className="flex items-center gap-1.5">
                     <span className={`grade grade-${g}`}>{g}</span>

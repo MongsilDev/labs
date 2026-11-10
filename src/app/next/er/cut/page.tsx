@@ -32,8 +32,8 @@ export default async function NextCut({ searchParams }: { searchParams: Promise<
           const t = data.tiers[key];
           const end = t.forecast?.[t.forecast.length - 1];
           return (
-            <div key={key} className={`grid grid-cols-3 gap-4 py-4 ${i ? "border-t border-rule lg:border-t-0 lg:border-l lg:pl-6" : "lg:pr-6"}`}>
-              <div>
+            <div key={key} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 py-4 sm:grid-cols-3 sm:gap-4 ${i ? "border-t border-rule lg:border-t-0 lg:border-l lg:pl-6" : "lg:pr-6"}`}>
+              <div className="max-sm:row-span-2">
                 <dt className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-3">
                   <span className="h-3 w-1" style={{ background: color }} aria-hidden="true" />
                   {name} {int(t.place)}위
@@ -42,7 +42,7 @@ export default async function NextCut({ searchParams }: { searchParams: Promise<
                   {t.estimated && <span className="mr-0.5 text-[13px] font-bold text-ink-3 sm:text-[16px]">약</span>}
                   {t.cut != null ? int(t.cut) : "-"}
                 </dd>
-                <dd className="m-0 mt-1.5 text-[12px] text-ink-3 num">순위표 {t.board != null ? int(t.board) : "-"}</dd>
+                {t.board != null && t.cut != null && int(t.board) !== int(t.cut) && <dd className="m-0 mt-1.5 text-[12px] text-ink-3 num">순위표 {int(t.board)}</dd>}
               </div>
               {end && (
                 <>
@@ -50,13 +50,13 @@ export default async function NextCut({ searchParams }: { searchParams: Promise<
                     <dt className="text-[12px] font-semibold text-ink-3">종료 예상</dt>
                     <dd className="m-0 mt-2.5 text-[20px] leading-none font-bold num">{tens(end[1])}</dd>
                   </div>
-                  <div>
-                    <dt className="text-[12px] font-semibold text-ink-3">범위</dt>
-                    <dd className="m-0 mt-2.5 text-[20px] leading-none font-bold text-ink-2 num">{tens(end[2])}~{tens(end[3])}</dd>
+                  <div className="max-sm:col-start-2">
+                    <dt className="text-[12px] font-semibold text-ink-3 max-sm:sr-only">범위</dt>
+                    <dd className="m-0 mt-1.5 text-[12px] leading-none text-ink-3 num sm:mt-2.5 sm:text-[20px] sm:font-bold sm:text-ink-2">{tens(end[2])}~{tens(end[3])}</dd>
                   </div>
                 </>
               )}
-              {t.dropped ? <p className="col-span-3 text-[12px] text-ink-3 num">휴면 강등으로 내려갈 {int(t.dropped)}명을 뺀 값입니다.</p> : null}
+              {t.dropped ? <p className="col-span-full text-[12px] text-ink-3 num max-sm:mt-3">휴면 강등으로 내려갈 {int(t.dropped)}명을 뺀 값입니다.</p> : null}
             </div>
           );
         })}

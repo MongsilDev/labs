@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "서킷별 순위" };
 
 const CIRCUITS = KEL_EVENTS.filter((e) => /^c\d$/.test(e.key));
-const CUTS: Record<number, string> = { [SEEDS]: "결승 직행", [QUALIFY]: "준결승 진출" };
+const CUTS: Record<number, string> = { [SEEDS]: `1~${SEEDS}위 결승 직행`, [QUALIFY]: `${SEEDS + 1}~${QUALIFY}위 준결승 진출` };
 const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (place - 1) * 5)}%, transparent)`;
 
 // 서킷이 끝날 때마다의 누적 순위. 위쪽이 1위
@@ -39,7 +39,7 @@ export default async function NextKelCircuits() {
           <table className="tbl">
             <thead>
               <tr>
-                <th className="l w-8">#</th>
+                <th className="w-8">#</th>
                 <th className="l">팀</th>
                 {CIRCUITS.map((c, i) => (
                   <th key={c.key} className="!text-center lg:w-[76px]" title={`${c.name}, ${c.dates}`}><span className="hidden sm:inline">서킷 </span>{i + 1}</th>
@@ -52,7 +52,7 @@ export default async function NextKelCircuits() {
               {season.map((r) => (
                 <Fragment key={r.team.key}>
                   <tr>
-                    <td className="l font-bold">{r.rank}</td>
+                    <td className="font-bold">{r.rank}</td>
                     <td className="l">
                       <span className="flex items-center gap-2 font-semibold">
                         <Logo team={r.team} size={24} className="ring-1 ring-rule-2" />
@@ -68,7 +68,7 @@ export default async function NextKelCircuits() {
                   </tr>
                   {CUTS[r.rank] && (
                     <tr aria-hidden="true">
-                      <td colSpan={CIRCUITS.length + 4} className="!h-6 border-t-2 !border-t-ink-3 !py-0 text-[12px] font-semibold text-ink-3">위 {r.rank}팀 {CUTS[r.rank]}</td>
+                      <td colSpan={CIRCUITS.length + 4} className="!h-6 border-t-2 !border-t-ink-3 !py-0 text-[12px] font-semibold text-ink-3">{CUTS[r.rank]}</td>
                     </tr>
                   )}
                 </Fragment>

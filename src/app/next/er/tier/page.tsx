@@ -58,7 +58,7 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">실험체 티어</h1>
         <p className="text-[13px] text-ink-3 num">
-          {data.band.server} 상위 1,000명 경기 {n(view.rows)}판, {at} 갱신
+          {data.band.server} 상위 1,000명 경기 기록 {n(view.rows)}판, {at} 갱신
         </p>
       </div>
       <Filters
@@ -76,7 +76,7 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
           <table className="tbl stick">
             <thead>
               <tr>
-                <th className="l w-10 !pl-3.5">#</th>
+                <th className="w-10 !pl-3.5">#</th>
                 <th className="l">실험체</th>
                 <th aria-sort={sort === "score" ? "descending" : undefined}>점수</th>
                 <th className="hidden md:table-cell">90% 범위</th>
@@ -102,12 +102,11 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
                   </tr>
                   {rows.map((c) => (
                     <tr key={`${c.char}-${c.weapon}`} style={{ boxShadow: `inset 3px 0 0 var(--g-${g.toLowerCase()})` }}>
-                      <td className="l !pl-3.5 text-ink-3">{++rank}</td>
-                      <td className="l">
-                        <Link href={`/next/er/tier/${c.char}-${c.weapon}${q.v ? `?v=${encodeURIComponent(q.v)}` : ""}`} className="flex items-center gap-2">
+                      <td className="!pl-3.5 text-ink-3">{++rank}</td>
+                      <td className="l max-sm:w-full max-sm:max-w-0">
+                        <Link href={`/next/er/tier/${c.char}-${c.weapon}${q.v ? `?v=${encodeURIComponent(q.v)}` : ""}`} className="flex min-w-0 items-center gap-2">
                           <Image className="portrait" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={24} height={24} unoptimized />
-                          <span className="font-semibold">{c.name}</span>
-                          <span className="text-ink-3">{c.weaponName}</span>
+                          <span className="min-w-0 truncate"><span className="text-ink-3">{c.weaponName}</span> <span className="font-semibold">{c.name}</span></span>
                         </Link>
                       </td>
                       <td className="font-bold">{signed(c.score)}</td>

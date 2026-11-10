@@ -30,7 +30,7 @@ export default async function NextLate({ searchParams }: { searchParams: Promise
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">초반과 막판</h1>
         <p className="text-[13px] text-ink-3 num">
-          아시아1 상위 1,000명 경기 {n(data.games)}판, {day.format(data.from)}~{day.format(data.to)}
+          아시아1 상위 1,000명 {n(data.games)}경기, {day.format(data.from)}~{day.format(data.to)}
         </p>
       </div>
       <Filters
@@ -46,7 +46,7 @@ export default async function NextLate({ searchParams }: { searchParams: Promise
         ]}
       />
       <div className="mt-6 grid gap-10 xl:grid-cols-[minmax(0,1fr)_440px]">
-      <section className="sec min-w-0">
+      <section className="sec min-w-0 xl:sticky xl:top-4 xl:self-start">
         <h2 className="sec-h">실험체 지도<small className="num">{rows.length}개</small></h2>
         <div className="hidden sm:block"><LateMap rows={data.rows} early={data.early} fin={data.fin} cut={data.cut} /></div>
         <div className="sm:hidden"><LateMap rows={data.rows} early={data.early} fin={data.fin} cut={data.cut} w={360} h={360} fs={11} labels={8} /></div>
@@ -74,8 +74,8 @@ export default async function NextLate({ searchParams }: { searchParams: Promise
                   <span className="flex items-center gap-2">
                     <Image className="portrait" src={`/img/er/char/${r.key}.v1.webp`} alt="" width={24} height={24} unoptimized />
                     <span className="flex flex-wrap gap-x-1.5">
-                      <span className="font-semibold">{r.name}</span>
                       <span className="text-ink-3">{r.weaponName}</span>
+                      <span className="font-semibold">{r.name}</span>
                     </span>
                   </span>
                 </td>

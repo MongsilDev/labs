@@ -34,9 +34,9 @@ export default async function NextScore() {
               <table className="tbl min-w-[560px]">
                 <thead>
                   <tr>
-                    <th className="l w-8">#</th>
+                    <th className="w-8">#</th>
                     <th className="l">팀</th>
-                    {rounds.map((r) => <th key={r} className="!text-center">R{r}</th>)}
+                    {rounds.map((r) => <th key={r} className="!text-center">{r}R</th>)}
                     <th>처치</th>
                     <th className="pin-r" aria-sort="descending">총점</th>
                   </tr>
@@ -44,7 +44,7 @@ export default async function NextScore() {
                 <tbody>
                   {res.standings.map((s) => (
                     <tr key={s.key}>
-                      <td className="l text-ink-3">{s.rank}</td>
+                      <td className="text-ink-3">{s.rank}</td>
                       <td className="l font-semibold">{s.name}</td>
                       {s.rounds.map((r, i) => (
                         <td key={i} className="!text-center" style={{ background: heat(r?.placement ?? null) }}>

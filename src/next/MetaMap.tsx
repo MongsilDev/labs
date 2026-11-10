@@ -27,7 +27,7 @@ export function place(points: { k: string; x: number; y: number; text: string }[
 }
 
 export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, fs = 12 }: { list: Spot[]; median: number; label: Set<string>; w?: number; h?: number; fs?: number }) {
-  const L = fs * 3, R = 12, T = fs * 2.2, B = fs * 3;
+  const L = fs * 3, R = 12, T = fs * 2.2, B = fs * 3.3;
   const xs = list.map((c) => Math.log10(Math.max(c.pick, 0.01)));
   const x0 = Math.min(...xs) - 0.05, x1 = Math.max(...xs) + 0.05;
   const ys = list.map((c) => c.score);
@@ -42,7 +42,7 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
   const named = list
     .filter((c) => label.has(key(c)))
     .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-    .map((c) => ({ k: key(c), x: sx(c.pick), y: sy(c.score), text: `${c.name} ${c.weaponName}` }));
+    .map((c) => ({ k: key(c), x: sx(c.pick), y: sy(c.score), text: `${c.weaponName} ${c.name}` }));
   // 사분면 이름이 차지한 자리. 이름표가 그 위에 놓이지 않게 함
   const cw = (text: string) => text.length * fs * 0.92;
   const QUADS: [string, "start" | "end", number][] = [["많이 쓰고 강함", "end", T + fs], ["적게 쓰지만 강함", "start", T + fs], ["많이 쓰지만 약함", "end", H - B - 6]];
@@ -62,7 +62,7 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
         </g>
       ))}
       {ticksX.map((p) => (
-        <text key={p} x={sx(p)} y={H - B + fs * 1.6} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">{p}%</text>
+        <text key={p} x={sx(p)} y={H - B + fs * 1.35} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">{p}%</text>
       ))}
       <text x={W - R} y={H - 4} textAnchor="end" fontSize={fs} fill="var(--ink-3)">픽률</text>
       <line x1={L} x2={W - R} y1={zy} y2={zy} stroke="var(--rule-2)" />
@@ -80,7 +80,7 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
         const color = `var(--g-${c.grade.toLowerCase()})`;
         return (
           <g key={k} className="group">
-            <title>{`${c.name} ${c.weaponName}, 점수 ${c.score > 0 ? "+" : ""}${c.score}, 픽률 ${c.pick}%, ${c.n}판`}</title>
+            <title>{`${c.weaponName} ${c.name}, 점수 ${c.score > 0 ? "+" : ""}${c.score}, 픽률 ${c.pick}%, ${c.n}판`}</title>
             {c.half != null && <line className="opacity-0 group-hover:opacity-100" x1={x} x2={x} y1={sy(c.score + c.half)} y2={sy(c.score - c.half)} stroke={color} strokeOpacity="0.5" strokeWidth="2" />}
             <circle cx={x} cy={y} r={at ? fs * 0.42 : fs * 0.33} fill={color} stroke="var(--bg)" strokeWidth="1.5" />
           </g>

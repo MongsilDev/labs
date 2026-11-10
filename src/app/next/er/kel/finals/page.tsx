@@ -87,7 +87,7 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
             <table className="tbl">
               <thead>
                 <tr>
-                  <th className="l hidden w-8 sm:table-cell">#</th>
+                  <th className="hidden w-8 sm:table-cell">#</th>
                   <th className="l sticky left-0 bg-bg">팀</th>
                   {Array.from({ length: played }, (_, r) => (
                     <th key={r} className="!text-center max-sm:!px-1 lg:w-[60px]" title={f.weather[r] || undefined}>{r + 1}R</th>
@@ -102,7 +102,7 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
                   const t = TEAM.get(row.key)!;
                   return (
                     <tr key={row.key} className={i + 1 === qualify ? "[&>td]:!border-b-2 [&>td]:!border-b-ink-3" : undefined}>
-                      <td className="l hidden font-bold sm:table-cell">{i + 1}</td>
+                      <td className="hidden font-bold sm:table-cell">{i + 1}</td>
                       <td className="l sticky left-0 bg-bg">
                         <span className="flex items-center gap-2 font-semibold">
                           <Logo team={t} size={22} className="ring-1 ring-rule-2" />
@@ -114,9 +114,9 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
                       {Array.from({ length: played }, (_, r) => {
                         const e = rounds[r]?.[row.key];
                         return (
-                          <td key={r} className="!text-center max-sm:!px-1" style={e ? { background: heat(e.placement) } : undefined} title={e ? `${e.placement}위, 킬 점수 ${e.killScore}` : undefined}>
+                          <td key={r} className="relative !text-center max-sm:!px-1" style={e ? { background: heat(e.placement) } : undefined} title={e ? `${e.placement}위, 킬 점수 ${e.killScore}` : undefined}>
                             {e ? fmt(gameScore(e)) : ""}
-                            {held(row.key, r) && <span className="ml-0.5 align-super text-[10px]" aria-label="체크포인트">●</span>}
+                            {held(row.key, r) && <span className="absolute top-1 right-1 text-[8px] leading-none" aria-label="체크포인트">●</span>}
                           </td>
                         );
                       })}

@@ -17,24 +17,23 @@ function Rows({ title, rows, empty }: { title: string; rows: Spot[]; empty: stri
         <small className="num">{rows.length}개</small>
       </h2>
       {rows.length ? (
-        <table className="tbl mt-1">
+        <table className="tbl mt-1 table-fixed">
           <thead>
             <tr>
               <th className="l">실험체</th>
-              <th>점수</th>
-              <th>픽률</th>
-              <th>판</th>
+              <th className="w-14">점수</th>
+              <th className="w-[68px]">픽률</th>
+              <th className="w-16">판</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((c) => (
               <tr key={`${c.char}-${c.weapon}`}>
                 <td className="l">
-                  <span className="flex items-center gap-2">
+                  <span className="flex min-w-0 items-center gap-2">
                     <span className={`grade grade-${c.grade}`}>{c.grade}</span>
                     <Image className="portrait" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={24} height={24} unoptimized />
-                    <span className="font-semibold">{c.name}</span>
-                    <span className="text-ink-3">{c.weaponName}</span>
+                    <span className="min-w-0 truncate"><span className="text-ink-3">{c.weaponName}</span> <span className="font-semibold">{c.name}</span></span>
                   </span>
                 </td>
                 <td className="font-bold">{signed(c.score)}</td>
@@ -59,7 +58,7 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
   const { list, median } = view.combos.length ? spots(view) : { list: [], median: 0 };
   const strong = list.filter((c) => c.sure && c.popular).sort((a, b) => b.score - a.score);
   const hidden = list.filter((c) => c.sure && !c.popular).sort((a, b) => b.score - a.score);
-  const trap = list.filter((c) => c.weak && c.popular).sort((a, b) => b.pick - a.pick);
+  const trap = list.filter((c) => c.weak && c.popular).sort((a, b) => a.score - b.score);
   const label = new Set([...hidden, ...trap].map((c) => `${c.char}-${c.weapon}`));
   const at = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(data.updatedAt);
   return (
@@ -67,7 +66,7 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
       <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">메타 지도</h1>
         <p className="text-[13px] text-ink-3 num">
-          {data.band.server} 상위 1,000명 경기 {view.rows.toLocaleString("ko-KR")}판, {at} 갱신
+          {data.band.server} 상위 1,000명 경기 기록 {view.rows.toLocaleString("ko-KR")}판, {at} 갱신
         </p>
       </div>
       <Filters groups={[{ name: "기간", items: data.views.map((x) => ({ href: `/next/er/meta?v=${x.id}`, label: x.label, on: x.id === view.id })) }]} />
