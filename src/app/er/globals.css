@@ -1360,6 +1360,13 @@
     mask-size: calc(var(--s) * 23) var(--s);
     mask-position: calc(var(--i) * var(--s) * -1) 0;
   }
+  /* 고대비 모드는 배경색을 시스템 색으로 덮어써 마스크 아이콘이 사라짐 */
+  @media (forced-colors: active) {
+    .tier-wg {
+      forced-color-adjust: none;
+      background: CanvasText;
+    }
+  }
   .tier-how {
     font-size: 13px;
     color: var(--text-3);
