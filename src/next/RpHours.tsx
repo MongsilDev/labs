@@ -9,6 +9,7 @@ const n = (v: number) => v.toLocaleString("ko-KR");
 // 글자가 표 머리와 같은 12px로 보이도록 viewBox 폭을 실제 그려지는 폭에 맞춘다
 export default function RpHours({ hours, w: W = 1100, h: H = 200, every = 3 }: { hours: RpHour[]; w?: number; h?: number; every?: number }) {
   const [on, setOn] = useState<number | null>(null);
+  if (!hours.length) return null;
   const L = 34, B = 22, T = 8;
   const ext = Math.max(...hours.map((d) => Math.abs(d.gain) + d.ci));
   const step = ext > 8 ? 5 : 2;
@@ -68,7 +69,7 @@ export default function RpHours({ hours, w: W = 1100, h: H = 200, every = 3 }: {
           </g>
         ))}
         {/* 열 폭이 좁으면 라벨이 옆 시간의 막대와 겹친다 */}
-        {!cur && bw >= 30 && [hi, lo].map((d) => (
+        {!cur && bw >= 30 && (hi === lo ? [hi] : [hi, lo]).map((d) => (
           <text key={d.h} x={side(d).x} y={y(d.gain) + 4} textAnchor={side(d).a} fontSize="12" fontWeight="600" fill="var(--ink-2)" className="num">{signed(d.gain)}</text>
         ))}
       </svg>
