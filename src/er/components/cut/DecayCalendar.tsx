@@ -14,7 +14,8 @@ export default function DecayCalendar({ data }: { data: CutData }) {
   const seasonEnd = data.season.end ? dayStart(new Date(data.season.end * 1000 + 9 * 3_600_000).toISOString().slice(0, 10)) : Infinity;
   const until = Math.min(Math.max(dayStart(lastDrop ?? today), dayStart(PATCH.day)) + 2 * DAY, seasonEnd);
   const dates: string[] = [];
-  for (let t = dayStart(today) + DAY; t <= until; t += DAY) dates.push(new Date(t + 9 * 3_600_000).toISOString().slice(0, 10));
+  // 오늘 15시 차감이 아직 남았으면 응답에 오늘 날짜가 들어 있음
+  for (let t = dayStart(today) + (counts.has(today) ? 0 : DAY); t <= until; t += DAY) dates.push(new Date(t + 9 * 3_600_000).toISOString().slice(0, 10));
   const grace = data.rule.grace;
   const peak = Math.max(1, ...[...counts.values()].flatMap((c) => Object.values(c)));
 
