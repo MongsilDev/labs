@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import Shell from "@/next/Shell";
+import Filters from "@/next/Filters";
 import MetaMap from "@/next/MetaMap";
 import { spots, type Spot } from "@/next/meta";
 import { pickView, signed } from "@/er/lib/tier";
@@ -69,14 +69,8 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
         <p className="text-[13px] text-ink-3 num">
           {data.band.server} 상위 1,000명 경기 {view.rows.toLocaleString("ko-KR")}판, {at} 갱신
         </p>
-        <nav className="flex w-full gap-1 overflow-x-auto text-[13px] font-semibold lg:ml-auto lg:w-auto" aria-label="기간">
-          {data.views.map((x) => (
-            <Link key={x.id} href={`/next/er/meta?v=${x.id}`} aria-current={x.id === view.id ? "page" : undefined} className="shrink-0 border border-rule px-2.5 py-1 text-ink-2 hover:no-underline aria-[current=page]:border-ink aria-[current=page]:text-ink">
-              {x.label}
-            </Link>
-          ))}
-        </nav>
       </div>
+      <Filters groups={[{ name: "기간", items: data.views.map((x) => ({ href: `/next/er/meta?v=${x.id}`, label: x.label, on: x.id === view.id })) }]} />
       {!view.combos.length ? (
         <p className="mt-5 text-ink-3">이 기간은 집계가 아직 없습니다.</p>
       ) : (

@@ -5,7 +5,8 @@ const z = (r: LateRow, early: number, fin: number) => Math.max(Math.abs(r.early 
 
 // 가로는 탈락이 적을수록 오른쪽, 세로는 TOP3 중 1위가 높을수록 위
 export default function LateMap({ rows, early, fin, cut, w: W = 760, h: H = 520, fs = 12, labels = 18 }: { rows: LateRow[]; early: number; fin: number; cut: number; w?: number; h?: number; fs?: number; labels?: number }) {
-  const L = fs * 3, R = 12, T = fs * 2.2, B = fs * 3;
+  // 사분면 이름은 점과 겹치지 않게 그림 위쪽 여백에 두고, 가로축 설명은 눈금 아래 줄에 둠
+  const L = fs * 3, R = 12, T = fs * 3.6, B = fs * 3.8;
   const ex = rows.map((r) => r.early), fy = rows.map((r) => r.fin);
   const x0 = Math.floor(Math.min(...ex) - 1), x1 = Math.ceil(Math.max(...ex) + 1);
   const y0 = Math.floor(Math.min(...fy) - 1), y1 = Math.ceil(Math.max(...fy) + 1);
@@ -36,8 +37,8 @@ export default function LateMap({ rows, early, fin, cut, w: W = 760, h: H = 520,
       <text x={W - R} y={H - 4} textAnchor="end" fontSize={fs} fill="var(--ink-3)">{Math.round(cut / 60)}분 안에 탈락, 오른쪽일수록 적음</text>
       <line x1={L} x2={W - R} y1={sy(fin)} y2={sy(fin)} stroke="var(--rule-2)" strokeDasharray="3 3" />
       <line x1={sx(early)} x2={sx(early)} y1={T} y2={H - B} stroke="var(--rule-2)" strokeDasharray="3 3" />
-      <text x={W - R - 4} y={T + fs} textAnchor="end" {...q}>초반에 버티고 막판에 강함</text>
-      <text x={L + 6} y={T + fs} {...q}>막판에 강함</text>
+      <text x={W - R} y={T - 8} textAnchor="end" {...q}>초반에 버티고 막판에 강함</text>
+      <text x={L} y={T - 8} {...q}>막판에 강함</text>
       <text x={W - R - 4} y={H - B - 6} textAnchor="end" {...q}>초반에 잘 버팀</text>
       {rows.map((r) => {
         const x = sx(r.early), y = sy(r.fin), k = key(r), at = spots.get(k);

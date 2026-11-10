@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Shell from "@/next/Shell";
-import Rail from "@/next/Rail";
+import Filters from "@/next/Filters";
 import { pickView, signed, type TierCombo } from "@/er/lib/tier";
 import { getTier } from "@/er/server/tier";
 
@@ -61,29 +61,29 @@ export default async function NextTier({ searchParams }: { searchParams: Promise
           {data.band.server} 상위 1,000명 경기 {n(view.rows)}판, {at} 갱신
         </p>
       </div>
-      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
-        <Rail
-          groups={[
-            { name: "기간", items: data.views.map((x) => ({ href: url({ v: x.id }), label: x.label, on: x.id === view.id })) },
-            { name: "역할군", items: [{ href: url({ role: undefined }), label: "전체", on: !role }, ...ROLES.map((r) => ({ href: url({ role: r }), label: r, on: r === role }))] },
-            { name: "정렬", items: SORTS.map(([k, l]) => ({ href: url({ sort: k }), label: l, on: k === sort })) },
-          ]}
-        />
+      <Filters
+        groups={[
+          { name: "기간", items: data.views.map((x) => ({ href: url({ v: x.id }), label: x.label, on: x.id === view.id })) },
+          { name: "역할군", items: [{ href: url({ role: undefined }), label: "전체", on: !role }, ...ROLES.map((r) => ({ href: url({ role: r }), label: r, on: r === role }))] },
+          { name: "정렬", items: SORTS.map(([k, l]) => ({ href: url({ sort: k }), label: l, on: k === sort })) },
+        ]}
+      />
+      <div className="mt-3">
         {!list.length ? (
-          <p className="text-ink-3" role="status">{view.combos.length ? <>이 기간에는 {role} 실험체가 없습니다.<br /><Link href={url({ role: undefined })} className="underline">역할군 전체</Link>로 바꿔주세요.</> : <>이 기간은 집계가 아직 없습니다.<br />다른 기간을 골라주세요.</>}</p>
+          <p className="py-3 text-ink-3" role="status">{view.combos.length ? <>이 기간에는 {role} 실험체가 없습니다.<br /><Link href={url({ role: undefined })} className="underline">역할군 전체</Link>로 바꿔주세요.</> : <>이 기간은 집계가 아직 없습니다.<br />다른 기간을 골라주세요.</>}</p>
         ) : (
-        <div className="scroll-fade -mx-4 min-w-0 self-start px-4 lg:mx-0 lg:px-0">
-          <table className="tbl self-start">
+        <div>
+          <table className="tbl stick">
             <thead>
               <tr>
                 <th className="l w-10 !pl-3.5">#</th>
                 <th className="l">실험체</th>
-                <th>점수</th>
+                <th aria-sort={sort === "score" ? "descending" : undefined}>점수</th>
                 <th className="hidden md:table-cell">90% 범위</th>
-                <th>TOP3</th>
+                <th aria-sort={sort === "top3" ? "descending" : undefined}>TOP3</th>
                 <th className="hidden md:table-cell">평균 순위</th>
                 <th className="hidden md:table-cell">승률</th>
-                <th>픽률</th>
+                <th aria-sort={sort === "pick" ? "descending" : undefined}>픽률</th>
                 <th className="hidden sm:table-cell">판</th>
               </tr>
             </thead>
