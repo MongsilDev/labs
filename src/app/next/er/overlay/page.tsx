@@ -6,7 +6,7 @@ import { BASE_URL } from "@/er/server/auth";
 
 export const metadata = { title: "방송 화면" };
 
-const NAMES: [PresetKey, string][] = [["t1", "왼쪽 아래"], ["t2", "위쪽 한 줄"], ["t3", "위쪽"]];
+const NAMES: [PresetKey, string][] = [["t1", "왼쪽 아래"], ["t2", "오른쪽 위 한 줄"], ["t3", "오른쪽 위"]];
 const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 const px = (v: string | undefined) => Math.round(Number(v)) || 0;
 
@@ -22,7 +22,7 @@ export default async function NextOverlay({ searchParams }: { searchParams: Prom
       <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">방송 화면</h1>
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="sec" aria-labelledby="tier-h">
-          <h2 id="tier-h" className="sec-h">내 티어</h2>
+          <h2 id="tier-h" className="sec-h">티어 방송 화면</h2>
           <form className="mt-4 grid max-w-[560px] gap-5" noValidate>
             <div>
               <label className="lbl" htmlFor="n">닉네임</label>
@@ -70,10 +70,9 @@ export default async function NextOverlay({ searchParams }: { searchParams: Prom
             </div>
           )}
         </section>
-        <section id="t" className="sec self-start" aria-labelledby="t-h">
+        <section className="sec self-start" aria-labelledby="t-h">
           <h2 id="t-h" className="sec-h">대회 방송 화면</h2>
-          <p className="mt-3 text-ink-2">주소는 대회 화면에서 복사합니다.</p>
-          <Link href="/next/er/score" className="mt-3 flex h-11 items-center border-y border-rule font-semibold hover:bg-row hover:no-underline">
+          <Link href="/next/er/score" className="mt-2 flex h-11 items-center border-y border-rule font-semibold hover:bg-row hover:no-underline">
             대회 점수
           </Link>
         </section>

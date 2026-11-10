@@ -98,12 +98,15 @@ export default async function NextHub() {
           {cut ? (
             <div className="mt-3 grid items-end gap-x-10 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)]">
               <dl className="grid grid-cols-2 gap-x-8">
-                {TIERS.map(({ key, name }) => {
+                {TIERS.map(({ key, name, color }) => {
                   const t = cut.tiers[key];
                   const end = t.forecast?.[t.forecast.length - 1];
                   return (
                     <div key={key}>
-                      <dt className="text-[12px] font-semibold text-ink-3 num">{name} {n(t.place)}위</dt>
+                      <dt className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-3 num">
+                        <span className="h-3 w-1" style={{ background: color }} aria-hidden="true" />
+                        {name} {n(t.place)}위
+                      </dt>
                       <dd className="m-0 mt-1.5 text-[38px] leading-none font-black tracking-[-1.2px] num sm:text-[44px]">
                         {t.estimated ? <span className="mr-1 text-[18px] font-bold tracking-normal text-ink-3">약</span> : null}
                         {t.cut != null ? rp(t.cut) : "-"}
@@ -128,7 +131,7 @@ export default async function NextHub() {
             <input className="field" name="n" placeholder="닉네임" aria-label="닉네임" autoComplete="off" spellCheck={false} maxLength={32} />
             <button className="btn primary flex-none">주소 만들기</button>
           </form>
-          <Link href="/next/er/overlay#t" className="mt-3 flex h-11 items-center border-y border-rule font-semibold hover:bg-row hover:no-underline">
+          <Link href="/next/er/score" className="mt-3 flex h-11 items-center border-y border-rule font-semibold hover:bg-row hover:no-underline">
             대회 방송 화면
           </Link>
         </section>

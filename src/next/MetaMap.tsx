@@ -3,20 +3,18 @@ import type { Spot } from "./meta";
 type Box = { x: number; y: number; w: number; h: number };
 const hit = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
-// 겹치는 이름표는 오른쪽, 왼쪽, 위, 아래 순으로 옮기고 자리가 없으면 뺌
+// 이름표는 점 오른쪽에 두고, 겹치면 왼쪽으로 옮기며, 두 자리 모두 겹치면 뺌
 export function place(points: { k: string; x: number; y: number; text: string }[], fs: number, box: Box, dots: [number, number][], fixed: Box[] = []) {
   const taken: Box[] = [...fixed, ...dots.map(([x, y]) => ({ x: x - 4, y: y - 4, w: 8, h: 8 }))];
-  const out = new Map<string, { x: number; y: number; anchor: "start" | "end" | "middle" }>();
+  const out = new Map<string, { x: number; y: number; anchor: "start" | "end" }>();
   for (const p of points) {
     const w = p.text.length * fs * 0.92, h = fs + 2;
-    const tries: [number, number, "start" | "end" | "middle"][] = [
+    const tries: [number, number, "start" | "end"][] = [
       [p.x + 8, p.y + fs * 0.35, "start"],
       [p.x - 8, p.y + fs * 0.35, "end"],
-      [p.x, p.y - 9, "middle"],
-      [p.x, p.y + fs + 7, "middle"],
     ];
     for (const [tx, ty, anchor] of tries) {
-      const left = anchor === "start" ? tx : anchor === "end" ? tx - w : tx - w / 2;
+      const left = anchor === "start" ? tx : tx - w;
       const b = { x: left, y: ty - fs, w, h };
       if (b.x < box.x || b.x + b.w > box.x + box.w || b.y < box.y || b.y + b.h > box.y + box.h) continue;
       if (taken.some((t) => hit(t, b))) continue;
@@ -51,6 +49,8 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
   const fixed = QUADS.map(([text, anchor, y]) => ({ x: anchor === "end" ? W - R - 4 - cw(text) : L + 6, y: y - fs, w: cw(text), h: fs + 4 }));
   const spots = place(named, fs, { x: L, y: T, w: W - L - R, h: H - T - B }, list.map((c) => [sx(c.pick), sy(c.score)]), fixed);
   const q = { fontSize: fs, fontWeight: 700, fill: "var(--ink-3)" };
+  // 그려진 글자 폭의 어림값. 한글은 글자 크기만큼, 공백과 영문과 기호는 그보다 좁음
+  const tw = (text: string) => [...text].reduce((w, ch) => w + (ch === " " ? 0.28 : /[\u3131-\uD7A3]/.test(ch) ? 0.93 : 0.62), 0) * fs;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="실험체별 점수와 픽률">
       <text x={4} y={fs} fontSize={fs} fill="var(--ink-3)">점수</text>
@@ -79,9 +79,13 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
             {c.half != null && <line className="opacity-0 group-hover:opacity-100" x1={x} x2={x} y1={sy(c.score + c.half)} y2={sy(c.score - c.half)} stroke={color} strokeOpacity="0.5" strokeWidth="2" />}
             <circle cx={x} cy={y} r={at ? fs * 0.42 : fs * 0.33} fill={color} stroke="var(--bg)" strokeWidth="1.5" />
             {at && (
-              <text x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)" paintOrder="stroke" stroke="var(--bg)" strokeWidth="3">
-                {c.name} {c.weaponName}
-              </text>
+              <>
+                {/* 눈금선이 글자를 지나가지 않게 이름표 뒤를 바탕색으로 덮음 */}
+                <rect x={at.anchor === "start" ? at.x - 2 : at.x - tw(`${c.name} ${c.weaponName}`) - 2} y={at.y - fs} width={tw(`${c.name} ${c.weaponName}`) + 4} height={fs + 4} fill="var(--bg)" />
+                <text x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)">
+                  {c.name} {c.weaponName}
+                </text>
+              </>
             )}
           </g>
         );
