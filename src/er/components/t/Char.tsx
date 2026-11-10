@@ -11,7 +11,7 @@ export default function Char({ name, label, size = 22 }: { name: string; label?:
     <span className="inline-flex min-w-0 items-center gap-1.5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        className="max-w-none flex-none rounded-full bg-field"
+        className="er-char max-w-none flex-none rounded-full bg-field"
         style={{ width: size, height: size }}
         src={`${CDN}/${name}.png`}
         alt={label ? characterName(name) : ""}

@@ -16,7 +16,7 @@ export default function NextNotFound() {
         <ul className="mt-6 grid">
           {GO.map(([href, label]) => (
             <li key={href} className="border-b border-rule">
-              <Link href={href} className="flex h-11 items-center font-semibold hover:no-underline hover:text-hot">{label}</Link>
+              <Link href={href} className="flex h-11 items-center font-semibold hover:bg-row hover:no-underline">{label}</Link>
             </li>
           ))}
         </ul>

@@ -56,23 +56,26 @@
     --up: #15803d;
     --down: #b91c1c;
     --g-s: #c81e1e;
-    --g-a: #c2570c;
+    --g-a: #b4500b;
     --g-b: #8a6d00;
     --g-c: #0f7a52;
     --g-d: #5b6475;
     --et: #c42f63;
     --dg: #9c6a12;
   }
-  :root { --text: var(--ink); --text-2: var(--ink-2); --text-3: var(--ink-3); --line: var(--rule); --line-soft: var(--rule); --line-strong: var(--rule-2); --surface: var(--row); --field: var(--bg); --hover: var(--row); --minus: var(--g-s); --accent: var(--hot); }
+  :root { --text: var(--ink); --text-2: var(--ink-2); --text-3: var(--ink-3); --line: var(--rule); --line-soft: var(--rule); --line-strong: var(--rule-2); --surface: var(--row); --field: var(--bg); --hover: var(--row); --minus: var(--g-s); --accent: var(--ink); }
   html { background: var(--bg); color: var(--ink); font-family: var(--font-sans); -webkit-text-size-adjust: 100%; }
-  body { margin: 0; font-size: 14px; line-height: 1.45; }
+  /* 내용이 짧은 화면에서도 푸터가 화면 아래에 붙게 함 */
+  body { margin: 0; font-size: 14px; line-height: 1.45; min-height: 100dvh; display: flex; flex-direction: column; }
+  main { flex: 1; }
   a { color: inherit; text-decoration: none; }
   a:hover { text-decoration: underline; text-underline-offset: 3px; }
-  :focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 }
 
 .num { font-variant-numeric: tabular-nums; }
 .grade { display: inline-grid; place-items: center; width: 20px; height: 20px; font-size: 12px; font-weight: 800; color: #111; border-radius: 2px; }
+:root[data-theme="light"] .grade { color: #fff; }
 .grade-S { background: var(--g-s); } .grade-A { background: var(--g-a); } .grade-B { background: var(--g-b); } .grade-C { background: var(--g-c); } .grade-D { background: var(--g-d); }
 .sec { border-top: 2px solid var(--ink); padding-top: 10px; }
 .sec-h { display: flex; align-items: baseline; gap: 12px; font-size: 15px; font-weight: 800; }
@@ -85,6 +88,16 @@
 .tbl th:last-child, .tbl td:last-child { padding-right: 0; }
 .tbl .l { text-align: left; }
 .tbl tbody tr:hover { background: var(--row); }
+.tbl th[aria-sort] { color: var(--ink); }
+.tbl th[aria-sort] a { color: inherit; }
+.tbl th[aria-sort="descending"]::after { content: "↓"; margin-left: 3px; }
+.tbl th[aria-sort="ascending"]::after { content: "↑"; margin-left: 3px; }
+/* 감싼 요소가 가로로 밀리지 않는 표에서만 헤더가 화면 위에 남음 */
+.tbl.stick thead th { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 0; box-shadow: inset 0 -1px 0 var(--rule-2); }
+/* 좁은 폭에서 합계 열을 오른쪽에 남김. 감싼 요소의 좌우 여백 16px만큼 더 밀어 여백으로 뒤 칸이 비치지 않게 함 */
+@media (max-width: 1023px) {
+  .tbl .pin-r { position: sticky; right: -16px; z-index: 1; background: var(--bg); box-shadow: inset 1px 0 0 var(--rule-2); padding-left: 10px; padding-right: 16px; }
+}
 .portrait { width: 24px; height: 24px; border-radius: 2px; object-fit: cover; background: var(--row); }
 .field { height: 40px; padding: 0 12px; border: 1px solid var(--rule-2); border-radius: 2px; background: var(--bg); color: var(--ink); font: inherit; font-size: 15px; width: 100%; min-width: 0; }
 .field::placeholder { color: var(--ink-3); }
@@ -99,7 +112,7 @@
 .btn.lg { height: 44px; font-size: 15px; }
 .chip { display: inline-flex; align-items: center; height: 26px; padding: 0 9px; border: 1px solid var(--rule-2); border-radius: 2px; font-size: 13px; font-weight: 600; color: var(--ink-2); white-space: nowrap; cursor: pointer; }
 .chip.strong, .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
-.panel { border: 0; }
+.panel { border: 0; padding: 0; }
 .text-minus { color: var(--g-s); }
 .hits { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; list-style: none; margin: 0; padding: 4px; max-height: min(470px, 70vh); overflow: auto; background: var(--bg); border: 1px solid var(--rule-2); }
 .hits li { display: flex; align-items: baseline; gap: 10px; padding: 9px 10px; cursor: pointer; }
@@ -127,7 +140,28 @@
 .seg small { font-size: 11px; font-weight: 500; color: var(--ink-3); }
 .seg label:has(input:checked) { background: var(--ink); color: var(--bg); }
 .seg label:has(input:checked) small { color: inherit; opacity: 0.7; }
-.seg label:has(input:focus-visible) { outline: 2px solid var(--hot); outline-offset: -2px; }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: -2px; }
 /* KORD 카드는 모서리를 없애고 가로선 목록으로 */
 .kord .kb-card { border-radius: 0; border-width: 0 0 1px; border-color: var(--rule); background: transparent; }
 .kord .kb-bar { border-radius: 0; background: transparent; border-width: 2px 0 1px; border-color: var(--ink) transparent var(--rule); }
+/* 손가락으로 누르는 폭에서는 입력칸과 버튼 높이 44px */
+@media (max-width: 1023px) {
+  .field, .btn:where(:not(.sm)) { height: 44px; }
+}
+/* 운영 부품의 실험체 이미지와 팀 로고, 진단 카드 모서리를 시안의 2px에 맞춤 */
+.er-char, .kel-logo { border-radius: 2px; }
+.rpcheck .grid-cols-2 { grid-template-columns: minmax(0, 1fr); gap: 0; }
+.rpcheck section { border: 0; border-top: 1px solid var(--rule-2); border-radius: 0; padding: 12px 0 4px; }
+/* 필터와 화면 이동. 유틸리티로 폭마다 모양을 바꾸려고 components 층에 둠 */
+@layer components {
+  .opt { display: flex; align-items: center; height: 30px; border: 1px solid var(--rule-2); padding: 0 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+  .opt:hover { background: var(--row); color: var(--ink); text-decoration: none; }
+  .opt[aria-current] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .pick { position: relative; display: flex; flex: 1 1 auto; align-items: center; gap: 6px; min-width: 0; height: 44px; padding: 0 10px; border: 1px solid var(--rule-2); border-radius: 2px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .pick select { position: absolute; inset: 0; width: 100%; opacity: 0; font-size: 16px; }
+  .pick:has(select:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; }
+  /* 손가락으로 누르는 폭에서는 높이 44px */
+  @media (max-width: 1023px) {
+    .opt { height: 44px; padding: 0 12px; }
+  }
+}
