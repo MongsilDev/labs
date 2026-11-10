@@ -77,10 +77,10 @@ export default function RpHours({ hours, w: W = 1100, h: H = 200, every = 3 }: {
         <div
           aria-hidden="true"
           className="pointer-events-none absolute top-0 border border-rule-2 bg-bg px-2.5 py-1.5 text-[12px] whitespace-nowrap text-ink-3 num"
-          style={cur.h > 20 ? { right: `${100 - (x(cur.h) / W) * 100}%` } : { left: `${(x(cur.h) / W) * 100}%`, transform: cur.h < 3 ? undefined : "translateX(-50%)" }}
+          style={x(cur.h) / W > 0.65 ? { right: `${100 - (x(cur.h) / W) * 100}%` } : { left: `${(x(cur.h) / W) * 100}%`, transform: x(cur.h) / W < 0.35 ? undefined : "translateX(-50%)" }}
         >
           <b className="mr-1.5 text-[15px] text-ink">{signed(cur.gain)}</b>
-          {cur.h}시, ±{cur.ci}, {n(cur.n)}판
+          {cur.h}시, 95% 범위 ±{cur.ci}, {n(cur.n)}판
         </div>
       )}
       <p className="sr-only" aria-live="polite">{text}</p>
