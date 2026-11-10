@@ -42,6 +42,9 @@ export default function CutChart({ data }: { data: CutData }) {
   const y = (v: number) => pad.t + (1 - (v - vlo) / (vhi - vlo)) * (h - pad.t - pad.b);
   const path = (pts: [number, number][]) => pts.map(([t, v], i) => `${i ? "L" : "M"}${x(t).toFixed(1)},${y(v).toFixed(1)}`).join("");
 
+  // 종료 이름표와 겹칠 만큼 가까우면 「오늘」을 점선 위쪽 끝으로 올림. 폭은 12px 글꼴 어림값
+  const todayTop = x(now) + 14 > x(t1) - ((md(t1).length + 1) * 7 + 24) - 4;
+
   const weekly: number[] = [];
   for (let t = t0 + DAY; t < t1; t += 7 * DAY) weekly.push(t);
 
@@ -89,7 +92,7 @@ export default function CutChart({ data }: { data: CutData }) {
               {md(t)}
             </text>
           ))}
-        <text x={x(now)} y={h - 8} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--text)">
+        <text x={x(now)} y={todayTop ? pad.t - 6 : h - 8} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--text)">
           오늘
         </text>
         <text x={x(t1)} y={h - 8} textAnchor="end" fontSize="12" fontWeight="700" fill="var(--text)">

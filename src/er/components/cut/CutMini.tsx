@@ -24,6 +24,8 @@ export default function CutMini({ data }: { data: CutData }) {
   const y = (v: number) => (1 - (v - v0) / (v1 - v0)) * H;
   const path = (pts: [number, number][]) => pts.map(([t, v], i) => `${i ? "L" : "M"}${x(t).toFixed(1)},${y(v).toFixed(1)}`).join("");
   const pct = (t: number) => `${((x(t) / W) * 100).toFixed(2)}%`;
+  // 종료가 가까우면 「오늘」이 종료 날짜와 겹쳐서 뺌. 가장 좁은 300px 폭에서 두 글자가 닿는 비율
+  const near = (W - x(now)) / W < 0.28;
 
   return (
     <figure className="mt-4" aria-label="지난 3주 컷과 종료 예상">
@@ -54,9 +56,11 @@ export default function CutMini({ data }: { data: CutData }) {
       </div>
       <div className="relative mt-1 h-4 text-[12px] text-fg-3 tabular-nums">
         <span className="absolute left-0">{md(t0)}</span>
-        <span className="absolute -translate-x-1/2 font-bold text-fg" style={{ left: pct(now) }}>
-          오늘
-        </span>
+        {!near && (
+          <span className="absolute -translate-x-1/2 font-bold text-fg" style={{ left: pct(now) }}>
+            오늘
+          </span>
+        )}
         <span className="absolute right-0 font-bold text-fg">{md(t1)} 종료</span>
       </div>
     </figure>
