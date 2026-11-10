@@ -88,7 +88,7 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
               <thead>
                 <tr>
                   <th className="hidden w-8 sm:table-cell">#</th>
-                  <th className="l sticky left-0 bg-bg">팀</th>
+                  <th className="l sticky left-0 z-[1] bg-bg">팀</th>
                   {Array.from({ length: played }, (_, r) => (
                     <th key={r} className="!text-center max-sm:!px-1 lg:w-[60px]" title={f.weather[r] || undefined}>{r + 1}R</th>
                   ))}
@@ -103,7 +103,7 @@ export default async function NextKelFinals({ searchParams }: { searchParams: Pr
                   return (
                     <tr key={row.key} className={i + 1 === qualify ? "[&>td]:!border-b-2 [&>td]:!border-b-ink-3" : undefined}>
                       <td className="hidden font-bold sm:table-cell">{i + 1}</td>
-                      <td className="l sticky left-0 bg-bg">
+                      <td className="l sticky left-0 z-[1] bg-bg">
                         <span className="flex items-center gap-2 font-semibold">
                           <Logo team={t} size={22} className="ring-1 ring-rule-2" />
                           <span className="sm:hidden">{t.short}</span>
