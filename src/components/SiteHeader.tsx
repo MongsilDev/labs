@@ -1,9 +1,51 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Account, { type AccountUser } from "./Account";
-import { MarkSvg } from "./SiteMark";
 import ThemeToggle from "./ThemeToggle";
 import "./site.css";
 
+type Item = { href: string; label: string; also?: string[] };
+type Sect = { name: string; items: Item[] };
+
+const ER: Sect[] = [
+  { name: "실험체", items: [{ href: "/er/tier", label: "실험체 티어" }] },
+  {
+    name: "랭크",
+    items: [
+      { href: "/er/cut", label: "이터컷" },
+      { href: "/er/overlay", label: "방송 화면" },
+    ],
+  },
+  {
+    name: "대회",
+    items: [
+      { href: "/er/kel", label: "KEL 기록" },
+      { href: "/er/score", label: "대회 점수", also: ["/er/t", "/er/i", "/er/example"] },
+    ],
+  },
+];
+const TK: Sect = {
+  name: "타르코프",
+  items: [
+    { href: "/tarkov/players", label: "계정 조회", also: ["/tarkov/criteria"] },
+    { href: "/tarkov/kord-breach", label: "KORD BREACH" },
+  ],
+};
+
+const under = (path: string, base: string) => path === base || path.startsWith(`${base}/`);
+const hit = (path: string, i: Item) => [i.href, ...(i.also ?? [])].some((b) => under(path, b));
+
+function SectLink({ sect, on }: { sect: Sect; on: boolean }) {
+  return (
+    <Link className="site-sect" href={sect.items[0].href} aria-current={on ? "true" : undefined}>
+      {sect.name}
+    </Link>
+  );
+}
+
+// crumb.href는 지금 화면 항목의 주소를 대신함. 상세에서 목록으로 돌아갈 때 고른 기간을 남기는 데 씀
 export default function SiteHeader({
   crumb,
   user,
@@ -13,6 +55,9 @@ export default function SiteHeader({
   user?: AccountUser | null;
   children?: React.ReactNode;
 }) {
+  const path = usePathname() ?? "/";
+  const sect = [...ER, TK].find((g) => g.items.some((i) => hit(path, i)));
+  const cur = sect?.items.find((i) => hit(path, i));
   return (
     <header className="site-top">
       <a className="site-skip" href="#main">
@@ -20,20 +65,31 @@ export default function SiteHeader({
       </a>
       <div className="site-top-in">
         <Link className="site-mark" href="/">
-          <MarkSvg />
-          Labs
+          labs
         </Link>
-        {crumb && (
-          <Link className="site-crumb" href={crumb.href}>
-            {crumb.label}
-          </Link>
-        )}
+        <nav className="site-nav" aria-label="사이트">
+          <span className="site-game">이터널 리턴</span>
+          {ER.map((g) => (
+            <SectLink key={g.name} sect={g} on={g === sect} />
+          ))}
+          <span className="site-sep" aria-hidden="true" />
+          <SectLink sect={TK} on={TK === sect} />
+        </nav>
         <div className="site-right">
           {children}
           <Account user={user} />
           <ThemeToggle />
         </div>
       </div>
+      {sect && (
+        <nav className="site-sub" aria-label={`${sect.name} 화면`}>
+          {sect.items.map((i) => (
+            <Link key={i.href} href={i === cur && crumb && under(crumb.href.split("?")[0], i.href) ? crumb.href : i.href} aria-current={i === cur ? "page" : undefined}>
+              {i.label}
+            </Link>
+          ))}
+        </nav>
+      )}
     </header>
   );
 }

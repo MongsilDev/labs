@@ -1,17 +1,47 @@
+/* 화면마다 색 토큰과 본문 폭이 달라도 헤더는 개편 화면의 색과 1320px 폭으로 같게 그림 */
 .site-top {
+  --site-hot: #2997ff;
+  --bg: #121212;
+  --surface: #1a1a1a;
+  --hover: #1a1a1a;
+  --line: #262626;
+  --line-soft: #262626;
+  --line-strong: #383838;
+  --text: #ededed;
+  --text-2: #a6a6a6;
+  --text-3: #8a8a8a;
   border-bottom: 1px solid var(--line-soft);
+  background: var(--bg);
+  color: var(--text);
+}
+:root[data-theme="light"] .site-top {
+  --site-hot: #0066cc;
+  --bg: #fafaf9;
+  --surface: #f1f1ef;
+  --hover: #f1f1ef;
+  --line: #e4e4e1;
+  --line-soft: #e4e4e1;
+  --line-strong: #cfcfcb;
+  --text: #141414;
+  --text-2: #4d4d4d;
+  --text-3: #6b6b6b;
 }
 .site-top-in,
-.site-foot-in {
+.site-sub {
   margin: 0 auto;
   padding: 0 24px;
-  max-width: 1280px;
+  max-width: 1320px;
+  display: flex;
+  align-items: center;
+}
+.site-top-in {
+  gap: 20px;
+}
+.site-foot-in {
+  margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 14px;
-}
-.site-top-in {
-  min-height: 56px;
 }
 .site-skip {
   position: absolute;
@@ -25,42 +55,158 @@
   border-radius: 6px;
   background: var(--surface);
 }
+.site-top a:hover {
+  text-decoration: none;
+}
+/* 줄 높이를 고정해 본문 줄 높이가 다른 옛 화면과 새 화면의 헤더 높이를 맞춤 */
+/* 메뉴 칸은 위아래 6px을 margin으로 빼 안쪽 포커스 링이 밑줄과 경계선, 화면 위끝에 닿지 않게 하고, 밑줄과 누르는 범위는 칸 밖 6px까지 그림 */
 .site-mark {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 700;
+  position: relative;
+  margin: 6px -6px;
+  padding: 6px;
+  line-height: 24px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
   color: var(--text);
   text-decoration: none;
   white-space: nowrap;
 }
-.site-mark svg {
-  width: 24px;
-  height: 24px;
+.site-nav,
+.site-sub {
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.site-crumb {
+.site-nav {
+  display: flex;
+  flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--text-2);
+  align-items: center;
+  gap: 4px;
+}
+.site-game {
+  flex: none;
+  margin-right: 4px;
+  font-size: 12px;
   font-weight: 600;
+  color: var(--text-3);
+}
+.site-sect {
+  position: relative;
+  flex: none;
+  margin: 6px 0;
+  padding: 6px 8px;
+  line-height: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-decoration: none;
+}
+.site-sect:hover,
+.site-sect[aria-current] {
+  color: var(--text);
+}
+.site-sect[aria-current]::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -6px;
+  height: 2px;
+  background: var(--site-hot);
+}
+.site-sep {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 8px;
+  background: var(--line-strong, var(--line));
+}
+.site-sub {
+  gap: 20px;
+}
+.site-sub a {
+  position: relative;
+  flex: none;
+  margin: 6px -6px;
+  padding: 6px;
+  line-height: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
   text-decoration: none;
   white-space: nowrap;
 }
-.site-crumb::before {
-  content: "/";
-  margin-right: 14px;
-  color: var(--line);
+.site-sub a:hover,
+.site-sub a[aria-current] {
+  color: var(--text);
+}
+.site-sub a[aria-current]::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: -6px;
+  height: 2px;
+  background: var(--text);
+}
+.site-mark::before,
+.site-sect::before,
+.site-sub a::before {
+  content: "";
+  position: absolute;
+  inset: -6px 0;
+}
+.site-top :focus-visible {
+  outline-color: var(--site-hot);
+}
+.site-mark:focus-visible,
+.site-sect:focus-visible,
+.site-sub a:focus-visible {
+  outline: 2px solid var(--site-hot);
+  outline-offset: -2px;
 }
 .site-right {
-  margin-left: auto;
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 .site-right .btn.site-login {
-  height: 36px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.site-right .btn.site-login:hover {
+  color: var(--text);
+}
+/* 보이는 크기는 32px이고 누르는 범위만 44px */
+.site-right .icon-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line-strong, var(--line));
+  border-radius: 2px;
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.site-right .icon-btn::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+.site-right .icon-btn:hover {
+  color: var(--text);
+}
+.site-right .icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 .site-av {
   display: inline-grid;
@@ -160,12 +306,34 @@
 .site-foot a:hover {
   color: var(--text);
 }
-@media (max-width: 760px) {
-  .site-top-in {
-    flex-wrap: wrap;
-    row-gap: 8px;
-    padding: 8px 16px;
+@media (max-width: 1023px) {
+  .site-top-in,
+  .site-sub {
+    padding: 0 16px;
   }
+}
+@media (max-width: 639px) {
+  .site-top-in {
+    gap: 12px;
+  }
+  .site-game {
+    display: none;
+  }
+  .site-nav {
+    gap: 0;
+  }
+  .site-sect {
+    padding: 6px;
+  }
+  .site-sect[aria-current]::after {
+    left: 6px;
+    right: 6px;
+  }
+  .site-sep {
+    margin: 0 4px;
+  }
+}
+@media (max-width: 760px) {
   .site-user-btn {
     width: 36px;
     padding: 0;

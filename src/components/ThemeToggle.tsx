@@ -37,7 +37,8 @@ export default function ThemeToggle() {
         try {
           localStorage.setItem("labs-theme", next);
         } catch {}
-        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "light" ? "#eef1f5" : "#0a0d14");
+        // 화면마다 바탕색이 달라 바뀐 테마의 --bg를 그대로 씀
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
       }}
     >
       {theme === "light" ? (
