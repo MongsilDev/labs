@@ -1619,6 +1619,10 @@
   .tier-table tr[data-thin] .tier-wi .tier-wg {
     color: inherit;
   }
+  .tier-wn {
+    font-weight: 500;
+    color: var(--text-3);
+  }
   @container (max-width: 600px) {
     .tier-table .tier-x {
       display: none;

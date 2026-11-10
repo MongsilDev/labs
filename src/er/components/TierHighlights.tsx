@@ -2,7 +2,7 @@ import Link from "next/link";
 import { go, Head, line, row } from "@/er/components/HubList";
 import { int } from "@/er/lib/cut";
 import { signed, type TierCombo, type TierMoved } from "@/er/lib/tier";
-import { Weapon } from "@/app/er/tier/parts";
+import { Weapon, WeaponText } from "@/app/er/tier/parts";
 
 const HREF = "/er/tier";
 
@@ -14,6 +14,7 @@ function Combo({ c, value, sub }: { c: TierCombo; value: string; sub: string }) 
         <img className="size-9 rounded-[10px] bg-field object-cover" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={36} height={36} loading="lazy" />
         <span className="tier-wi min-w-0 truncate text-[14px] font-bold">
           <Weapon code={c.weapon} label={c.weaponName} />
+          <WeaponText code={c.weapon} label={c.weaponName} />
           {c.name}
         </span>
         <span className="grid justify-items-end">

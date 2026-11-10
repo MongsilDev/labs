@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { type MouseEvent, useEffect, useState } from "react";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
-import { comboPath, compareView, movedCombos, signed, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
-import { Weapon } from "./parts";
+import { comboPath, compareView, movedCombos, signed, WEAPON_SPRITE, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
+import { Weapon, WeaponText } from "./parts";
 
 const GRADES: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
 // 상세로 떠날 때 목록 주소와 스크롤 위치를 남기는 탭 단위 저장소 키. 30분이 지나면 쓰지 않음
@@ -143,6 +143,7 @@ function PickTable({ list, thin, href, onOpen }: { list: TierCombo[]; thin: (c: 
                   <Link href={href(c)} prefetch={false} onClick={onOpen}>
                     <b className="tier-wi">
                       <Weapon code={c.weapon} label={c.weaponName} />
+                      <WeaponText code={c.weapon} label={c.weaponName} />
                       {c.name}
                     </b>
                   </Link>
@@ -384,11 +385,16 @@ export default function TierBoard(p: Props) {
                       {/* 새 실험체는 초상 파일을 더하기 전까지 칸만 남김 */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={122} height={122} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
-                      <span className="tier-wb">
-                        <Weapon code={c.weapon} label={c.weaponName} />
-                      </span>
+                      {WEAPON_SPRITE.includes(c.weapon) && (
+                        <span className="tier-wb">
+                          <Weapon code={c.weapon} label={c.weaponName} />
+                        </span>
+                      )}
                     </span>
-                    <b>{c.name}</b>
+                    <b>
+                      <WeaponText code={c.weapon} label={c.weaponName} />
+                      {c.name}
+                    </b>
                     <span className="tier-sc">{signed(c.score)}</span>
                     <small>{int(c.n)}판</small>
                   </Link>
