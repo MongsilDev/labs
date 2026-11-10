@@ -18,7 +18,7 @@ export default function KelNav({ here }: { here: KelScreen }) {
                 <Link
                   href={href(s)}
                   aria-current={s === here ? "page" : undefined}
-                  className="opt lg:h-auto lg:border-0 lg:border-l-2 lg:border-transparent lg:px-2 lg:py-1 lg:aria-[current=page]:border-ink lg:aria-[current=page]:bg-transparent lg:aria-[current=page]:text-ink"
+                  className="opt lg:h-auto lg:border-0 lg:border-l-2 lg:border-transparent lg:px-2 lg:py-1 lg:aria-[current=page]:border-hot lg:aria-[current=page]:bg-transparent lg:aria-[current=page]:text-ink"
                 >
                   {s === "home" ? "요약" : KEL_SCREENS[s].title}
                 </Link>

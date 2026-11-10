@@ -39,7 +39,7 @@ export default async function NextHub() {
   const accounts = Number(getMeta("accounts")) || 0;
   return (
     <Shell>
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-11 lg:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-16 gap-y-16 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="sec">
           <h2 className="sec-h">
             <Link href="/next/er/tier">실험체 티어</Link>
@@ -52,7 +52,7 @@ export default async function NextHub() {
                 {[...faces.values()].map((ws) => (
                   <li key={ws[0].char} className="min-w-0 max-sm:nth-[n+9]:hidden">
                     <Link href={`/next/er/tier/${id(ws[0])}`} className="group block hover:no-underline">
-                      <Image className="block aspect-square h-auto w-full rounded-[2px] bg-row object-cover group-hover:outline-2 group-hover:outline-ink" src={`/img/er/char/${ws[0].key}.v1.webp`} alt="" width={96} height={96} unoptimized />
+                      <Image className="block aspect-square h-auto w-full rounded-[2px] bg-row object-cover group-hover:outline-2 group-hover:outline-hot" src={`/img/er/char/${ws[0].key}.v1.webp`} alt="" width={96} height={96} unoptimized />
                       <b className="mt-1.5 block truncate text-[14px]">{ws[0].name}</b>
                     </Link>
                     {ws.map((c) => (
@@ -107,7 +107,7 @@ export default async function NextHub() {
                         <span className="h-3 w-1" style={{ background: color }} aria-hidden="true" />
                         {name} {n(t.place)}위
                       </dt>
-                      <dd className="m-0 mt-1.5 text-[38px] leading-none font-black tracking-[-1.2px] num sm:text-[44px]">
+                      <dd className="m-0 mt-1.5 text-[38px] leading-none font-bold tracking-[-1px] num sm:text-[44px]">
                         {t.estimated ? <span className="mr-1 text-[18px] font-bold tracking-normal text-ink-3">약</span> : null}
                         {t.cut != null ? rp(t.cut) : "-"}
                       </dd>

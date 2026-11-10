@@ -9,7 +9,7 @@ export const metadata = { title: "서킷별 순위" };
 
 const CIRCUITS = KEL_EVENTS.filter((e) => /^c\d$/.test(e.key));
 const CUTS: Record<number, string> = { [SEEDS]: `1~${SEEDS}위 결승 직행`, [QUALIFY]: `${SEEDS + 1}~${QUALIFY}위 준결승 진출` };
-const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (place - 1) * 5)}%, transparent)`;
+const heat = (place: number) => `color-mix(in srgb, var(--hot) ${Math.max(0, 50 - (place - 1) * 5)}%, transparent)`;
 
 // 서킷이 끝날 때마다의 누적 순위. 위쪽이 1위
 function Path({ ranks, n }: { ranks: number[]; n: number }) {
