@@ -31,7 +31,7 @@ export default async function NextScore() {
               <Link className="more" href="/er/example/a">예시 대회 열기</Link>
             </h2>
             <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
-              <table className="tbl min-w-[560px]">
+              <table className="tbl max-lg:min-w-[560px]">
                 <thead>
                   <tr>
                     <th className="w-8">#</th>

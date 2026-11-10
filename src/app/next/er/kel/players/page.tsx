@@ -13,9 +13,9 @@ const COLS: { k: keyof PlayerStat; label: string; fmt: (v: number) => string; lo
   { k: "kpr", label: "게임당 처치", fmt: (v) => v.toFixed(2) },
   { k: "avgPlace", label: "평균 순위", fmt: (v) => v.toFixed(2), low: true },
   { k: "top3", label: "TOP3", fmt: (v) => `${Math.round(v * 100)}%` },
-  { k: "damage", label: "피해량", fmt: (v) => Math.round(v).toLocaleString("ko-KR") },
+  { k: "damage", label: "가한 피해", fmt: (v) => Math.round(v).toLocaleString("ko-KR") },
   { k: "damageShare", label: "팀 피해 비중", fmt: (v) => `${Math.round(v * 100)}%` },
-  { k: "ccShare", label: "팀 CC 비중", fmt: (v) => `${Math.round(v * 100)}%` },
+  { k: "ccShare", label: "팀 군중제어 비중", fmt: (v) => `${Math.round(v * 100)}%` },
   { k: "healShare", label: "팀 회복 비중", fmt: (v) => `${Math.round(v * 100)}%` },
 ];
 
@@ -36,7 +36,7 @@ export default async function NextKelPlayers({ searchParams }: { searchParams: P
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-10">
         <KelNav here="players" />
         <div className="scroll-fade -mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-          <table className="tbl min-w-[760px]">
+          <table className="tbl max-lg:min-w-[760px]">
             <thead>
               <tr>
                 <th className="l sticky left-0 bg-bg">선수</th>
