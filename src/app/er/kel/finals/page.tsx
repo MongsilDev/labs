@@ -51,7 +51,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
       notes={NOTES[f.key]}
     >
       <KelTabs
-        prefetch
         label="경기"
         items={list.map((x) => [x.key, `${EVENT_NAME[x.event]} ${x.stage}`] as const)}
         current={f.key}

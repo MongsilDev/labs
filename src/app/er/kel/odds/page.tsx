@@ -75,9 +75,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
       ]}
     >
       <div className="grid gap-2">
-        <KelTabs prefetch label="서킷" items={CIRCUITS.map((c) => [String(c), circuitName(c)] as const)} current={String(circuit)} href={(k) => href(Number(k), done)} />
+        <KelTabs label="서킷" items={CIRCUITS.map((c) => [String(c), circuitName(c)] as const)} current={String(circuit)} href={(k) => href(Number(k), done)} />
         <KelTabs
-          prefetch
           label="단계"
           items={DONE.map((s) => {
             const date = views.find((v) => v.circuit === circuit && v.done === s)!.date;

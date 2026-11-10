@@ -115,9 +115,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   return (
     <KelPage user={user} owner={owner} screen="records" notes={low ? "같은 값은 같은 순위로 묶고, 같은 순위 안에서는 경기가 열린 순서대로 표시했습니다." : undefined}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <KelTabs prefetch label="범위" items={scopes} current={scope} href={(s) => href(s, view)} className="max-[760px]:hidden" />
+        <KelTabs label="범위" items={scopes} current={scope} href={(s) => href(s, view)} className="max-[760px]:hidden" />
         <KelSelect label="범위" items={scopes.map(([s, name]) => [href(s, view), name] as const)} current={href(scope, view)} className="hidden max-[760px]:block" />
-        <KelTabs prefetch label="보기" items={VIEWS} current={view} href={(v) => href(scope, v)} />
+        <KelTabs label="보기" items={VIEWS} current={view} href={(v) => href(scope, v)} />
       </div>
       {view === "season" && (
         <>

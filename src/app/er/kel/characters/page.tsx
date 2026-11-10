@@ -293,7 +293,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
   const sort = pickTab(sorts, q.sort);
   const scopeName = scopes.find(([k]) => k === scope)![1];
   const { total, eventGames, rows } = characterStats(scoped(data, scope));
-  const tabs = <KelTabs prefetch label="보기" items={VIEWS} current={view} href={(v) => (v === "build" ? `${KEL_SCREENS.characters.path}?view=build` : ratePath(scope, sort))} />;
+  const tabs = <KelTabs label="보기" items={VIEWS} current={view} href={(v) => (v === "build" ? `${KEL_SCREENS.characters.path}?view=build` : ratePath(scope, sort))} />;
 
   if (view === "build") {
     const builds = characterBuilds(data);
@@ -338,8 +338,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         {tabs}
-        <KelTabs prefetch label="범위" items={scopes} current={scope} href={(s) => ratePath(s, sort)} />
-        <KelTabs prefetch label="정렬" items={sorts} current={sort} href={(k) => ratePath(scope, k)} className="sort" />
+        <KelTabs label="범위" items={scopes} current={scope} href={(s) => ratePath(s, sort)} />
+        <KelTabs label="정렬" items={sorts} current={sort} href={(k) => ratePath(scope, k)} className="sort" />
       </div>
       <section className="panel p-5 max-[760px]:p-4">
         {shown.length < rows.length && (

@@ -219,7 +219,7 @@ function Ranking({ all, metric }: { all: PlayerStat[]; metric: Metric }) {
     <section className="panel p-5 max-[760px]:p-4" aria-label={`${label} 순위`}>
       <div className="grid gap-2">
         {GROUPS.map(([title, tiles]) => (
-          <KelTabs prefetch key={title} className="sort" label={title} items={tiles.map(([m, l]) => [m, l] as const)} current={metric} href={rankPath} />
+          <KelTabs key={title} className="sort" label={title} items={tiles.map(([m, l]) => [m, l] as const)} current={metric} href={rankPath} />
         ))}
       </div>
       <KelScroll label={`${label} 순위`} className="mt-4">
@@ -275,7 +275,7 @@ export default function Players({ user, owner, name, metric }: { user: User | nu
     "가한 피해 비중은 팀 세 명이 가한 피해에서 그 선수가 차지한 비율을 게임마다 구해 평균한 값입니다.",
     "데스당 받은 피해는 시즌 동안 받은 피해의 합계를 데스 수의 합계로 나눈 값입니다.",
   ];
-  const tabs = <KelTabs prefetch label="보기" items={VIEWS} current={metric ? "rank" : "card"} href={(v) => (v === "card" ? KEL_SCREENS.players.path : rankPath(METRICS[0]))} />;
+  const tabs = <KelTabs label="보기" items={VIEWS} current={metric ? "rank" : "card"} href={(v) => (v === "card" ? KEL_SCREENS.players.path : rankPath(METRICS[0]))} />;
   if (metric) {
     return (
       <KelPage user={user} owner={owner} screen="players" notes={notes}>
