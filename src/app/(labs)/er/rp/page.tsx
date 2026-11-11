@@ -32,7 +32,7 @@ export default async function RpPage({ searchParams }: { searchParams: Promise<{
           아시아1 상위 1,000명 {n(data.games)}경기, {day.format(data.from)}~{day.format(data.to)}
         </p>
       </div>
-      <Filters groups={[{ name: "게임 전 RP", items: data.bands.map((b) => ({ href: `/next/er/rp?rp=${b.lo}`, label: bandName(b.lo, b.hi), on: b === band })) }]} />
+      <Filters groups={[{ name: "게임 전 RP", items: data.bands.map((b) => ({ href: `/er/rp?rp=${b.lo}`, label: bandName(b.lo, b.hi), on: b === band })) }]} />
       <div className="mt-6">
         <div className="grid min-w-0 content-start gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
           <section className="sec min-w-0">

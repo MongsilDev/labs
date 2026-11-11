@@ -56,7 +56,7 @@ export function derive(games, tier) {
       const e = combos.get(key) ?? { n: 0, early: 0, top3: 0, win: 0 };
       for (const x of [e, all]) {
         x.n++;
-        if (rank > 3 && (p.duration ?? 0) <= EARLY_S) x.early++;
+        if (rank > 3 && typeof p.duration === "number" && p.duration <= EARLY_S) x.early++;
         if (rank <= 3) x.top3++;
         if (rank === 1) x.win++;
       }
@@ -67,8 +67,8 @@ export function derive(games, tier) {
       put(b.tk, p.teamKill ?? 0);
       const k = TK.findIndex(([lo, hi]) => p.teamKill >= lo && p.teamKill <= hi);
       if (rank >= 1 && rank <= 8 && k >= 0) put(b.cells[rank - 1][k], p.mmrGain);
-      const h = Number(String(p.startDtm ?? "").slice(11, 13));
-      if (h >= 0 && h < 24) put(b.hours[h], p.mmrGain);
+      const hh = String(p.startDtm ?? "").slice(11, 13);
+      if (/^\d\d$/.test(hh) && Number(hh) < 24) put(b.hours[Number(hh)], p.mmrGain);
     }
   }
   if (!count || !all.top3) return null;

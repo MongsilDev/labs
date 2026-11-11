@@ -72,7 +72,7 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
           {data.band.server} 상위 1,000명 경기 기록 {view.rows.toLocaleString("ko-KR")}판, {at} 갱신
         </p>
       </div>
-      <Filters groups={[{ name: "기간", items: data.views.map((x) => ({ href: `/next/er/meta?v=${x.id}`, label: x.label, on: x.id === view.id })) }]} />
+      <Filters groups={[{ name: "기간", items: data.views.map((x) => ({ href: `/er/meta?v=${x.id}`, label: x.label, on: x.id === view.id })) }]} />
       {!view.combos.length ? (
         <p className="mt-5 text-ink-3">이 기간은 집계가 아직 없습니다.</p>
       ) : (

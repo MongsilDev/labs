@@ -41,7 +41,7 @@ export default async function LatePage({ searchParams }: { searchParams: Promise
           {
             name: "정렬",
             items: (Object.keys(SORTS) as (keyof typeof SORTS)[]).map((k) => ({
-              href: k === "fin" ? "/next/er/late" : `/next/er/late?s=${k}`,
+              href: k === "fin" ? "/er/late" : `/er/late?s=${k}`,
               label: k === "fin" ? "TOP3 중 1위 비율이 높은 순" : `${min}분 안에 탈락한 비율이 낮은 순`,
               on: k === s,
             })),
