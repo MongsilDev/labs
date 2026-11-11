@@ -90,7 +90,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
                       <span className="inline-flex flex-col items-center gap-0.5">
                         <span className={champ?.key === row.key ? "rk first" : i < qualify ? "rk adv" : "rk"}>{i + 1}</span>
                         {(champ?.key === row.key || i < qualify) && (
-                          <span className="text-[9px] leading-none text-fg-3 min-[761px]:hidden">{champ?.key === row.key ? "우승" : "진출"}</span>
+                          <span className="text-[10px] leading-none text-fg-3 min-[761px]:hidden">{champ?.key === row.key ? "우승" : "진출"}</span>
                         )}
                       </span>
                     </td>

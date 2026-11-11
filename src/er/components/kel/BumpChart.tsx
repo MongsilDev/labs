@@ -21,7 +21,9 @@ export default function BumpChart({ rows, labels, initial, legend, suffix = "" }
   const [picked, setPicked] = useState(() => initial.slice(0, TONES.length).map((key, tone) => ({ key, tone })));
   const [hover, setHover] = useState<string | null>(null);
   const narrow = w < 560;
-  const step = 26;
+  // 좁은 폭에서는 팀 이름 버튼이 줄마다 44px를 차지함
+  const step = narrow ? 44 : 26;
+  const tap = narrow ? 44 : 22;
   const pad = { l: narrow ? 32 : 40, r: narrow ? 144 : 176, t: legend === "" ? 12 : 32, b: 30 };
   const h = pad.t + step * (rows.length - 1) + pad.b;
   const x = (i: number) => pad.l + 8 + (i * (w - pad.l - pad.r - 16)) / (labels.length - 1);
@@ -100,7 +102,7 @@ export default function BumpChart({ rows, labels, initial, legend, suffix = "" }
               onFocus={() => setHover(r.key)}
               onBlur={() => setHover(null)}
               className="absolute flex items-center gap-1.5 rounded-md px-1 text-left hover:bg-hover"
-              style={{ left: x(last) + 8, top: y(r.ranks[last]) - 11, height: 22, maxWidth: pad.r - 10 }}
+              style={{ left: x(last) + 8, top: y(r.ranks[last]) - tap / 2, height: tap, maxWidth: pad.r - 10 }}
             >
               <span className="h-[3px] w-2.5 flex-none rounded-full" style={{ background: tone >= 0 ? TONES[tone] : "var(--kel-0)" }} aria-hidden="true" />
               <Logo team={team} size={18} />

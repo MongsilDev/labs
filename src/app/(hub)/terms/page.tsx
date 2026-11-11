@@ -99,7 +99,7 @@ export default function Terms() {
 
         <h2>10. 문의</h2>
         <p>
-          <a href="mailto:mail@mongsil.dev">mail@mongsil.dev</a>
+          <a className="tap" href="mailto:mail@mongsil.dev">mail@mongsil.dev</a>
         </p>
       </main>
       <SiteFooter />

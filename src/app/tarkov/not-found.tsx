@@ -7,7 +7,7 @@ export default function NotFound() {
     <>
       <Header />
       <main id="main" className="wrap slim">
-        <section className="panel nf">
+        <section className="nf">
           <h1>없는 페이지입니다</h1>
           <Link className="btn primary" href="/tarkov/players">
             계정 조회로 이동
