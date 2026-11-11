@@ -123,6 +123,7 @@ const hasRawRoute = db.prepare(`SELECT 1 FROM raw.routes WHERE route = ?`);
 const getRawRoute = db.prepare(`SELECT body FROM raw.routes WHERE route = ?`);
 const getDak = db.prepare(`SELECT title, nick, trait, tac, body FROM dak_routes WHERE route = ?`);
 const putDak = db.prepare(`INSERT OR REPLACE INTO dak_routes (route, t, title, nick, trait, tac, body) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+const markDak = db.prepare(`UPDATE dak_routes SET t = ?, body = ? WHERE route = ?`);
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
 const putAccount = db.prepare(`INSERT INTO accounts VALUES (?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked`);
 
@@ -435,6 +436,11 @@ async function fetchDak(ids) {
       }
       // 404가 아닌데 루트가 비어 있으면 형식이 바뀌었을 수 있어 저장하지 않고 다음 회차에 다시 물음
       if (!w) continue;
+    }
+    // 이름만 받아 둔 루트가 그 사이 dak.gg에서 지워졌으면 받아 둔 값은 두고 본문 칸에 null을 넣어 다시 묻지 않음
+    if (!w && getDak.get(id)) {
+      markDak.run(Date.now(), pack(null), id);
+      continue;
     }
     const body = w ? { ...w } : null;
     if (body) delete body.userNum;
@@ -767,7 +773,7 @@ async function routeMeta(s, ids, nm, used) {
     const w = raw ? JSON.parse(brotliDecompressSync(raw.body)).route : null;
     const own = getRoute.get(id);
     // dak.gg에도 없던 루트는 모든 칸이 null인 행이라 없는 것으로 보고 특성과 전술 스킬을 판에서 고름
-    const d = [getDak.get(id)].find((x) => x && [x.title, x.nick, x.trait, x.tac].some((v) => v != null));
+    const d = [getDak.get(id)].find((x) => x && [x.title, x.nick, x.trait, x.tac, x.body].some((v) => v != null));
     // 게임이 본문을 주지 않으면 dak.gg 본문을 쓰고 10번째 칸을 1로 둠. 둘 다 없으면 아이템과 지역이 null이라 화면이 불러올 수 없는 루트로 그림
     const dw = !w && d?.body ? JSON.parse(brotliDecompressSync(d.body)) : null;
     const body = w ? routeBody(w, nm, items) : (dw && dakBody(dw, nm, items)) || [null, null, null];
