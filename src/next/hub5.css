@@ -1,0 +1,186 @@
+/* 첫 화면 시안 1~5가 함께 쓰는 값 표시 */
+.hub-lg .sec-h { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+.hub-lg .sec-h small, .hub-lg .sec-h a.more { font-size: 13px; letter-spacing: 0; }
+@media (min-width: 640px) { .hub-lg .sec-h { font-size: 26px; } }
+
+.cutnums { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; gap: 0 var(--cut-gap, 40px); margin: 0; }
+.cutnums dt { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.cutnums dt span { width: 4px; height: 12px; }
+.cutnums dd { margin: 6px 0 0; font-size: var(--cut-size, 44px); line-height: 1; font-weight: 700; letter-spacing: -0.03em; }
+.cutnums dd small { margin-right: 4px; font-size: .38em; font-weight: 700; letter-spacing: 0; color: var(--ink-3); }
+.cutnums p { margin-top: 8px; font-size: 13px; color: var(--ink-2); }
+
+.fig { display: flex; align-items: center; gap: 12px; font-size: var(--fig-name, 22px); font-weight: 700; white-space: nowrap; }
+.fig img { width: var(--fig-face, 48px); height: var(--fig-face, 48px); border-radius: 2px; background: var(--row); object-fit: cover; }
+.fig .kel-logo { width: var(--fig-face, 48px) !important; height: var(--fig-face, 48px) !important; }
+.fig .kel-logo img { width: 100%; height: 100%; background: none; object-fit: contain; }
+/* 이름과 숫자는 기준선을 맞추고, 묶음의 높이는 숫자 한 줄 */
+.fig-t { display: flex; align-items: baseline; gap: 12px; line-height: 1; }
+.fig b { font-size: var(--fig-num, 44px); font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+
+.tierbig { margin-top: 12px; }
+.tierbig td { height: var(--tb-h, 84px); }
+.tierbig td:first-child { width: 32px; }
+.tb-who { display: flex; align-items: center; gap: 16px; }
+.tb-who:hover { text-decoration: none; }
+.tb-who:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.tb-face { flex: none; width: var(--tb-face, 56px); height: var(--tb-face, 56px); border-radius: 2px; background: var(--row); object-fit: cover; }
+.tb-name { display: grid; gap: 5px; min-width: 0; }
+.tb-name span { font-size: 13px; font-weight: 600; line-height: 1; color: var(--ink-2); }
+.tb-name b { font-size: var(--tb-name, 22px); font-weight: 700; line-height: 1; }
+.tbl td.tb-stat { font-size: 16px; }
+.tbl td.tb-score { font-size: var(--tb-score, 32px); font-weight: 800; letter-spacing: -0.02em; }
+@media (max-width: 639px) {
+  .tierbig { --tb-h: 64px; --tb-face: 40px; --tb-name: 17px; --tb-score: 22px; }
+  .tb-who { gap: 12px; }
+}
+
+/* 시안 1: 큰 글자 목차. 줄 전체가 링크이고 입력칸과 버튼만 그 위로 올림 */
+.hub1 { margin-top: -20px; isolation: isolate; }
+.hub1-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; align-items: center; gap: 0 28px; min-height: 148px; border-bottom: 1px solid var(--rule-2); }
+/* 줄 선은 본문 폭에 맞추고, 올렸을 때 바탕만 양옆으로 16px 넓힘 */
+.hub1-row::before { content: ""; position: absolute; inset: 0 -16px; z-index: -1; }
+.hub1-row:hover::before { background: var(--row); }
+.hub1-row h2 { margin: 0; font-size: 72px; line-height: 1; font-weight: 800; letter-spacing: -0.04em; }
+.hub1-row[data-size="m"] { min-height: 96px; --fig-face: 32px; --fig-name: 20px; --fig-num: 32px; }
+.hub1-row[data-size="m"] h2 { font-size: 40px; letter-spacing: -0.03em; }
+.hub1-row[data-size="s"] { min-height: 64px; }
+.hub1-row[data-size="s"] h2 { font-size: 22px; letter-spacing: -0.01em; }
+.hub1-t::after { content: ""; position: absolute; inset: 0; }
+.hub1-t:hover { text-decoration: none; }
+.hub1-row > svg { grid-column: 3; color: var(--ink-3); }
+.hub1-row:hover > svg { color: var(--ink); }
+.hub1-v { justify-self: end; }
+.hub1-v :is(form, a, button, input) { position: relative; z-index: 1; }
+.hub1-k { margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--ink-3); text-align: right; }
+.hub1-v .fig { justify-content: flex-end; }
+.hub1-pair { display: grid; grid-template-columns: 1fr 1fr; }
+.hub1-pair { gap: 0 33px; }
+.hub1-pair .hub1-row + .hub1-row::after { content: ""; position: absolute; top: 0; bottom: 0; left: -17px; border-left: 1px solid var(--rule-2); }
+@media (max-width: 767px) {
+  .hub1-row { grid-template-columns: minmax(0, 1fr) 16px; gap: 14px 12px; min-height: 0; padding: 20px 0; --fig-face: 36px; --fig-name: 18px; --fig-num: 30px; --cut-size: 34px; --cut-gap: 28px; }
+  .hub1-row h2 { font-size: 36px; }
+  .hub1-row[data-size="m"] { min-height: 0; --fig-num: 26px; }
+  .hub1-row[data-size="m"] h2 { font-size: 26px; }
+  .hub1-row[data-size="s"] { min-height: 0; padding: 18px 0; }
+  .hub1-row[data-size="s"] h2 { font-size: 18px; }
+  .hub1-row > svg { grid-column: 2; grid-row: 1; }
+  .hub1-v { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; }
+  .hub1-k { text-align: left; }
+  /* 코드 입력칸 아래 안내 줄 자리만큼 줄 아래 여백을 줄임 */
+  .hub1-v form:has(#hub-code) { margin-bottom: -14px; }
+  .hub1-v .fig { justify-content: flex-start; }
+  .hub1-pair { grid-template-columns: minmax(0, 1fr); }
+  .hub1-pair .hub1-row + .hub1-row::after { content: none; }
+}
+
+/* 시안 2: 왼쪽 탭과 오른쪽 무대. 좁은 폭에서는 탭이 위 한 줄 */
+.hub2 { display: grid; grid-template-columns: 360px minmax(0, 1fr); grid-template-areas: "tabs stage" "more stage"; grid-template-rows: auto 1fr; gap: 0 56px; }
+.hub2-tabs { grid-area: tabs; display: grid; }
+.hub2-tabs button { display: grid; align-content: center; gap: 8px; min-height: 100px; padding: 0 20px; border: 0; border-left: 3px solid var(--rule-2); background: none; color: var(--ink-3); font: inherit; text-align: left; cursor: pointer; }
+.hub2-tabs button:hover { background: var(--row); color: var(--ink); }
+.hub2-tabs button[aria-selected="true"] { border-left-color: var(--hot); background: var(--row); color: var(--ink); }
+.hub2-tabs b { font-size: 28px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+.hub2-tabs span { min-height: 18px; font-size: 13px; line-height: 18px; font-weight: 500; color: var(--ink-2); }
+.hub2-stage { grid-area: stage; min-height: 540px; }
+.hub2-stage[hidden] { display: none; }
+.hub2-more { grid-area: more; margin-top: 24px; }
+.hub2-cut { --cut-size: 104px; --cut-gap: 72px; }
+.hub2-cut .cutnums { margin-top: 28px; }
+.hub2-cut .cutnums dt { font-size: 13px; }
+.hub2-cut .cutnums p { font-size: 15px; }
+/* 무대에서는 미니 차트의 높이만 키움. CutMini가 h-16으로 고정한 값을 덮어씀 */
+.hub2-cut figure, .hub5-cut figure { margin-top: 32px; }
+.hub2-cut figure .h-16 { height: 180px; }
+@media (max-width: 1023px) {
+  .hub2 { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tabs" "stage" "more"; grid-template-rows: none; gap: 0; }
+  .hub2-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hub2-tabs button { justify-items: center; min-height: 52px; padding: 0 4px; border-left: 0; border-bottom: 3px solid var(--rule-2); text-align: center; }
+  .hub2-tabs button[aria-selected="true"] { border-bottom-color: var(--hot); }
+  .hub2-tabs b { font-size: 16px; letter-spacing: 0; }
+  .hub2-tabs span { display: none; }
+  .hub2-stage { min-height: 0; margin-top: 24px; }
+  .hub2-more { margin-top: 32px; }
+  .hub2-cut { --cut-size: 44px; --cut-gap: 28px; }
+  .hub2-cut figure .h-16 { height: 96px; }
+}
+
+/* 시안 3: 대회 점수와 예시 순위표가 맨 위, 통계는 값 하나씩 한 줄 */
+.hub3-hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center; gap: 64px; padding: 12px 0 36px; }
+.hub3-h { margin: 0; font-size: 88px; line-height: 1; font-weight: 800; letter-spacing: -0.045em; }
+.hub3-h a:hover { text-decoration: none; }
+.hub3-shot { padding: 4px 28px 12px; border: 1px solid var(--rule-2); border-radius: 2px; background: var(--row); }
+.hub3-shot .tbl tbody tr:hover { background: none; }
+.hub3-more { display: flex; align-items: center; justify-content: flex-end; gap: 4px; height: 44px; font-size: 13px; font-weight: 600; color: var(--hot); }
+.hub3-strip { display: grid; grid-template-columns: 1.15fr 1.25fr 1fr; border-top: 1px solid var(--rule-2); border-bottom: 1px solid var(--rule-2); --fig-num: 40px; --cut-size: 40px; --cut-gap: 32px; }
+.hub3-strip > a { display: grid; grid-template-rows: auto 1fr; align-items: end; gap: 10px; min-height: 132px; padding: 22px 28px; }
+.hub3-strip > a:first-child { padding-left: 0; }
+.hub3-strip > a + a { border-left: 1px solid var(--rule-2); }
+.hub3-strip > a:hover { background: var(--row); text-decoration: none; }
+.hub3-k { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+/* 칸마다 숫자의 기준선이 같은 높이에 오도록 그림과 글자를 칸 아래에 맞춤 */
+.hub3-strip .fig { align-items: flex-end; }
+.hub3-strip .cutnums dd { margin-top: 4px; }
+.hub3-foot { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: end; gap: 64px; margin-top: 28px; }
+@media (max-width: 1023px) {
+  .hub3-hero { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 8px 0 32px; }
+  .hub3-h { font-size: 52px; }
+  /* 좁은 폭에서는 팀 이름이 잘리지 않게 틀을 없앰 */
+  .hub3-shot { padding: 0; border: 0; background: none; }
+  .hub3-strip { grid-template-columns: minmax(0, 1fr); --fig-num: 30px; --fig-face: 36px; --fig-name: 18px; --cut-size: 32px; }
+  .hub3-strip > a { min-height: 0; padding: 18px 0; }
+  .hub3-strip > a + a { border-left: 0; border-top: 1px solid var(--rule); }
+  .hub3-foot { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+}
+
+/* 시안 4: 가운데 입력칸 하나. 대상 셋을 위에서 고름 */
+.hub4 { max-width: 760px; margin: 36px auto 0; }
+.hub4 .seg label { min-height: 48px; font-size: 15px; }
+.hub4-body { margin-top: 12px; }
+.hub4-body[hidden] { display: none; }
+.hub4-body .field { height: 64px; padding: 0 20px; font-size: 20px; }
+.hub4-body .btn { height: 64px; padding: 0 28px; font-size: 16px; }
+.hub4-body .sec-h { margin-top: 28px; padding-bottom: 8px; border-bottom: 1px solid var(--rule-2); }
+/* 대상 이름이 위 선택 칸에 이미 있어 입력칸 라벨은 화면에서만 감춤 */
+.hub4-body .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 767px) {
+  .hub4 { margin-top: 4px; }
+  .hub4-body .field, .hub4-body .btn { height: 56px; }
+  .hub4-body .field { padding: 0 14px; font-size: 17px; }
+  .hub4-body .btn { padding: 0 18px; }
+}
+
+/* 시안 5: 같은 폭 세 기둥과 아래 한 줄 */
+.hub5 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); --tb-h: 80px; --tb-face: 48px; --tb-name: 20px; --tb-score: 28px; }
+.hub5 > section { padding: 0 36px 28px; border-top: 0; }
+.hub5 > section:first-child { padding-left: 0; }
+.hub5 > section:last-child { padding-right: 0; }
+.hub5 > section + section { border-left: 1px solid var(--rule-2); }
+.hub5-cut { --cut-size: 88px; }
+.hub5-cut .cutnums { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 24px; }
+.hub5-cut figure .h-16 { height: 88px; }
+.hub5-band { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; border-top: 1px solid var(--rule-2); border-bottom: 1px solid var(--rule-2); }
+.hub5-band > * { display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 0 28px; font-weight: 600; }
+.hub5-band > :first-child { padding-left: 0; }
+.hub5-band > :last-child { padding-right: 0; }
+.hub5-band > * + * { border-left: 1px solid var(--rule-2); }
+.hub5-band > a:hover { background: var(--row); text-decoration: none; }
+.hub5-band b { font-size: 15px; font-weight: 700; white-space: nowrap; }
+.hub5-band span { font-size: 13px; font-weight: 400; color: var(--ink-3); white-space: nowrap; }
+.hub5-band svg { margin-left: auto; color: var(--ink-3); }
+.hub5-band > a:hover svg { color: var(--ink); }
+.hub5-band h2 { flex: none; margin: 0; font-size: 15px; font-weight: 700; }
+.hub5-band form { flex: 1; }
+@media (max-width: 1023px) {
+  .hub5 { grid-template-columns: minmax(0, 1fr); --tb-h: 64px; --tb-face: 40px; --tb-name: 17px; --tb-score: 22px; }
+  .hub5 > section { padding: 0 0 32px; }
+  .hub5 > section + section { border-left: 0; border-top: 1px solid var(--rule-2); padding-top: 20px; }
+  .hub5-cut { --cut-size: 44px; }
+  .hub5-cut .cutnums { grid-template-columns: repeat(2, auto); gap: 0 28px; margin-top: 16px; }
+  .hub5-cut figure .h-16 { height: 64px; }
+  .hub5-band { grid-template-columns: minmax(0, 1fr); }
+  .hub5-band > * { padding: 0; min-height: 56px; }
+  .hub5-band > * + * { border-left: 0; border-top: 1px solid var(--rule); }
+  .hub5-band > div { flex-wrap: wrap; gap: 8px 12px; padding: 14px 0; }
+  .hub5-band form { flex-basis: 100%; }
+}

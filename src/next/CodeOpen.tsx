@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function CodeOpen() {
+export default function CodeOpen({ className = "max-w-[280px]" }: { className?: string }) {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -18,7 +18,7 @@ export default function CodeOpen() {
       }}
     >
       <label className="lbl" htmlFor="hub-code">대회 코드</label>
-      <div className="grid max-w-[280px] grid-cols-[minmax(0,1fr)_auto] gap-2">
+      <div className={`grid grid-cols-[minmax(0,1fr)_auto] gap-2 ${className}`}>
         <input
           id="hub-code"
           className="field font-bold tracking-[3px] uppercase"
