@@ -1488,7 +1488,8 @@
     background: #c92a2a;
     color: #fff;
   }
-  :root[data-theme="light"] .tier-grade[data-grade="S"] {
+  /* 표본이 적은 행의 흐린 칩 규칙을 이기지 않게 명시도를 낮춤 */
+  :where(:root[data-theme="light"]) .tier-grade[data-grade="S"] {
     background: #ff6b6b;
     color: #0a0d14;
   }

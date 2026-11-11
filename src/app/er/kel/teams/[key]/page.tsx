@@ -373,11 +373,11 @@ export default async function Page({ params }: Props) {
               ).map(([title, list, side]) => (
                 <div key={title} className="min-w-0">
                   <h3 className={SUB}>{title}</h3>
-                  <ul className="mt-2 grid gap-1.5 text-[14px]">
+                  <ul className="mt-2 grid gap-1.5 text-[14px] max-[760px]:gap-0">
                     {list.map((x) => (
-                      <li key={x.t.key} className="flex min-w-0 items-center gap-2">
+                      <li key={x.t.key} className="flex min-w-0 items-center gap-2 max-[760px]:min-h-11">
                         <Logo team={x.t} size={22} label />
-                        <Link className={`truncate font-semibold ${LINK}`} href={teamPath(x.t)}>
+                        <Link className={`truncate font-semibold [--tap:11px] ${LINK}`} href={teamPath(x.t)}>
                           {x.t.name}
                         </Link>
                         <span className="ml-auto flex-none text-fg-3">{x[side]}번</span>

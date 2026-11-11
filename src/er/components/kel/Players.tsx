@@ -69,13 +69,13 @@ function Opponents({ title, list, side }: { title: string; list: { r: KillPair }
   return (
     <div className="min-w-0">
       <h3 className="text-[13px] font-semibold text-fg-3">{title}</h3>
-      <ul className="mt-2 grid gap-1.5 text-[14px]">
+      <ul className="mt-2 grid gap-1.5 text-[14px] max-[760px]:gap-0">
         {list.map(({ r }) => {
           const o = r[side];
           return (
-            <li key={o.player} className="flex min-w-0 items-center gap-2">
+            <li key={o.player} className="flex min-w-0 items-center gap-2 max-[760px]:min-h-11">
               <Logo team={TEAM.get(o.team)!} size={22} label />
-              <Link className="tap truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(o.player)}>
+              <Link className="tap truncate font-semibold decoration-line-strong underline-offset-[3px] [--tap:11px] hover:decoration-fg-3" href={playerPath(o.player)}>
                 {o.player}
               </Link>
               <span className="ml-auto text-fg-3">{r.count}번</span>

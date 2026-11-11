@@ -69,7 +69,7 @@
     --et: #c42f63;
     --dg: #8a6100;
   }
-  :root { --text: var(--ink); --text-2: var(--ink-2); --text-3: var(--ink-3); --line: var(--rule); --line-soft: var(--rule); --line-strong: var(--rule-2); --surface: var(--row); --field: var(--bg); --hover: var(--row); --minus: var(--g-s); --accent: var(--hot); --hot-fill: #0071e3; }
+  :root { --text: var(--ink); --text-2: var(--ink-2); --text-3: var(--ink-3); --line: var(--rule); --line-soft: var(--rule); --line-strong: var(--rule-2); --surface: var(--row); --field: var(--bg); --hover: var(--row); --minus: var(--down); --accent: var(--hot); --hot-fill: #0071e3; }
   html { background: var(--bg); color: var(--ink); font-family: var(--font-sans); -webkit-text-size-adjust: 100%; }
   /* 내용이 짧은 화면에서도 푸터가 화면 아래에 붙게 함 */
   body { margin: 0; font-size: 14px; line-height: 1.45; min-height: 100dvh; display: flex; flex-direction: column; word-break: keep-all; overflow-wrap: break-word; }
