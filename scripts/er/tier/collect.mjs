@@ -503,11 +503,11 @@ function rebuild() {
   log(`raw에서 루트, 전술 스킬, 경기 지표 ${n}행과 루트 정보 ${r}개를 채웠습니다`);
 }
 
-async function collectAccount(s, acc, since, cuts, stop) {
+async function collectAccount(s, acc, since, cuts, stop, measure) {
   const player = playerId(s.id, acc.name);
   const prev = getAccount.get(player);
   // 랭크 경기를 하면 RP가 바뀌므로 지난번에 끝까지 받은 뒤 RP가 같은 계정은 건너뜀. 순 변화가 0인 판을 놓치지 않게 하루에 한 번은 받음
-  if (!BACKFILL && acc.mmr != null && prev?.mmr === acc.mmr && prev.checked > Date.now() - 86_400_000) {
+  if (!BACKFILL && !measure && acc.mmr != null && prev?.mmr === acc.mmr && prev.checked > Date.now() - 86_400_000) {
     stats.skipped++;
     return 0;
   }
@@ -519,7 +519,8 @@ async function collectAccount(s, acc, since, cuts, stop) {
   let added = 0;
   let top = newest;
   let complete = false;
-  let seen = false;
+  // 마지막 랭크 경기 뒤 RP. rank/top RP와 같을 때만 저장해, 목록에 아직 안 올라온 판이 있으면 다음 회차에 다시 받음
+  let after;
   for (let page = 0; !abort && !stop(); page++) {
     if (page === MAX_PAGES) {
       complete = true;
@@ -528,7 +529,7 @@ async function collectAccount(s, acc, since, cuts, stop) {
     const g = await get(path);
     if (g === undefined) break;
     const list = g?.userGames ?? [];
-    if (list.length) seen = true;
+    if (page === 0) after = list.find((y) => y.matchingMode === 3 && y.seasonId === s.id)?.mmrAfter;
     let done = !g?.next || !list.length;
     for (const y of list) {
       const t = kst(y.startDtm);
@@ -545,8 +546,9 @@ async function collectAccount(s, acc, since, cuts, stop) {
     }
     path = `/v1/user/games/uid/${uid}?next=${g.next}`;
   }
-  // 중간에 끊긴 계정은 다음 실행에서 처음부터 다시 받음. 경기 목록을 한 쪽도 받지 못했으면 RP를 저장하지 않아 다음 회차에 다시 받음
-  putAccount.run(player, complete ? top : newest, Date.now(), complete && seen ? acc.mmr : (prev?.mmr ?? null));
+  // 중간에 끊긴 계정은 다음 실행에서 처음부터 다시 받음. checked와 mmr도 끝까지 받았을 때만 바꿈
+  const ok = complete && acc.mmr != null && after === acc.mmr;
+  putAccount.run(player, complete ? top : newest, complete ? Date.now() : (prev?.checked ?? 0), ok ? acc.mmr : complete ? null : (prev?.mmr ?? null));
   return added;
 }
 
@@ -570,7 +572,7 @@ async function collect(s, since, { measure }) {
         else await sleep(200);
         continue;
       }
-      const n = await collectAccount(s, acc, since, cuts, stopWorkers);
+      const n = await collectAccount(s, acc, since, cuts, stopWorkers, measure);
       added += n;
     }
   });
