@@ -658,9 +658,12 @@
   }
   .doc-table {
     overflow-x: auto;
-    border: 1px solid var(--line);
-    border-radius: 2px;
+    border-block: 1px solid var(--line);
     margin: 10px 0;
+  }
+  .doc-table th:first-child,
+  .doc-table td:first-child {
+    padding-left: 0;
   }
   .doc-table th,
   .doc-table td {
@@ -689,7 +692,7 @@
     }
     .doc-table.cards tr {
       display: block;
-      padding: 10px 12px;
+      padding: 10px 0;
       border-bottom: 1px solid var(--line-soft);
     }
     .doc-table.cards tr:last-child {
