@@ -323,7 +323,7 @@ export default function TierBoard(p: Props) {
             ))}
           </select>
           <select className="field sm tier-sel" aria-label="역할군" value={role ?? ""} onChange={(e) => { const r = e.target.value || null; setRole(r); keep({ r }); }}>
-            {[null, ...roles].map((r) => (
+            {[null, ...roles, ...(role && !roles.includes(role) ? [role] : [])].map((r) => (
               <option key={r ?? "all"} value={r ?? ""}>
                 {r ?? "역할군 전체"}
               </option>

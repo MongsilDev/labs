@@ -1802,6 +1802,10 @@
     .tier-moved-fold { display: none; }
   }
   .tier-board { border: 0; border-top: 1px solid var(--line-strong); background: none; }
+  /* 표가 가로로 넘치지 않는 폭에서만 헤더가 화면 위에 남음 */
+  @media (width >= 1024px) {
+    .tier-board { overflow-x: clip; }
+  }
   .tier-table { width: 100%; }
   .tier-table th, .tier-table td { padding-top: 5px; padding-bottom: 5px; }
   .tier-table thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); height: 36px; }
@@ -1821,7 +1825,8 @@
     .tier-table { font-size: 13px; }
     .tier-table th, .tier-table td { padding-left: 4px; padding-right: 4px; }
     .tier-table .tier-no, .tier-table thead th:last-child, .tier-table td:last-child, .tier-pk small { display: none; }
-    .tier-table .l { position: static !important; box-shadow: none !important; min-width: 0 !important; max-width: none !important; width: auto !important; }
+    .tier-table td.l { position: static !important; }
+    .tier-table .l { left: auto !important; box-shadow: none !important; min-width: 0 !important; max-width: none !important; width: auto !important; }
     .tier-board { overflow-x: visible; }
     .tier-table td:not(.l):not(.tier-no), .tier-table td.tier-pk { width: 54px; }
     .tier-table th:nth-child(2), .tier-table td:nth-child(2) { padding-left: 0; }
