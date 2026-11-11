@@ -507,7 +507,8 @@ async function collectAccount(s, acc, since, cuts, stop, measure) {
   const player = playerId(s.id, acc.name);
   const prev = getAccount.get(player);
   // 랭크 경기를 하면 RP가 바뀌므로 지난번에 끝까지 받은 뒤 RP가 같은 계정은 건너뜀. 순 변화가 0인 판을 놓치지 않게 하루에 한 번은 받음
-  if (!BACKFILL && !measure && acc.mmr != null && prev?.mmr === acc.mmr && prev.checked > Date.now() - 86_400_000) {
+  // 종료 뒤에는 수집하지 않아 늦게 반영된 판을 되찾을 수 없으므로 시즌 마지막 하루는 건너뛰지 않음
+  if (!BACKFILL && !measure && s.end - Date.now() > 86_400_000 && acc.mmr != null && prev?.mmr === acc.mmr && prev.checked > Date.now() - 86_400_000) {
     stats.skipped++;
     return 0;
   }
