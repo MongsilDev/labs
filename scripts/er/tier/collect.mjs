@@ -94,6 +94,8 @@ db.exec(`
 `);
 // recommend가 404인 루트를 dak.gg에서 받은 값. 모든 칸이 null인 행은 dak.gg에도 없던 루트라 다시 묻지 않음
 db.exec(`CREATE TABLE IF NOT EXISTS dak_routes (route INTEGER PRIMARY KEY, t INTEGER NOT NULL, title TEXT, nick TEXT, trait INTEGER, tac INTEGER)`);
+// body는 11-12에 더한 dak.gg weaponRoute 원본(userNum 뺌). 이 열이 빈 옛 행은 아이템과 지역을 받으려고 한 번 다시 물음
+if (!db.prepare(`PRAGMA table_info(dak_routes)`).all().some((c) => c.name === "body")) db.exec(`ALTER TABLE dak_routes ADD COLUMN body BLOB`);
 const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 const fillRow = db.prepare(`UPDATE rows SET route = coalesce(route, ?), tac = coalesce(tac, ?), assists = coalesce(assists, ?), deaths = coalesce(deaths, ?), monsters = coalesce(monsters, ?)
   WHERE game = ? AND player = ? AND (route IS NULL OR assists IS NULL)`);
@@ -119,8 +121,8 @@ const openRoutes = db.prepare(
 const putRawRoute = db.prepare(`INSERT OR REPLACE INTO raw.routes VALUES (?, ?, ?)`);
 const hasRawRoute = db.prepare(`SELECT 1 FROM raw.routes WHERE route = ?`);
 const getRawRoute = db.prepare(`SELECT body FROM raw.routes WHERE route = ?`);
-const getDak = db.prepare(`SELECT title, nick, trait, tac FROM dak_routes WHERE route = ?`);
-const putDak = db.prepare(`INSERT OR REPLACE INTO dak_routes VALUES (?, ?, ?, ?, ?, ?)`);
+const getDak = db.prepare(`SELECT title, nick, trait, tac, body FROM dak_routes WHERE route = ?`);
+const putDak = db.prepare(`INSERT OR REPLACE INTO dak_routes (route, t, title, nick, trait, tac, body) VALUES (?, ?, ?, ?, ?, ?, ?)`);
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
 const putAccount = db.prepare(`INSERT INTO accounts VALUES (?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked`);
 
@@ -391,10 +393,12 @@ const DAK_STOP = join(DIR, "dak-stopped");
 const DAK_STOP_MS = 86_400_000;
 const DAK_GAP_MS = 3000;
 
-/** 화면 루트 가운데 recommend가 404였던 것만 dak.gg에 하나씩 물어 이름, 작성자, 핵심 특성, 전술 스킬을 남김. 좋아요나 승률 같은 수치는 받지 않음 */
+/** 화면 루트 가운데 recommend가 404였던 것만 dak.gg에 하나씩 물어 이름, 작성자, 특성, 전술 스킬, 목표 아이템, 지역을 남김. 좋아요나 승률 같은 수치는 쓰지 않음 */
 async function fetchDak(ids) {
   const queue = ids.filter((id) => {
-    if (getDak.get(id)) return false;
+    const d = getDak.get(id);
+    // 본문을 받았거나 dak.gg에도 없던 루트(모든 칸 null)는 다시 묻지 않음
+    if (d && (d.body || [d.title, d.nick, d.trait, d.tac].every((v) => v == null))) return false;
     const r = getRawRoute.get(id);
     return !!r && JSON.parse(brotliDecompressSync(r.body)).route == null;
   });
@@ -432,7 +436,9 @@ async function fetchDak(ids) {
       // 404가 아닌데 루트가 비어 있으면 형식이 바뀌었을 수 있어 저장하지 않고 다음 회차에 다시 물음
       if (!w) continue;
     }
-    putDak.run(id, Date.now(), w?.title || null, w?.userNickname || null, firstTrait(w), w?.tacticalSkillGroupCode ?? null);
+    const body = w ? { ...w } : null;
+    if (body) delete body.userNum;
+    putDak.run(id, Date.now(), w?.title || null, w?.userNickname || null, firstTrait(w), w?.tacticalSkillGroupCode ?? null, body ? pack(body) : null);
     saved++;
   }
   log(`dak.gg에 루트 ${queue.length}개의 정보를 요청해 ${saved}개를 저장했습니다`);
@@ -740,6 +746,15 @@ function routeBody(w, nm, items) {
   return [codes, list(w.paths).map((a) => nm.area(a)), w.version ? w.version.split(".").slice(0, 2).join(".") : null];
 }
 
+/** dak.gg 본문은 형식이 바뀌어도 publish가 멈추지 않게 읽지 못하면 null */
+function dakBody(w, nm, items) {
+  try {
+    return [...routeBody(w, nm, items), 1];
+  } catch {
+    return null;
+  }
+}
+
 async function routeMeta(s, ids, nm, used) {
   const top = topRanks.length ? topRanks : ((await get(`/v1/rank/top/${s.id}/3/10`))?.topRanks ?? []);
   // 루트는 시즌을 넘어 쓰이므로 작성자 키에 시즌을 넣지 않음
@@ -750,10 +765,12 @@ async function routeMeta(s, ids, nm, used) {
   for (const id of ids) {
     const raw = getRawRoute.get(id);
     const w = raw ? JSON.parse(brotliDecompressSync(raw.body)).route : null;
-    // 게임이 본문을 주지 않는 루트는 아이템과 지역 칸을 null로 두어 화면이 공개되지 않은 루트로 그림
-    const body = w ? routeBody(w, nm, items) : [null, null, null];
     const own = getRoute.get(id);
-    const d = getDak.get(id);
+    // dak.gg에도 없던 루트는 모든 칸이 null인 행이라 없는 것으로 보고 특성과 전술 스킬을 판에서 고름
+    const d = [getDak.get(id)].find((x) => x && [x.title, x.nick, x.trait, x.tac].some((v) => v != null));
+    // 게임이 본문을 주지 않으면 dak.gg 본문을 쓰고 10번째 칸을 1로 둠. 둘 다 없으면 아이템과 지역이 null이라 화면이 불러올 수 없는 루트로 그림
+    const dw = !w && d?.body ? JSON.parse(brotliDecompressSync(d.body)) : null;
+    const body = w ? routeBody(w, nm, items) : (dw && dakBody(dw, nm, items)) || [null, null, null];
     // dak.gg 값은 게임에서 받은 칸이 비어 있을 때만 씀
     const r = d
       ? { author: own?.author ?? (d.nick ? playerId(0, d.nick) : null), title: own?.title ?? d.title, nick: own?.nick ?? d.nick, trait: own?.trait ?? d.trait, tac: own?.tac ?? d.tac }
@@ -839,8 +856,8 @@ async function publish(s, nm) {
   const ids = [...new Set(combos.flatMap((c) => [...(c.routes ?? []), ...(c.routesTop ?? [])].map((x) => x[0])))];
   // --publish나 중단된 회차 뒤에도 화면에 오를 루트는 정보를 갖추게 함. 수집 회차에서는 이미 받아 요청이 없음
   if (!abort) await fetchRoutes(s, ids);
-  // dak.gg에는 조합마다 전체와 300위 안의 상위 3개만 요청함
-  if (!abort) await fetchDak([...new Set(combos.flatMap((c) => [...(c.routes ?? []).slice(0, ROUTE_TOP), ...(c.routesTop ?? []).slice(0, ROUTE_TOP)].map((x) => x[0])))]);
+  // dak.gg에는 화면 루트 가운데 게임이 본문을 주지 않는 것만 루트마다 한 번 요청함
+  if (!abort) await fetchDak(ids);
   const { badge, info, items } = await routeMeta(s, ids, nm, routeUse(all, new Set(ids)));
   for (const v of views) for (const c of v.combos) for (const x of [...(c.routes ?? []), ...(c.routesTop ?? [])]) if (badge.has(x[0])) x.push(badge.get(x[0]));
   const ready = views.find((v) => v.patch === cur && v.id.startsWith("patch-"))?.ready;

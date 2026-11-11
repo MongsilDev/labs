@@ -98,7 +98,7 @@ export default function RouteTable({ list: full, dn: fullDn, top, info, items, p
         <tbody>
           {shown.map(([id, players, n, g, b]) => {
             const x = info?.[id];
-            const [rawTitle, nick, trait, traitName, tac, tacName, codes, paths, ver] = x ?? [];
+            const [rawTitle, nick, trait, traitName, tac, tacName, codes, paths, ver, fromDak] = x ?? [];
             const title = rawTitle?.trim();
             const hidden = hiddenRoute(x);
             return (
@@ -116,10 +116,10 @@ export default function RouteTable({ list: full, dn: fullDn, top, info, items, p
                             {title}
                           </a>
                         ) : (
-                          <span className={hidden ? "tdx-title tdx-hid" : "tdx-title"}>{hidden ? "공개되지 않은 루트" : `루트 ${id}`}</span>
+                          <span className={hidden ? "tdx-title tdx-hid" : "tdx-title"}>{hidden ? "불러올 수 없는 루트" : `루트 ${id}`}</span>
                         )}
-                        {/* 게임이 본문을 주지 않는 루트는 번호로 불러올 수 없어 복사 버튼을 두지 않음 */}
-                        {!hidden && (
+                        {/* 게임이 본문을 주지 않는 루트는 dak.gg 본문을 받았어도 번호로 불러올 수 없어 복사 버튼을 두지 않음 */}
+                        {!hidden && !fromDak && (
                           <button type="button" className="tdx-copy" aria-label={`루트 번호 ${id} 복사`} onClick={() => copy(id)}>
                             {id}
                             {copied === id ? <CheckIcon /> : <CopyIcon />}

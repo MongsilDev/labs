@@ -6,16 +6,16 @@ export type TierRoute = [number, number, number, number | null, AuthorBadge?];
 /** [이름, 플레이어 수, 판 수, 평균 RP 획득, 코드] */
 export type TierSplit = [string, number, number, number | null, number?];
 /**
- * 루트 번호별 [이름, 작성자 닉네임, 핵심 특성 코드, 핵심 특성 이름, 전술 스킬 그룹, 전술 스킬 이름, 목표 아이템 코드, 지역 이름 순서, 패치].
- * 게임이 본문을 주지 않는 루트는 아이템, 지역, 패치가 null이고 특성과 전술 스킬은 그 루트로 한 판에서 가장 많이 고른 값. 11-10 전 표는 앞 6칸만 있음
+ * 루트 번호별 [이름, 작성자 닉네임, 핵심 특성 코드, 핵심 특성 이름, 전술 스킬 그룹, 전술 스킬 이름, 목표 아이템 코드, 지역 이름 순서, 패치, dak.gg 본문 여부].
+ * 게임이 본문을 주지 않는 루트는 dak.gg 본문을 쓰고 마지막 칸이 1. dak.gg에도 없으면 아이템, 지역, 패치가 null이고 특성과 전술 스킬은 그 루트로 한 판에서 가장 많이 고른 값. 11-10 전 표는 앞 6칸만 있음
  */
-export type TierRouteInfo = [string | null, string | null, number | null, string | null, number | null, string | null, (number[] | null)?, (string[] | null)?, (string | null)?];
+export type TierRouteInfo = [string | null, string | null, number | null, string | null, number | null, string | null, (number[] | null)?, (string[] | null)?, (string | null)?, (1 | null)?];
 /** 상위 1,000명 판당 평균 [킬, 어시스트, 사망, 피해량, 몬스터 처치] */
 export type TierItem = [name: string, grade: string | null];
 export type TierMetric = [number, number, number, number, number];
 export const METRIC_LABELS = ["킬", "어시스트", "사망", "피해량", "몬스터 처치"] as const;
 
-/** 게임에서 받을 수 없는 루트. 11-10 전 표는 모두 null인 6칸 */
+/** 게임과 dak.gg 어디서도 본문을 받지 못한 루트. 11-10 전 표는 모두 null인 6칸 */
 export function hiddenRoute(info: TierRouteInfo | undefined): boolean {
   if (!info) return false;
   return info.length > 6 ? info[6] == null : info.every((x) => x == null);
