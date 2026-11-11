@@ -12,7 +12,8 @@ export async function hubData() {
   const [cut, tier, user] = await Promise.all([getCut(), getTier(), currentUser()]);
   const picked = tier ? pickView(tier) : null;
   const view = picked?.combos.length ? picked : null;
-  const combos = view ? [...view.combos].sort((a, b) => b.score - a.score) : [];
+  // 점수가 같으면 판 수가 많은 쪽이 먼저. 실험체 티어 화면의 순서와 같음
+  const combos = view ? [...view.combos].sort((a, b) => b.score - a.score || b.n - a.n) : [];
   const prev = tier && view ? compareView(tier.views, view, tier.patch) : undefined;
   const kel = kelData();
   return {

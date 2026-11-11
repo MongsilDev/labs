@@ -5,6 +5,7 @@ import { int as rp, TIERS, tens } from "@/er/lib/cut";
 import { fmt, fmt1 } from "@/er/lib/format";
 import { EVENT_NAME, TEAM } from "@/er/lib/kel";
 import { comboPath, signed, type TierCombo } from "@/er/lib/tier";
+import HubSearch from "@/tarkov/components/players/HubSearch";
 import { face, n } from "./HubParts";
 import type { Hub } from "./hub";
 
@@ -93,6 +94,71 @@ export function kelLead(h: Hub, fixed = false) {
   const row = h.final?.state.rows[0];
   const team = row ? TEAM.get(row.key) : undefined;
   return h.final && row && team ? { team, total: (fixed ? fmt1 : fmt)(row.total), stage: `${EVENT_NAME[h.final.event]} ${h.final.stage}` } : null;
+}
+
+/** 실험체 표와 같은 줄 높이와 글자 크기로 그린 KEL 마지막 단계 순위 */
+export function KelBig({ h, rows = 4 }: { h: Hub; rows?: number }) {
+  if (!h.final) return <p className="py-3 text-ink-3">KEL 기록을 불러오지 못했습니다.</p>;
+  return (
+    <table className="tbl tierbig">
+      <thead className="sr-only">
+        <tr>
+          <th className="l w-8">#</th>
+          <th className="l">팀</th>
+          <th>점수</th>
+        </tr>
+      </thead>
+      <tbody>
+        {h.final.state.rows.slice(0, rows).map((row, i) => {
+          const t = TEAM.get(row.key)!;
+          return (
+            <tr key={row.key}>
+              <td className="l text-ink-3">{i + 1}</td>
+              <td className="l">
+                <Link href="/er/kel/finals" className="tb-who">
+                  <Logo team={t} size={40} className="tb-logo ring-1 ring-rule-2" />
+                  <b className="tb-team">{t.name}</b>
+                </Link>
+              </td>
+              <td className="tb-score">{fmt1(row.total)}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+/** 닉네임만 받아 오버레이 화면으로 넘김. 위치와 이동 값은 그 화면에서 고름 */
+export function OverlayOpen() {
+  return (
+    <form action="/er/overlay" className="mt-3">
+      <label className="lbl" htmlFor="hub-ov">닉네임</label>
+      <div className="grid max-w-[280px] grid-cols-[minmax(0,1fr)_auto] gap-2">
+        <input id="hub-ov" name="n" className="field" autoComplete="off" spellCheck={false} maxLength={32} />
+        <button className="btn">주소 만들기</button>
+      </div>
+    </form>
+  );
+}
+
+/** 타르코프는 다른 게임이라 이터널 리턴 기능과 섞지 않고 한 묶음으로 둠 */
+export function TarkovGroup({ className = "" }: { className?: string }) {
+  return (
+    <section className={`hub-tk ${className}`}>
+      <h2 className="sec-h">타르코프</h2>
+      <div>
+        <h3>
+          <Link href="/tarkov/players">계정 조회</Link>
+        </h3>
+        <HubSearch />
+      </div>
+      <Link href="/tarkov/kord-breach">
+        <b>KORD BREACH 특성 시뮬레이터</b>
+        <Chev />
+      </Link>
+    </section>
+  );
 }
 
 /** 1위 실험체 한 줄: 얼굴, 무기와 이름, 점수 */

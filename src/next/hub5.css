@@ -93,8 +93,16 @@
 .hub2-cut .cutnums dt { font-size: 13px; }
 .hub2-cut .cutnums p { font-size: 15px; }
 /* 무대에서는 미니 차트의 높이만 키움. CutMini가 h-16으로 고정한 값을 덮어씀 */
-.hub2-cut figure, .hub5-cut figure { margin-top: 32px; }
-.hub2-cut figure .h-16 { height: 180px; }
+.hub2-cut figure { margin-top: 32px; }
+.hub2-cut figure .h-16 { height: 120px; }
+.hub2-stage section { padding-top: 0; border-top: 0; }
+.hub2-stage section + section { margin-top: 44px; }
+/* 탭 아래 타르코프 묶음은 좁은 열이라 세로로 쌓음 */
+.hub2-more .hub-tk { grid-template-columns: minmax(0, 1fr); padding-top: 20px; }
+.hub2-more .hub-tk > * { min-height: 56px; padding: 0; border-left: 0; }
+.hub2-more .hub-tk > h2 { min-height: 0; font-size: 20px; }
+.hub2-more .hub-tk > div { flex-wrap: wrap; gap: 8px 12px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+.hub2-more .hub-tk form { flex-basis: 100%; }
 @media (max-width: 1023px) {
   .hub2 { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tabs" "stage" "more"; grid-template-rows: none; gap: 0; }
   .hub2-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -153,37 +161,52 @@
   .hub4-body .btn { padding: 0 18px; }
 }
 
-/* 시안 5: 같은 폭 세 기둥과 아래 한 줄 */
-.hub5 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); --tb-h: 80px; --tb-face: 48px; --tb-name: 20px; --tb-score: 28px; }
-.hub5 > section { padding: 0 36px 28px; border-top: 0; }
-.hub5 > section:first-child { padding-left: 0; }
-.hub5 > section:last-child { padding-right: 0; }
-.hub5 > section + section { border-left: 1px solid var(--rule-2); }
-.hub5-cut { --cut-size: 88px; }
-.hub5-cut .cutnums { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 24px; }
-.hub5-cut figure .h-16 { height: 88px; }
-.hub5-band { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; border-top: 1px solid var(--rule-2); }
-.hub5-band > * { display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 0 28px; font-weight: 600; }
-.hub5-band > :first-child { padding-left: 0; }
-.hub5-band > :last-child { padding-right: 0; }
-.hub5-band > * + * { border-left: 1px solid var(--rule-2); }
-.hub5-band > a:hover { background: var(--row); text-decoration: none; }
-.hub5-band > a b { font-size: 15px; font-weight: 700; white-space: nowrap; }
-.hub5-band > a span { font-size: 13px; font-weight: 400; color: var(--ink-3); white-space: nowrap; }
-.hub5-band > a svg { margin-left: auto; color: var(--ink-3); }
-.hub5-band > a:hover svg { color: var(--ink); }
-.hub5-band h2 { flex: none; margin: 0; font-size: 15px; font-weight: 700; }
-.hub5-band form { flex: 1; }
+/* 시안 5: 메뉴 묶음대로 세 기둥. 둘째 줄 구역의 머리 높이를 맞추려고 기둥이 줄 두 개를 나눠 씀 */
+.hub5 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto; --tb-h: 56px; --tb-face: 40px; --tb-name: 17px; --tb-score: 22px; }
+.hub5-col { grid-row: span 2; display: grid; grid-template-rows: subgrid; padding: 0 36px 28px; }
+.hub5-col:first-child { padding-left: 0; }
+.hub5-col:last-child { padding-right: 0; }
+.hub5-col + .hub5-col { border-left: 1px solid var(--rule-2); }
+.hub5-col > section { min-width: 0; padding-top: 0; border-top: 0; }
+.hub5-col > section:only-child { grid-row: span 2; }
+.hub5-col > section + section { padding-top: 40px; }
+.hub5-cut .cutnums { margin-top: 16px; }
+.hub5-cut figure { margin-top: 20px; }
+/* 차트 아래 끝을 옆 기둥 KEL 표의 끝에 맞춤. CutMini가 h-16으로 고정한 값을 덮어씀 */
+.hub5-cut figure .h-16 { height: 100px; }
+.tb-team { font-size: var(--tb-name, 22px); font-weight: 700; line-height: 1; }
+.tb-logo { width: var(--tb-face, 56px) !important; height: var(--tb-face, 56px) !important; }
+
+/* 타르코프 묶음: 이름, 계정 조회, KORD BREACH가 한 줄 */
+.hub-tk { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; border-top: 1px solid var(--rule-2); }
+.hub-tk > * { display: flex; align-items: center; gap: 12px; min-height: 72px; margin: 0; padding: 0 28px; font-weight: 600; }
+.hub-tk > :first-child { padding-left: 0; }
+.hub-tk > :last-child { padding-right: 0; }
+.hub-tk > * + * { border-left: 1px solid var(--rule-2); }
+.hub-tk > a:hover { background: var(--row); text-decoration: none; }
+.hub-tk > a b, .hub-tk h3 { flex: none; margin: 0; font-size: 15px; font-weight: 700; white-space: nowrap; }
+.hub-tk > a svg { margin-left: auto; color: var(--ink-3); }
+.hub-tk > a:hover svg { color: var(--ink); }
+.hub-tk form { flex: 1; }
+/* 1024~1279 폭은 기둥이 300px 안팎이라 제목과 컷 숫자를 한 줄에 두려고 줄임 */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .hub5 { --cut-size: 36px; --cut-gap: 24px; }
+  .hub5-col { padding: 0 24px 28px; }
+  .hub5 .sec-h { gap: 8px; font-size: 22px; }
+  .hub5 .sec-h > * { white-space: nowrap; }
+}
 @media (max-width: 1023px) {
-  .hub5 { grid-template-columns: minmax(0, 1fr); --tb-h: 64px; --tb-face: 40px; --tb-name: 17px; --tb-score: 22px; }
-  .hub5 > section { padding: 0 0 32px; }
-  .hub5 > section + section { border-left: 0; border-top: 1px solid var(--rule-2); padding-top: 20px; }
-  .hub5-cut { --cut-size: 44px; }
-  .hub5-cut .cutnums { grid-template-columns: repeat(2, auto); gap: 0 28px; margin-top: 16px; }
+  .hub5 { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .hub5-col { grid-row: auto; display: block; padding: 0 0 32px; }
+  .hub5-col + .hub5-col { border-left: 0; border-top: 1px solid var(--rule-2); padding-top: 20px; }
+  .hub5-col > section + section { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--rule-2); }
   .hub5-cut figure .h-16 { height: 64px; }
-  .hub5-band { grid-template-columns: minmax(0, 1fr); }
-  .hub5-band > * { padding: 0; min-height: 56px; }
-  .hub5-band > * + * { border-left: 0; border-top: 1px solid var(--rule); }
-  .hub5-band > div { flex-wrap: wrap; gap: 8px 12px; padding: 14px 0; }
-  .hub5-band form { flex-basis: 100%; }
+  /* 좁은 폭은 높이를 맞출 옆 기둥이 없어 위에서 다섯 실험체와 세 팀만 보임 */
+  .hub5 .hub5-col:first-child tbody tr:nth-child(n+6), .hub5 .hub5-col:last-child tbody tr:nth-child(n+4) { display: none; }
+  .hub-tk { grid-template-columns: minmax(0, 1fr); }
+  .hub-tk > * { padding: 0; min-height: 56px; }
+  .hub-tk > h2 { min-height: 0; padding-top: 20px; }
+  .hub-tk > * + * { border-left: 0; }
+  .hub-tk > div { flex-wrap: wrap; gap: 8px 12px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+  .hub-tk form { flex-basis: 100%; }
 }
