@@ -56,9 +56,9 @@ export default async function RpPage({ searchParams }: { searchParams: Promise<{
                     <tr key={i}>
                       <td className="l font-semibold">{i + 1}위</td>
                       {row.map((c, j) => (
-                        <td key={j} className="!text-center font-bold" style={c.n >= MIN_N && c.m != null ? { background: tint(c.m) } : undefined}>
+                        <td key={j} className="!text-center font-bold" style={c.n >= MIN_N && c.m != null ? { background: tint(c.m) } : undefined} data-tip={c.n >= MIN_N && c.m != null ? `${n(c.n)}판, 95% 범위 ±${c.ci}` : undefined}>
                           {c.n >= MIN_N && c.m != null ? (
-                            <span title={`${n(c.n)}판, 95% 범위 ±${c.ci}`}>{signed(c.m)}</span>
+                            signed(c.m)
                           ) : (
                             <span className="font-normal text-ink-3">-</span>
                           )}

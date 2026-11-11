@@ -80,6 +80,8 @@
 }
 
 .num { font-variant-numeric: tabular-nums; }
+/* 툴팁이 가리키는 칸 */
+td[data-tip]:hover { box-shadow: inset 0 0 0 1px var(--ink); }
 .grade { display: inline-grid; place-items: center; width: 20px; height: 20px; font-size: 12px; font-weight: 800; color: #111; border-radius: 2px; }
 :root[data-theme="light"] .grade { color: #fff; }
 .grade-S { background: var(--g-s); color: #fff; } .grade-A { background: var(--g-a); } .grade-B { background: var(--g-b); } .grade-C { background: var(--g-c); } .grade-D { background: var(--g-d); }

@@ -1,3 +1,4 @@
+import Dots, { type Dot } from "./Dots";
 import { place } from "./MetaMap";
 import type { LateRow } from "./late";
 
@@ -22,38 +23,48 @@ export default function LateMap({ rows, early, fin, cut, w: W = 760, h: H = 520,
     .map((r) => ({ k: key(r), x: sx(r.early), y: sy(r.fin), text: `${r.weaponName} ${r.name}` }));
   const spots = place(named, fs, { x: L, y: T, w: W - L - R, h: H - T - B }, rows.map((r) => [sx(r.early), sy(r.fin)]));
   const q = { fontSize: fs, fontWeight: 700, fill: "var(--ink-3)" };
+  const min = Math.round(cut / 60);
+  const dots: Dot[] = rows.map((r) => ({
+    k: key(r),
+    x: sx(r.early),
+    y: sy(r.fin),
+    r: spots.has(key(r)) ? fs * 0.42 : fs * 0.33,
+    fill: spots.has(key(r)) ? "var(--ink)" : "var(--ink-3)",
+    img: `/img/er/char/${r.key}.v1.webp`,
+    weapon: r.weaponName,
+    name: r.name,
+    rows: [[`${min}분 안에 탈락`, `${r.early.toFixed(1)}%`], ["TOP3 중 1위", `${r.fin.toFixed(1)}%`], ["판", r.n.toLocaleString("ko-KR")]],
+  }));
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`실험체별 ${Math.round(cut / 60)}분 안에 탈락한 비율과 TOP3 중 1위 비율`}>
-      <text x={4} y={fs} fontSize={fs} fill="var(--ink-3)">TOP3 중 1위</text>
-      {ticksY.map((v) => (
-        <g key={v}>
-          <line x1={L} x2={W - R} y1={sy(v)} y2={sy(v)} stroke="var(--rule)" />
-          <text x={L - 6} y={sy(v) + fs * 0.35} textAnchor="end" fontSize={fs} fill="var(--ink-3)" className="num">{v}%</text>
-        </g>
-      ))}
-      {ticksX.map((v) => (
-        <text key={v} x={sx(v)} y={H - B + fs * 1.6} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">{v}%</text>
-      ))}
-      <text x={W - R} y={H - 4} textAnchor="end" fontSize={fs} fill="var(--ink-3)">{Math.round(cut / 60)}분 안에 탈락, 오른쪽일수록 적음</text>
-      <line x1={L} x2={W - R} y1={sy(fin)} y2={sy(fin)} stroke="var(--rule-2)" strokeDasharray="3 3" />
-      <line x1={sx(early)} x2={sx(early)} y1={T} y2={H - B} stroke="var(--rule-2)" strokeDasharray="3 3" />
-      <text x={W - R} y={T - 8} textAnchor="end" {...q}>초반에 버티고 막판에 강함</text>
-      <text x={L} y={T - 8} {...q}>막판에 강함</text>
-      <text x={W - R - 4} y={H - B - 6} textAnchor="end" {...q}>초반에 잘 버팀</text>
-      {rows.map((r) => {
-        const x = sx(r.early), y = sy(r.fin), k = key(r), at = spots.get(k);
-        return (
-          <g key={k}>
-            <title>{`${r.weaponName} ${r.name}, ${Math.round(cut / 60)}분 안에 탈락 ${r.early.toFixed(1)}%, TOP3 중 1위 ${r.fin.toFixed(1)}%, ${r.n.toLocaleString("ko-KR")}판`}</title>
-            <circle cx={x} cy={y} r={at ? fs * 0.42 : fs * 0.33} fill={at ? "var(--ink)" : "var(--ink-3)"} stroke="var(--bg)" strokeWidth="1.5" />
-            {at && (
-              <text x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)" paintOrder="stroke" stroke="var(--bg)" strokeWidth="3">
-                {r.weaponName} {r.name}
-              </text>
-            )}
-          </g>
-        );
+    <Dots
+      w={W}
+      h={H}
+      label={`실험체별 ${min}분 안에 탈락한 비율과 TOP3 중 1위 비율`}
+      dots={dots}
+      under={
+        <>
+          <text x={4} y={fs} fontSize={fs} fill="var(--ink-3)">TOP3 중 1위</text>
+          {ticksY.map((v) => (
+            <g key={v}>
+              <line x1={L} x2={W - R} y1={sy(v)} y2={sy(v)} stroke="var(--rule)" />
+              <text x={L - 6} y={sy(v) + fs * 0.35} textAnchor="end" fontSize={fs} fill="var(--ink-3)" className="num">{v}%</text>
+            </g>
+          ))}
+          {ticksX.map((v) => (
+            <text key={v} x={sx(v)} y={H - B + fs * 1.6} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">{v}%</text>
+          ))}
+          <text x={W - R} y={H - 4} textAnchor="end" fontSize={fs} fill="var(--ink-3)">{min}분 안에 탈락, 오른쪽일수록 적음</text>
+          <line x1={L} x2={W - R} y1={sy(fin)} y2={sy(fin)} stroke="var(--rule-2)" strokeDasharray="3 3" />
+          <line x1={sx(early)} x2={sx(early)} y1={T} y2={H - B} stroke="var(--rule-2)" strokeDasharray="3 3" />
+          <text x={W - R} y={T - 8} textAnchor="end" {...q}>초반에 버티고 막판에 강함</text>
+          <text x={L} y={T - 8} {...q}>막판에 강함</text>
+          <text x={W - R - 4} y={H - B - 6} textAnchor="end" {...q}>초반에 잘 버팀</text>
+        </>
+      }
+      over={named.flatMap((p) => {
+        const at = spots.get(p.k);
+        return at ? [<text key={p.k} x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)" paintOrder="stroke" stroke="var(--bg)" strokeWidth="3">{p.text}</text>] : [];
       })}
-    </svg>
+    />
   );
 }

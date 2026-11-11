@@ -1,3 +1,4 @@
+import Dots, { type Dot } from "./Dots";
 import type { Spot } from "./meta";
 
 type Box = { x: number; y: number; w: number; h: number };
@@ -52,43 +53,53 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
   // 그려진 글자 폭의 어림값. 한글은 글자 크기만큼, 공백과 영문과 기호는 그보다 좁음
   const tw = (text: string) => [...text].reduce((w, ch) => w + (ch === " " ? 0.28 : /[\u3131-\uD7A3]/.test(ch) ? 0.93 : 0.62), 0) * fs;
   const labels = named.flatMap((p) => { const at = spots.get(p.k); return at ? [{ k: p.k, text: p.text, at }] : []; });
+  const signed = (v: number) => (v > 0 ? `+${v}` : `${v}`);
+  const dots: Dot[] = list.map((c) => ({
+    k: key(c),
+    x: sx(c.pick),
+    y: sy(c.score),
+    r: spots.has(key(c)) ? fs * 0.42 : fs * 0.33,
+    fill: `var(--g-${c.grade.toLowerCase()})`,
+    img: `/img/er/char/${c.key}.v1.webp`,
+    weapon: c.weaponName,
+    name: c.name,
+    grade: c.grade,
+    rows: [["점수", signed(c.score)], ...(c.half != null ? [["90% 범위", `±${c.half}`] as [string, string]] : []), ["픽률", `${c.pick.toFixed(2)}%`], ["판", c.n.toLocaleString("ko-KR")]],
+  }));
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="실험체별 점수와 픽률">
-      <text x={4} y={fs} fontSize={fs} fill="var(--ink-3)">점수</text>
-      {ticksY.map((v) => (
-        <g key={v}>
-          <line x1={L} x2={W - R} y1={sy(v)} y2={sy(v)} stroke="var(--rule)" />
-          <text x={L - 6} y={sy(v) + fs * 0.35} textAnchor="end" fontSize={fs} fill="var(--ink-3)" className="num">{v > 0 ? `+${v}` : v}</text>
-        </g>
-      ))}
-      {ticksX.map((p) => (
-        <text key={p} x={sx(p)} y={H - B + fs * 1.35} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">{p}%</text>
-      ))}
-      <text x={W - R} y={H - 4} textAnchor="end" fontSize={fs} fill="var(--ink-3)">픽률</text>
-      <line x1={L} x2={W - R} y1={zy} y2={zy} stroke="var(--rule-2)" />
-      <line x1={mx} x2={mx} y1={T} y2={H - B} stroke="var(--rule-2)" strokeDasharray="3 3" />
-      <text x={mx} y={H - 4} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">중앙값 {median}%</text>
-      {QUADS.map(([text, anchor, y]) => (
-        <text key={text} x={anchor === "end" ? W - R - 4 : L + 6} y={y} textAnchor={anchor} {...q}>{text}</text>
-      ))}
-      {/* 눈금선이 글자를 지나가지 않게 이름표 자리를 바탕색으로 덮음. 점보다 먼저 그려 이웃 점을 가리지 않음 */}
-      {labels.map(({ k, text, at }) => (
-        <rect key={k} x={at.anchor === "start" ? at.x - 2 : at.x - tw(text) - 2} y={at.y - fs} width={tw(text) + 4} height={fs + 4} fill="var(--bg)" />
-      ))}
-      {list.map((c) => {
-        const x = sx(c.pick), y = sy(c.score), k = key(c), at = spots.get(k);
-        const color = `var(--g-${c.grade.toLowerCase()})`;
-        return (
-          <g key={k} className="group">
-            <title>{`${c.weaponName} ${c.name}, 점수 ${c.score > 0 ? "+" : ""}${c.score}, 픽률 ${c.pick}%, ${c.n}판`}</title>
-            {c.half != null && <line className="opacity-0 group-hover:opacity-100" x1={x} x2={x} y1={sy(c.score + c.half)} y2={sy(c.score - c.half)} stroke={color} strokeOpacity="0.5" strokeWidth="2" />}
-            <circle cx={x} cy={y} r={at ? fs * 0.42 : fs * 0.33} fill={color} stroke="var(--bg)" strokeWidth="1.5" />
-          </g>
-        );
-      })}
-      {labels.map(({ k, text, at }) => (
+    <Dots
+      w={W}
+      h={H}
+      label="실험체별 점수와 픽률"
+      dots={dots}
+      under={
+        <>
+          <text x={4} y={fs} fontSize={fs} fill="var(--ink-3)">점수</text>
+          {ticksY.map((v) => (
+            <g key={v}>
+              <line x1={L} x2={W - R} y1={sy(v)} y2={sy(v)} stroke="var(--rule)" />
+              <text x={L - 6} y={sy(v) + fs * 0.35} textAnchor="end" fontSize={fs} fill="var(--ink-3)" className="num">{signed(v)}</text>
+            </g>
+          ))}
+          {ticksX.map((p) => (
+            <text key={p} x={sx(p)} y={H - B + fs * 1.35} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">{p}%</text>
+          ))}
+          <text x={W - R} y={H - 4} textAnchor="end" fontSize={fs} fill="var(--ink-3)">픽률</text>
+          <line x1={L} x2={W - R} y1={zy} y2={zy} stroke="var(--rule-2)" />
+          <line x1={mx} x2={mx} y1={T} y2={H - B} stroke="var(--rule-2)" strokeDasharray="3 3" />
+          <text x={mx} y={H - 4} textAnchor="middle" fontSize={fs} fill="var(--ink-3)" className="num">중앙값 {median}%</text>
+          {QUADS.map(([text, anchor, y]) => (
+            <text key={text} x={anchor === "end" ? W - R - 4 : L + 6} y={y} textAnchor={anchor} {...q}>{text}</text>
+          ))}
+          {/* 눈금선이 글자를 지나가지 않게 이름표 자리를 바탕색으로 덮음. 점보다 먼저 그려 이웃 점을 가리지 않음 */}
+          {labels.map(({ k, text, at }) => (
+            <rect key={k} x={at.anchor === "start" ? at.x - 2 : at.x - tw(text) - 2} y={at.y - fs} width={tw(text) + 4} height={fs + 4} fill="var(--bg)" />
+          ))}
+        </>
+      }
+      over={labels.map(({ k, text, at }) => (
         <text key={k} x={at.x} y={at.y} textAnchor={at.anchor} fontSize={fs} fontWeight="600" fill="var(--ink)" paintOrder="stroke" stroke="var(--bg)" strokeWidth="3">{text}</text>
       ))}
-    </svg>
+    />
   );
 }

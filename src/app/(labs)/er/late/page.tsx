@@ -82,8 +82,8 @@ export default async function LatePage({ searchParams }: { searchParams: Promise
                     </span>
                   </span>
                 </td>
-                <td className="font-bold" style={tint(r.early - data.early, r.earlyCi, r.early < data.early, 6)} title={`95% 범위 ±${r.earlyCi}`}>{r.early.toFixed(1)}%</td>
-                <td className="font-bold" style={tint(r.fin - data.fin, r.finCi, r.fin > data.fin, 10)} title={`TOP3 ${n(r.top3)}판, 95% 범위 ±${r.finCi}`}>{r.fin.toFixed(1)}%</td>
+                <td className="font-bold" style={tint(r.early - data.early, r.earlyCi, r.early < data.early, 6)} data-tip={`95% 범위 ±${r.earlyCi}`}>{r.early.toFixed(1)}%</td>
+                <td className="font-bold" style={tint(r.fin - data.fin, r.finCi, r.fin > data.fin, 10)} data-tip={`TOP3 ${n(r.top3)}판, 95% 범위 ±${r.finCi}`}>{r.fin.toFixed(1)}%</td>
                 <td className="hidden text-ink-3 md:table-cell">{n(r.n)}</td>
               </tr>
             ))}
