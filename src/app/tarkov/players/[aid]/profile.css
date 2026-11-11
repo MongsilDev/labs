@@ -872,32 +872,42 @@
   font-size: 18px;
   font-weight: 700;
 }
+/* 여섯 색을 모든 쌍으로 검증한 값. 색각 이상에서는 범례의 순서와 수치가 구분을 보조함 */
 .outcome .survived {
   background: #5fd38d;
 }
-:root[data-theme="light"] .outcome .survived {
-  background: #15803d;
-}
 .outcome .kia {
-  background: var(--minus);
+  background: #ff6b6b;
 }
 .outcome .mia {
-  background: var(--text-3);
+  background: #6e6e6e;
 }
 .outcome .left {
   background: #9d8df1;
 }
+.outcome .runner {
+  background: #f0b429;
+}
+.outcome .transit {
+  background: #7dd3fc;
+}
+:root[data-theme="light"] .outcome .survived {
+  background: #1a9a55;
+}
+:root[data-theme="light"] .outcome .kia {
+  background: #a51414;
+}
+:root[data-theme="light"] .outcome .mia {
+  background: #555555;
+}
 :root[data-theme="light"] .outcome .left {
   background: #6b58d6;
 }
-.outcome .runner {
-  background: var(--warn);
-}
-.outcome .transit {
-  background: #5aa9e6;
+:root[data-theme="light"] .outcome .runner {
+  background: #b77a00;
 }
 :root[data-theme="light"] .outcome .transit {
-  background: #2a6fb0;
+  background: #0e9cc0;
 }
 .tiles.combat {
   grid-template-columns: repeat(6, minmax(0, 1fr));
