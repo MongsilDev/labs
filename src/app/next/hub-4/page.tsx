@@ -2,7 +2,7 @@ import Live from "@/next/Live";
 import CodeOpen from "@/next/CodeOpen";
 import HubFind from "@/next/HubFind";
 import HubScore from "@/next/HubScore";
-import { CutSection, KelSection, TierHead } from "@/next/HubParts";
+import { CutSection, KelSection, TierHead, TierMissing } from "@/next/HubParts";
 import RowLinks from "@/next/RowLinks";
 import { hubData } from "@/next/hub";
 import HubSearch from "@/tarkov/components/players/HubSearch";
@@ -20,7 +20,12 @@ export default async function Hub4() {
       <div className="hub-in">
         <HubFind
           combos={h.combos.map(({ char, key, name, weapon, weaponName, score }) => ({ char, key, name, weapon, weaponName, score }))}
-          head={<TierHead h={h} />}
+          head={
+            <>
+              <TierHead h={h} />
+              {!h.view && <TierMissing />}
+            </>
+          }
           code={<CodeOpen className="" />}
           tarkov={<HubSearch />}
         />

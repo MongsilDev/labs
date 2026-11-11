@@ -60,11 +60,11 @@ export default function HubFind({ combos, head, code, tarkov }: { combos: FindCo
               </li>
             ))}
           </ol>
-        ) : (
+        ) : key ? (
           <p className="py-4 text-ink-3" role="status">
             실험체나 무기 이름을 다시 확인해주세요.
           </p>
-        )}
+        ) : null}
       </div>
       <div className="hub4-body" hidden={mode !== "code"}>
         {code}

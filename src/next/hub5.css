@@ -165,9 +165,9 @@
 .hub5-band > :last-child { padding-right: 0; }
 .hub5-band > * + * { border-left: 1px solid var(--rule-2); }
 .hub5-band > a:hover { background: var(--row); text-decoration: none; }
-.hub5-band b { font-size: 15px; font-weight: 700; white-space: nowrap; }
-.hub5-band span { font-size: 13px; font-weight: 400; color: var(--ink-3); white-space: nowrap; }
-.hub5-band svg { margin-left: auto; color: var(--ink-3); }
+.hub5-band > a b { font-size: 15px; font-weight: 700; white-space: nowrap; }
+.hub5-band > a span { font-size: 13px; font-weight: 400; color: var(--ink-3); white-space: nowrap; }
+.hub5-band > a svg { margin-left: auto; color: var(--ink-3); }
 .hub5-band > a:hover svg { color: var(--ink); }
 .hub5-band h2 { flex: none; margin: 0; font-size: 15px; font-weight: 700; }
 .hub5-band form { flex: 1; }
