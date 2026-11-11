@@ -1223,7 +1223,9 @@ function candidates(user: User): Candidate[] {
     for (let g = 0; g < t.group_count; g++) {
       const names = new Set<string>();
       for (const r of roster) if (r.group_idx === g) for (const n of JSON.parse(r.names) as string[]) names.add(nick(n));
-      for (const r of played) if (r.group_idx === g) for (const p of JSON.parse(r.players) as Player[]) names.add(nick(p.nickname));
+      // 명단이 있는 조는 명단만 씀. 같은 날 다시 조편성하면 지난 경기 닉네임이 옛 조에 남아 두 조와 맞게 됨
+      if (!roster.some((r) => r.group_idx === g))
+        for (const r of played) if (r.group_idx === g) for (const p of JSON.parse(r.players) as Player[]) names.add(nick(p.nickname));
       out.push({ t, g, role, names, ended: groupResult(view, g).ended });
     }
   }

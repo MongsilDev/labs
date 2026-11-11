@@ -293,6 +293,19 @@ describe("스크림봇 명단", () => {
     expect(rows).toEqual([{ group_idx: 1, names: JSON.stringify(["라1"]) }]);
   });
 
+  it("재조편성 전에 치른 경기의 닉네임은 옛 조에 남지 않음", async () => {
+    const first = await scrim({ name: "옮김" });
+    const value = t.issueUploadToken(op);
+    expect((await send(value, lobby(7402, A))).status).toBe(200);
+    const swapped = [
+      { group: "A", channelId: "6001", guild: "스크림", channel: "a조", roster: roster(B) },
+      { group: "B", channelId: "6002", guild: "스크림", channel: "b조", roster: roster(A) },
+    ];
+    await scrim({ name: "옮김", links: swapped });
+    expect((await send(value, lobby(7403, A))).status).toBe(200);
+    expect(rounds(first.code)).toEqual([[7402], [7403]]);
+  });
+
   it("같은 날 다시 조편성하면 명단을 바꿈", async () => {
     const first = await scrim({ name: "다시" });
     const swapped = [
