@@ -10,6 +10,7 @@ import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "nod
 import { dakStopped } from "./dakstop.mjs";
 import { derive, writeDerived } from "./derive.mjs";
 import { RULE, scoreRows } from "./score.mjs";
+import { topView, writeTop } from "./top.mjs";
 
 const HOME = homedir();
 const DIR = process.env.TIER_DIR || "/Volumes/SSD/ertier/live";
@@ -866,6 +867,16 @@ async function publish(s, nm) {
     if (writeDerived(join(OUT, ".."), out)) log(`RP 손익, 초반과 막판 집계 ${out.rp.games}경기`);
   } catch (e) {
     log(`RP 손익, 초반과 막판 집계 실패: ${e.message}`);
+  }
+  // 이번 회차에 랭킹을 받았을 때만 씀. --publish는 앞선 파일을 남김
+  if (topRanks.length) {
+    try {
+      const first = topRanks.find((x) => x.rank === 1);
+      const games = first?.nickname ? db.prepare(`SELECT t, rank, gain FROM rows WHERE player = ? AND season = ? ORDER BY t DESC LIMIT 10`).all(playerId(s.id, first.nickname), s.id) : [];
+      writeTop(join(OUT, ".."), topView(first, games, RANKED_GATE, Date.now()));
+    } catch (e) {
+      log(`오버레이 1위 자료 쓰기 실패: ${e.message}`);
+    }
   }
   const removed = prune.run(s.id, now - KEEP_DAYS * 86_400_000).changes;
   log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, ${KEEP_DAYS}일 지난 행 ${removed}개 삭제` : ""}`);

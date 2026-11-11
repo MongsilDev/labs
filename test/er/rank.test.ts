@@ -1,6 +1,9 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { overlayPlace, rankEmblem } from "@/er/lib/rank";
-import { NICKNAME, parseRank, rankOf } from "@/er/server/rank";
+import { NICKNAME, parseRank, rankOf, topRank } from "@/er/server/rank";
 
 const VIEW = { nickname: "Foo", tier: "메테오라이트 3", mmr: 6842, place: "아시아1 1,284위", serverRank: 1284, serverCode: 10, last: { gain: 38, at: 1794150000 }, updatedAt: 1794150100 };
 
@@ -68,5 +71,26 @@ describe("랭크 오버레이", () => {
     expect(await rankOf("NobodyHere")).toEqual({ ok: false, status: 404 });
     expect(await rankOf("NobodyHere")).toEqual({ ok: false, status: 404 });
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("오버레이 1위 자료 읽기", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rank-"));
+  const put = (v: unknown) => {
+    mkdirSync(join(dir, "er-rank"), { recursive: true });
+    writeFileSync(join(dir, "er-rank/top.json"), JSON.stringify(v));
+  };
+  const now = Math.floor(Date.now() / 1000);
+
+  it("하루 안에 갱신된 자료만 쓴다", async () => {
+    vi.stubEnv("DATA_DIR", dir);
+    expect(await topRank()).toBeNull();
+    put({ ...VIEW, updatedAt: now - 3600 });
+    expect((await topRank())?.nickname).toBe("Foo");
+    put({ ...VIEW, updatedAt: now - 90_000 });
+    expect(await topRank()).toBeNull();
+    put(null);
+    expect(await topRank()).toBeNull();
+    vi.unstubAllEnvs();
   });
 });

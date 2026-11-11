@@ -2,6 +2,7 @@ import Live from "@/next/Live";
 import CopyField from "@/next/CopyField";
 import RankPreview from "@/next/RankPreview";
 import { overlayPlace, PRESETS, type PresetKey } from "@/er/lib/rank";
+import { topRank } from "@/er/server/rank";
 
 export const metadata = { title: "오버레이" };
 
@@ -17,6 +18,7 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
   const asked = one(q.n) !== undefined;
   const nick = (one(q.n) ?? "").trim().slice(0, 32);
   const { preset } = overlayPlace(one(q.p));
+  const top = nick ? null : await topRank();
   const x = px(one(q.x)), y = px(one(q.y));
   // OBS에 넣는 공개 주소라 BASE_URL이 없는 빌드도 운영 주소로 만듦
   const url = `${(process.env.BASE_URL || "https://labs.mongsil.dev").replace(/\/$/, "")}/er/rank/overlay?n=${encodeURIComponent(nick)}&p=${preset}${x || y ? `&x=${x}&y=${y}` : ""}`;
@@ -73,7 +75,7 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
             </div>
           )}
         </section>
-        <RankPreview key={nick} form="rank-form" nick={nick} init={`${preset}|${x}|${y}`} />
+        <RankPreview key={nick} form="rank-form" nick={nick} top={top} init={`${preset}|${x}|${y}`} />
       </div>
     </Live>
   );

@@ -1,4 +1,6 @@
 import "server-only";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { botApiUrl } from "./bot";
 import type { RankView } from "@/er/lib/rank";
 
@@ -7,6 +9,7 @@ const MISS_TTL = 60_000;
 const FAIL_TTL = 15_000;
 const MAX_ENTRIES = 2000;
 export const NICKNAME = /^[\p{L}\p{N}_]{2,16}$/u;
+const TOP_FRESH_S = 86_400;
 
 export type RankResult = { ok: true; data: RankView } | { ok: false; status: 404 | 429 | 503 };
 type Entry = { at: number; result: RankResult };
@@ -97,3 +100,13 @@ export async function rankOf(nickname: string): Promise<RankResult> {
 
 /** 처음 보는 닉네임인지. 남용 방지 한도를 셀 때 씀 */
 export const cachedRank = (nickname: string) => cache.has(nickname.toLowerCase());
+
+/** 수집기의 scripts/er/tier/top.mjs가 회차마다 쓰는 아시아1 1위. 하루 넘게 갱신되지 않았으면 순위가 바뀌었을 수 있어 쓰지 않음 */
+export async function topRank(): Promise<RankView | null> {
+  try {
+    const v = parseRank(JSON.parse(await readFile(join(process.env.DATA_DIR ?? "data", "er-rank/top.json"), "utf8")));
+    return v && Date.now() / 1000 - v.updatedAt < TOP_FRESH_S ? v : null;
+  } catch {
+    return null;
+  }
+}
