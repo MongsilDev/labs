@@ -393,6 +393,8 @@ const DAK_API = process.env.TIER_DAK_API || "https://er.dakgg.io/api/v1/routes";
 const DAK_STOP = join(DIR, "dak-stopped");
 const DAK_STOP_MS = 86_400_000;
 const DAK_GAP_MS = 3000;
+// 한 회차에 dak.gg에 보내는 요청 수 상한. 남은 루트는 다음 회차가 이어 받음
+const DAK_MAX = 20;
 
 /** 화면 루트 가운데 recommend가 404였던 것만 dak.gg에 하나씩 물어 이름, 작성자, 특성, 전술 스킬, 목표 아이템, 지역을 남김. 좋아요나 승률 같은 수치는 쓰지 않음 */
 async function fetchDak(ids) {
@@ -402,7 +404,7 @@ async function fetchDak(ids) {
     if (d && (d.body || [d.title, d.nick, d.trait, d.tac].every((v) => v == null))) return false;
     const r = getRawRoute.get(id);
     return !!r && JSON.parse(brotliDecompressSync(r.body)).route == null;
-  });
+  }).slice(0, DAK_MAX);
   if (!queue.length) return;
   if (dakStopped(existsSync(DAK_STOP) ? readFileSync(DAK_STOP, "utf8") : null, Date.now())) {
     log(`dak-stopped 파일이 있어 루트 ${queue.length}개를 dak.gg에 요청하지 않습니다`);
