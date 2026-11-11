@@ -73,6 +73,7 @@ type Props = {
   server: string;
   thin: number;
   few?: number;
+  cap?: number;
   publishRows: number;
   early?: { label: string; patch: string; rows: number };
   weights?: { gain: number; place: number; top3: number };
@@ -329,35 +330,28 @@ export default function TierBoard(p: Props) {
         </div>
         <details className="tier-how">
           <summary>계산 방법</summary>
-          <p>
-            점수는 평균보다 한 판에 RP를 얼마나 더 얻는지를 나타냅니다.
-            <br />
-            {w && (
-              <>
-                RP 획득 {w.gain * 100}%, 평균 순위 {w.place * 100}%, TOP 3 비율 {w.top3 * 100}%를 합쳐 계산합니다.
-                <br />
-              </>
-            )}
-            RP 획득, 순위, TOP 3 비율에서는 참가자의 시작 RP 구간 평균을 빼고 계산합니다.
-            <br />
-            실험체는 무기마다 따로 점수를 매기고, 판 수가 적은 무기는 점수를 그 실험체의 전체 점수에 가깝게 보정합니다.
-            <br />
-            {p.few ? `${p.thin}판 미만이거나 유효 플레이어가 ${p.few}명 미만인 실험체는 흐리게 표시합니다.` : `${p.thin}판 미만인 실험체는 흐리게 표시합니다.`}
+          <div className="tier-how-body">
+            <p className="tier-how-lead">점수는 평균보다 한 판에 RP를 얼마나 더 얻는지를 나타냅니다.</p>
+            <ol>
+              <li>시작 RP 구간마다 평균 성적이 달라서, 그 차이를 빼고 계산합니다.</li>
+              {p.cap != null && <li>점수에는 한 플레이어의 판을 그 실험체와 무기 조합 판 수의 <span className="whitespace-nowrap">{Math.round(p.cap * 100)}%까지만</span> 반영합니다.</li>}
+              <li>판 수가 적은 무기는 점수를 같은 실험체의 모든 무기를 합친 점수에 가깝게 맞춥니다.</li>
+              {w && (
+                <li>
+                  RP 획득 {w.gain * 100}%, 평균 순위 {w.place * 100}%, TOP 3 비율 {w.top3 * 100}%를 합쳐 RP 단위로 바꿉니다.
+                </li>
+              )}
+            </ol>
+            <p>{p.few ? `${p.thin}판 미만이거나 유효 플레이어가 ${p.few}명 미만인 실험체는 흐리게 표시합니다.` : `${p.thin}판 미만인 실험체는 흐리게 표시합니다.`}</p>
             {p.few && (
-              <>
+              <p>
+                유효 플레이어는 판을 몇 명이 고르게 나눠 했는지 나타냅니다.
                 <br />
-                유효 플레이어는 플레이어마다 자기가 한 판 수를 전체 판 수로 나눈 비율을 제곱해 모두 더한 값의 역수입니다.
-                <br />
-                판이 적은 수의 플레이어에게 몰릴수록 값이 작아집니다.
-              </>
+                {p.few}명이 같은 판 수씩 했으면 {p.few}명이고, 한 명이 거의 다 했으면 1명에 가깝습니다.
+              </p>
             )}
-            {prev && (
-              <>
-                <br />
-                패치 비교에는 점수 차이의 90% 범위에 0이 포함되지 않는 실험체만 표시합니다.
-              </>
-            )}
-          </p>
+            {prev && <p>패치 비교에는 점수 차이가 90% 오차 범위를 넘어 우연으로 설명하기 어려운 실험체만 넣습니다.</p>}
+          </div>
         </details>
         {prev && moved.length > 0 && (
           <details className="tier-how tier-moved">

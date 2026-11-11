@@ -55,6 +55,7 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
               server={data.band.server}
               thin={data.rule.thin}
               few={data.rule.few}
+              cap={data.rule.cap}
               publishRows={data.rule.publishRows}
               early={early}
               weights={data.rule.weights}

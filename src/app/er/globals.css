@@ -1376,9 +1376,24 @@
     width: max-content;
     cursor: pointer;
   }
-  .tier-how p {
-    margin-top: 8px;
-    line-height: 1.7;
+  .tier-how-body {
+    display: grid;
+    gap: 10px;
+    max-width: 760px;
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-2);
+  }
+  .tier-how-lead {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .tier-how-body ol {
+    display: grid;
+    gap: 4px;
+    padding-left: 1.4em;
+    list-style: decimal;
   }
   .tier-moved h3 {
     margin-top: 12px;
