@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.BASE_URL || "https://labs.mongsil.dev"),
   title: { default: "Labs", template: "%s - Labs" },
   description: "이터널 리턴 대회 점수 계산과 이터컷 예측, 2026 KEL 기록, Escape from Tarkov 계정 전적 조회와 KORD BREACH 특성 시뮬레이터가 있는 게임 도구 모음입니다.",
-  // 묶음 폴더 밖의 미리보기 이미지는 자동으로 붙지 않아 주소를 직접 적음
+  // 아이콘과 미리보기 이미지 파일이 묶음 폴더 밖에 있어 주소를 직접 적음
+  icons: { icon: "/icon.svg", apple: "/apple-icon" },
   openGraph: { siteName: "Labs", type: "website", locale: "ko_KR", images: [{ url: "/opengraph-image", ...OG_SIZE, alt: "Labs" }] },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },

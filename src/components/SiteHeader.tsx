@@ -10,11 +10,19 @@ type Item = { href: string; label: string; also?: string[] };
 type Sect = { name: string; items: Item[] };
 
 const ER: Sect[] = [
-  { name: "실험체", items: [{ href: "/er/tier", label: "실험체 티어" }] },
+  {
+    name: "실험체",
+    items: [
+      { href: "/er/tier", label: "실험체 티어" },
+      { href: "/er/meta", label: "메타 지도" },
+      { href: "/er/late", label: "초반과 막판" },
+    ],
+  },
   {
     name: "랭크",
     items: [
       { href: "/er/cut", label: "이터컷" },
+      { href: "/er/rp", label: "RP 손익" },
       { href: "/er/overlay", label: "오버레이" },
     ],
   },

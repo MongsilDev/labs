@@ -1,4 +1,5 @@
-import Shell from "@/next/Shell";
+import { avatarUrl, currentUser } from "@/er/server/auth";
+import Live from "@/next/Live";
 import Filters from "@/next/Filters";
 import { breakEven, getRp, MIN_N } from "@/next/rp";
 import RpHours from "@/next/RpHours";
@@ -13,16 +14,18 @@ const bandName = (lo: number, hi: number) => (hi >= 99999 ? `${n(lo)} 이상` : 
 // 양수는 초록, 음수는 빨강. 60 RP에서 가장 진하고, 50%를 넘으면 어두운 테마 초록 칸의 글자 대비가 4.5 아래로 떨어짐
 const tint = (v: number) => `color-mix(in srgb, var(${v >= 0 ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(v) / 60, 1) * 50)}%, transparent)`;
 
-export default async function NextRp({ searchParams }: { searchParams: Promise<{ rp?: string }> }) {
+export default async function RpPage({ searchParams }: { searchParams: Promise<{ rp?: string }> }) {
   const q = await searchParams;
+  const me = await currentUser();
+  const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
   const data = await getRp();
-  if (!data) return <Shell here="rp"><h1 className="text-[26px] font-black">RP 손익</h1><p className="mt-3 text-ink-3" role="status">지금은 RP 손익 표를 가져올 수 없습니다.<br />잠시 뒤 다시 열어주세요.</p></Shell>;
+  if (!data) return <Live user={user}><h1 className="text-[26px] font-black">RP 손익</h1><p className="mt-3 text-ink-3" role="status">지금은 RP 손익 표를 가져올 수 없습니다.<br />잠시 뒤 다시 열어주세요.</p></Live>;
   const rp = Number(q.rp);
   const band = data.bands.find((b) => rp >= b.lo && rp < b.hi) ?? data.bands.find((b) => b.lo === 8400) ?? data.bands[0];
   const even = breakEven(band);
   const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
   return (
-    <Shell here="rp">
+    <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">RP 손익</h1>
         <p className="text-[13px] text-ink-3 num">
@@ -97,6 +100,6 @@ export default async function NextRp({ searchParams }: { searchParams: Promise<{
           </section>
         </div>
       </div>
-    </Shell>
+    </Live>
   );
 }

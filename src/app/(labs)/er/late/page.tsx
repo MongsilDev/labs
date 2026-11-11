@@ -1,5 +1,6 @@
 import Image from "next/image";
-import Shell from "@/next/Shell";
+import { avatarUrl, currentUser } from "@/er/server/auth";
+import Live from "@/next/Live";
 import Filters from "@/next/Filters";
 import LateMap from "@/next/LateMap";
 import { getLate, type LateRow } from "@/next/late";
@@ -17,16 +18,18 @@ const SORTS = {
   early: { by: (a: LateRow, b: LateRow) => a.early - b.early },
 } as const;
 
-export default async function NextLate({ searchParams }: { searchParams: Promise<{ s?: string }> }) {
+export default async function LatePage({ searchParams }: { searchParams: Promise<{ s?: string }> }) {
   const q = await searchParams;
+  const me = await currentUser();
+  const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
   const data = await getLate();
-  if (!data) return <Shell here="late"><h1 className="text-[26px] font-black">초반과 막판</h1><p className="mt-3 text-ink-3" role="status">지금은 초반과 막판 표를 가져올 수 없습니다.<br />잠시 뒤 다시 열어주세요.</p></Shell>;
+  if (!data) return <Live user={user}><h1 className="text-[26px] font-black">초반과 막판</h1><p className="mt-3 text-ink-3" role="status">지금은 초반과 막판 표를 가져올 수 없습니다.<br />잠시 뒤 다시 열어주세요.</p></Live>;
   const s = q.s === "early" ? "early" : "fin";
   const rows = [...data.rows].sort(SORTS[s].by);
   const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
   const min = Math.round(data.cut / 60);
   return (
-    <Shell here="late">
+    <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">초반과 막판</h1>
         <p className="text-[13px] text-ink-3 num">
@@ -88,6 +91,6 @@ export default async function NextLate({ searchParams }: { searchParams: Promise
         </table>
       </section>
       </div>
-    </Shell>
+    </Live>
   );
 }

@@ -1,9 +1,10 @@
 import Image from "next/image";
-import Shell from "@/next/Shell";
+import Live from "@/next/Live";
 import Filters from "@/next/Filters";
 import MetaMap from "@/next/MetaMap";
 import { spots, type Spot } from "@/next/meta";
 import { pickView, signed } from "@/er/lib/tier";
+import { avatarUrl, currentUser } from "@/er/server/auth";
 import { getTier } from "@/er/server/tier";
 
 export const dynamic = "force-dynamic";
@@ -52,9 +53,11 @@ function Rows({ title, rows, empty }: { title: string; rows: Spot[]; empty: stri
 
 export default async function MetaPage({ searchParams }: { searchParams: Promise<{ v?: string }> }) {
   const { v } = await searchParams;
+  const me = await currentUser();
+  const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
   const data = await getTier();
   const view = data ? pickView(data, v) : null;
-  if (!data || !view) return <Shell here="meta"><p className="text-ink-3">집계가 아직 없습니다.</p></Shell>;
+  if (!data || !view) return <Live user={user}><p className="text-ink-3">집계가 아직 없습니다.</p></Live>;
   const { list, median } = view.combos.length ? spots(view) : { list: [], median: 0 };
   const strong = list.filter((c) => c.sure && c.popular).sort((a, b) => b.score - a.score);
   const hidden = list.filter((c) => c.sure && !c.popular).sort((a, b) => b.score - a.score);
@@ -62,7 +65,7 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
   const label = new Set([...hidden, ...trap].map((c) => `${c.char}-${c.weapon}`));
   const at = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(data.updatedAt);
   return (
-    <Shell here="meta">
+    <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">메타 지도</h1>
         <p className="text-[13px] text-ink-3 num">
@@ -89,6 +92,6 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
         </div>
       </div>
       )}
-    </Shell>
+    </Live>
   );
 }

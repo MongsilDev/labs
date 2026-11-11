@@ -6,7 +6,7 @@ export type RpHour = { h: number; gain: number; ci: number; n: number };
 export type RpBand = { lo: number; hi: number; n: number; entry: number; tkAvg: number; cells: Cell[][]; hours: RpHour[] };
 export type RpData = { from: number; to: number; games: number; rows: number; tk: [number, number][]; bands: RpBand[] };
 
-// 시제품은 원본에서 미리 계산한 파일을 읽음. 수집기에 넣을지는 결정 뒤에 정함
+// 수집기의 scripts/er/tier/derive.mjs가 발행 때마다 쓰는 파일
 export async function getRp(): Promise<RpData | null> {
   try {
     return JSON.parse(await readFile(join(process.env.DATA_DIR ?? "data", "er-rp/rp.json"), "utf8"));

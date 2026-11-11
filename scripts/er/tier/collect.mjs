@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
 import { dakStopped } from "./dakstop.mjs";
+import { derive, writeDerived } from "./derive.mjs";
 import { RULE, scoreRows } from "./score.mjs";
 
 const HOME = homedir();
@@ -859,6 +860,13 @@ async function publish(s, nm) {
     ...(past && { past }),
   };
   writeTier(data);
+  // RP 손익, 초반과 막판 집계는 저장된 원본에서만 만듦. 실패해도 티어 발행은 끝난 상태로 둠
+  try {
+    const out = derive(db.prepare(`SELECT t, body FROM raw.games WHERE season = ?`).iterate(s.id), data);
+    if (writeDerived(join(OUT, ".."), out)) log(`RP 손익, 초반과 막판 집계 ${out.rp.games}경기`);
+  } catch (e) {
+    log(`RP 손익, 초반과 막판 집계 실패: ${e.message}`);
+  }
   const removed = prune.run(s.id, now - KEEP_DAYS * 86_400_000).changes;
   log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, ${KEEP_DAYS}일 지난 행 ${removed}개 삭제` : ""}`);
 }
