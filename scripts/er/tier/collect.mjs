@@ -16,7 +16,8 @@ const HOME = homedir();
 const DIR = process.env.TIER_DIR || "/Volumes/SSD/ertier/live";
 const OUT = process.env.TIER_OUT || join(HOME, "docker/_data/labs/er-tier");
 const BOT = process.env.BOT_DIR || join(HOME, "docker/mongsil-bot");
-const API = "https://open-api.bser.io";
+// TIER_API는 사본 DB 시험에서 가짜 서버를 쓰려고 바꾸는 값
+const API = process.env.TIER_API || "https://open-api.bser.io";
 const SERVER = "Asia";
 const RANKED_GATE = 8300;
 const SEASON_NAME_OFFSET = 9;
@@ -82,6 +83,8 @@ db.exec(`
 // route와 tac은 11-09, 경기 지표 세 열은 11-10에 더한 열. 기존 행은 --rebuild가 raw에서 채움
 const rowCols = new Set(db.prepare(`PRAGMA table_info(rows)`).all().map((c) => c.name));
 for (const c of ["route", "tac", "assists", "deaths", "monsters"]) if (!rowCols.has(c)) db.exec(`ALTER TABLE rows ADD COLUMN ${c} INTEGER`);
+// mmr은 11-12에 더한 열. 마지막으로 경기 목록을 끝까지 받은 회차의 rank/top RP이고, 다음 회차 RP가 같으면 그 계정은 요청하지 않음
+if (!db.prepare(`PRAGMA table_info(accounts)`).all().some((c) => c.name === "mmr")) db.exec(`ALTER TABLE accounts ADD COLUMN mmr INTEGER`);
 // 작성자 닉네임은 게임 안 루트 목록에서 공개되는 값이라 이 표에만 평문으로 둠. 경기 원본과 rows는 playerId
 const routeCols = new Set(db.prepare(`PRAGMA table_info(routes)`).all().map((c) => c.name));
 for (const [c, t] of [["title", "TEXT"], ["nick", "TEXT"], ["trait", "INTEGER"], ["tac", "INTEGER"]]) if (!routeCols.has(c)) db.exec(`ALTER TABLE routes ADD COLUMN ${c} ${t}`);
@@ -102,7 +105,7 @@ const fillRow = db.prepare(`UPDATE rows SET route = coalesce(route, ?), tac = co
 /** 원본 한 사람분으로 뒤에 더한 열이 빈 행을 채우고 바뀐 행 수를 돌려줌 */
 const fill = (y, game, player) =>
   Number(fillRow.run(y.routeIdOfStart ?? null, y.tacticalSkillGroup ?? null, y.playerAssistant ?? null, y.playerDeaths ?? null, y.monsterKill ?? null, game, player).changes);
-const getAccount = db.prepare(`SELECT newest FROM accounts WHERE player = ?`);
+const getAccount = db.prepare(`SELECT newest, mmr FROM accounts WHERE player = ?`);
 const openGames = db.prepare(`SELECT game, max(coalesce(in1000, 0)) AS top FROM rows
   WHERE season = ? AND t >= ? AND game NOT IN (SELECT game FROM raw.games) GROUP BY game ORDER BY max(t) DESC`);
 const putRaw = db.prepare(`INSERT OR REPLACE INTO raw.games VALUES (?, ?, ?, ?, ?)`);
@@ -125,7 +128,7 @@ const getDak = db.prepare(`SELECT title, nick, trait, tac, body FROM dak_routes 
 const putDak = db.prepare(`INSERT OR REPLACE INTO dak_routes (route, t, title, nick, trait, tac, body) VALUES (?, ?, ?, ?, ?, ?, ?)`);
 const markDak = db.prepare(`UPDATE dak_routes SET t = ?, body = ? WHERE route = ?`);
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
-const putAccount = db.prepare(`INSERT INTO accounts VALUES (?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked`);
+const putAccount = db.prepare(`INSERT INTO accounts (player, newest, checked, mmr) VALUES (?,?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked, mmr = excluded.mmr`);
 
 class Pace {
   constructor(rps) {
@@ -150,7 +153,7 @@ class Pace {
   }
 }
 
-const stats = { sent: 0, ok: 0, limited: 0, failed: 0, lat: [] };
+const stats = { sent: 0, ok: 0, limited: 0, failed: 0, skipped: 0, lat: [] };
 const RATE = join(DIR, "rate.json");
 const measured = existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : null;
 const pace = new Pace(opt("rps", measured?.rps ?? 2));
@@ -303,9 +306,10 @@ async function accounts(s, since) {
     const b = JSON.parse(readFileSync(join(BOT, "data/rank_history.json"), "utf8"));
     if (b.players?.season === s.id) book = b.players.list ?? {};
   } catch {}
-  const names = new Set(top.map((x) => x.nickname));
+  const mmr = new Map(top.map((x) => [x.nickname, x.mmr ?? null]));
+  const names = new Set(mmr.keys());
   for (const [name, v] of Object.entries(book)) if (v[3] && v[3] * 1000 >= since) names.add(name);
-  return [...names].map((name) => ({ name, uid: book[name]?.[6] ?? null }));
+  return [...names].map((name) => ({ name, uid: book[name]?.[6] ?? null, mmr: mmr.get(name) ?? null }));
 }
 
 /** 경기 기록 한 사람분을 행으로 넣고 넣은 행 수를 돌려줌 */
@@ -500,11 +504,17 @@ function rebuild() {
 }
 
 async function collectAccount(s, acc, since, cuts, stop) {
+  const player = playerId(s.id, acc.name);
+  const prev = getAccount.get(player);
+  // 랭크 경기를 하면 RP가 바뀌므로 지난번에 끝까지 받은 뒤 RP가 같은 계정은 건너뜀. 놓친 경기는 RP가 바뀐 회차에 newest부터 다시 받음
+  if (!BACKFILL && acc.mmr != null && prev?.mmr === acc.mmr) {
+    stats.skipped++;
+    return 0;
+  }
   let uid = acc.uid;
   if (!uid) uid = (await get(`/v1/user/nickname?query=${encodeURIComponent(acc.name)}`))?.user?.userId;
   if (!uid) return 0;
-  const player = playerId(s.id, acc.name);
-  const newest = getAccount.get(player)?.newest ?? 0;
+  const newest = prev?.newest ?? 0;
   let path = `/v1/user/games/uid/${uid}`;
   let added = 0;
   let top = newest;
@@ -534,7 +544,7 @@ async function collectAccount(s, acc, since, cuts, stop) {
     path = `/v1/user/games/uid/${uid}?next=${g.next}`;
   }
   // 중간에 끊긴 계정은 다음 실행에서 처음부터 다시 받음
-  putAccount.run(player, complete ? top : newest, Date.now());
+  putAccount.run(player, complete ? top : newest, Date.now(), complete ? acc.mmr : (prev?.mmr ?? null));
   return added;
 }
 
@@ -921,7 +931,7 @@ async function once(measure) {
     if (s.regular && Date.now() < s.end && !PUBLISH_ONLY) {
       const since = Math.max(s.start, Date.now() - opt("days", 11) * 86_400_000);
       run = await collect(s, since, { measure });
-      log(`새 행 ${run.added}, 요청 ${stats.sent}, 한도 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
+      log(`새 행 ${run.added}, 요청 ${stats.sent}, RP가 그대로라 건너뛴 계정 ${stats.skipped}, 429 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
       writeFileSync(join(DIR, "status.json"), JSON.stringify({ at: Date.now(), abort, ...run, stats: { ...stats, lat: undefined } }));
     }
     if (!abort) await publish(s, nm);
