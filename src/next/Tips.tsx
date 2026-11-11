@@ -15,18 +15,26 @@ export default function Tips() {
       setTip({ text: el.dataset.tip ?? "", x: r.left + r.width / 2, top: r.top, bottom: r.bottom });
     };
     const hide = () => setTip(null);
+    // 포인터가 창 밖으로 바로 나가면 pointerover가 오지 않음
+    const left = (e: PointerEvent) => {
+      if (!e.relatedTarget) hide();
+    };
     document.addEventListener("pointerover", show);
+    document.addEventListener("pointerout", left);
     document.addEventListener("click", show);
     window.addEventListener("scroll", hide, true);
+    window.addEventListener("blur", hide);
     return () => {
       document.removeEventListener("pointerover", show);
+      document.removeEventListener("pointerout", left);
       document.removeEventListener("click", show);
       window.removeEventListener("scroll", hide, true);
+      window.removeEventListener("blur", hide);
     };
   }, []);
   if (!tip) return null;
   // 가로는 화면 안 위치 비율만큼 왼쪽으로 당겨 가장자리에서도 잘리지 않고, 위에 자리가 없으면 아래에 띄움
-  const px = (tip.x / window.innerWidth) * 100;
+  const px = Math.min(100, Math.max(0, (tip.x / window.innerWidth) * 100));
   const above = tip.top > 44;
   return (
     <div
