@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS tournaments (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   version INTEGER NOT NULL DEFAULT 1,
-  group_keys TEXT
+  group_keys TEXT,
+  auto_upload INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS members (
   tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
@@ -133,6 +134,18 @@ CREATE TABLE IF NOT EXISTS discord_links (
   last_user TEXT,
   UNIQUE (tournament_id, group_idx)
 );
+CREATE TABLE IF NOT EXISTS upload_tokens (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  hash TEXT NOT NULL UNIQUE,
+  created_at INTEGER NOT NULL,
+  last_used_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS group_rosters (
+  tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  group_idx INTEGER NOT NULL,
+  names TEXT NOT NULL,
+  PRIMARY KEY (tournament_id, group_idx)
+);
 CREATE INDEX IF NOT EXISTS logs_t ON logs(tournament_id, id);
 CREATE INDEX IF NOT EXISTS members_user ON members(user_id);
 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
@@ -163,6 +176,7 @@ export function db(): DatabaseSync {
     const roundCols = conn.prepare("PRAGMA table_info(rounds)").all() as { name: string }[];
     if (!roundCols.some((c) => c.name === "discord")) conn.exec("ALTER TABLE rounds ADD COLUMN discord INTEGER NOT NULL DEFAULT 0");
     const tournamentCols = conn.prepare("PRAGMA table_info(tournaments)").all() as { name: string }[];
+    if (!tournamentCols.some((c) => c.name === "auto_upload")) conn.exec("ALTER TABLE tournaments ADD COLUMN auto_upload INTEGER NOT NULL DEFAULT 0");
     if (!tournamentCols.some((c) => c.name === "group_keys")) {
       conn.exec("BEGIN IMMEDIATE");
       try {

@@ -36,6 +36,7 @@ import type { User } from "./auth";
 import { hash, safeEqual, token } from "./auth";
 import { botChannels, notifyChanged, type BotGuild } from "./bot";
 import { afterCommit, db, newGroupKeys, now, tx } from "./db";
+import { autoConfig, nick, pickGroup } from "./autoUpload";
 
 const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 const MODES: Mode[] = ["points", "checkpoint", "double"];
@@ -54,6 +55,7 @@ type TRow = {
   updated_at: number;
   version: number;
   group_keys: string | null;
+  auto_upload: number;
 };
 
 export class OpError extends Error {}
@@ -133,8 +135,8 @@ export function createTournament(user: User, input: CreateInput): string {
     const code = newCode();
     const t = now();
     const r = db()
-      .prepare("INSERT INTO tournaments(code, name, mode, rules, planned_rounds, group_count, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-      .run(code, name, mode, JSON.stringify(rules), planned, groups, user.id, t, t);
+      .prepare("INSERT INTO tournaments(code, name, mode, rules, planned_rounds, group_count, created_by, created_at, updated_at, auto_upload) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .run(code, name, mode, JSON.stringify(rules), planned, groups, user.id, t, t, autoConfig().optin === "on" ? 1 : 0);
     const id = Number(r.lastInsertRowid);
     db().prepare("INSERT INTO members(tournament_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)").run(id, user.id, t);
     db().prepare("INSERT INTO logs(tournament_id, user_name, text, created_at) VALUES (?, ?, ?, ?)").run(id, user.name, "대회 만들기", t);
@@ -887,6 +889,12 @@ function upsertScrimOwner(id: string, name: string): User {
 
 const live = (t: TRow) => t.updated_at + RETENTION_MS > now();
 
+// 자동 업로드의 조 판정에만 쓰는 명단. 형식이 틀려도 대회 만들기는 막지 않고 빈 명단으로 둠
+function rosterNames(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return [...new Set(v.filter((x): x is string => typeof x === "string").map((x) => clean(x, 40)).filter(Boolean))].slice(0, 60);
+}
+
 export type LinkResult = { status: "gone" | "forbidden" | "invalid" } | { status: "ok"; links: { group: string; channelId: string }[] };
 
 type LinkWant = { g: number; channelId: string | null; guild: string; channel: string };
@@ -941,7 +949,7 @@ export function setDiscordLinks(code: string, actor: unknown, links: unknown): L
   });
 }
 
-export type ScrimInput = { owner?: unknown; ownerName?: unknown; operators?: unknown; name?: unknown; preset?: unknown; plannedRounds?: unknown; rules?: unknown; links?: unknown };
+export type ScrimInput = { owner?: unknown; ownerName?: unknown; operators?: unknown; name?: unknown; preset?: unknown; plannedRounds?: unknown; rules?: unknown; links?: unknown; autoUpload?: unknown };
 export type ScrimResult = { status: "forbidden" | "invalid" | "full" } | { status: "ok"; code: string; reused: boolean; missing: string[] };
 
 // 같은 날 다시 불러도 대회가 하나만 남도록 같은 개최자의 같은 이름 대회는 이 시간 안이면 다시 씀
@@ -956,10 +964,12 @@ export function createScrim(input: ScrimInput): ScrimResult {
   if (!name || !Array.isArray(links) || links.length < 1 || links.length > LIMITS.groups) return { status: "invalid" };
   const labels = links.map((_, i) => groupLabel(i));
   const want: LinkWant[] = [];
-  for (const l of links as { group?: unknown; channelId?: unknown; guild?: unknown; channel?: unknown }[]) {
+  const rosters = new Map<number, string[]>();
+  for (const l of links as { group?: unknown; channelId?: unknown; guild?: unknown; channel?: unknown; roster?: unknown }[]) {
     const g = typeof l?.group === "string" ? labels.indexOf(l.group.trim().toUpperCase()) : -1;
     if (g < 0 || want.some((w) => w.g === g) || typeof l.channelId !== "string" || !DISCORD_ID.test(l.channelId) || want.some((w) => w.channelId === l.channelId)) return { status: "invalid" };
     want.push({ g, channelId: l.channelId, guild: clean(l.guild, 100), channel: clean(l.channel, 100) });
+    rosters.set(g, rosterNames(l.roster));
   }
   const ids = Array.isArray(input.operators) ? [...new Set(input.operators.filter((x): x is string => typeof x === "string" && DISCORD_ID.test(x) && x !== ownerId))] : [];
   return tx(() => {
@@ -983,6 +993,8 @@ export function createScrim(input: ScrimInput): ScrimResult {
         .run(code, name, JSON.stringify(clampRules(input.rules as Partial<Rules> | undefined, preset)), planned, want.length, owner.id, at, at, JSON.stringify(newGroupKeys(want.length)));
       conn.prepare("INSERT INTO members(tournament_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)").run(Number(r.lastInsertRowid), owner.id, at);
       conn.prepare("INSERT INTO logs(tournament_id, user_name, text, created_at) VALUES (?, ?, ?, ?)").run(Number(r.lastInsertRowid), owner.name, "대회 만들기 (스크림봇)", at);
+      // 개최자가 끈 뒤 같은 날 다시 불려도 켜지 않도록 만들 때만 정함
+      if (input.autoUpload === true && autoConfig().optin !== "none") conn.prepare("UPDATE tournaments SET auto_upload = 1 WHERE id = ?").run(Number(r.lastInsertRowid));
       t = find(code)!;
     }
     const missing: string[] = [];
@@ -1002,6 +1014,9 @@ export function createScrim(input: ScrimInput): ScrimResult {
     }
     if (reused && added) bump(t, owner, `운영자 ${added}명 추가 (스크림봇)`);
     writeLinks(t, owner, want);
+    // 같은 날 다시 조편성하면 명단도 새로 받음
+    conn.prepare("DELETE FROM group_rosters WHERE tournament_id = ?").run(t.id);
+    for (const [g, names] of rosters) if (names.length) conn.prepare("INSERT INTO group_rosters(tournament_id, group_idx, names) VALUES (?, ?, ?)").run(t.id, g, JSON.stringify(names));
     return { status: "ok", code: t.code, reused, missing } as const;
   });
 }
@@ -1147,6 +1162,99 @@ export function relayDiscord(channelId: unknown, actor: unknown, actorName: unkn
   });
 }
 
+const UPLOAD_TOKEN_IDLE_MS = 90 * 24 * 60 * 60 * 1000;
+
+export type UploadTokenInfo = { createdAt: number; lastUsedAt: number | null } | null;
+
+export function uploadTokenInfo(user: User): UploadTokenInfo {
+  const r = db().prepare("SELECT created_at, last_used_at FROM upload_tokens WHERE user_id = ?").get(user.id) as { created_at: number; last_used_at: number | null } | undefined;
+  return r ? { createdAt: r.created_at, lastUsedAt: r.last_used_at } : null;
+}
+
+// 한 사람에게 하나. 다시 발급하면 이전 토큰은 바로 못 씀. 평문은 이 응답에만 있음
+export function issueUploadToken(user: User): string {
+  const value = token(24);
+  db()
+    .prepare("INSERT INTO upload_tokens(user_id, hash, created_at, last_used_at) VALUES (?, ?, ?, NULL) ON CONFLICT(user_id) DO UPDATE SET hash = excluded.hash, created_at = excluded.created_at, last_used_at = NULL")
+    .run(user.id, hash(value), now());
+  return value;
+}
+
+export function revokeUploadToken(user: User) {
+  db().prepare("DELETE FROM upload_tokens WHERE user_id = ?").run(user.id);
+}
+
+export function uploadTokenOwner(value: string): { user: User; hash: string } | null {
+  if (!value || value.length > 100) return null;
+  const r = db().prepare("SELECT u.id, u.name, u.avatar, k.hash FROM upload_tokens k JOIN users u ON u.id = k.user_id WHERE k.hash = ?").get(hash(value)) as
+    | (User & { hash: string })
+    | undefined;
+  return r ? { user: { id: r.id, name: r.name, avatar: r.avatar }, hash: r.hash } : null;
+}
+
+export function autoUploadOf(code: string, user: User): boolean {
+  const { t } = findRole(code, user);
+  return autoConfig().optin === "none" || t.auto_upload === 1;
+}
+
+export function setAutoUpload(code: string, user: User, on: boolean) {
+  const t = requireOwner(code, user);
+  if (autoConfig().optin === "none" || (t.auto_upload === 1) === on) return;
+  tx(() => {
+    db().prepare("UPDATE tournaments SET auto_upload = ? WHERE id = ?").run(on ? 1 : 0, t.id);
+    bump(t, user, on ? "자동 업로드 켜기" : "자동 업로드 끄기");
+  });
+}
+
+type Candidate = { t: TRow; g: number; role: "owner" | "operator"; names: Set<string> };
+
+// 토큰 주인이 지금 개최자나 운영자인, 보관 기간 안의 자동 업로드 대회의 조. 운영진에서 빠지면 바로 후보에서 빠짐
+function candidates(user: User): Candidate[] {
+  const all = autoConfig().optin === "none";
+  const rows = db()
+    .prepare(`SELECT t.*, m.role FROM tournaments t JOIN members m ON m.tournament_id = t.id AND m.user_id = ? WHERE t.updated_at > ?${all ? "" : " AND t.auto_upload = 1"}`)
+    .all(user.id, now() - RETENTION_MS) as (TRow & { role: "owner" | "operator" })[];
+  const out: Candidate[] = [];
+  for (const { role, ...t } of rows) {
+    const roster = db().prepare("SELECT group_idx, names FROM group_rosters WHERE tournament_id = ?").all(t.id) as { group_idx: number; names: string }[];
+    const played = db().prepare("SELECT group_idx, players FROM rounds WHERE tournament_id = ? AND deleted_at IS NULL AND source = 'csv'").all(t.id) as { group_idx: number; players: string }[];
+    for (let g = 0; g < t.group_count; g++) {
+      const names = new Set<string>();
+      for (const r of roster) if (r.group_idx === g) for (const n of JSON.parse(r.names) as string[]) names.add(nick(n));
+      for (const r of played) if (r.group_idx === g) for (const p of JSON.parse(r.players) as Player[]) names.add(nick(p.nickname));
+      out.push({ t, g, role, names });
+    }
+  }
+  return out;
+}
+
+// 감시 창 전용. 대회와 조를 주소 대신 결과 CSV의 닉네임으로 고름
+export function uploadWithToken(value: string, file: { name: string; text: string }): UploadResult & { round?: number | null } {
+  return tx(() => {
+    const owner = uploadTokenOwner(value);
+    if (!owner) return { status: "gone", message: "" };
+    db().prepare("UPDATE upload_tokens SET last_used_at = ? WHERE hash = ?").run(now(), owner.hash);
+    const parsed = parseRoundCsv(file.text);
+    if (!parsed.ok) return { status: "invalid", message: parsed.error };
+    const cands = candidates(owner.user);
+    // 다른 대회에 이미 올린 경기를 명단 비교로 새 대회에 또 넣지 않도록 후보 전체에서 먼저 찾음
+    const ids = [...new Set(cands.map((c) => c.t.id))];
+    if (ids.length) {
+      const dup = db()
+        .prepare(`SELECT tournament_id, group_idx, round_no FROM rounds WHERE game_id = ? AND deleted_at IS NULL AND tournament_id IN (${ids.map(() => "?").join(",")})`)
+        .get(parsed.round.gameId, ...ids) as { tournament_id: number; group_idx: number; round_no: number } | undefined;
+      if (dup) {
+        const t = cands.find((c) => c.t.id === dup.tournament_id)!.t;
+        return { status: "duplicate", message: `이미 ${prefix(t, dup.group_idx)}${dup.round_no}라운드에 올린 경기입니다.` };
+      }
+    }
+    const pick = pickGroup(cands, parsed.round.players.map((p) => p.nickname), autoConfig());
+    if (!pick.ok) return { status: "invalid", message: pick.message };
+    const r = landCsv(pick.c.t, pick.c.g, pick.c.role, owner.user, file, " (자동 업로드)");
+    return { status: r.status, message: r.message, round: r.round };
+  });
+}
+
 export function deleteTournament(code: string, user: User, confirmName: string) {
   const t = requireOwner(code, user);
   if (clean(confirmName, LIMITS.nameLength) !== t.name) throw new OpError("대회 이름이 일치하지 않습니다. 대회 이름을 다시 확인해주세요.");
@@ -1161,9 +1269,11 @@ export function cleanup(): { tournaments: number; sessions: number; users: numbe
   conn.prepare("DELETE FROM rounds WHERE deleted_at IS NOT NULL AND deleted_at < ?").run(t - 60 * 60 * 1000);
   conn.prepare("DELETE FROM penalties WHERE deleted_at IS NOT NULL AND deleted_at < ?").run(t - 60 * 60 * 1000);
   const sessions = Number(conn.prepare("DELETE FROM sessions WHERE expires_at < ?").run(t).changes);
+  conn.prepare("DELETE FROM upload_tokens WHERE COALESCE(last_used_at, created_at) < ?").run(t - UPLOAD_TOKEN_IDLE_MS);
+  // 감시 창의 토큰은 로그인 세션과 따로 살아야 해서 토큰이 있는 사용자는 남김
   const users = Number(
     conn
-      .prepare("DELETE FROM users WHERE id NOT IN (SELECT user_id FROM sessions) AND id NOT IN (SELECT user_id FROM members)")
+      .prepare("DELETE FROM users WHERE id NOT IN (SELECT user_id FROM sessions) AND id NOT IN (SELECT user_id FROM members) AND id NOT IN (SELECT user_id FROM upload_tokens)")
       .run().changes,
   );
   if ((conn.prepare("PRAGMA freelist_count").get() as { freelist_count: number }).freelist_count > 1024) conn.exec("PRAGMA incremental_vacuum; PRAGMA wal_checkpoint(TRUNCATE);");
