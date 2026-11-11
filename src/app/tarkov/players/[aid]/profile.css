@@ -59,7 +59,7 @@
   border-left: 4px solid var(--line-strong);
 }
 /* 판정 색 막대와 글자 사이는 띄움. 패널의 좌우 여백 규칙을 이기려고 선택자를 겹침 */
-.panel.verdict {
+.panel.panel.verdict {
   padding-left: 18px !important;
 }
 .verdict.clear {
@@ -799,7 +799,7 @@
   border-top-right-radius: 0;
 }
 /* 판정 색 막대와 글자 사이는 띄움 */
-.hero > .phead {
+.hero > .panel.panel.phead {
   padding-left: 18px !important;
 }
 .hero.clear > .phead {
