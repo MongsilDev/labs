@@ -816,7 +816,9 @@ async function publish(s, nm) {
   const now = Date.now();
   const lastFile = join(DIR, "tier.json");
   const last = existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null;
-  const all = s.regular ? selectRows.all(s.id, SERVER, s.start, s.id) : [];
+  // 끝난 정규 시즌이 아직 현재 행이면 다시 집계하지 않음. 최근 N일 탭이 줄고 오래된 행이 지워짐
+  const ended = s.regular && now >= s.end && last?.season?.id === s.id;
+  const all = s.regular && !ended ? selectRows.all(s.id, SERVER, s.start, s.id) : [];
   const cut300 = cutSeries(s.id, TOP_PLACE);
   for (const r of all) {
     const c = cutAt(cut300, r.t);
@@ -825,7 +827,7 @@ async function publish(s, nm) {
   // 프리 시즌과 새 시즌 첫 집계 전에는 마지막 표를 그대로 두고 상태만 바꿈
   if (!all.length) {
     if (last) writeTier({ ...last, state: "offseason", updatedAt: now, next: s.regular && last.season?.id !== s.id ? s.name : undefined });
-    log("집계할 행이 없어 마지막 표를 유지합니다.");
+    log(ended ? "시즌이 끝나 마지막 표를 유지합니다." : "집계할 행이 없어 마지막 표를 유지합니다.");
     return;
   }
   // 새 시즌 첫 집계 때 지난 시즌 마지막 표의 패치 탭만 남김. 한 시즌 전까지만 둠
