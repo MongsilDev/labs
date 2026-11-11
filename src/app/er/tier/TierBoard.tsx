@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
-import { comboPath, compareView, movedCombos, signed, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
+import { comboPath, compareView, movedCombos, signed, sortCombos, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
 import { Weapon, WeaponText } from "./parts";
 
 // 상세로 떠날 때 목록 주소와 스크롤 위치를 남기는 탭 단위 저장소 키. 30분이 지나면 쓰지 않음
@@ -268,7 +268,7 @@ export default function TierBoard(p: Props) {
     (c) => (role == null || c.roles?.includes(role)) && (!query || `${c.weaponName}${c.name}`.replace(/\s+/g, "").includes(query) || `${c.name}${c.weaponName}`.replace(/\s+/g, "").includes(query)),
   );
   const by = COLS.find((c) => c.key === sort)!;
-  const ordered = [...shown].sort((a, b) => (dir === "asc" ? 1 : -1) * (by.val(a) - by.val(b)) || b.n - a.n);
+  const ordered = sortCombos(shown, by.val, dir, sort === "score");
   const w = p.weights;
   const prev = compareView(p.views, view, p.patch);
   const moved = prev ? movedCombos(shown, prev) : [];

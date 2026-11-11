@@ -187,6 +187,15 @@ export function compareView(views: TierView[], view: TierView, patch: string | n
   return views.find((v) => v.id.startsWith("patch-") && v.id !== view.id && !v.season);
 }
 
+const GRADE_RANK: TierCombo["grade"][] = ["S", "A", "B", "C", "D"];
+
+/** 표 정렬. 점수는 소수 한 자리, z는 두 자리로 반올림된 값이고 등급은 반올림 전 z로 정해져서, 점수가 같으면 등급, z, 판 수 순으로 가름 */
+export function sortCombos(list: TierCombo[], val: (c: TierCombo) => number, dir: "asc" | "desc", byScore: boolean): TierCombo[] {
+  const s = dir === "asc" ? 1 : -1;
+  const tie = (a: TierCombo, b: TierCombo) => s * (GRADE_RANK.indexOf(b.grade) - GRADE_RANK.indexOf(a.grade)) || s * (a.z - b.z);
+  return [...list].sort((a, b) => s * (val(a) - val(b)) || (byScore ? tie(a, b) : 0) || b.n - a.n);
+}
+
 /** 점수 차이의 90% 범위에 0이 들어가지 않는 조합. 차이가 큰 순 */
 export function movedCombos(combos: TierCombo[], prev: TierView): TierMoved[] {
   return combos
