@@ -108,7 +108,7 @@ export default function AutoUpload({
             )}
           </li>
         )}
-        <li className={LI}>
+        <li className={`${LI} flex-wrap`}>
           <b className="whitespace-nowrap">내 토큰</b>
           <span className="min-w-0 text-[13px] text-fg-3">
             {token ? `${timeKo(token.createdAt)} 발급, ${token.lastUsedAt ? `마지막 업로드 ${timeKo(token.lastUsedAt)}` : "올린 기록 없음"}` : "없음"}
