@@ -133,8 +133,24 @@ describe("조 판정", () => {
     const value = t.issueUploadToken(op);
     expect((await send(value, lobby(7004, A))).status).toBe(200);
     expect((await send(value, lobby(7004, A))).body).toMatchObject({ status: "duplicate", message: "이미 A조 1라운드에 올린 경기입니다." });
-    expect((await send(value, lobby(7005, A))).status).toBe(410);
+    expect((await send(value, lobby(7005, A))).body).toMatchObject({ status: "ended", message: "A조 경기가 끝났습니다." });
     expect(rounds(code)).toEqual([[7004], []]);
+  });
+
+  it("끝난 조는 후보에서 빠져, 같은 선수들의 다음 대회 경기는 새 대회로 감", async () => {
+    const one = await scrim({ plannedRounds: 1 });
+    const value = t.issueUploadToken(op);
+    expect((await send(value, lobby(7007, A))).status).toBe(200);
+    const two = await scrim();
+    expect((await send(value, lobby(7008, A))).status).toBe(200);
+    expect([rounds(one.code), rounds(two.code)]).toEqual([[[7007], []], [[7008], []]]);
+  });
+
+  it("조 수를 줄이면 줄인 조의 명단도 지움", async () => {
+    const { code } = await scrim();
+    t.applyOp(code, owner, { op: "update_settings", groupCount: 1 });
+    t.applyOp(code, owner, { op: "update_settings", groupCount: 2 });
+    expect(db.db().prepare("SELECT group_idx FROM group_rosters WHERE tournament_id = (SELECT id FROM tournaments WHERE code = ?)").all(code)).toEqual([{ group_idx: 0 }]);
   });
 
   it("운영진에서 빠지거나 대회에 속하지 않은 사람의 토큰은 후보가 없어 422", async () => {
@@ -280,6 +296,9 @@ describe("감시 파일", () => {
     expect(s).toContain('set "LABS_TOKEN=tok-_9"');
     expect(s).toContain('set "LABS_URL=https://labs.example/api/upload/me"');
     expect(s).not.toContain("{{");
-    expect(watchScript({ token: "", url: "u" })).toContain('set "LABS_TOKEN="\r\n');
+    expect(s).toContain('if not "tok-_9"=="" if not defined LABS_MIN');
+    const paste = watchScript({ token: "", url: "u" });
+    expect(paste).toContain('set "LABS_TOKEN="\r\n');
+    expect(paste).toContain('if not ""=="" if not defined LABS_MIN');
   });
 });

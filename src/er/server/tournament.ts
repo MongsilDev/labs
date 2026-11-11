@@ -628,6 +628,7 @@ function runOp(t: TRow, role: Role, user: Actor, op: Op, via = ""): OpResult {
       if (groups < t.group_count) {
         conn.prepare("DELETE FROM upload_keys WHERE tournament_id = ? AND group_idx >= ?").run(t.id, groups);
         conn.prepare("DELETE FROM discord_links WHERE tournament_id = ? AND group_idx >= ?").run(t.id, groups);
+        conn.prepare("DELETE FROM group_rosters WHERE tournament_id = ? AND group_idx >= ?").run(t.id, groups);
       }
       conn
         .prepare("UPDATE tournaments SET name = ?, mode = ?, rules = ?, planned_rounds = ?, group_count = ?, group_keys = ? WHERE id = ?")
@@ -1206,7 +1207,7 @@ export function setAutoUpload(code: string, user: User, on: boolean) {
   });
 }
 
-type Candidate = { t: TRow; g: number; role: "owner" | "operator"; names: Set<string> };
+type Candidate = { t: TRow; g: number; role: "owner" | "operator"; names: Set<string>; ended: boolean };
 
 // 토큰 주인이 지금 개최자나 운영자인, 보관 기간 안의 자동 업로드 대회의 조. 운영진에서 빠지면 바로 후보에서 빠짐
 function candidates(user: User): Candidate[] {
@@ -1216,13 +1217,14 @@ function candidates(user: User): Candidate[] {
     .all(user.id, now() - RETENTION_MS) as (TRow & { role: "owner" | "operator" })[];
   const out: Candidate[] = [];
   for (const { role, ...t } of rows) {
+    const view = loadView(t.code, null)!;
     const roster = db().prepare("SELECT group_idx, names FROM group_rosters WHERE tournament_id = ?").all(t.id) as { group_idx: number; names: string }[];
     const played = db().prepare("SELECT group_idx, players FROM rounds WHERE tournament_id = ? AND deleted_at IS NULL AND source = 'csv'").all(t.id) as { group_idx: number; players: string }[];
     for (let g = 0; g < t.group_count; g++) {
       const names = new Set<string>();
       for (const r of roster) if (r.group_idx === g) for (const n of JSON.parse(r.names) as string[]) names.add(nick(n));
       for (const r of played) if (r.group_idx === g) for (const p of JSON.parse(r.players) as Player[]) names.add(nick(p.nickname));
-      out.push({ t, g, role, names });
+      out.push({ t, g, role, names, ended: groupResult(view, g).ended });
     }
   }
   return out;
@@ -1248,8 +1250,14 @@ export function uploadWithToken(value: string, file: { name: string; text: strin
         return { status: "duplicate", message: `이미 ${prefix(t, dup.group_idx)}${dup.round_no}라운드에 올린 경기입니다.` };
       }
     }
-    const pick = pickGroup(cands, parsed.round.players.map((p) => p.nickname), autoConfig());
-    if (!pick.ok) return { status: "invalid", message: pick.message };
+    // 끝난 조는 명단이 남아 있어도 후보에서 빼야 같은 선수들의 다음 대회가 여러 조와 맞지 않음
+    const nicks = parsed.round.players.map((p) => p.nickname);
+    const pick = pickGroup(cands.filter((c) => !c.ended), nicks, autoConfig());
+    if (!pick.ok) {
+      const done = pickGroup(cands.filter((c) => c.ended && c.names.size > 0), nicks, { ...autoConfig(), many: "latest", first: "reject" });
+      if (done.ok) return { status: "ended", message: done.c.t.group_count > 1 ? `${groupLabel(done.c.g)}조 경기가 끝났습니다.` : "대회가 끝났습니다." };
+      return { status: "invalid", message: pick.message };
+    }
     const r = landCsv(pick.c.t, pick.c.g, pick.c.role, owner.user, file, " (자동 업로드)");
     return { status: r.status, message: r.message, round: r.round };
   });

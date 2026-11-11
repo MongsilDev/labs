@@ -3,8 +3,8 @@ import "server-only";
 // 운영자 PC에서 도는 감시 창. Windows 기본 명령(curl.exe, fc, ping)만 씀. cmd는 LF만 있으면 goto 라벨을 놓칠 수 있어 CRLF로 내보냄
 const TEMPLATE = String.raw`@echo off
 setlocal EnableExtensions EnableDelayedExpansion
-rem 시작 프로그램 폴더에서 뜨면 작업 표시줄에 최소화해 다시 띄움
-if /i "%~dp0"=="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\" if not defined LABS_MIN (set "LABS_MIN=1" & start "Labs" /min "%~f0" & exit /b)
+rem 시작 프로그램 폴더에서 뜨면 작업 표시줄에 최소화해 다시 띄움. 토큰을 붙여 넣어야 하면 입력 창이 숨지 않게 그대로 둠
+if /i "%~dp0"=="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\" if not "{{TOKEN}}"=="" if not defined LABS_MIN (set "LABS_MIN=1" & start "Labs" /min "%~f0" & exit /b)
 chcp 65001 >nul
 title Labs 결과 자동 업로드
 rem 토큰은 Labs 내 정보에서 폐기할 수 있음
@@ -53,5 +53,5 @@ goto loop
 
 // token이 빈 문자열이면 창을 열 때 붙여 넣게 함
 export function watchScript(opts: { token: string; url: string }): string {
-  return TEMPLATE.replace("{{TOKEN}}", opts.token).replace("{{URL}}", opts.url).replace(/\r?\n/g, "\r\n");
+  return TEMPLATE.replaceAll("{{TOKEN}}", opts.token).replace("{{URL}}", opts.url).replace(/\r?\n/g, "\r\n");
 }
