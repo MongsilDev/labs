@@ -82,6 +82,8 @@ export function derive(games, tier) {
     const early = e.early / e.n, fin = e.win / e.top3;
     late.push({ ...meta, n: e.n, top3: e.top3, early: pct(early), earlyCi: pctCi(early, e.n), fin: pct(fin), finCi: pctCi(fin, e.top3) });
   }
+  // 새 시즌 초처럼 표본이 모자란 동안에는 앞선 집계를 남김
+  if (!late.length) return null;
   return {
     rp: {
       from,

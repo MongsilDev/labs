@@ -21,10 +21,11 @@ const full = (t: number, over: P = {}) => game(t, Array.from({ length: 24 }, (_,
 
 describe("RP 손익, 초반과 막판 집계", () => {
   it("지금 패치의 아시아 랭크 경기만 센다", () => {
-    const out = derive([full(1000), full(2000, { versionMajor: 6 }), full(3000, { serverName: "NorthAmerica" }), full(4000, { matchingMode: 2 }), full(5000, { matchSize: 12 })], tier);
-    expect(out?.rp.games).toBe(1);
-    expect(out?.rp.rows).toBe(24);
-    expect([out?.rp.from, out?.rp.to]).toEqual([1000, 1000]);
+    const mine = Array.from({ length: 20 }, (_, i) => full(1000 + i));
+    const out = derive([...mine, full(2000, { versionMajor: 6 }), full(3000, { serverName: "NorthAmerica" }), full(4000, { matchingMode: 2 }), full(5000, { matchSize: 12 })], tier);
+    expect(out?.rp.games).toBe(20);
+    expect(out?.rp.rows).toBe(480);
+    expect([out?.rp.from, out?.rp.to]).toEqual([1000, 1019]);
   });
 
   it("RP 구간, 순위, 팀 처치 구간별로 평균을 낸다", () => {
@@ -54,6 +55,8 @@ describe("RP 손익, 초반과 막판 집계", () => {
     const dir = mkdtempSync(join(tmpdir(), "derive-"));
     expect(writeDerived(dir, derive([full(1000, { versionMajor: 6 })], tier))).toBe(false);
     expect(writeDerived(dir, derive([full(1000)], { ...tier, patch: null }))).toBe(false);
+    // 조합마다 300판이 안 되는 동안에는 앞선 파일을 그대로 둠
+    expect(writeDerived(dir, derive([full(1000)], tier))).toBe(false);
     expect(writeDerived(dir, derive(Array.from({ length: 20 }, (_, i) => full(1000 + i)), tier))).toBe(true);
     expect(JSON.parse(readFileSync(join(dir, "er-rp/rp.json"), "utf8")).games).toBe(20);
     expect(JSON.parse(readFileSync(join(dir, "er-late/late.json"), "utf8")).games).toBe(20);
