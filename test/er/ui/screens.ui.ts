@@ -151,7 +151,7 @@ const SCREENS: Screen[] = [
   { name: "Labs", path: () => "/" },
   { name: "Labs 로그인", path: () => "/", login: true },
   { name: "오버레이", path: () => "/er/overlay" },
-  { name: "오버레이 주소", path: () => "/er/overlay?n=%EB%AA%BD%EC%8B%A4" },
+  { name: "오버레이 주소", path: () => `/er/overlay?n=${encodeURIComponent("시험선수")}` },
   { name: "대회 점수", path: () => "/er/score" },
   { name: "이터컷 예측", path: () => "/er/cut" },
   { name: "이터컷 예측 RP 주소", path: () => "/er/cut?rp=9050" },
@@ -475,6 +475,42 @@ describe("화면 점검", () => {
     expect(old && [old.x, old.y, old.width, old.height].map(Math.round)).toEqual([12, 12, 432, 200]);
     expect(big && [big.x, big.y, big.width, big.height].map((v) => Math.round((v * 3) / 4))).toEqual([4, 920, 288, 133]);
     for (const p of problems) expect(p).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
+  });
+
+  it("오버레이 주소 화면의 미리보기는 위치와 이동 값을 따라가고, 닉네임을 넣으면 그 선수의 값을 그린다", async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
+    // 화면 틀 안 패널의 왼쪽 위 자리와 크기를 1920 기준으로 환산
+    const box = () =>
+      page.evaluate(() => {
+        const s = document.querySelector(".ovp-screen")!.getBoundingClientRect();
+        const q = document.querySelector(".ovp-screen .tov-p")!.getBoundingClientRect();
+        const k = 1920 / s.width;
+        return [(q.left - s.left) * k, (q.top - s.top) * k, q.width * k, q.height * k].map(Math.round);
+      });
+    await page.goto(`${base}/er/overlay`, { waitUntil: "networkidle" });
+    await expect(page.locator(".ovp-one .tov-n").textContent()).resolves.toBe("닉네임");
+    expect(await box()).toEqual([4, 920, 288, 133]);
+    await page.locator("input[name=p][value=t3]").check({ force: true });
+    expect(await box()).toEqual([1280, 13, 269, 89]);
+    await page.fill("#x", "-10");
+    await page.fill("#y", "5");
+    expect(await box()).toEqual([1270, 18, 269, 89]);
+    await page.fill("#x", "99999");
+    expect(await box()).toEqual([1651, 18, 269, 89]);
+    const one = await page.locator(".ovp-one .tov-p").boundingBox();
+    expect(one && [one.width, one.height].map(Math.round)).toEqual([269, 89]);
+    expect(await page.evaluate(inspect)).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
+    await page.goto(`${base}/er/overlay?n=${encodeURIComponent("시험선수")}&p=t3&x=-10&y=5`, { waitUntil: "networkidle" });
+    await expect(page.locator(".ovp-one .tov-m span").textContent()).resolves.toBe("6,842 RP");
+    await expect(page.locator(".ovp-one .tov-d b").textContent()).resolves.toBe("0");
+    expect(await box()).toEqual([1270, 18, 269, 89]);
+    // 메뉴 링크는 화면을 새로 받지 않아서, 닉네임이 빠지면 앞 선수의 값 대신 예시로 돌아가야 함
+    await page.getByRole("link", { name: "오버레이", exact: true }).first().click();
+    await page.waitForFunction(() => !location.search && document.querySelector(".ovp-one .tov-d b")?.textContent === "+38");
+    await page.goto(`${base}/er/overlay?n=${encodeURIComponent("없는선수")}`, { waitUntil: "networkidle" });
+    await expect(page.locator(".ovp-one .tov-msg").textContent()).resolves.toBe("닉네임을 찾지 못했습니다.");
+    await ctx.close();
   });
 
   it("키보드로 옮긴 초점이 화면에 표시된다", async () => {

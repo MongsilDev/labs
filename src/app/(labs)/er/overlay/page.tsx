@@ -1,5 +1,6 @@
 import Live from "@/next/Live";
 import CopyField from "@/next/CopyField";
+import RankPreview from "@/next/RankPreview";
 import { overlayPlace, PRESETS, type PresetKey } from "@/er/lib/rank";
 
 export const metadata = { title: "오버레이" };
@@ -25,7 +26,7 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="sec" aria-labelledby="rank-h">
           <h2 id="rank-h" className="sec-h">랭크 오버레이</h2>
-          <form className="mt-4 grid max-w-[560px] gap-6" noValidate>
+          <form id="rank-form" className="mt-4 grid max-w-[560px] gap-6" noValidate>
             <div className="relative">
               <label className="lbl" htmlFor="n">닉네임</label>
               <input id="n" name="n" className="field" defaultValue={nick} autoComplete="off" spellCheck={false} maxLength={32} aria-describedby="n-msg" />
@@ -73,6 +74,7 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
             </div>
           )}
         </section>
+        <RankPreview key={nick} form="rank-form" nick={nick} init={`${preset}|${x}|${y}`} />
       </div>
     </Live>
   );

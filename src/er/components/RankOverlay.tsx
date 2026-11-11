@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { isRanked, rankEmblem, type Place, type RankView } from "@/er/lib/rank";
+import "./rank-overlay.css";
 
 const EVERY = 60_000;
 const GAIN_FOR = 12 * 3_600_000;
@@ -142,6 +143,18 @@ function T3({ data, style, today: value }: ViewProps) {
 
 const VIEWS = { t1: T1, t2: T2, t3: T3 };
 
+/** 프리셋 자리의 패널. 방송 화면과 주소 화면의 미리보기가 함께 쓰고 .tov 안에 그림 */
+export function RankPanel({ data, error, today, place }: State & { place: Place }) {
+  const style: CSSProperties = { left: u(place.left), right: u(place.right), top: u(place.top), bottom: u(place.bottom) };
+  const View = VIEWS[place.preset];
+  if (data) return <View data={data} style={style} today={today} />;
+  return error ? (
+    <div className="tov-p tov-msg" style={style}>
+      {error}
+    </div>
+  ) : null;
+}
+
 export default function RankOverlay({ nickname, place }: { nickname: string; place: Place }) {
   const [state, setState] = useState<State>({ data: null, error: null, today: 0 });
   useEffect(() => {
@@ -169,20 +182,9 @@ export default function RankOverlay({ nickname, place }: { nickname: string; pla
     };
   }, [nickname]);
 
-  const style: CSSProperties = { left: u(place.left), right: u(place.right), top: u(place.top), bottom: u(place.bottom) };
-  const { data, error, today } = state;
-  const View = VIEWS[place.preset];
   return (
     <div className="tov" style={place.scale ? ({ "--u": `${place.scale}px` } as CSSProperties) : undefined}>
-      {data ? (
-        <View data={data} style={style} today={today} />
-      ) : (
-        error && (
-          <div className="tov-p tov-msg" style={style}>
-            {error}
-          </div>
-        )
-      )}
+      <RankPanel {...state} place={place} />
     </div>
   );
 }

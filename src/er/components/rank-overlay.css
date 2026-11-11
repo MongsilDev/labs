@@ -1,0 +1,254 @@
+/* 랭크 방송 화면. 브라우저 소스는 방송 화면 전체 크기이고 자리와 크기는 1920 기준 프리셋 */
+.tov {
+  --u: calc(100vw / 1920);
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: #fff;
+  line-height: 1.5;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+.tov-p {
+  position: absolute;
+  background: #090c11;
+  border-radius: calc(3 * var(--u));
+}
+.tov-em {
+  display: block;
+  flex: none;
+  width: auto;
+}
+.tov-up {
+  height: calc(16 * var(--u));
+  padding: 0 calc(4 * var(--u));
+  border-radius: calc(3 * var(--u));
+  background: rgb(126 226 168 / 0.14);
+  color: #7ee2a8;
+  font-size: calc(13 * var(--u));
+  font-weight: 800;
+  line-height: calc(16 * var(--u));
+  animation: tov-in 0.6s ease-out;
+}
+.tov-up.dn {
+  background: rgb(255 138 138 / 0.14);
+  color: #ff8a8a;
+}
+.tov-f {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: calc(10 * var(--u));
+}
+.tov-l {
+  font-size: calc(13 * var(--u));
+  font-weight: 600;
+  line-height: calc(16 * var(--u));
+  color: rgb(255 255 255 / 0.55);
+}
+/* 칩이 10개보다 적어도 칸 자리는 그대로라서 첫 칩이 라벨 옆에 옴 */
+.tov-chips {
+  display: grid;
+  gap: calc(4 * var(--u));
+}
+.tov-c {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(3 * var(--u));
+  background: rgb(255 255 255 / 0.12);
+  color: rgb(255 255 255 / 0.75);
+  font-size: calc(13 * var(--u));
+  font-weight: 800;
+}
+.tov-c.win {
+  background: #14b37d;
+  color: #fff;
+}
+.tov-c.top3 {
+  background: #2a6fd6;
+  color: #fff;
+}
+.tov-msg {
+  padding: calc(10 * var(--u)) calc(14 * var(--u));
+  font-size: calc(16 * var(--u));
+  color: rgb(255 255 255 / 0.8);
+}
+/* T1: 엠블럼 높이 83은 오른쪽 네 줄 16, 29, 22, 16의 합 */
+.tov-t1 {
+  width: calc(288 * var(--u));
+  padding: calc(10 * var(--u));
+}
+.tov-t1 .tov-hd {
+  display: flex;
+  gap: calc(10 * var(--u));
+}
+.tov-t1 .tov-em {
+  height: calc(83 * var(--u));
+}
+.tov-t1 .tov-m {
+  min-width: 0;
+}
+.tov-n {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: calc(13 * var(--u));
+  font-weight: 600;
+  line-height: calc(16 * var(--u));
+  color: rgb(255 255 255 / 0.6);
+}
+.tov-tn {
+  font-size: calc(24 * var(--u));
+  font-weight: 800;
+  line-height: calc(29 * var(--u));
+}
+.tov-t1 .tov-rp {
+  display: flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  height: calc(22 * var(--u));
+  font-size: calc(18 * var(--u));
+  font-weight: 700;
+}
+.tov-sv {
+  font-size: calc(13 * var(--u));
+  font-weight: 650;
+  line-height: calc(16 * var(--u));
+  color: rgb(255 255 255 / 0.7);
+}
+.tov-t1 .tov-chips {
+  grid-template-columns: repeat(10, calc(20 * var(--u)));
+}
+.tov-t1 .tov-c {
+  height: calc(20 * var(--u));
+}
+/* T2: 높이는 팀 수 표시와 같은 32 */
+.tov-t2 {
+  display: flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  height: calc(32 * var(--u));
+  padding-right: calc(10 * var(--u));
+}
+.tov-t2 .tov-em {
+  height: calc(32 * var(--u));
+}
+.tov-t2 b {
+  font-size: calc(18 * var(--u));
+  font-weight: 800;
+  line-height: calc(22 * var(--u));
+}
+.tov-t2 .tov-rp {
+  font-size: calc(18 * var(--u));
+  font-weight: 600;
+  line-height: calc(22 * var(--u));
+  color: rgb(255 255 255 / 0.85);
+}
+/* T3: 높이 89에서 엠블럼 38과 칩 18을 빼고 셋으로 나눈 여백 11 */
+.tov-t3 {
+  width: calc(269 * var(--u));
+  padding: calc(11 * var(--u));
+}
+.tov-t3 .tov-hd {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: calc(11 * var(--u));
+  height: calc(38 * var(--u));
+}
+.tov-t3 .tov-em {
+  height: calc(38 * var(--u));
+}
+/* 언랭크는 RP 줄이 없어 티어 이름만 칸 가운데에 두고 t1, t2처럼 굵게 씀 */
+.tov-t3 .tov-m {
+  align-self: center;
+}
+.tov-t3 .tov-m b:only-child {
+  font-size: calc(18 * var(--u));
+  font-weight: 800;
+  line-height: calc(22 * var(--u));
+  color: #fff;
+}
+.tov-t3 .tov-m b,
+.tov-d span {
+  display: block;
+  font-size: calc(13 * var(--u));
+  line-height: calc(16 * var(--u));
+}
+.tov-t3 .tov-m b {
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.75);
+}
+.tov-t3 .tov-m span,
+.tov-d b {
+  display: block;
+  font-size: calc(18 * var(--u));
+  font-weight: 800;
+  line-height: calc(22 * var(--u));
+}
+.tov-d {
+  text-align: right;
+}
+.tov-d span {
+  font-weight: 600;
+  color: rgb(255 255 255 / 0.55);
+}
+.tov-d b {
+  color: #7ee2a8;
+}
+.tov-d b.dn {
+  color: #ff8a8a;
+}
+.tov-t3 .tov-f {
+  margin-top: calc(11 * var(--u));
+}
+.tov-t3 .tov-chips {
+  grid-template-columns: repeat(10, calc(18 * var(--u)));
+}
+.tov-t3 .tov-c {
+  height: calc(18 * var(--u));
+}
+@keyframes tov-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tov-up {
+    animation: none;
+  }
+}
+
+/* 주소 화면의 미리보기. 틀 너비를 1920으로 보고 방송 화면과 같은 규칙으로 그림 */
+.ovp-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  container-type: inline-size;
+  background: var(--rule-2);
+}
+.ovp-screen .tov {
+  --u: calc(100cqw / 1920);
+  position: absolute;
+}
+.ovp-one {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--rule-2);
+}
+.ovp-one .tov {
+  --u: 1px;
+  position: static;
+}
+.ovp-one .tov-p {
+  position: static;
+}
+.ovp-one .tov-t2,
+.ovp-one .tov-msg {
+  width: fit-content;
+}
+/* 위치를 바꿀 때마다 증감 칩이 다시 나타나지 않게 함 */
+.ovp-screen .tov-up,
+.ovp-one .tov-up {
+  animation: none;
+}
