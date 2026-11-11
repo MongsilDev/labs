@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/er/components/kel/Team";
 import { int as rp, TIERS, tens } from "@/er/lib/cut";
-import { fmt, fmt1 } from "@/er/lib/format";
-import { EVENT_NAME, TEAM } from "@/er/lib/kel";
+import { fmt1 } from "@/er/lib/format";
+import { TEAM } from "@/er/lib/kel";
 import { comboPath, signed, type TierCombo } from "@/er/lib/tier";
 import HubSearch from "@/tarkov/components/players/HubSearch";
 import { face, n } from "./HubParts";
@@ -42,22 +42,15 @@ export function CutNums({ cut, forecast = true }: { cut: NonNullable<Hub["cut"]>
   );
 }
 
-/** 얼굴과 이름을 키운 상위 표. stats를 끄면 점수 열만 남김 */
-export function TierBig({ list, stats = false }: { list: TierCombo[]; stats?: boolean }) {
+/** 얼굴과 이름을 키운 상위 표 */
+export function TierBig({ list }: { list: TierCombo[] }) {
   return (
     <table className="tbl tierbig">
       {/* 점수 열만 있으면 구역 제목으로 충분해 머리글은 읽어 주는 용도로만 둠 */}
-      <thead className={stats ? undefined : "sr-only"}>
+      <thead className="sr-only">
         <tr>
           <th className="l w-8">#</th>
           <th className="l">실험체</th>
-          {stats && (
-            <>
-              <th className="max-sm:hidden">픽률</th>
-              <th className="max-sm:hidden">승률</th>
-              <th className="max-sm:hidden">TOP 3</th>
-            </>
-          )}
           <th>점수</th>
         </tr>
       </thead>
@@ -75,25 +68,12 @@ export function TierBig({ list, stats = false }: { list: TierCombo[]; stats?: bo
                 </span>
               </Link>
             </td>
-            {stats && (
-              <>
-                <td className="tb-stat max-sm:hidden">{c.pick.toFixed(2)}%</td>
-                <td className="tb-stat max-sm:hidden">{c.win.toFixed(1)}%</td>
-                <td className="tb-stat max-sm:hidden">{c.top3.toFixed(1)}%</td>
-              </>
-            )}
             <td className="tb-score">{signed(c.score)}</td>
           </tr>
         ))}
       </tbody>
     </table>
   );
-}
-
-export function kelLead(h: Hub, fixed = false) {
-  const row = h.final?.state.rows[0];
-  const team = row ? TEAM.get(row.key) : undefined;
-  return h.final && row && team ? { team, total: (fixed ? fmt1 : fmt)(row.total), stage: `${EVENT_NAME[h.final.event]} ${h.final.stage}` } : null;
 }
 
 /** 실험체 표와 같은 줄 높이와 글자 크기로 그린 KEL 마지막 단계 순위 */
@@ -158,33 +138,5 @@ export function TarkovGroup({ className = "" }: { className?: string }) {
         <Chev />
       </Link>
     </section>
-  );
-}
-
-/** 1위 실험체 한 줄: 얼굴, 무기와 이름, 점수 */
-export function TopFig({ c }: { c: TierCombo }) {
-  return (
-    <p className="fig">
-      <Image src={face(c)} alt="" width={48} height={48} unoptimized />
-      <span className="fig-t">
-        <span>
-          <span className="font-normal text-ink-2">{c.weaponName}</span> {c.name}
-        </span>
-        <b className="num">{signed(c.score)}</b>
-      </span>
-    </p>
-  );
-}
-
-/** KEL 마지막 단계 1위 한 줄: 로고, 팀 이름, 점수 */
-export function KelFig({ lead }: { lead: NonNullable<ReturnType<typeof kelLead>> }) {
-  return (
-    <p className="fig">
-      <Logo team={lead.team} size={32} className="ring-1 ring-rule-2" />
-      <span className="fig-t">
-        <span>{lead.team.name}</span>
-        <b className="num">{lead.total}</b>
-      </span>
-    </p>
   );
 }

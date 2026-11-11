@@ -1,47 +1,81 @@
-/* 첫 화면 시안. 첫 진입 때 한 번만 짧게 올라오고, 동작 줄이기 설정이면 움직이지 않음 */
+/* 첫 화면. 첫 진입 때 한 번만 짧게 올라오고, 동작 줄이기 설정이면 움직이지 않음 */
 @keyframes hub-in { from { opacity: 0; transform: translateY(10px); } }
 .hub-in { animation: hub-in .4s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--d, 0) * 60ms); }
 @media (prefers-reduced-motion: reduce) { .hub-in { animation: none; } }
 
-/* 시안 A: 1위 실험체 무대. 그림은 상세 화면처럼 줄이기만 하고 네 변을 흐리게 지움 */
-.hub-stage { position: relative; display: grid; align-content: end; gap: 28px; min-height: 500px; margin-top: 8px; isolation: isolate; }
-.hub-stage-art { position: absolute; z-index: -1; right: 4%; bottom: 0; width: auto; height: 500px; pointer-events: none; user-select: none; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 70%, transparent 98%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 70%, transparent 98%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); -webkit-mask-composite: source-in; mask-composite: intersect; }
-.hub-stage-face { position: absolute; z-index: -1; right: 12%; bottom: 120px; width: 122px; height: 122px; border-radius: 2px; }
-.hub-stage-art[hidden], .hub-stage-face[hidden] { display: none; }
-.hub-stage-id { display: grid; justify-items: start; max-width: 60%; }
-.hub-stage-wn { font-size: 18px; font-weight: 600; color: var(--ink-2); }
-.hub-stage-name { margin-top: 6px; font-size: 136px; line-height: .92; font-weight: 800; letter-spacing: -0.04em; color: var(--ink); }
-.hub-stage-name[data-long] { font-size: 96px; }
-.hub-stage-name:hover { text-decoration: none; }
-.hub-stage-stats { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 32px; margin-top: 24px; }
-.hub-stage-stats dt { font-size: 12px; font-weight: 600; color: var(--ink-3); }
-.hub-stage-stats dd { margin: 4px 0 0; font-size: 22px; font-weight: 700; line-height: 1; }
-.hub-stage-score dd { font-size: 44px; font-weight: 800; letter-spacing: -1px; }
-.hub-stage-pick { display: flex; gap: 12px; }
-.hub-stage-pick button { display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--ink-3); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.hub-stage-pick img { width: 56px; height: 56px; border-radius: 2px; background: var(--row); opacity: .55; outline: 1px solid var(--rule-2); outline-offset: 2px; }
-.hub-stage-pick button:hover img { opacity: 1; }
-.hub-stage-pick button[aria-pressed="true"] { color: var(--ink); }
-.hub-stage-pick button[aria-pressed="true"] img { opacity: 1; outline: 2px solid var(--hot); }
-@media (max-width: 767px) {
-  .hub-stage { min-height: 0; padding-top: 150px; gap: 20px; }
-  .hub-stage-art { right: -16px; top: 0; bottom: auto; height: 300px; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 45%, transparent 80%), linear-gradient(to right, transparent, #000 40%); mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 45%, transparent 80%), linear-gradient(to right, transparent, #000 40%); }
-  .hub-stage-face { top: 16px; right: 0; bottom: auto; width: 96px; height: 96px; }
-  .hub-stage-id { max-width: none; }
-  .hub-stage-wn { font-size: 15px; }
-  .hub-stage-name, .hub-stage-name[data-long] { font-size: 56px; }
-  .hub-stage-stats { gap: 8px 20px; margin-top: 16px; }
-  .hub-stage-stats dd { font-size: 17px; }
-  .hub-stage-score dd { font-size: 32px; }
-  .hub-stage-pick { justify-content: space-between; }
+.hub-lg .sec-h { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+.hub-lg .sec-h small, .hub-lg .sec-h a.more { font-size: 13px; letter-spacing: 0; }
+@media (min-width: 640px) { .hub-lg .sec-h { font-size: 26px; } }
+
+.cutnums { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; gap: 0 var(--cut-gap, 40px); margin: 0; }
+.cutnums dt { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.cutnums dt span { width: 4px; height: 12px; }
+.cutnums dd { margin: 6px 0 0; font-size: var(--cut-size, 44px); line-height: 1; font-weight: 700; letter-spacing: -0.03em; }
+.cutnums dd small { margin-right: 4px; font-size: .38em; font-weight: 700; letter-spacing: 0; color: var(--ink-3); }
+.cutnums p { margin-top: 8px; font-size: 13px; color: var(--ink-2); }
+
+.tierbig { margin-top: 12px; }
+.tierbig td { height: var(--tb-h, 84px); }
+.tierbig td:first-child { width: 32px; }
+.tb-who { display: flex; align-items: center; gap: 16px; }
+.tb-who:hover { text-decoration: none; }
+.tb-who:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.tb-face { flex: none; width: var(--tb-face, 56px); height: var(--tb-face, 56px); border-radius: 2px; background: var(--row); object-fit: cover; }
+.tb-name { display: grid; gap: 5px; min-width: 0; }
+.tb-name span { font-size: 13px; font-weight: 600; line-height: 1; color: var(--ink-2); }
+.tb-name b { font-size: var(--tb-name, 22px); font-weight: 700; line-height: 1; }
+.tbl td.tb-score { font-size: var(--tb-score, 32px); font-weight: 800; letter-spacing: -0.02em; }
+@media (max-width: 639px) {
+  .tierbig { --tb-h: 64px; --tb-face: 40px; --tb-name: 17px; --tb-score: 22px; }
+  .tb-who { gap: 12px; }
 }
 
-/* 시안 C: 구역 제목과 숫자를 키운 브랜드형 */
-.hub-c .sec-h { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
-.hub-c .sec-h small { font-size: 13px; letter-spacing: 0; }
-.hub-c .sec-h a.more { font-size: 13px; letter-spacing: 0; }
-@media (min-width: 640px) { .hub-c .sec-h { font-size: 26px; } }
+/* 메뉴 묶음대로 세 기둥. 둘째 줄 구역의 머리 높이를 맞추려고 기둥이 줄 두 개를 나눠 씀 */
+.hub5 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto; --tb-h: 56px; --tb-face: 40px; --tb-name: 17px; --tb-score: 22px; }
+.hub5-col { grid-row: span 2; display: grid; grid-template-rows: subgrid; padding: 0 36px 28px; }
+.hub5-col:first-child { padding-left: 0; }
+.hub5-col:last-child { padding-right: 0; }
+.hub5-col + .hub5-col { border-left: 1px solid var(--rule-2); }
+.hub5-col > section { min-width: 0; padding-top: 0; border-top: 0; }
+.hub5-col > section:only-child { grid-row: span 2; }
+.hub5-col > section + section { padding-top: 40px; }
+.hub5-cut .cutnums { margin-top: 16px; }
+.hub5-cut figure { margin-top: 20px; }
+/* 차트 아래 끝을 옆 기둥 KEL 표의 끝에 맞춤. CutMini가 h-16으로 고정한 값을 덮어씀 */
+.hub5-cut figure .h-16 { height: 100px; }
+.tb-team { font-size: var(--tb-name, 22px); font-weight: 700; line-height: 1; }
+.tb-logo { width: var(--tb-face, 56px) !important; height: var(--tb-face, 56px) !important; }
 
-/* 시안 C 아래쪽은 가는 테두리 카드를 크기 다르게 붙인 벤토 그리드 */
-.hub-bento > .sec { border: 1px solid var(--rule-2); border-radius: 2px; padding: 20px; }
-@media (max-width: 767px) { .hub-bento > .sec { padding: 16px; } }
+/* 타르코프 묶음: 이름, 계정 조회, KORD BREACH가 한 줄 */
+.hub-tk { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; border-top: 1px solid var(--rule-2); }
+.hub-tk > * { display: flex; align-items: center; gap: 12px; min-height: 72px; margin: 0; padding: 0 28px; font-weight: 600; }
+.hub-tk > :first-child { padding-left: 0; }
+.hub-tk > :last-child { padding-right: 0; }
+.hub-tk > * + * { border-left: 1px solid var(--rule-2); }
+.hub-tk > a:hover { background: var(--row); text-decoration: none; }
+.hub-tk > a b, .hub-tk h3 { flex: none; margin: 0; font-size: 15px; font-weight: 700; white-space: nowrap; }
+.hub-tk > a svg { margin-left: auto; color: var(--ink-3); }
+.hub-tk > a:hover svg { color: var(--ink); }
+.hub-tk form { flex: 1; }
+/* 1024~1279 폭은 기둥이 300px 안팎이라 제목과 컷 숫자를 한 줄에 두려고 줄임 */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .hub5 { --cut-size: 36px; --cut-gap: 24px; }
+  .hub5-col { padding: 0 24px 28px; }
+  .hub5 .sec-h { gap: 8px; font-size: 22px; }
+  .hub5 .sec-h > * { white-space: nowrap; }
+}
+@media (max-width: 1023px) {
+  .hub5 { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .hub5-col { grid-row: auto; display: block; padding: 0 0 32px; }
+  .hub5-col + .hub5-col { border-left: 0; border-top: 1px solid var(--rule-2); padding-top: 20px; }
+  .hub5-col > section + section { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--rule-2); }
+  .hub5-cut figure .h-16 { height: 64px; }
+  /* 좁은 폭은 높이를 맞출 옆 기둥이 없어 위에서 다섯 실험체와 세 팀만 보임 */
+  .hub5 .hub5-col:first-child tbody tr:nth-child(n+6), .hub5 .hub5-col:last-child tbody tr:nth-child(n+4) { display: none; }
+  .hub-tk { grid-template-columns: minmax(0, 1fr); }
+  .hub-tk > * { padding: 0; min-height: 56px; }
+  .hub-tk > h2 { min-height: 0; padding-top: 20px; }
+  .hub-tk > * + * { border-left: 0; }
+  .hub-tk > div { flex-wrap: wrap; gap: 8px 12px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+  .hub-tk form { flex-basis: 100%; }
+}
