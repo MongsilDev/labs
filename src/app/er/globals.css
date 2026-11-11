@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 @theme inline {
+  --radius-md: 2px;
+  --radius-lg: 2px;
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-field: var(--field);
@@ -28,27 +30,27 @@
     --surface: #1a1a1a;
     --field: #202020;
     --hover: #272727;
-    --line: #343434;
-    --line-strong: #494949;
-    --line-soft: #272727;
-    --text: #f1f1f1;
-    --text-2: #afafaf;
-    --text-3: #8c8c8c;
-    --accent: #26f1f6;
-    --accent-text: #26f1f6;
+    --line: #262626;
+    --line-strong: #383838;
+    --line-soft: #262626;
+    --text: #ededed;
+    --text-2: #a6a6a6;
+    --text-3: #8a8a8a;
+    --accent: #2997ff;
+    --accent-text: #2997ff;
     --gold: #ffd621;
     --gold-text: #ffd621;
     --minus: #ff6b6b;
-    --up: #4ade80;
-    --eternity: #f472b6;
-    --demigod: #e2b979;
+    --up: #5fd38d;
+    --eternity: #e84c7d;
+    --demigod: #be8a35;
     --on-status: #111;
-    --ramp-a: #0f5c66;
-    --ramp-b: #26f1f6;
-    --adv-bg: #26f1f6;
+    --ramp-a: #123a63;
+    --ramp-b: #2997ff;
+    --adv-bg: #2997ff;
     --dim: rgba(6, 6, 6, 0.72);
     --kel-0: #3f3f3f;
-    --kel-1: #17a2ab;
+    --kel-1: #2997ff;
     --kel-2: #d95926;
     --kel-3: #9085e9;
   }
@@ -59,27 +61,27 @@
     --surface: #ffffff;
     --field: #f3f3f1;
     --hover: #f1f1ef;
-    --line: #cfcfcb;
-    --line-strong: #989898;
+    --line: #e4e4e1;
+    --line-strong: #cfcfcb;
     --line-soft: #e4e4e1;
-    --text: #0d0d0d;
-    --text-2: #424242;
-    --text-3: #676767;
-    --accent: #0b9aa3;
-    --accent-text: #077880;
+    --text: #141414;
+    --text-2: #4d4d4d;
+    --text-3: #6b6b6b;
+    --accent: #0066cc;
+    --accent-text: #0066cc;
     --gold: #ffd621;
     --gold-text: #8a6d00;
-    --minus: #d93a3a;
+    --minus: #b91c1c;
     --up: #15803d;
-    --eternity: #be185d;
-    --demigod: #92400e;
+    --eternity: #c42f63;
+    --demigod: #8a6100;
     --on-status: #fff;
-    --ramp-a: #6fd6dd;
-    --ramp-b: #0a5f66;
-    --adv-bg: #26f1f6;
+    --ramp-a: #9cc8f5;
+    --ramp-b: #004a94;
+    --adv-bg: #2997ff;
     --dim: rgba(13, 13, 13, 0.45);
     --kel-0: #d2d2d2;
-    --kel-1: #0b9aa3;
+    --kel-1: #0066cc;
     --kel-2: #d4552a;
     --kel-3: #6250d6;
   }
@@ -171,11 +173,11 @@
   /* 이터컷 예측. 몽실봇 카드와 같은 티어 색 */
   .cut {
     --et: #e84c7d;
-    --dg: #d9a24a;
+    --dg: #be8a35;
   }
   :root[data-theme="light"] .cut {
     --et: #c42f63;
-    --dg: #9c6a12;
+    --dg: #8a6100;
   }
   /* 헤더(.site-top-in)와 같은 1320px 폭이라 본문 왼쪽 끝이 로고와 맞음 */
   .wrap {
@@ -190,7 +192,7 @@
   .panel {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 2px;
   }
   .link {
     background: none;
@@ -218,7 +220,7 @@
     height: 36px;
     padding: 0 14px;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 2px;
     background: var(--surface);
     font-size: 14px;
     font-weight: 600;
@@ -273,7 +275,7 @@
     display: inline-grid;
     place-items: center;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 2px;
     background: var(--surface);
     cursor: pointer;
     color: var(--text-2);
@@ -291,7 +293,7 @@
     height: 40px;
     padding: 0 12px;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 2px;
     background: var(--field);
     color: var(--text);
     font-size: 15px;
@@ -326,7 +328,7 @@
     align-items: center;
     height: 24px;
     padding: 0 8px;
-    border-radius: 4px;
+    border-radius: 2px;
     font-size: 12px;
     font-weight: 600;
     background: var(--field);
@@ -348,7 +350,7 @@
     align-items: center;
     height: 20px;
     padding: 0 6px;
-    border-radius: 4px;
+    border-radius: 2px;
     font-size: 11px;
     font-weight: 700;
     border: 1px solid var(--gold);
@@ -362,7 +364,7 @@
     place-items: center;
     width: 30px;
     height: 30px;
-    border-radius: 5px;
+    border-radius: 2px;
     font-weight: 800;
     font-size: 15px;
     background: var(--field);
@@ -448,7 +450,7 @@
   .tabs a {
     height: 32px;
     padding: 0 12px;
-    border-radius: 6px;
+    border-radius: 2px;
     border: 1px solid var(--line);
     background: transparent;
     font-size: 13px;
@@ -502,7 +504,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
-    border-radius: 8px;
+    border-radius: 2px;
     background: var(--text);
     color: var(--bg);
     font-size: 14px;
@@ -562,7 +564,7 @@
   }
   .drop-overlay div {
     border: 2px dashed var(--accent);
-    border-radius: 12px;
+    border-radius: 2px;
     padding: 40px 56px;
     font-size: 20px;
     font-weight: 700;
@@ -589,7 +591,7 @@
     width: 100%;
     text-align: left;
     padding: 9px 10px;
-    border-radius: 5px;
+    border-radius: 2px;
     font-size: 14px;
     text-decoration: none;
     background: none;
@@ -617,7 +619,7 @@
   .doc-table {
     overflow-x: auto;
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 2px;
     margin: 10px 0;
   }
   .doc-table th,
@@ -672,7 +674,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 2px;
     overflow: hidden;
   }
   .seg label {
@@ -749,7 +751,7 @@
   .subw button {
     height: 28px;
     padding: 0 9px;
-    border-radius: 4px;
+    border-radius: 2px;
     border: 1px solid var(--line);
     background: var(--field);
     font-size: 12px;
@@ -1191,7 +1193,7 @@
     min-width: 150px;
     padding: 8px 10px;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 2px;
     background: var(--surface);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
     font-size: 12px;
@@ -1205,7 +1207,7 @@
     overflow: hidden;
     width: 500px;
     background: rgba(10, 13, 20, 0.86);
-    border-radius: 8px;
+    border-radius: 2px;
     color: #fff;
     padding: 16px 20px 6px;
     --surface: #0a0d14;
@@ -1238,7 +1240,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
   .ov-row.cut {
-    border-bottom: 2px solid #26f1f6;
+    border-bottom: 2px solid #2997ff;
   }
   .ov .rk {
     background: #1f2633;
@@ -1246,7 +1248,7 @@
     font-size: 16px;
   }
   .ov .rk.adv {
-    background: #26f1f6;
+    background: #2997ff;
     color: #0a0d14;
   }
   .ov .rk.first {
@@ -1415,7 +1417,7 @@
     border-bottom: 1px solid var(--line-soft);
   }
   .tier-moved img {
-    border-radius: 6px;
+    border-radius: 2px;
   }
   .tier-mv {
     display: inline-flex;
@@ -1430,12 +1432,12 @@
   .tier-grade.sm {
     width: 22px;
     height: 22px;
-    border-radius: 5px;
+    border-radius: 2px;
     font-size: 12px;
   }
   .tier-board {
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 2px;
     background: var(--surface);
     overflow-x: auto;
     container-type: inline-size;
@@ -1445,7 +1447,7 @@
     place-items: center;
     width: 34px;
     height: 34px;
-    border-radius: 8px;
+    border-radius: 2px;
     font-size: 17px;
     font-weight: 800;
     color: #0a0d14;
@@ -1559,7 +1561,7 @@
     flex: none;
     width: 36px;
     height: 36px;
-    border-radius: 10px;
+    border-radius: 2px;
     background: var(--field);
     object-fit: cover;
   }
@@ -1620,7 +1622,7 @@
     .tier-who img {
       width: 28px;
       height: 28px;
-      border-radius: 8px;
+      border-radius: 2px;
     }
   }
   @media (max-width: 600px) {
@@ -1639,7 +1641,7 @@
     border-radius: 9999px;
   }
   .kel-logo {
-    border-radius: 5px;
+    border-radius: 2px;
   }
 
   /* 경기 중 점수 읽기 표 */

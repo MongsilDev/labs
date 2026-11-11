@@ -13,13 +13,13 @@
   --surface: #1a1a1a;
   --field: #202020;
   --hover: #272727;
-  --line: #343434;
-  --line-strong: #494949;
-  --line-soft: #272727;
-  --text: #f1f1f1;
-  --text-2: #afafaf;
-  --text-3: #8c8c8c;
-  --accent: #c8d65a;
+  --line: #262626;
+  --line-strong: #383838;
+  --line-soft: #262626;
+  --text: #ededed;
+  --text-2: #a6a6a6;
+  --text-3: #8a8a8a;
+  --accent: #2997ff;
   --warn: #f0b429;
   --minus: #ff6b6b;
   --on-status: #111;
@@ -32,15 +32,15 @@
   --surface: #ffffff;
   --field: #f3f3f1;
   --hover: #f1f1ef;
-  --line: #cfcfcb;
-  --line-strong: #989898;
+  --line: #e4e4e1;
+  --line-strong: #cfcfcb;
   --line-soft: #e4e4e1;
-  --text: #0d0d0d;
-  --text-2: #424242;
-  --text-3: #676767;
-  --accent: #5d6b0c;
+  --text: #141414;
+  --text-2: #4d4d4d;
+  --text-3: #6b6b6b;
+  --accent: #0066cc;
   --warn: #9a6a00;
-  --minus: #d93a3a;
+  --minus: #b91c1c;
   --on-status: #fff;
   --dim: rgba(13, 13, 13, 0.45);
 }
@@ -103,7 +103,7 @@ body > main {
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
 }
 .link {
   background: none;
@@ -153,7 +153,7 @@ fieldset {
   height: 36px;
   padding: 0 14px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 2px;
   background: var(--surface);
   font-size: 14px;
   font-weight: 600;
@@ -203,7 +203,7 @@ fieldset {
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 2px;
   background: var(--surface);
   cursor: pointer;
   color: var(--text-2);
@@ -221,7 +221,7 @@ fieldset {
   height: 40px;
   padding: 0 12px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 2px;
   background: var(--field);
   color: var(--text);
   font-size: 15px;
@@ -256,7 +256,7 @@ select.field {
   align-items: center;
   height: 24px;
   padding: 0 8px;
-  border-radius: 4px;
+  border-radius: 2px;
   font-size: 12px;
   font-weight: 600;
   background: var(--field);
@@ -312,7 +312,7 @@ select.field {
 .tabs a {
   height: 32px;
   padding: 0 12px;
-  border-radius: 6px;
+  border-radius: 2px;
   border: 1px solid var(--line);
   background: transparent;
   font-size: 13px;
@@ -345,7 +345,7 @@ select.field {
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: 2px;
   background: var(--text);
   color: var(--bg);
   font-size: 14px;
@@ -463,7 +463,7 @@ table {
 .doc-table {
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
   margin: 10px 0;
 }
 .doc-table th,
@@ -505,7 +505,7 @@ table {
   align-items: center;
   height: 30px;
   padding: 0 12px;
-  border-radius: 6px;
+  border-radius: 2px;
   font-size: 15px;
   font-weight: 800;
   background: var(--field);
@@ -574,7 +574,7 @@ table {
   align-items: baseline;
   gap: 10px;
   padding: 9px 10px;
-  border-radius: 5px;
+  border-radius: 2px;
   cursor: pointer;
 }
 .hits li:hover,
@@ -672,7 +672,7 @@ table {
   gap: 10px;
   padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
   background: var(--surface);
 }
 .rate-head {
@@ -689,7 +689,7 @@ table {
 .rate-cells i {
   aspect-ratio: 1;
   border-radius: 2px;
-  background: var(--line);
+  background: var(--line-strong);
 }
 .rate-cells i.warn {
   background: var(--warn);

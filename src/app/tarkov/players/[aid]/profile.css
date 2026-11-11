@@ -229,7 +229,7 @@
 .tile {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 14px 12px;
   display: grid;
   gap: 2px;
@@ -321,7 +321,7 @@
   padding: 0 12px 0 8px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
   font-size: 14px;
   font-weight: 600;
 }
@@ -463,7 +463,10 @@
   color: #e0a93b;
 }
 .ach.seasonal .ach-rarity {
-  color: var(--accent);
+  color: #5fd38d;
+}
+:root[data-theme="light"] .ach.seasonal .ach-rarity {
+  color: #15803d;
 }
 :root[data-theme="light"] .ach.rare .ach-rarity {
   color: #2f6db0;
@@ -476,7 +479,7 @@
 }
 .lvl-badge {
   background: #2b2d28;
-  border-radius: 5px;
+  border-radius: 2px;
   padding: 2px;
 }
 .ach-bar {
@@ -490,14 +493,14 @@
   padding: 2px;
   gap: 2px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 2px;
   background: var(--surface);
 }
 .seg button {
   height: 28px;
   padding: 0 11px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 2px;
   background: transparent;
   color: var(--text-2);
   font-size: 13px;
@@ -526,7 +529,7 @@
   padding: 8px 12px 8px 8px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
 }
 .gear img,
 .gear-blank {
@@ -534,7 +537,7 @@
   width: 44px;
   height: 44px;
   object-fit: contain;
-  border-radius: 5px;
+  border-radius: 2px;
   background: var(--field);
 }
 .gear-text {
@@ -561,13 +564,13 @@
   padding: 0 12px 0 7px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
   font-size: 14px;
   font-weight: 600;
 }
 .skills img {
   flex: none;
-  border-radius: 4px;
+  border-radius: 2px;
 }
 .skills b {
   margin-left: auto;
@@ -598,7 +601,7 @@
   padding: 10px 14px 10px 10px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
 }
 .mlist img,
 .mlist .gear-blank {
@@ -628,7 +631,7 @@
   width: 4px;
   height: 12px;
   border-radius: 1px;
-  background: var(--line);
+  background: var(--line-strong);
 }
 .pips i.on {
   background: var(--accent);
@@ -680,7 +683,7 @@
 .skel {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
   animation: skel 1.2s ease-in-out infinite alternate;
 }
 .skel-row {
@@ -689,7 +692,7 @@
 }
 .skel-row .skel {
   width: 64px;
-  border-radius: 6px;
+  border-radius: 2px;
 }
 @keyframes skel {
   from {
@@ -713,7 +716,7 @@
   padding: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 2px;
 }
 .prog > b {
   font-size: 20px;
@@ -828,7 +831,7 @@
   display: flex;
   gap: 2px;
   height: 14px;
-  border-radius: 4px;
+  border-radius: 2px;
   overflow: hidden;
   background: var(--field);
 }
@@ -870,7 +873,10 @@
   font-weight: 700;
 }
 .outcome .survived {
-  background: var(--accent);
+  background: #5fd38d;
+}
+:root[data-theme="light"] .outcome .survived {
+  background: #15803d;
 }
 .outcome .kia {
   background: var(--minus);
@@ -919,7 +925,7 @@
   padding: 12px;
   background: #0b0c0d;
   border: 1px solid #2b2e31;
-  border-radius: 8px;
+  border-radius: 2px;
 }
 .kit.compact {
   justify-self: start;

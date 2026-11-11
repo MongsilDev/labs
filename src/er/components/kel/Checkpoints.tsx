@@ -8,7 +8,7 @@ export default function Checkpoints() {
           <li key={i} className="grid justify-items-center gap-1.5 text-center">
             <span className="grid grid-cols-4 gap-[3px]" aria-hidden="true">
               {Array.from({ length: 8 }, (_, k) => (
-                <span key={k} className={`size-[9px] rounded-full ${k < n ? "bg-accent" : "bg-line"}`} />
+                <span key={k} className={`size-[9px] rounded-full ${k < n ? "bg-accent" : "bg-line-strong"}`} />
               ))}
             </span>
             <span className="text-[12px] leading-snug text-fg-3">
