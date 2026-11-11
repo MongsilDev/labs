@@ -21,11 +21,10 @@ const full = (t: number, over: P = {}) => game(t, Array.from({ length: 24 }, (_,
 
 describe("RP 손익, 초반과 막판 집계", () => {
   it("지금 패치의 아시아 랭크 경기만 센다", () => {
-    const mine = Array.from({ length: 20 }, (_, i) => full(1000 + i));
-    const out = derive([...mine, full(2000, { versionMajor: 6 }), full(3000, { serverName: "NorthAmerica" }), full(4000, { matchingMode: 2 }), full(5000, { matchSize: 12 })], tier);
-    expect(out?.rp.games).toBe(20);
-    expect(out?.rp.rows).toBe(480);
-    expect([out?.rp.from, out?.rp.to]).toEqual([1000, 1019]);
+    const out = derive([full(1000), full(2000, { versionMajor: 6 }), full(3000, { serverName: "NorthAmerica" }), full(4000, { matchingMode: 2 }), full(5000, { matchSize: 12 })], tier);
+    expect(out?.rp.games).toBe(1);
+    expect(out?.rp.rows).toBe(24);
+    expect([out?.rp.from, out?.rp.to]).toEqual([1000, 1000]);
   });
 
   it("RP 구간, 순위, 팀 처치 구간별로 평균을 낸다", () => {
@@ -41,11 +40,11 @@ describe("RP 손익, 초반과 막판 집계", () => {
 
   it("표본이 모자란 조합과 이름을 모르는 조합은 초반과 막판에서 뺀다", () => {
     const games = Array.from({ length: 20 }, (_, i) => game(1000 + i, [...Array.from({ length: 20 }, (_, k) => player(k)), ...Array.from({ length: 4 }, (_, k) => player(k, { characterNum: 99 }))]));
-    const out = derive(games, tier)!;
-    expect(out.late.cut).toBe(EARLY_S);
-    expect(out.late.rows.map((r) => [r.key, r.n])).toEqual([["Nadine", 400]]);
+    const late = derive(games, tier)!.late!;
+    expect(late.cut).toBe(EARLY_S);
+    expect(late.rows.map((r) => [r.key, r.n])).toEqual([["Nadine", 400]]);
     // 경기마다 4위 밖이고 780초 안에 끝난 참가자는 네 명, TOP3는 아홉 명이고 그중 1위가 셋
-    const r = out.late.rows[0];
+    const r = late.rows[0];
     expect(r.early).toBe(20);
     expect(r.top3).toBe(180);
     expect(r.fin).toBe(33.3);
@@ -55,10 +54,18 @@ describe("RP 손익, 초반과 막판 집계", () => {
     const dir = mkdtempSync(join(tmpdir(), "derive-"));
     expect(writeDerived(dir, derive([full(1000, { versionMajor: 6 })], tier))).toBe(false);
     expect(writeDerived(dir, derive([full(1000)], { ...tier, patch: null }))).toBe(false);
-    // 조합마다 300판이 안 되는 동안에는 앞선 파일을 그대로 둠
-    expect(writeDerived(dir, derive([full(1000)], tier))).toBe(false);
     expect(writeDerived(dir, derive(Array.from({ length: 20 }, (_, i) => full(1000 + i)), tier))).toBe(true);
     expect(JSON.parse(readFileSync(join(dir, "er-rp/rp.json"), "utf8")).games).toBe(20);
+    expect(JSON.parse(readFileSync(join(dir, "er-late/late.json"), "utf8")).games).toBe(20);
+  });
+
+  it("조합 표본이 모자라면 RP 손익만 새로 쓰고 초반과 막판은 앞선 파일을 남긴다", () => {
+    const dir = mkdtempSync(join(tmpdir(), "derive-"));
+    writeDerived(dir, derive(Array.from({ length: 20 }, (_, i) => full(1000 + i)), tier));
+    const out = derive([full(9000)], tier);
+    expect(out?.late).toBeNull();
+    expect(writeDerived(dir, out)).toBe(true);
+    expect(JSON.parse(readFileSync(join(dir, "er-rp/rp.json"), "utf8")).games).toBe(1);
     expect(JSON.parse(readFileSync(join(dir, "er-late/late.json"), "utf8")).games).toBe(20);
   });
 });

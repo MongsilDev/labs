@@ -82,8 +82,6 @@ export function derive(games, tier) {
     const early = e.early / e.n, fin = e.win / e.top3;
     late.push({ ...meta, n: e.n, top3: e.top3, early: pct(early), earlyCi: pctCi(early, e.n), fin: pct(fin), finCi: pctCi(fin, e.top3) });
   }
-  // 새 시즌 초처럼 표본이 모자란 동안에는 앞선 집계를 남김
-  if (!late.length) return null;
   return {
     rp: {
       from,
@@ -101,7 +99,8 @@ export function derive(games, tier) {
         hours: b.hours.map((a, h) => ({ h, gain: a.n < 2 ? 0 : fix1(mean(a)), ci: a.n < 2 ? 0 : fix1(ci95(a)), n: a.n })),
       })),
     },
-    late: { from, to, games: count, cut: EARLY_S, early: pct(all.early / all.n), fin: pct(all.win / all.top3), rows: late },
+    // 새 시즌 초처럼 조합 표본이 모자란 동안에는 null로 두어 앞선 파일을 남김
+    late: late.length ? { from, to, games: count, cut: EARLY_S, early: pct(all.early / all.n), fin: pct(all.win / all.top3), rows: late } : null,
   };
 }
 
@@ -109,6 +108,7 @@ export function derive(games, tier) {
 export function writeDerived(root, out) {
   if (!out) return false;
   for (const [dir, name, data] of [["er-rp", "rp.json", out.rp], ["er-late", "late.json", out.late]]) {
+    if (!data) continue;
     mkdirSync(join(root, dir), { recursive: true });
     const tmp = join(root, dir, `.${name}.${process.pid}`);
     writeFileSync(tmp, JSON.stringify(data));
@@ -127,5 +127,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const tier = JSON.parse(readFileSync(file, "utf8"));
   const db = new DatabaseSync(join(dir, "raw.sqlite"), { readOnly: true });
   const res = derive(db.prepare("SELECT t, body FROM games WHERE season = ?").iterate(tier.season.id), tier);
-  console.log(writeDerived(join(out, ".."), res) ? `경기 ${res.rp.games}, 행 ${res.rp.rows}, 조합 ${res.late.rows.length}` : "해당 경기 없음");
+  console.log(writeDerived(join(out, ".."), res) ? `경기 ${res.rp.games}, 행 ${res.rp.rows}, 조합 ${res.late?.rows.length ?? 0}` : "해당 경기 없음");
 }
