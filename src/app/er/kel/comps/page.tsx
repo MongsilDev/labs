@@ -1,6 +1,7 @@
 import KelPage, { KelScroll, NO_DATA } from "@/er/components/kel/KelPage";
 import { Logo } from "@/er/components/kel/Team";
 import Char from "@/er/components/t/Char";
+import { characterName } from "@/er/lib/format";
 import { TEAM } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata } from "@/er/server/kel";
 import { comps } from "@/er/server/kel-stats";
@@ -43,16 +44,24 @@ export default async function Page() {
               {rows.map((r) => (
                 <tr key={r.characters.join("|")}>
                   <td className="l">
-                    <span className="flex flex-wrap gap-x-3 gap-y-1 max-[760px]:grid">
-                      {r.characters.map((c) => (
-                        <Char key={c} name={c} />
-                      ))}
-                    </span>
-                    <span className="narrow mt-1">
-                      <span className="inline-flex items-center gap-1.5 text-[12px] text-fg-3">
-                        <Logo team={TEAM.get(r.teams[0][0])!} size={18} label />
-                        {r.teams[0][1]}번
+                    <span className="wide">
+                      <span className="flex flex-wrap gap-x-3 gap-y-1">
+                        {r.characters.map((c) => (
+                          <Char key={c} name={c} />
+                        ))}
                       </span>
+                    </span>
+                    <span className="narrow">
+                      <span className="flex items-center gap-1">
+                        {r.characters.map((c) => (
+                          <Char key={c} name={c} label="" size={26} />
+                        ))}
+                        <span className="ml-2 inline-flex items-center gap-1.5 text-[12px] text-fg-3">
+                          <Logo team={TEAM.get(r.teams[0][0])!} size={18} label />
+                          {r.teams[0][1]}번
+                        </span>
+                      </span>
+                      <span className="mt-1 block text-[13px]">{r.characters.map(characterName).join(", ")}</span>
                     </span>
                   </td>
                   <td className="max-[760px]:align-top">{r.count}</td>

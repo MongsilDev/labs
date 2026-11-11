@@ -1795,10 +1795,13 @@
   .tier-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
   .tier-side { display: none; }
   @media (width >= 1180px) {
-    .tier-main { grid-template-columns: minmax(0, 1fr) 320px; }
+    .tier-main { grid-template-columns: minmax(0, 1fr) 344px; }
     .tier-side { display: block; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
     .tier-side h2 { font-size: 13px; font-weight: 600; color: var(--text-2); padding-bottom: 8px; border-bottom: 1px solid var(--line); }
     .tier-side ul { grid-template-columns: minmax(0, 1fr) !important; }
+    /* 가장 긴 「양손검 데비&마를렌」이 잘리지 않는 폭 */
+    .tier-side li { grid-template-columns: 24px minmax(0, 1fr) auto 88px; gap: 8px; font-size: 13px; }
+    .tier-side img { width: 24px; height: 24px; }
     .tier-moved-fold { display: none; }
   }
   .tier-board { border: 0; border-top: 1px solid var(--line-strong); background: none; }
