@@ -816,8 +816,8 @@ async function publish(s, nm) {
   const now = Date.now();
   const lastFile = join(DIR, "tier.json");
   const last = existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null;
-  // 끝난 정규 시즌이 아직 현재 행이면 다시 집계하지 않음. 최근 N일 탭이 줄고 오래된 행이 지워짐
-  const ended = s.regular && now >= s.end && last?.season?.id === s.id;
+  // 끝난 정규 시즌이 아직 현재 행이면 종료 뒤 첫 발행만 집계함. 다시 집계하면 최근 N일 탭이 줄고 오래된 행이 지워짐
+  const ended = s.regular && now >= s.end && last?.season?.id === s.id && last.updatedAt >= s.end && !PUBLISH_ONLY;
   const all = s.regular && !ended ? selectRows.all(s.id, SERVER, s.start, s.id) : [];
   const cut300 = cutSeries(s.id, TOP_PLACE);
   for (const r of all) {
