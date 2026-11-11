@@ -1,22 +1,22 @@
 import { toCsv } from "./csv";
 import { barLength, barWidths, type GroupResult } from "./engine";
-import { dateKo, fmt, num, rampDarkText } from "./format";
+import { dateKo, fmt, num, RAMP, rampDarkText } from "./format";
 import { MODE_LABEL, scoreLabel, type Mode, type Rules } from "./rules";
 
 const FONT = '"Pretendard Variable", Pretendard, system-ui, sans-serif';
 const C = {
-  bg: "#0a0d14",
-  box: "#1a202c",
-  line: "#2a3140",
-  soft: "#1d2330",
+  bg: "#121212",
+  box: "#262626",
+  line: "#383838",
+  soft: "#262626",
   text: "#ffffff",
-  text2: "#c9d0db",
-  text3: "#7f889b",
-  muted: "#9aa3b5",
+  text2: "#c9c9c9",
+  text3: "#8a8a8a",
+  muted: "#a6a6a6",
   gold: "#ffd621",
-  cyan: "#26f1f6",
+  accent: "#2997ff",
   minus: "#ff6b6b",
-  // 순위 상승. 라운드 막대의 청록과 구분되는 초록, 웹 어두운 테마와 몽실봇 순위 이미지와 같은 값
+  // 순위 상승. 몽실봇 순위 이미지와 같은 값
   up: "#4ade80",
 };
 
@@ -26,8 +26,7 @@ function hex(h: string) {
   return [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 }
 function ramp(i: number, n: number) {
-  const a = hex("#0f5c66");
-  const b = hex("#26f1f6");
+  const [a, b] = RAMP.dark.map(hex);
   const t = n <= 1 ? 1 : i / (n - 1);
   return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(",")})`;
 }
@@ -114,7 +113,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
   const legend: { label: string; color: string; line?: boolean }[] = [];
   const compact = standings.length > 12;
   if (!compact) for (let i = 0; i < played; i++) legend.push({ label: `${i + 1}R`, color: ramp(i, played) });
-  if (meta.rules.advance > 0) legend.unshift({ label: `상위 ${meta.rules.advance}팀 진출`, color: C.cyan, line: true });
+  if (meta.rules.advance > 0) legend.unshift({ label: `상위 ${meta.rules.advance}팀 진출`, color: C.accent, line: true });
   for (const item of [...legend].reverse()) {
     const w = ctx.measureText(item.label).width;
     ctx.fillStyle = C.text2;
@@ -164,7 +163,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
     const y = rowsTop + i * rowH;
     const mid = y + rowH / 2;
     const box = Math.round(56 * scale);
-    const cls = s.rank === 1 ? C.gold : meta.rules.advance > 0 && s.rank <= meta.rules.advance ? C.cyan : C.box;
+    const cls = s.rank === 1 ? C.gold : meta.rules.advance > 0 && s.rank <= meta.rules.advance ? C.accent : C.box;
     ctx.fillStyle = cls;
     roundRect(ctx, colRank, mid - box / 2, box, box, 6 * scale);
     ctx.fill();
@@ -242,7 +241,7 @@ export async function boardImage(result: GroupResult, meta: BoardMeta): Promise<
     ctx.fillStyle = C.soft;
     ctx.fillRect(L, y + rowH - 1, R - L, 1);
     if (meta.rules.advance > 0 && s.rank === meta.rules.advance && i < standings.length - 1) {
-      ctx.fillStyle = C.cyan;
+      ctx.fillStyle = C.accent;
       ctx.fillRect(L, y + rowH - 1, R - L, 2);
     }
   });
@@ -301,7 +300,7 @@ function drawCompact(ctx: Ctx, result: GroupResult, meta: BoardMeta, L: number, 
       const y = top + 40 + i * rowH;
       const mid = y + rowH / 2;
       const box = Math.round(42 * s);
-      const fill = t.rank === 1 ? C.gold : meta.rules.advance > 0 && t.rank <= meta.rules.advance ? C.cyan : C.box;
+      const fill = t.rank === 1 ? C.gold : meta.rules.advance > 0 && t.rank <= meta.rules.advance ? C.accent : C.box;
       ctx.fillStyle = fill;
       roundRect(ctx, x0 + 12, mid - box / 2, box, box, 5);
       ctx.fill();
@@ -344,7 +343,7 @@ function drawCompact(ctx: Ctx, result: GroupResult, meta: BoardMeta, L: number, 
       ctx.fillStyle = C.soft;
       ctx.fillRect(x0, y + rowH - 1, colW, 1);
       if (meta.rules.advance > 0 && t.rank === meta.rules.advance) {
-        ctx.fillStyle = C.cyan;
+        ctx.fillStyle = C.accent;
         ctx.fillRect(x0, y + rowH - 1, colW, 2);
       }
     });

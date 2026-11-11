@@ -1,4 +1,4 @@
-export const LABS_ACCENT = "#5ac8fa";
+export const LABS_ACCENT = "#2997ff";
 
 export function MarkSvg({ accent = LABS_ACCENT, className }: { accent?: string; className?: string }) {
   return (

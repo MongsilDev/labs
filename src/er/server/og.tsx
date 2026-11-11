@@ -2,6 +2,7 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { LABS_ACCENT } from "@/components/SiteMark";
 import { glyphs, keepGlyphs } from "@/glyphs";
 import { type CutData, daysLeft, int, tens } from "@/er/lib/cut";
 import { groupResult } from "@/er/lib/engine";
@@ -14,7 +15,7 @@ const font = (w: string) => readFile(join(process.cwd(), `assets/fonts/Pretendar
 const fonts = Promise.all([font("Medium"), font("Bold"), font("ExtraBold")]);
 const covered = fonts.then(([medium]) => glyphs(medium));
 
-const C = { bg: "#0a0d14", panel: "#121722", line: "#232a38", text: "#e8edf5", text2: "#aab3c5", text3: "#7c879c", accent: "#26f1f6", gold: "#ffd621" };
+const C = { bg: "#121212", panel: "#1a1a1a", line: "#2e2e2e", text: "#ededed", text2: "#a6a6a6", text3: "#8a8a8a", accent: LABS_ACCENT, gold: "#ffd621" };
 
 
 export function summary(view: TournamentView, idx: number): string {
@@ -31,7 +32,7 @@ const Mark = () => (
     <rect width="64" height="64" rx="15" fill="#000" />
     <rect x=".5" y=".5" width="63" height="63" rx="14.5" fill="none" stroke="#fff" strokeOpacity=".14" />
     <path d="M15 21l11 11-11 11" fill="none" stroke="#f5f5f7" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M33 44h17" stroke="#26f1f6" strokeWidth="7" strokeLinecap="round" />
+    <path d="M33 44h17" stroke={C.accent} strokeWidth="7" strokeLinecap="round" />
   </svg>
 );
 
@@ -123,7 +124,7 @@ export async function boardImage(view: TournamentView | null, idx: number) {
 
 const TIER_OG = [
   { key: "eternity", name: "이터니티", color: "#e84c7d" },
-  { key: "demigod", name: "데미갓", color: "#d9a24a" },
+  { key: "demigod", name: "데미갓", color: "#be8a35" },
 ] as const;
 
 export async function cutImage(data: CutData) {

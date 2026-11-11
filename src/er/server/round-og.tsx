@@ -11,13 +11,13 @@ const fonts = Promise.all([font("Medium"), font("Bold"), font("ExtraBold")]);
 const covered = fonts.then(([medium]) => glyphs(medium));
 
 const C = {
-  bg: "#0a0d14",
-  panel: "#1a2130",
-  line: "#232a38",
-  text: "#e8edf5",
-  text2: "#aab3c5",
-  text3: "#7c879c",
-  accent: "#26f1f6",
+  bg: "#121212",
+  panel: "#262626",
+  line: "#2e2e2e",
+  text: "#ededed",
+  text2: "#a6a6a6",
+  text3: "#8a8a8a",
+  accent: "#2997ff",
   gold: "#ffd621",
   up: "#4ade80",
   down: "#ff6b6b",

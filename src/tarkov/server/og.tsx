@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { glyphs, keepGlyphs } from "@/glyphs";
-import { ACCENT } from "@/tarkov/components/Mark";
+import { LABS_ACCENT } from "@/components/SiteMark";
 import { rankLabel, VERDICT_LABEL, type Verdict } from "@/tarkov/lib/criteria";
 import { dateTime, dec, div, hours, int, pct } from "@/tarkov/lib/format";
 import type { Mode } from "@/tarkov/lib/modes";
@@ -15,14 +15,14 @@ const font = (w: string) => readFile(join(process.cwd(), `assets/fonts/Pretendar
 const fonts = Promise.all([font("Medium"), font("Bold"), font("ExtraBold")]);
 const covered = fonts.then(([medium]) => glyphs(medium));
 
-const C = { bg: "#0a0d14", panel: "#121722", line: "#232a38", text: "#e8edf5", text2: "#aab3c5", text3: "#7c879c", warn: "#f0b429", alert: "#ff6b6b" };
+const C = { bg: "#121212", panel: "#1a1a1a", line: "#2e2e2e", text: "#ededed", text2: "#a6a6a6", text3: "#8a8a8a", warn: "#f0b429", alert: "#ff6b6b" };
 
 const Mark = ({ size }: { size: number }) => (
   <svg width={size} height={size} viewBox="0 0 64 64">
     <rect width="64" height="64" rx="15" fill="#000" />
     <rect x=".5" y=".5" width="63" height="63" rx="14.5" fill="none" stroke="#fff" strokeOpacity=".14" />
     <path d="M15 21l11 11-11 11" fill="none" stroke="#f5f5f7" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M33 44h17" stroke={ACCENT} strokeWidth="7" strokeLinecap="round" />
+    <path d="M33 44h17" stroke={LABS_ACCENT} strokeWidth="7" strokeLinecap="round" />
   </svg>
 );
 
