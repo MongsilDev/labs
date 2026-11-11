@@ -26,7 +26,12 @@ export const api = {
     call<{ ok?: true; token?: string }>(`/api/t/${code}/members`, { method: "POST", body: JSON.stringify(body) }),
   channels: (code: string) => call<{ guilds: DiscordGuild[] | null }>(`/api/t/${code}/channels`),
   accept: (token: string) => call<{ code: string; already: boolean }>(`/api/i/${token}`, { method: "POST" }),
+  uploadToken: (action: "issue" | "revoke") =>
+    call<{ token: UploadToken; value?: string; script: string; fileName: string }>("/api/me/upload-token", { method: "POST", body: JSON.stringify({ action }) }),
+  autoUpload: (code: string, on: boolean) => call<{ on: boolean }>(`/api/t/${code}/auto-upload`, { method: "POST", body: JSON.stringify({ on }) }),
 };
+
+export type UploadToken = { createdAt: number; lastUsedAt: number | null } | null;
 
 const RECENT = "er-recent";
 export type Recent = { code: string; name: string; at: number };

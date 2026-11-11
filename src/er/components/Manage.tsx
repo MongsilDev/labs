@@ -8,6 +8,7 @@ import { ago, timeKo } from "@/er/lib/format";
 import { LIMITS, PLACEMENT_POINTS, PRESET_LABEL, groupLabel, type Mode, type Preset, type Rules } from "@/er/lib/rules";
 import { useNow } from "@/er/lib/useNow";
 import { firstPath, type DiscordGuild, type DiscordLinkRow, type InviteRow, type MemberRow, type RelayStatus, type TournamentView } from "@/er/lib/view";
+import AutoUpload, { type AutoUploadInit } from "./AutoUpload";
 import Avatar from "./Avatar";
 import ModeSeg from "./ModeSeg";
 import RulesFields from "./RulesFields";
@@ -26,12 +27,14 @@ export default function Manage({
   initialMembers,
   initialInvites,
   initialLinks,
+  autoUpload,
 }: {
   view: TournamentView;
   me: string;
   initialMembers: MemberRow[];
   initialInvites: InviteRow[];
   initialLinks: DiscordLinkRow[];
+  autoUpload: AutoUploadInit;
 }) {
   const router = useRouter();
   const [list, setList] = useState(initialMembers);
@@ -223,6 +226,8 @@ export default function Manage({
             }}
             onMsg={(text, bad) => setMsg({ text, bad })}
           />
+
+          <AutoUpload code={view.code} owner={owner} init={autoUpload} onMsg={(text, bad) => setMsg({ text, bad })} />
         </div>
         <div className="min-w-0">
 

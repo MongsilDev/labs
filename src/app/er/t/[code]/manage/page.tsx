@@ -6,7 +6,8 @@ import Manage from "@/er/components/Manage";
 import Limited from "@/er/components/t/Limited";
 import { avatarUrl, currentUser } from "@/er/server/auth";
 import { openView } from "@/er/server/http";
-import { discordLinks, members } from "@/er/server/tournament";
+import { autoConfig } from "@/er/server/autoUpload";
+import { autoUploadOf, discordLinks, members, uploadTokenInfo } from "@/er/server/tournament";
 
 export const metadata: Metadata = { title: "관리", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
         initialMembers={data.members.map((m) => ({ ...m, avatar: m.avatar ? avatarUrl(m) : null }))}
         initialInvites={data.invites}
         initialLinks={discordLinks(view.code, user)}
+        autoUpload={{ on: autoUploadOf(view.code, user), fixed: autoConfig().optin === "none", token: uploadTokenInfo(user), paste: autoConfig().ship === "paste" }}
       />
       <Footer />
     </>
