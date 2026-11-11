@@ -56,6 +56,9 @@
 .hub1-v .fig { justify-content: flex-end; }
 .hub1-pair { display: grid; grid-template-columns: 1fr 1fr; }
 .hub1-pair { gap: 0 33px; }
+/* 마지막 줄 선과 푸터 선 사이가 빈 줄처럼 보여 마지막 선은 뺌 */
+.hub1-pair .hub1-row:last-child, .hub-last > li:last-child { border-bottom: 0; }
+@media (min-width: 768px) { .hub1-pair .hub1-row { border-bottom: 0; } }
 .hub1-pair .hub1-row + .hub1-row::after { content: ""; position: absolute; top: 0; bottom: 0; left: -17px; border-left: 1px solid var(--rule-2); }
 @media (max-width: 767px) {
   .hub1-row { grid-template-columns: minmax(0, 1fr) 16px; gap: 14px 12px; min-height: 0; padding: 20px 0; --fig-face: 36px; --fig-name: 18px; --fig-num: 30px; --cut-size: 34px; --cut-gap: 28px; }
@@ -159,7 +162,7 @@
 .hub5-cut { --cut-size: 88px; }
 .hub5-cut .cutnums { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 24px; }
 .hub5-cut figure .h-16 { height: 88px; }
-.hub5-band { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; border-top: 1px solid var(--rule-2); border-bottom: 1px solid var(--rule-2); }
+.hub5-band { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; border-top: 1px solid var(--rule-2); }
 .hub5-band > * { display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 0 28px; font-weight: 600; }
 .hub5-band > :first-child { padding-left: 0; }
 .hub5-band > :last-child { padding-right: 0; }

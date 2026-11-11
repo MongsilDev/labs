@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/er/components/kel/Team";
 import { int as rp, TIERS, tens } from "@/er/lib/cut";
-import { fmt } from "@/er/lib/format";
+import { fmt, fmt1 } from "@/er/lib/format";
 import { EVENT_NAME, TEAM } from "@/er/lib/kel";
 import { comboPath, signed, type TierCombo } from "@/er/lib/tier";
 import { face, n } from "./HubParts";
@@ -89,10 +89,10 @@ export function TierBig({ list, stats = false }: { list: TierCombo[]; stats?: bo
   );
 }
 
-export function kelLead(h: Hub) {
+export function kelLead(h: Hub, fixed = false) {
   const row = h.final?.state.rows[0];
   const team = row ? TEAM.get(row.key) : undefined;
-  return h.final && row && team ? { team, total: fmt(row.total), stage: `${EVENT_NAME[h.final.event]} ${h.final.stage}` } : null;
+  return h.final && row && team ? { team, total: (fixed ? fmt1 : fmt)(row.total), stage: `${EVENT_NAME[h.final.event]} ${h.final.stage}` } : null;
 }
 
 /** 1위 실험체 한 줄: 얼굴, 무기와 이름, 점수 */

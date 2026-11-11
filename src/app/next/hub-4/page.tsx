@@ -34,9 +34,9 @@ export default async function Hub4() {
         <CutSection h={h} />
         <HubScore mine={h.mine} code={false} className="self-start" />
         <div className="grid content-start gap-10 md:col-span-2 md:grid-cols-2 md:gap-x-12 lg:col-span-1 lg:grid-cols-1">
-          <KelSection h={h} />
+          <KelSection h={h} fixed />
           <RowLinks
-            className=""
+            className="hub-last"
             items={[
               { href: "/er/overlay", label: "오버레이" },
               { href: "/tarkov/kord-breach", label: "KORD BREACH 특성 시뮬레이터" },

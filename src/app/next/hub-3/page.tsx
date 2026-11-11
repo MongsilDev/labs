@@ -16,7 +16,7 @@ export const metadata = { title: "첫 화면 3" };
 export default async function Hub3() {
   const h = await hubData();
   const top = h.combos[0];
-  const lead = kelLead(h);
+  const lead = kelLead(h, true);
   return (
     <Live user={h.user}>
       <div className="hub3-hero hub-in">
@@ -31,7 +31,7 @@ export default async function Hub3() {
           {h.mine.length > 0 && <RowLinks className="mt-1" items={h.mine.map((m) => ({ href: `/er/t/${m.code}/a`, label: m.name, note: m.code }))} />}
         </section>
         <div className="hub3-shot">
-          <ScorePreview rows={8} big />
+          <ScorePreview rows={8} big label="예시" />
           <Link className="hub3-more" href="/er/example/a">
             예시 대회
             <Chev />
@@ -62,7 +62,7 @@ export default async function Hub3() {
           <HubSearch />
         </div>
         <RowLinks
-          className=""
+          className="hub-last"
           items={[
             { href: "/er/overlay", label: "오버레이" },
             { href: "/tarkov/kord-breach", label: "KORD BREACH 특성 시뮬레이터" },

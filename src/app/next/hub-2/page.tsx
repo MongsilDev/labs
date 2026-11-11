@@ -6,7 +6,7 @@ import Live from "@/next/Live";
 import HubScore from "@/next/HubScore";
 import HubTabs from "@/next/HubTabs";
 import { CutNums, kelLead, TierBig } from "@/next/Hub5Parts";
-import { TierHead, TierMissing } from "@/next/HubParts";
+import { n, TierHead, TierMissing } from "@/next/HubParts";
 import RowLinks from "@/next/RowLinks";
 import { hubData } from "@/next/hub";
 import HubSearch from "@/tarkov/components/players/HubSearch";
@@ -41,7 +41,7 @@ export default async function Hub2() {
             {
               id: "cut",
               label: "이터컷",
-              note: et?.cut != null ? `이터니티 ${et.estimated ? "약 " : ""}${rp(et.cut)}` : undefined,
+              note: et?.cut != null ? `이터니티 ${n(et.place)}위 ${et.estimated ? "약 " : ""}${rp(et.cut)}` : undefined,
               panel: (
                 <section className="hub2-cut">
                   <h2 className="sec-h">
@@ -63,7 +63,7 @@ export default async function Hub2() {
             {
               id: "score",
               label: "대회 점수",
-              note: h.mine.length ? `내 대회 ${h.mine.length}개` : undefined,
+              note: h.mine.length ? `내 대회 ${h.mine.length}개` : "새 대회 만들기, 대회 코드로 열기",
               panel: <HubScore mine={h.mine} rows={6} big className="border-t-0! pt-0!" />,
             },
           ]}
@@ -76,7 +76,7 @@ export default async function Hub2() {
             <HubSearch />
           </div>
           <RowLinks
-            className="border-t-0!"
+            className="hub-last border-t-0!"
             items={[
               { href: "/er/overlay", label: "오버레이" },
               { href: "/tarkov/kord-breach", label: "KORD BREACH 특성 시뮬레이터" },

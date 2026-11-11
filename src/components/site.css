@@ -81,7 +81,8 @@
   display: flex;
   flex: 1;
   min-width: 0;
-  align-items: center;
+  /* 12px 게임 이름과 14px 메뉴 글자의 기준선을 맞춤 */
+  align-items: baseline;
   gap: 4px;
 }
 .site-game {
@@ -117,6 +118,7 @@
 }
 .site-sep {
   flex: none;
+  align-self: center;
   width: 1px;
   height: 16px;
   margin: 0 8px;

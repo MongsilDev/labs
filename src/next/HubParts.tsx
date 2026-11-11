@@ -3,7 +3,7 @@ import Link from "next/link";
 import CutMini from "@/er/components/cut/CutMini";
 import { Logo } from "@/er/components/kel/Team";
 import { int as rp, TIERS, tens } from "@/er/lib/cut";
-import { fmt } from "@/er/lib/format";
+import { fmt, fmt1 } from "@/er/lib/format";
 import { EVENT_NAME, TEAM } from "@/er/lib/kel";
 import { comboPath, signed, type TierCombo } from "@/er/lib/tier";
 import HubSearch from "@/tarkov/components/players/HubSearch";
@@ -93,7 +93,8 @@ export function CutSection({ h, className = "", body = "mt-3 grid items-end gap-
   );
 }
 
-export function KelRows({ h }: { h: Hub }) {
+/** fixed는 소수 한 자리로 고정. 대회 점수 표와 한 화면에 놓일 때 씀 */
+export function KelRows({ h, fixed = false }: { h: Hub; fixed?: boolean }) {
   if (!h.final) return <p className="py-3 text-ink-3">KEL 기록을 불러오지 못했습니다.</p>;
   return (
     <ol className="mt-1">
@@ -105,7 +106,7 @@ export function KelRows({ h }: { h: Hub }) {
               <span className="w-4 font-normal text-ink-3 num">{i + 1}</span>
               <Logo team={t} size={24} className="ring-1 ring-rule-2" />
               {t.name}
-              <b className="ml-auto font-black num">{fmt(row.total)}</b>
+              <b className="ml-auto font-black num">{(fixed ? fmt1 : fmt)(row.total)}</b>
             </Link>
           </li>
         );
@@ -123,11 +124,11 @@ export function KelHead({ h }: { h: Hub }) {
   );
 }
 
-export function KelSection({ h, className = "" }: { h: Hub; className?: string }) {
+export function KelSection({ h, fixed, className = "" }: { h: Hub; fixed?: boolean; className?: string }) {
   return (
     <section className={`sec ${className}`}>
       <KelHead h={h} />
-      <KelRows h={h} />
+      <KelRows h={h} fixed={fixed} />
     </section>
   );
 }

@@ -5,14 +5,17 @@ import { exampleView } from "@/er/lib/example";
 const heat = (p: number | null) => (p == null ? undefined : `color-mix(in srgb, var(--hot) ${Math.max(0, 60 - (p - 1) * 8)}%, transparent)`);
 
 /** 로그인하지 않은 사람에게 보이는 예시 대회 순위표 윗부분 */
-export default function ScorePreview({ rows = 4, big = false }: { rows?: number; big?: boolean }) {
+export default function ScorePreview({ rows = 4, big = false, label }: { rows?: number; big?: boolean; label?: string }) {
   const ex = exampleView();
   const g = ex.groups[0];
   const res = computeGroup({ mode: ex.mode, rules: ex.rules, plannedRounds: ex.plannedRounds, rounds: g.rounds, penalties: g.penalties, weather: g.weather, aliases: g.aliases, overrides: g.overrides });
   const rounds = Array.from({ length: res.played }, (_, i) => i + 1);
   return (
     <figure className="m-0 mt-5">
-      <figcaption className="text-[12px] font-semibold text-ink-3">{ex.name}</figcaption>
+      <figcaption className="text-[12px] font-semibold text-ink-3">
+        {label && <b className="mr-1.5 text-ink">{label}</b>}
+        {ex.name}
+      </figcaption>
       <table className={`tbl mt-1 table-fixed ${big ? "text-[15px] [&_td]:h-10!" : "text-[13px]"}`}>
         <thead>
           <tr>

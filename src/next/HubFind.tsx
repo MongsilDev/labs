@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { comboPath, signed } from "@/er/lib/tier";
-import Weapon from "./Weapon";
 
 export type FindCombo = { char: number; key: string; name: string; weapon: number; weaponName: string; score: number };
 
@@ -53,8 +52,9 @@ export default function HubFind({ combos, head, code, tarkov }: { combos: FindCo
               <li key={`${c.char}-${c.weapon}`} className="border-b border-rule">
                 <Link href={comboPath(c)} className="flex h-14 items-center gap-3 text-[17px] font-semibold hover:bg-row hover:no-underline">
                   <Image className="size-9 flex-none rounded-[2px] bg-row object-cover" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={36} height={36} unoptimized />
-                  <Weapon code={c.weapon} name={c.weaponName} />
-                  <span className="-ml-1 truncate">{c.name}</span>
+                  <span className="truncate">
+                    <span className="font-normal text-ink-2">{c.weaponName}</span> {c.name}
+                  </span>
                   <b className="ml-auto text-[20px] font-black num">{signed(c.score)}</b>
                 </Link>
               </li>
