@@ -34,6 +34,7 @@ export default async function Players({ searchParams }: { searchParams: Promise<
           <div>
             <dt className="text-[12px] font-semibold text-ink-3">찾을 수 있는 계정</dt>
             <dd className="num m-0 mt-1 text-[34px] leading-none font-bold">{indexed ? `${int(count)}개` : "준비 중"}</dd>
+            <dd className="m-0 mt-2 text-[13px] text-ink-2">tarkov.dev에서 한 번 이상 조회된 계정만 찾을 수 있습니다.</dd>
           </div>
           {indexed && (
             <div>
