@@ -18,6 +18,7 @@ export default function DecayCalendar({ data }: { data: CutData }) {
   for (let t = dayStart(today) + (counts.has(today) ? 0 : DAY); t <= until; t += DAY) dates.push(new Date(t + 9 * 3_600_000).toISOString().slice(0, 10));
   const grace = data.rule.grace;
   const peak = Math.max(1, ...[...counts.values()].flatMap((c) => Object.values(c)));
+  const any = [...counts.values()].some((c) => Object.values(c).some((n) => n > 0));
 
   return (
     <div>
@@ -31,11 +32,12 @@ export default function DecayCalendar({ data }: { data: CutData }) {
                 <span className="size-2 rounded-full" style={{ background: color }} aria-hidden="true" />
                 {name}에서 휴면 강등으로 내려갈 계정
               </dt>
-              <dd className="text-[22px] leading-tight font-extrabold tabular-nums">{total}명</dd>
+              <dd className="text-[22px] leading-tight font-bold tabular-nums">{total}명</dd>
             </div>
           );
         })}
       </dl>
+      {any && (
       <div className="scroll-fade overflow-x-auto pb-1" tabIndex={0}>
         <ol className="flex w-full min-w-max items-end gap-1" aria-label="날짜별 휴면 강등으로 컷 아래로 내려가는 인원">
           {dates.map((d) => {
@@ -63,6 +65,7 @@ export default function DecayCalendar({ data }: { data: CutData }) {
           })}
         </ol>
       </div>
+      )}
       <p className="mt-4 text-[13px] text-fg-3">
         {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정은 유예 기간이 지난 뒤 매일 15시에 RP가 {data.rule.step}점씩 깎입니다.
         <br />
