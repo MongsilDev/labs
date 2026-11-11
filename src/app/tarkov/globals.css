@@ -101,9 +101,15 @@ body > main {
 
 /* 부품 */
 /* 상자 대신 위쪽 선 하나로 구역을 나눔. 안쪽 좌우 여백은 화면 왼쪽 선에 맞추려고 없앰 */
-.panel {
+.panel:not(.dialog, .hits) {
   border-top: 1px solid var(--line-strong);
   padding-inline: 0 !important;
+}
+/* 떠 있는 창과 검색 목록은 바탕과 구분되는 상자로 남김 */
+.panel:is(.dialog, .hits) {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
 }
 .link {
   background: none;

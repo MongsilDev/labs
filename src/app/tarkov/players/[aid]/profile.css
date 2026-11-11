@@ -56,7 +56,11 @@
   padding: 18px 20px;
   display: grid;
   gap: 10px;
-  border-left-width: 4px;
+  border-left: 4px solid var(--line-strong);
+}
+/* 판정 색 막대와 글자 사이는 띄움. 패널의 좌우 여백 규칙을 이기려고 선택자를 겹침 */
+.panel.verdict {
+  padding-left: 18px !important;
 }
 .verdict.clear {
   border-left-color: var(--line-strong);
@@ -204,7 +208,7 @@
   margin: -6px 0 0 -6px;
   border-radius: 50%;
   background: var(--text);
-  box-shadow: 0 0 0 3px var(--surface);
+  box-shadow: 0 0 0 3px var(--bg);
 }
 .vbar .mark.p90,
 .vbar .mark.p99 {
