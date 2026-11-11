@@ -19,6 +19,12 @@
   --color-line: var(--rule);
   --color-line-soft: var(--rule);
   --color-surface: var(--row);
+  --color-line-strong: var(--rule-2);
+  --color-field: var(--row);
+  --color-accent: var(--hot);
+  --color-minus: var(--down);
+  --radius-md: 2px;
+  --radius-lg: 2px;
 }
 
 @layer base {

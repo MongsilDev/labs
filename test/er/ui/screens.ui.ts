@@ -279,7 +279,7 @@ describe("화면 점검", () => {
             expect(status).toBe(screen.status ?? 200);
             expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
             const p = await page.evaluate(inspect);
-            expect(p, "가로 넘침, 정의 없는 클래스, 브라우저 기본 모양 컨트롤, 브라우저 기본 검증").toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
+            expect(p, `가로 넘침, 정의 없는 클래스, 브라우저 기본 모양 컨트롤, 브라우저 기본 검증 ${JSON.stringify(p)}`).toEqual({ overflow: 0, undefinedClass: [], unstyled: [], nativeCheck: [] });
             expect(errors).toEqual([]);
           } catch (e) {
             await page.screenshot({ path: join(SHOTS, `${screen.name}-${width}-${theme}.png`), fullPage: true });

@@ -119,7 +119,7 @@ function inspect(): Problems {
   const defined = new Set<string>();
   const collect = (rule: CSSRule) => {
     const sel = (rule as CSSStyleRule).selectorText;
-    if (sel) for (const m of sel.matchAll(/\.([\w-]+)/g)) defined.add(m[1]);
+    if (sel) for (const m of sel.matchAll(/\.((?:\\.|[\w-])+)/g)) defined.add(m[1].replace(/\\(.)/g, "$1"));
     for (const child of (rule as CSSGroupingRule).cssRules ?? []) collect(child);
   };
   for (const sheet of document.styleSheets) for (const rule of sheet.cssRules) collect(rule);
