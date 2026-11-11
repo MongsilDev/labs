@@ -74,8 +74,12 @@ export default function DecayCalendar({ data }: { data: CutData }) {
         {data.updatedAt < data.rule.graceFrom
           ? `유예는 최대 ${grace.default}일이고, 10월 29일 12.7 패치부터 이터니티 최대 ${grace.eternity}일, 데미갓 최대 ${grace.demigod}일로 줄어듭니다.`
           : `유예는 이터니티 최대 ${grace.eternity}일, 데미갓 최대 ${grace.demigod}일, 그 밖의 티어 최대 ${grace.default}일입니다.`}
-        <br />
-        막대는 휴면 계정이 지금 휴면 반영 컷 아래로 내려가는 날과 인원을 표시합니다.
+        {any && (
+          <>
+            <br />
+            막대는 휴면 계정이 지금 휴면 반영 컷 아래로 내려가는 날과 인원을 표시합니다.
+          </>
+        )}
       </p>
     </div>
   );
