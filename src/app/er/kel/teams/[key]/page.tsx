@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props) {
 const CIRCUITS = KEL_EVENTS.filter((e) => /^c\d$/.test(e.key)).map((e) => e.name);
 const H2 = "text-[17px] font-bold";
 const SUB = "text-[13px] font-semibold text-fg-3";
-const LINK = "decoration-line-strong underline-offset-[3px] hover:decoration-fg-3";
+const LINK = "tap decoration-line-strong underline-offset-[3px] hover:decoration-fg-3";
 
 function Tile({ label, value, children }: { label: string; value: string; children?: React.ReactNode }) {
   return (
@@ -108,7 +108,7 @@ export default async function Page({ params }: Props) {
           <Logo team={team} size={64} label />
           <div className="min-w-0">
             <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px] max-[760px]:text-[24px]">
-              <a className="decoration-line-strong underline-offset-[5px] hover:decoration-fg-3" href={wikiUrl(team.wiki)}>
+              <a className="tap decoration-line-strong underline-offset-[5px] [--tap:7px] hover:decoration-fg-3" href={wikiUrl(team.wiki)}>
                 {team.name}
               </a>
             </h1>

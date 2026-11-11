@@ -41,7 +41,7 @@
     --hot: #2997ff;
     --up: #5fd38d;
     --down: #ff6b6b;
-    --g-s: #ff5c5c;
+    --g-s: #c92a2a;
     --g-a: #ff9a3d;
     --g-b: #e8c547;
     --g-c: #6cc29a;
@@ -82,7 +82,7 @@
 .num { font-variant-numeric: tabular-nums; }
 .grade { display: inline-grid; place-items: center; width: 20px; height: 20px; font-size: 12px; font-weight: 800; color: #111; border-radius: 2px; }
 :root[data-theme="light"] .grade { color: #fff; }
-.grade-S { background: var(--g-s); } .grade-A { background: var(--g-a); } .grade-B { background: var(--g-b); } .grade-C { background: var(--g-c); } .grade-D { background: var(--g-d); }
+.grade-S { background: var(--g-s); color: #fff; } .grade-A { background: var(--g-a); } .grade-B { background: var(--g-b); } .grade-C { background: var(--g-c); } .grade-D { background: var(--g-d); }
 .sec { border-top: 1px solid var(--rule-2); padding-top: 14px; }
 .sec-h { display: flex; align-items: baseline; gap: 12px; font-size: 16px; font-weight: 700; }
 .sec-h small { font-size: 12px; font-weight: 500; color: var(--ink-3); }
@@ -124,13 +124,13 @@
 .chip { display: inline-flex; align-items: center; height: 26px; padding: 0 9px; border: 1px solid var(--rule-2); border-radius: 2px; font-size: 13px; font-weight: 600; color: var(--ink-2); white-space: nowrap; cursor: pointer; }
 .chip.strong, .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 .panel { border: 0; padding: 0; }
-.text-minus { color: var(--g-s); }
+.text-minus { color: var(--down); }
 .hits { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; list-style: none; margin: 0; padding: 4px; max-height: min(470px, 70vh); overflow: auto; background: var(--bg); border: 1px solid var(--rule-2); }
 .hits li { display: flex; align-items: baseline; gap: 10px; padding: 9px 10px; cursor: pointer; }
 .hits li:hover, .hits li[aria-selected="true"] { background: var(--row); }
 .hits .hits-note { cursor: default; font-size: 12px; color: var(--ink-3); padding: 6px 10px 4px; }
 .hit-date { margin-left: auto; white-space: nowrap; }
-.err { color: var(--g-s); font-size: 13px; }
+.err { color: var(--down); font-size: 13px; }
 .muted { color: var(--ink-3); }
 .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .small { font-size: 13px; }

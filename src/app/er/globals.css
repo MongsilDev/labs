@@ -613,8 +613,38 @@
     list-style: disc;
   }
   .doc h2 {
-    font-size: 17px;
-    margin: 26px 0 8px;
+    font-size: 16px;
+    margin: 28px 0 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  /* 넓은 화면에서는 조항 제목을 왼쪽 기둥에, 본문을 오른쪽 기둥에 둠 */
+  @media (min-width: 960px) {
+    .doc {
+      display: grid;
+      /* 조항 구분선이 두 기둥에 걸쳐 이어지게 기둥 사이를 띄우지 않음 */
+      grid-template-columns: 320px minmax(0, 760px);
+      gap: 10px 0;
+      align-content: start;
+    }
+    .doc > * {
+      grid-column: 2;
+      margin-block: 0;
+    }
+    .doc > h1 {
+      grid-column: 1 / -1;
+    }
+    .doc > h2 {
+      grid-column: 1;
+      margin-top: 18px;
+    }
+    .doc > h2 + * {
+      margin-top: 18px;
+    }
+    .doc > h2 + :not(.doc-table) {
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
   }
   .doc-table {
     overflow-x: auto;
@@ -1453,8 +1483,14 @@
     font-weight: 700;
     color: #0a0d14;
   }
+  /* 음수와 오류의 빨강(--minus)과 겹치지 않게 어두운 테마에서만 진하게 씀 */
   .tier-grade[data-grade="S"] {
+    background: #c92a2a;
+    color: #fff;
+  }
+  :root[data-theme="light"] .tier-grade[data-grade="S"] {
     background: #ff6b6b;
+    color: #0a0d14;
   }
   .tier-grade[data-grade="A"] {
     background: #ffa94d;

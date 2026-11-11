@@ -129,7 +129,7 @@ export function TarkovGroup({ className = "" }: { className?: string }) {
       <h2 className="sec-h">타르코프</h2>
       <div>
         <h3>
-          <Link href="/tarkov/players">계정 조회</Link>
+          <Link href="/tarkov/players" className="tap">계정 조회</Link>
         </h3>
         <HubSearch />
       </div>

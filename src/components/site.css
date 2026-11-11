@@ -201,7 +201,8 @@
 .site-right .icon-btn::after {
   content: "";
   position: absolute;
-  inset: -6px;
+  /* 테두리 1px 안쪽에서 재므로 7px을 넓혀야 44px */
+  inset: -7px;
 }
 .site-right .icon-btn:hover {
   color: var(--text);
@@ -345,5 +346,78 @@
   .site-foot .site-foot-in {
     padding: 16px 0;
     gap: 8px;
+  }
+}
+
+/* 좁은 폭과 터치 화면에서 44px에 못 미치는 링크와 버튼은 보이는 자리를 그대로 두고 누르는 범위만 위아래로 넓힘 */
+@media (max-width: 760px), (pointer: coarse) {
+  .tap,
+  .site-foot a,
+  .sec-h a,
+  .tb-who,
+  .tier-who a,
+  .tier-how summary,
+  .tdx-title,
+  .tdx-by a {
+    padding-block: var(--tap, 13px);
+    margin-block: calc(var(--tap, 13px) * -1);
+  }
+  .sec-h a:not(.more) {
+    --tap: 6px;
+  }
+  .tb-who {
+    --tap: 2px;
+  }
+  .more summary {
+    padding-block: 9px 13px;
+    margin-block: -5px;
+  }
+  .link {
+    padding-block: 12px;
+    margin-block: -10px;
+  }
+  .tier-table th button,
+  .btn.sm,
+  .tabs a,
+  .tabs button,
+  .chip.tap {
+    position: relative;
+  }
+  .tier-table th button::before,
+  .btn.sm::before,
+  .tabs a::before,
+  .tabs button::before,
+  .chip.tap::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 44px;
+    transform: translateY(-50%);
+  }
+  /* 아래 표의 고정 칸이 넓힌 범위를 덮지 않게 올림 */
+  .sec-h a.more {
+    position: relative;
+    z-index: 5;
+  }
+  /* 줄 사이 4px과 합쳐 줄마다 44px을 차지하게 함 */
+  .tabs a,
+  .tabs button {
+    height: 40px;
+  }
+  .chip.tap {
+    height: 36px;
+    padding-block: 0;
+    margin-block: 0;
+  }
+  /* 가로로 넘겨 보는 탭 줄은 넓힌 범위가 잘려 실제 높이를 키움 */
+  .tdx-tabs a,
+  .btn:not(.sm),
+  .field,
+  .seg button,
+  .kb-presets .btn,
+  .kb-acts .btn {
+    min-height: 44px;
   }
 }

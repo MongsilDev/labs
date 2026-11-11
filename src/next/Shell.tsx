@@ -97,8 +97,8 @@ export function Foot() {
   return (
     <footer className="mx-auto w-full max-w-[1320px] px-4 lg:px-6">
       <div className="flex gap-4 border-t border-rule py-5 text-[12px] text-ink-3">
-        <Link href="/terms">이용약관</Link>
-        <Link href="/privacy">개인정보 처리방침</Link>
+        <Link href="/terms" className="tap">이용약관</Link>
+        <Link href="/privacy" className="tap">개인정보 처리방침</Link>
       </div>
     </footer>
   );

@@ -44,11 +44,11 @@ export default function RulesFields({ rules, mode, rounds, onChange }: { rules: 
 
       <fieldset className="grid gap-2">
         <legend className="lbl">적용할 규칙</legend>
-        <label className="flex cursor-pointer items-center gap-2 text-[14px] [&>input]:size-4 [&>input]:accent-accent">
+        <label className="flex cursor-pointer items-center gap-2 text-[14px] max-[760px]:min-h-11 [&>input]:size-4 [&>input]:accent-accent">
           <input type="checkbox" checked={rules.deathPenalty} onChange={(e) => set("deathPenalty", e.target.checked)} />
           처치자 불명 사망 1회 1점 감점
         </label>
-        <label className="flex cursor-pointer items-center gap-2 text-[14px] [&>input]:size-4 [&>input]:accent-accent">
+        <label className="flex cursor-pointer items-center gap-2 text-[14px] max-[760px]:min-h-11 [&>input]:size-4 [&>input]:accent-accent">
           <input type="checkbox" checked={rules.subWeather} onChange={(e) => set("subWeather", e.target.checked)} />
           서브 날씨 후보 표시
         </label>
@@ -137,7 +137,7 @@ export default function RulesFields({ rules, mode, rounds, onChange }: { rules: 
               </div>
             </>
           )}
-          <label className="mt-2.5 flex cursor-pointer items-center gap-2 text-[14px] [&>input]:size-4 [&>input]:accent-accent">
+          <label className="mt-2.5 flex cursor-pointer items-center gap-2 text-[14px] max-[760px]:min-h-11 [&>input]:size-4 [&>input]:accent-accent">
             <input type="checkbox" checked={cp.penaltyKeeps} onChange={(e) => set("checkpoint", { ...cp, penaltyKeeps: e.target.checked })} />
             라운드 사이 규정 위반 감점으로는 해제하지 않음
           </label>

@@ -17,7 +17,7 @@ export function TeamName({ team, size = 24, short = false }: { team: KelTeam; si
   // 약칭은 로고 아래에 두어 칸 폭을 로고 폭에 맞춤
   if (short)
     return (
-      <Link className="inline-flex flex-col items-center gap-0.5 text-[10px] leading-none text-fg-2 no-underline" href={teamPath(team)} aria-label={team.name}>
+      <Link className="tap inline-flex flex-col items-center gap-0.5 text-[10px] leading-none text-fg-2 no-underline" href={teamPath(team)} aria-label={team.name}>
         <Logo team={team} size={size} />
         {team.short}
       </Link>
@@ -25,7 +25,7 @@ export function TeamName({ team, size = 24, short = false }: { team: KelTeam; si
   return (
     <span className="inline-flex min-w-0 items-center gap-2 max-[760px]:gap-1.5">
       <Logo team={team} size={size} />
-      <Link className="truncate decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={teamPath(team)}>
+      <Link className="tap truncate decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={teamPath(team)}>
         {team.name}
       </Link>
     </span>
@@ -36,7 +36,7 @@ export function PlayerName({ name, team, logoClass }: { name: string; team?: Kel
   return (
     <span className="inline-flex min-w-0 items-center gap-2">
       {team && <Logo team={team} size={22} label className={logoClass} />}
-      <Link className="truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(name)}>
+      <Link className="tap truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(name)}>
         {name}
       </Link>
     </span>

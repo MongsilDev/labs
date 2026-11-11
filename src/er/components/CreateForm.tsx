@@ -127,7 +127,7 @@ export default function CreateForm({ loggedIn, autoCreate }: { loggedIn: boolean
         </div>
       </div>
       <details open={detailsOpen} onToggle={(e) => setDetailsOpen(e.currentTarget.open)}>
-        <summary className="w-max cursor-pointer text-[14px] font-semibold text-fg-2">세부 규칙</summary>
+        <summary className="tap w-max cursor-pointer text-[14px] font-semibold text-fg-2">세부 규칙</summary>
         <RulesFields
           rules={rules}
           mode={mode}

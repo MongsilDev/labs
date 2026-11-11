@@ -75,7 +75,7 @@ function Opponents({ title, list, side }: { title: string; list: { r: KillPair }
           return (
             <li key={o.player} className="flex min-w-0 items-center gap-2">
               <Logo team={TEAM.get(o.team)!} size={22} label />
-              <Link className="truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(o.player)}>
+              <Link className="tap truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(o.player)}>
                 {o.player}
               </Link>
               <span className="ml-auto text-fg-3">{r.count}번</span>
@@ -97,11 +97,11 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
         <div className="flex items-center gap-4">
           <Logo team={team} size={56} />
           <div className="min-w-0">
-            <Link className="inline-block py-1 text-[14px] text-fg-2 decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={teamPath(team)}>
+            <Link className="inline-block py-1 text-[14px] max-[760px]:py-3 text-fg-2 decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={teamPath(team)}>
               {team.name}
             </Link>
-            <h2 id="player" className="truncate text-[34px] leading-tight font-bold tracking-[-0.5px] max-[760px]:text-[28px]">
-              <a className="decoration-line-strong underline-offset-[5px] hover:decoration-fg-3" href={wikiUrl(p.name)}>
+            <h2 id="player" className="truncate max-[760px]:-my-[5px] max-[760px]:py-[5px] text-[34px] leading-tight font-bold tracking-[-0.5px] max-[760px]:text-[28px]">
+              <a className="tap decoration-line-strong underline-offset-[5px] [--tap:5px] hover:decoration-fg-3" href={wikiUrl(p.name)}>
                 {p.name}
               </a>
             </h2>
@@ -243,7 +243,7 @@ function Ranking({ all, metric }: { all: PlayerStat[]; metric: Metric }) {
                 <td className="l">
                   <span className="flex min-w-0 items-center gap-2">
                     <Logo team={TEAM.get(p.team)!} size={22} label />
-                    <Link className="truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(p.name)}>
+                    <Link className="tap truncate font-semibold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={playerPath(p.name)}>
                       {p.name}
                     </Link>
                   </span>
@@ -304,13 +304,13 @@ export default function Players({ user, owner, name, metric }: { user: User | nu
           {byTeam.map(({ team, players }) => (
             <li key={team.key} className="mb-3 flex min-w-0 break-inside-avoid items-start gap-3">
               <Logo team={team} size={28} label />
-              <div className="flex min-w-0 flex-wrap gap-1.5">
+              <div className="flex min-w-0 flex-wrap gap-1.5 max-[760px]:gap-2">
                 {players.map((p) => (
                   <Link
                     key={p.name}
                     href={playerPath(p.name)}
                     aria-current={p.name === picked.name ? "page" : undefined}
-                    className="chip h-7 no-underline hover:border-line-strong aria-[current=page]:border-accent aria-[current=page]:text-accent-text"
+                    className="chip tap h-7 no-underline hover:border-line-strong aria-[current=page]:border-accent aria-[current=page]:text-accent-text"
                   >
                     {p.name}
                   </Link>
