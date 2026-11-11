@@ -794,6 +794,10 @@
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
+/* 판정 색 막대와 글자 사이는 띄움 */
+.hero > .phead {
+  padding-left: 18px !important;
+}
 .hero.clear > .phead {
   border-left: 4px solid var(--line-strong);
 }

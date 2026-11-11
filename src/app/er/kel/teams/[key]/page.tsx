@@ -30,7 +30,7 @@ const LINK = "tap decoration-line-strong underline-offset-[3px] hover:decoration
 
 function Tile({ label, value, children }: { label: string; value: string; children?: React.ReactNode }) {
   return (
-    <div className="rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
+    <div className="border-t border-line py-3">
       <dt className="text-[13px] text-fg-3">{label}</dt>
       <dd className="mt-1 text-[26px] leading-tight font-bold max-[420px]:text-[22px]">{value}</dd>
       {children}

@@ -214,7 +214,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
   return (
     <main id="main" className="wrap pt-[18px]">
       {operator || (preview && view.role) ? (
-        <div className="mb-[18px] flex flex-wrap items-center gap-2.5 rounded-lg border border-line bg-surface px-3.5 py-2.5" role="region" aria-label="운영 도구">
+        <div className="mb-[18px] flex flex-wrap items-center gap-2.5 border-b border-line pb-2.5" role="region" aria-label="운영 도구">
           <span className="flex items-center gap-2 text-[13px] text-fg-2">
             <i className="size-[7px] rounded-full bg-accent" aria-hidden="true" />
             {preview ? "참가자 화면 미리 보기" : view.role === "owner" ? "개최자" : "운영자"}
@@ -333,7 +333,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
       )}
 
       {operator && result.played === 0 ? (
-        <section className="panel mb-4 grid justify-items-start gap-3 border-[1.5px] border-dashed p-5">
+        <section className="panel boxed mb-4 grid justify-items-start gap-3 border-[1.5px] border-dashed p-5">
           <p className="text-[15px] font-bold">CSV 파일 끌어 놓기</p>
           <div className="flex flex-wrap justify-start gap-2">
             <button type="button" className="btn primary" onClick={() => pickFiles()}>

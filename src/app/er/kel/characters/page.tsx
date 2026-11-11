@@ -85,7 +85,7 @@ function Card({ b }: { b: CharacterBuild }) {
             ["평균 순위", place(b.avgPlace)],
             ["1위 비율", pct(b.winRate), `${b.picks}번 중 ${b.wins}번`],
           ].map(([label, value, sub]) => (
-            <div key={label} className="min-w-0 rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
+            <div key={label} className="min-w-0 border-t border-line py-3">
               <dt className="text-[13px] text-fg-3">{label}</dt>
               <dd className="mt-1 text-[22px] leading-tight font-bold max-[420px]:text-[19px]">{value}</dd>
               {sub && <dd className="mt-0.5 text-[13px] text-fg-3">{sub}</dd>}

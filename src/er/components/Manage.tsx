@@ -67,7 +67,7 @@ export default function Manage({
   };
 
   return (
-    <main id="main" className="wrap slim">
+    <main id="main" className="wrap">
       <Link className="text-[13px] text-fg-3 no-underline" href={firstPath(view)}>
         대회 화면으로 돌아가기
       </Link>
@@ -81,157 +81,163 @@ export default function Manage({
         </p>
       )}
 
-      <section className={BOX} aria-labelledby="m-h">
-        <h2 className={H2} id="m-h">
-          운영자 <span className="text-[13px] font-medium text-fg-3">{list.filter((m) => m.role === "operator").length}명, 개최자 외 최대 {LIMITS.operators}명</span>
-        </h2>
-        <ul className="mt-2.5 list-none">
-          {list.map((m) => (
-            <li key={m.id} className={LI}>
-              <Avatar name={m.name} src={m.avatar} />
-              <b className="min-w-0 truncate">{m.name}</b>
-              {m.role === "owner" ? <span className="chip">개최자</span> : <span className="text-[13px] whitespace-nowrap text-fg-3">{timeKo(m.joinedAt)} 참여</span>}
-              <span className={`${ACTS} max-[760px]:ml-[34px]`}>
-                {owner && m.role === "operator" && (
-                  <>
-                    <button type="button" className="btn sm" onClick={() => setConfirm({ kind: "transfer", user: m })}>
-                      개최자 넘기기
-                    </button>
-                    <button type="button" className="btn sm danger" onClick={() => setConfirm({ kind: "remove", user: m })}>
-                      운영자에서 빼기
-                    </button>
-                  </>
-                )}
-                {!owner && m.id === me && (
-                  <button
-                    type="button"
-                    className="btn sm danger"
-                    onClick={async () => {
-                      await act({ action: "leave" });
-                      router.push(firstPath(view));
-                    }}
-                  >
-                    운영자 그만두기
-                  </button>
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {owner && (
-        <section className={BOX} aria-labelledby="i-h">
-          <h2 className={H2} id="i-h">
-            초대 링크
-          </h2>
-          {invites.length > 0 && (
+      <div className={owner ? "grid items-start gap-x-10 gap-y-3.5 min-[1100px]:grid-cols-2" : "max-w-[712px]"}>
+        <div className="min-w-0">
+          <section className={BOX} aria-labelledby="m-h">
+            <h2 className={H2} id="m-h">
+              운영자 <span className="text-[13px] font-medium text-fg-3">{list.filter((m) => m.role === "operator").length}명, 개최자 외 최대 {LIMITS.operators}명</span>
+            </h2>
             <ul className="mt-2.5 list-none">
-              {invites.map((i) => (
-                <li key={i.token} className={LI}>
-                  <code className="min-w-0 flex-1 truncate text-fg-2 [font:inherit]" translate="no">
-                    {inviteUrl(i.token).replace(/^https?:\/\//, "")}
-                  </code>
-                  <span className="text-[13px] whitespace-nowrap text-fg-2">남은 {i.usesLeft}명</span>
-                  <span className={`${ACTS} max-[760px]:ml-0`}>
-                    <button
-                      type="button"
-                      className="btn sm"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(inviteUrl(i.token));
-                          setMsg({ text: "초대 링크를 복사했습니다." });
-                        } catch {
-                          setMsg({ text: "복사하지 못했습니다.\n링크를 직접 선택해 복사해주세요.", bad: true });
-                        }
-                      }}
-                    >
-                      복사
-                    </button>
-                    <button type="button" className="btn sm" onClick={() => act({ action: "cancel", token: i.token }, "초대 링크를 취소했습니다.")}>
-                      취소
-                    </button>
+              {list.map((m) => (
+                <li key={m.id} className={LI}>
+                  <Avatar name={m.name} src={m.avatar} />
+                  <b className="min-w-0 truncate">{m.name}</b>
+                  {m.role === "owner" ? <span className="chip">개최자</span> : <span className="text-[13px] whitespace-nowrap text-fg-3">{timeKo(m.joinedAt)} 참여</span>}
+                  <span className={`${ACTS} max-[760px]:ml-[34px]`}>
+                    {owner && m.role === "operator" && (
+                      <>
+                        <button type="button" className="btn sm" onClick={() => setConfirm({ kind: "transfer", user: m })}>
+                          개최자 넘기기
+                        </button>
+                        <button type="button" className="btn sm danger" onClick={() => setConfirm({ kind: "remove", user: m })}>
+                          운영자에서 빼기
+                        </button>
+                      </>
+                    )}
+                    {!owner && m.id === me && (
+                      <button
+                        type="button"
+                        className="btn sm danger"
+                        onClick={async () => {
+                          await act({ action: "leave" });
+                          router.push(firstPath(view));
+                        }}
+                      >
+                        운영자 그만두기
+                      </button>
+                    )}
                   </span>
                 </li>
               ))}
             </ul>
+          </section>
+
+          {owner && (
+            <section className={BOX} aria-labelledby="i-h">
+              <h2 className={H2} id="i-h">
+                초대 링크
+              </h2>
+              {invites.length > 0 && (
+                <ul className="mt-2.5 list-none">
+                  {invites.map((i) => (
+                    <li key={i.token} className={LI}>
+                      <code className="min-w-0 flex-1 truncate text-fg-2 [font:inherit]" translate="no">
+                        {inviteUrl(i.token).replace(/^https?:\/\//, "")}
+                      </code>
+                      <span className="text-[13px] whitespace-nowrap text-fg-2">남은 {i.usesLeft}명</span>
+                      <span className={`${ACTS} max-[760px]:ml-0`}>
+                        <button
+                          type="button"
+                          className="btn sm"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(inviteUrl(i.token));
+                              setMsg({ text: "초대 링크를 복사했습니다." });
+                            } catch {
+                              setMsg({ text: "복사하지 못했습니다.\n링크를 직접 선택해 복사해주세요.", bad: true });
+                            }
+                          }}
+                        >
+                          복사
+                        </button>
+                        <button type="button" className="btn sm" onClick={() => act({ action: "cancel", token: i.token }, "초대 링크를 취소했습니다.")}>
+                          취소
+                        </button>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {slots > 0 ? (
+                <div className="mt-3.5 grid grid-cols-[auto_96px_auto] items-center justify-start gap-2.5">
+                  <label className="lbl m-0" htmlFor="inv-uses">
+                    인원
+                  </label>
+                  <select id="inv-uses" className="field" value={pick} onChange={(e) => setUses(Number(e.target.value))}>
+                    {Array.from({ length: slots }, (_, k) => (
+                      <option key={k + 1} value={k + 1}>
+                        {k + 1}명
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={async () => {
+                      const r = await act({ action: "invite", uses: pick });
+                      if (r?.token) {
+                        setUses(1);
+                        try {
+                          await navigator.clipboard.writeText(inviteUrl(r.token));
+                          setMsg({ text: "초대 링크를 만들고 복사했습니다." });
+                        } catch {
+                          setMsg({ text: "초대 링크를 만들었습니다.\n위 목록에서 복사해주세요." });
+                        }
+                      }
+                    }}
+                  >
+                    초대 링크 만들기
+                  </button>
+                </div>
+              ) : (
+                <p className="text-[13px] text-fg-3" style={{ marginTop: 12 }}>
+                  <Lines text="남은 운영자 자리가 없습니다.\n더 초대하려면 쓰지 않을 초대 링크를 취소하거나 운영자를 빼주세요." />
+                </p>
+              )}
+            </section>
           )}
-          {slots > 0 ? (
-            <div className="mt-3.5 grid grid-cols-[auto_96px_auto] items-center justify-start gap-2.5">
-              <label className="lbl m-0" htmlFor="inv-uses">
-                인원
-              </label>
-              <select id="inv-uses" className="field" value={pick} onChange={(e) => setUses(Number(e.target.value))}>
-                {Array.from({ length: slots }, (_, k) => (
-                  <option key={k + 1} value={k + 1}>
-                    {k + 1}명
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="btn primary"
-                onClick={async () => {
-                  const r = await act({ action: "invite", uses: pick });
-                  if (r?.token) {
-                    setUses(1);
-                    try {
-                      await navigator.clipboard.writeText(inviteUrl(r.token));
-                      setMsg({ text: "초대 링크를 만들고 복사했습니다." });
-                    } catch {
-                      setMsg({ text: "초대 링크를 만들었습니다.\n위 목록에서 복사해주세요." });
-                    }
-                  }
-                }}
-              >
-                초대 링크 만들기
+
+          <Discord
+            view={view}
+            links={links}
+            onLink={async (group, channelId, guild, channel) => {
+              try {
+                await api.op(view.code, { op: "link_discord", group, channelId });
+                setLinks((l) => [
+                  ...l.filter((x) => x.group !== group && x.channelId !== channelId),
+                  { group, channelId, guild, channel, last: l.find((x) => x.group === group && x.channelId === channelId)?.last ?? null },
+                ].sort((a, b) => a.group - b.group));
+                setMsg({ text: view.groupCount > 1 ? `${groupLabel(group)}조를 #${channel}에 연결했습니다.` : `#${channel}에 연결했습니다.` });
+              } catch (e) {
+                setMsg({ text: e instanceof Error && (e as { status?: number }).status === 400 ? e.message : "연결하지 못했습니다.\n잠시 후 다시 시도해주세요.", bad: true });
+              }
+            }}
+            onUnlink={async (group) => {
+              try {
+                await api.op(view.code, { op: "unlink_discord", group });
+                setLinks((l) => l.filter((x) => x.group !== group));
+                setMsg({ text: view.groupCount > 1 ? `${groupLabel(group)}조 디스코드 연결을 해제했습니다.` : "디스코드 연결을 해제했습니다." });
+              } catch (e) {
+                setMsg({ text: e instanceof Error ? e.message : "연결을 해제하지 못했습니다.\n잠시 후 다시 시도해주세요.", bad: true });
+              }
+            }}
+            onMsg={(text, bad) => setMsg({ text, bad })}
+          />
+        </div>
+        <div className="min-w-0">
+
+          {owner && <Settings key={JSON.stringify(view.rules)} view={view} onSaved={(t) => setMsg({ text: t })} onError={(t) => setMsg({ text: t, bad: true })} />}
+
+          {owner && (
+            <section className={BOX} aria-labelledby="d-h">
+              <h2 className={H2} id="d-h">대회 삭제</h2>
+              <button type="button" className="btn danger" style={{ marginTop: 12 }} onClick={() => setConfirm({ kind: "delete" })}>
+                대회 삭제
               </button>
-            </div>
-          ) : (
-            <p className="text-[13px] text-fg-3" style={{ marginTop: 12 }}>
-              <Lines text="남은 운영자 자리가 없습니다.\n더 초대하려면 쓰지 않을 초대 링크를 취소하거나 운영자를 빼주세요." />
-            </p>
+            </section>
           )}
-        </section>
-      )}
-
-      <Discord
-        view={view}
-        links={links}
-        onLink={async (group, channelId, guild, channel) => {
-          try {
-            await api.op(view.code, { op: "link_discord", group, channelId });
-            setLinks((l) => [
-              ...l.filter((x) => x.group !== group && x.channelId !== channelId),
-              { group, channelId, guild, channel, last: l.find((x) => x.group === group && x.channelId === channelId)?.last ?? null },
-            ].sort((a, b) => a.group - b.group));
-            setMsg({ text: view.groupCount > 1 ? `${groupLabel(group)}조를 #${channel}에 연결했습니다.` : `#${channel}에 연결했습니다.` });
-          } catch (e) {
-            setMsg({ text: e instanceof Error && (e as { status?: number }).status === 400 ? e.message : "연결하지 못했습니다.\n잠시 후 다시 시도해주세요.", bad: true });
-          }
-        }}
-        onUnlink={async (group) => {
-          try {
-            await api.op(view.code, { op: "unlink_discord", group });
-            setLinks((l) => l.filter((x) => x.group !== group));
-            setMsg({ text: view.groupCount > 1 ? `${groupLabel(group)}조 디스코드 연결을 해제했습니다.` : "디스코드 연결을 해제했습니다." });
-          } catch (e) {
-            setMsg({ text: e instanceof Error ? e.message : "연결을 해제하지 못했습니다.\n잠시 후 다시 시도해주세요.", bad: true });
-          }
-        }}
-        onMsg={(text, bad) => setMsg({ text, bad })}
-      />
-
-      {owner && <Settings key={JSON.stringify(view.rules)} view={view} onSaved={(t) => setMsg({ text: t })} onError={(t) => setMsg({ text: t, bad: true })} />}
-
-      {owner && (
-        <section className={BOX} aria-labelledby="d-h">
-          <h2 className={H2} id="d-h">대회 삭제</h2>
-          <button type="button" className="btn danger" style={{ marginTop: 12 }} onClick={() => setConfirm({ kind: "delete" })}>
-            대회 삭제
-          </button>
-        </section>
-      )}
+        </div>
+      </div>
 
       {confirm && (
         <Confirm

@@ -197,7 +197,7 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
               {tiles.map(([m, label, value]) => {
                 const rank = rankOf(all, p, m);
                 return (
-                  <div key={m} className="rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
+                  <div key={m} className="border-t border-line py-3">
                     <dt className="text-[13px] text-fg-3">{label}</dt>
                     <dd className="mt-1 text-[26px] leading-tight font-bold max-[420px]:text-[22px]">{value(p)}</dd>
                     {rank !== null && <Rank pool={rankPool(all, m)} rank={rank} unit="명" />}
