@@ -306,7 +306,7 @@ async function accounts(s, since) {
     const b = JSON.parse(readFileSync(join(BOT, "data/rank_history.json"), "utf8"));
     if (b.players?.season === s.id) book = b.players.list ?? {};
   } catch {}
-  const mmr = new Map(top.map((x) => [x.nickname, x.mmr ?? null]));
+  const mmr = new Map(top.map((x) => [x.nickname, x.mmr == null ? null : Number(x.mmr)]));
   const names = new Set(mmr.keys());
   for (const [name, v] of Object.entries(book)) if (v[3] && v[3] * 1000 >= since) names.add(name);
   return [...names].map((name) => ({ name, uid: book[name]?.[6] ?? null, mmr: mmr.get(name) ?? null }));
@@ -530,7 +530,7 @@ async function collectAccount(s, acc, since, cuts, stop, measure) {
     const g = await get(path);
     if (g === undefined) break;
     const list = g?.userGames ?? [];
-    if (page === 0) after = list.find((y) => y.matchingMode === 3 && y.seasonId === s.id)?.mmrAfter;
+    if (page === 0) after = Number(list.find((y) => y.matchingMode === 3 && y.seasonId === s.id)?.mmrAfter);
     let done = !g?.next || !list.length;
     for (const y of list) {
       const t = kst(y.startDtm);
