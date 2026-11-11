@@ -105,7 +105,7 @@ const fillRow = db.prepare(`UPDATE rows SET route = coalesce(route, ?), tac = co
 /** 원본 한 사람분으로 뒤에 더한 열이 빈 행을 채우고 바뀐 행 수를 돌려줌 */
 const fill = (y, game, player) =>
   Number(fillRow.run(y.routeIdOfStart ?? null, y.tacticalSkillGroup ?? null, y.playerAssistant ?? null, y.playerDeaths ?? null, y.monsterKill ?? null, game, player).changes);
-const getAccount = db.prepare(`SELECT newest, mmr FROM accounts WHERE player = ?`);
+const getAccount = db.prepare(`SELECT newest, checked, mmr FROM accounts WHERE player = ?`);
 const openGames = db.prepare(`SELECT game, max(coalesce(in1000, 0)) AS top FROM rows
   WHERE season = ? AND t >= ? AND game NOT IN (SELECT game FROM raw.games) GROUP BY game ORDER BY max(t) DESC`);
 const putRaw = db.prepare(`INSERT OR REPLACE INTO raw.games VALUES (?, ?, ?, ?, ?)`);
@@ -506,8 +506,8 @@ function rebuild() {
 async function collectAccount(s, acc, since, cuts, stop) {
   const player = playerId(s.id, acc.name);
   const prev = getAccount.get(player);
-  // 랭크 경기를 하면 RP가 바뀌므로 지난번에 끝까지 받은 뒤 RP가 같은 계정은 건너뜀. 놓친 경기는 RP가 바뀐 회차에 newest부터 다시 받음
-  if (!BACKFILL && acc.mmr != null && prev?.mmr === acc.mmr) {
+  // 랭크 경기를 하면 RP가 바뀌므로 지난번에 끝까지 받은 뒤 RP가 같은 계정은 건너뜀. 순 변화가 0인 판을 놓치지 않게 하루에 한 번은 받음
+  if (!BACKFILL && acc.mmr != null && prev?.mmr === acc.mmr && prev.checked > Date.now() - 86_400_000) {
     stats.skipped++;
     return 0;
   }
@@ -519,6 +519,7 @@ async function collectAccount(s, acc, since, cuts, stop) {
   let added = 0;
   let top = newest;
   let complete = false;
+  let seen = false;
   for (let page = 0; !abort && !stop(); page++) {
     if (page === MAX_PAGES) {
       complete = true;
@@ -527,6 +528,7 @@ async function collectAccount(s, acc, since, cuts, stop) {
     const g = await get(path);
     if (g === undefined) break;
     const list = g?.userGames ?? [];
+    if (list.length) seen = true;
     let done = !g?.next || !list.length;
     for (const y of list) {
       const t = kst(y.startDtm);
@@ -543,8 +545,8 @@ async function collectAccount(s, acc, since, cuts, stop) {
     }
     path = `/v1/user/games/uid/${uid}?next=${g.next}`;
   }
-  // 중간에 끊긴 계정은 다음 실행에서 처음부터 다시 받음
-  putAccount.run(player, complete ? top : newest, Date.now(), complete ? acc.mmr : (prev?.mmr ?? null));
+  // 중간에 끊긴 계정은 다음 실행에서 처음부터 다시 받음. 경기 목록을 한 쪽도 받지 못했으면 RP를 저장하지 않아 다음 회차에 다시 받음
+  putAccount.run(player, complete ? top : newest, Date.now(), complete && seen ? acc.mmr : (prev?.mmr ?? null));
   return added;
 }
 
