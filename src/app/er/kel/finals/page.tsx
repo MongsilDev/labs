@@ -126,7 +126,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
           </KelScroll>
         </section>
         <section className="panel p-5 max-[760px]:p-4" aria-labelledby="flow">
-          <h2 id="flow" className="text-[17px] font-extrabold">
+          <h2 id="flow" className="text-[17px] font-bold">
             {EVENT_NAME[f.event]} {f.stage} 누적 점수
           </h2>
           <span className="legend mt-2">

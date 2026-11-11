@@ -37,7 +37,7 @@ export default async function Page() {
       ]}
     >
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="top-pairs">
-        <h2 id="top-pairs" className="text-[17px] font-extrabold">
+        <h2 id="top-pairs" className="text-[17px] font-bold">
           같은 상대를 많이 처치한 기록 상위 {pairs.length}쌍
         </h2>
         <KelScroll label={`같은 상대를 많이 처치한 기록 상위 ${pairs.length}쌍`} className="mt-3">
@@ -83,7 +83,7 @@ export default async function Page() {
         </KelScroll>
       </section>
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="team-kills">
-        <h2 id="team-kills" className="text-[17px] font-extrabold">
+        <h2 id="team-kills" className="text-[17px] font-bold">
           팀끼리 처치한 횟수
         </h2>
         <p className="mt-1 text-[14px] text-fg-2">

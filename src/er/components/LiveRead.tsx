@@ -239,7 +239,7 @@ function Reader({ initial, groupIdx, segment }: Props) {
       <Link className="text-[13px] text-fg-3 no-underline" href={firstPath(view)}>
         대회 화면으로 돌아가기
       </Link>
-      <h1 className="mt-1.5 mb-0.5 text-[28px] font-extrabold tracking-[-0.5px]">경기 중 점수 읽기</h1>
+      <h1 className="mt-1.5 mb-0.5 text-[26px] leading-tight font-bold tracking-[-0.5px]">경기 중 점수 읽기</h1>
       <p className="mb-[18px] text-[14px] text-fg-3">
         {title}, {roundNo}라운드
       </p>

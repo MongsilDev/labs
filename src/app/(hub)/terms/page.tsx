@@ -10,7 +10,7 @@ export default function Terms() {
     <>
       <SiteHeader />
       <main id="main" className="wrap doc">
-        <h1 className="mt-3 mb-[18px] text-[28px] font-extrabold tracking-[-0.5px]">이용약관</h1>
+        <h1 className="mt-3 mb-[18px] text-[26px] leading-tight font-bold tracking-[-0.5px]">이용약관</h1>
         <p className="text-[14px] text-fg-3">2026년 10월 28일 시행</p>
         <p>
           이 약관은 labs.mongsil.dev와 이 사이트가 제공하는 모든 도구에 적용됩니다.

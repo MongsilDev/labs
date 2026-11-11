@@ -26,7 +26,7 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
       <main id="main" className="wrap grid grid-cols-[minmax(0,1fr)] gap-4 pb-10">
         {!data || !view || !fallback ? (
           <>
-            <h1 className="pt-3 text-[28px] font-extrabold tracking-[-0.5px]">실험체 티어</h1>
+            <h1 className="pt-3 text-[26px] leading-tight font-bold tracking-[-0.5px]">실험체 티어</h1>
             <p className="panel px-5 py-4" role="status">
               지금은 티어 정보를 가져올 수 없습니다.
               <br />

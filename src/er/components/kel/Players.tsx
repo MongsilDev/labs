@@ -100,7 +100,7 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
             <Link className="inline-block py-1 text-[14px] text-fg-2 decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={teamPath(team)}>
               {team.name}
             </Link>
-            <h2 id="player" className="truncate text-[34px] leading-tight font-extrabold tracking-[-0.5px] max-[760px]:text-[28px]">
+            <h2 id="player" className="truncate text-[34px] leading-tight font-bold tracking-[-0.5px] max-[760px]:text-[28px]">
               <a className="decoration-line-strong underline-offset-[5px] hover:decoration-fg-3" href={wikiUrl(p.name)}>
                 {p.name}
               </a>
@@ -199,7 +199,7 @@ function Card({ p, all, pairs }: { p: PlayerStat; all: PlayerStat[]; pairs: Kill
                 return (
                   <div key={m} className="rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
                     <dt className="text-[13px] text-fg-3">{label}</dt>
-                    <dd className="mt-1 text-[26px] leading-tight font-extrabold max-[420px]:text-[22px]">{value(p)}</dd>
+                    <dd className="mt-1 text-[26px] leading-tight font-bold max-[420px]:text-[22px]">{value(p)}</dd>
                     {rank !== null && <Rank pool={rankPool(all, m)} rank={rank} unit="명" />}
                   </div>
                 );
@@ -297,7 +297,7 @@ export default function Players({ user, owner, name, metric }: { user: User | nu
       {tabs}
       <Card p={picked} all={all} pairs={killStats(data).pairs} />
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="player-list">
-        <h2 id="player-list" className="text-[17px] font-extrabold">
+        <h2 id="player-list" className="text-[17px] font-bold">
           선수 {all.length}명
         </h2>
         <ul className="mt-3 columns-2 gap-x-6 max-[760px]:columns-1">

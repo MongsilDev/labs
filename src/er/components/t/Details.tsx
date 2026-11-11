@@ -111,7 +111,7 @@ export default function Details({ result }: { result: GroupResult }) {
               <tbody>
                 {players.map((p) => (
                   <tr key={p.nickname + p.team}>
-                    <td className="font-extrabold text-fg-3">{p.rank}</td>
+                    <td className="font-bold text-fg-3">{p.rank}</td>
                     <td className="nm">
                       <b>{p.nickname}</b> <span className="text-fg-3">{p.team}</span>
                     </td>

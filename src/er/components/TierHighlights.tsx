@@ -18,7 +18,7 @@ function Combo({ c, value, sub }: { c: TierCombo; value: string; sub: string }) 
           {c.name}
         </span>
         <span className="grid justify-items-end">
-          <span className="text-[16px] leading-tight font-extrabold tabular-nums">{value}</span>
+          <span className="text-[16px] leading-tight font-bold tabular-nums">{value}</span>
           <span className="text-[12px] text-fg-3 tabular-nums">{sub}</span>
         </span>
       </Link>

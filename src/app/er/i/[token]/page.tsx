@@ -22,7 +22,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
           {info ? (
             <>
               <p className="text-fg-3">{info.inviter}님의 초대</p>
-              <h1 className="text-[21px] font-extrabold">{info.name} 운영자</h1>
+              <h1 className="text-[21px] font-bold">{info.name} 운영자</h1>
               <dl className="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1.5 rounded-md border border-line-soft p-3.5 text-[14px] [&>dt]:text-fg-3">
                 <dt>대회 코드</dt>
                 <dd translate="no">{info.code}</dd>
@@ -44,7 +44,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
             </>
           ) : (
             <>
-              <h1 className="text-[21px] font-extrabold">쓸 수 없는 초대 링크입니다</h1>
+              <h1 className="text-[21px] font-bold">쓸 수 없는 초대 링크입니다</h1>
               <p className="text-fg-3">
                 <Lines text="인원이 다 찼거나 취소된 링크입니다. 개최자에게 새 링크를 요청해주세요." />
               </p>

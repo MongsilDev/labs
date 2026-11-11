@@ -106,7 +106,7 @@ function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
   return (
     <>
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="ops">
-        <h2 id="ops" className="flex flex-wrap items-baseline gap-x-3 text-[17px] font-extrabold">
+        <h2 id="ops" className="flex flex-wrap items-baseline gap-x-3 text-[17px] font-bold">
           팀별 기록
           <span className="text-[14px] font-semibold text-fg-3">정규 시즌 순위 순서</span>
         </h2>
@@ -168,7 +168,7 @@ function Ops({ rows, ranks }: { rows: TeamOps[]; ranks: number[] }) {
         </KelScroll>
       </section>
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="wick-ranks">
-        <h2 id="wick-ranks" className="flex flex-wrap items-baseline gap-x-3 text-[17px] font-extrabold">
+        <h2 id="wick-ranks" className="flex flex-wrap items-baseline gap-x-3 text-[17px] font-bold">
           위클라인을 처치한 팀의 순위
           {games > 0 && <span className="text-[14px] font-semibold text-fg-3">평균 {(ranks.reduce((a, n, i) => a + n * (i + 1), 0) / games).toFixed(2)}위</span>}
         </h2>

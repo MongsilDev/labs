@@ -50,7 +50,7 @@ export default function RpCheck({ data, initial }: { data: CutData; initial?: nu
             const goal = end && round10(end[1]);
             return (
               <section key={key} className="rounded-md border border-line px-4 py-3" aria-label={`${name} 진단`}>
-                <h3 className="mb-1 flex items-center gap-1.5 text-[15px] font-extrabold">
+                <h3 className="mb-1 flex items-center gap-1.5 text-[15px] font-bold">
                   <span className="size-2 rounded-full" style={{ background: color }} aria-hidden="true" />
                   {name}
                 </h3>

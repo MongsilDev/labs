@@ -8,7 +8,7 @@ const ER: Sect[] = [
   {
     name: "실험체",
     items: [
-      { key: "tier", href: "/next/er/tier", label: "실험체 티어" },
+      { key: "tier", href: "/er/tier", label: "실험체 티어" },
       { key: "meta", href: "/next/er/meta", label: "메타 지도" },
       { key: "late", href: "/next/er/late", label: "초반과 막판" },
     ],
@@ -16,24 +16,24 @@ const ER: Sect[] = [
   {
     name: "랭크",
     items: [
-      { key: "cut", href: "/next/er/cut", label: "이터컷" },
+      { key: "cut", href: "/er/cut", label: "이터컷" },
       { key: "rp", href: "/next/er/rp", label: "RP 손익" },
-      { key: "overlay", href: "/next/er/overlay", label: "오버레이" },
+      { key: "overlay", href: "/er/overlay", label: "오버레이" },
     ],
   },
   {
     name: "대회",
     items: [
-      { key: "kel", href: "/next/er/kel", label: "KEL 기록" },
-      { key: "score", href: "/next/er/score", label: "대회 점수" },
+      { key: "kel", href: "/er/kel", label: "KEL 기록" },
+      { key: "score", href: "/er/score", label: "대회 점수" },
     ],
   },
 ];
 const TK: Sect = {
   name: "타르코프",
   items: [
-    { key: "players", href: "/next/tarkov/players", label: "계정 조회" },
-    { key: "kord", href: "/next/tarkov/kord-breach", label: "KORD BREACH" },
+    { key: "players", href: "/tarkov/players", label: "계정 조회" },
+    { key: "kord", href: "/tarkov/kord-breach", label: "KORD BREACH" },
   ],
 };
 
@@ -56,7 +56,7 @@ export default function Shell({ here, children }: { here?: string; children: Rea
       </a>
       <header className="border-b border-rule">
         <div className="mx-auto flex w-full max-w-[1320px] items-center gap-3 px-4 sm:gap-5 lg:px-6">
-          <Link href="/next" className="py-3 text-[16px] font-black tracking-[-0.4px] hover:no-underline">
+          <Link href="/" className="py-3 text-[16px] font-black tracking-[-0.4px] hover:no-underline">
             labs
           </Link>
           <nav className="flex min-w-0 flex-1 items-center overflow-x-auto [scrollbar-width:none] sm:gap-1" aria-label="사이트">

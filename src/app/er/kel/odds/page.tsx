@@ -142,7 +142,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
       </section>
       {cases.length > 0 && (
         <section className="panel p-5 max-[760px]:p-4" aria-labelledby="cases">
-          <h2 id="cases" className="text-[17px] font-extrabold">
+          <h2 id="cases" className="text-[17px] font-bold">
             경우의 수
           </h2>
           <ul className="mt-2 grid grid-cols-2 gap-x-8 max-[760px]:grid-cols-1">
@@ -162,7 +162,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
         </section>
       )}
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="trend">
-        <h2 id="trend" className="flex flex-wrap items-baseline gap-x-3 text-[17px] font-extrabold">
+        <h2 id="trend" className="flex flex-wrap items-baseline gap-x-3 text-[17px] font-bold">
           단계별 결승 직행 확률
           <span className="text-[14px] font-semibold text-fg-3">단위 %</span>
         </h2>

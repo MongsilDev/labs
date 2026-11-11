@@ -96,7 +96,7 @@ export default async function Page() {
       lead="정규 시즌 순위는 서킷 1~4에서 받은 서킷 포인트 합계로 정합니다."
     >
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="flow">
-        <h2 id="flow" className="text-[17px] font-extrabold">
+        <h2 id="flow" className="text-[17px] font-bold">
           시즌 진행
         </h2>
         <ol className="mt-3 grid grid-cols-8 gap-2 max-[1100px]:grid-cols-4 max-[760px]:grid-cols-2">
@@ -110,7 +110,7 @@ export default async function Page() {
       </section>
 
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="faq">
-        <h2 id="faq" className="text-[17px] font-extrabold">
+        <h2 id="faq" className="text-[17px] font-bold">
           자주 묻는 질문
         </h2>
         <div className="mt-1 columns-2 gap-8 max-[900px]:columns-1">
@@ -130,7 +130,7 @@ export default async function Page() {
 
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="standings">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-          <h2 id="standings" className="text-[17px] font-extrabold">
+          <h2 id="standings" className="text-[17px] font-bold">
             정규 시즌 최종 순위
           </h2>
           <span className="legend">
@@ -178,7 +178,7 @@ export default async function Page() {
 
       <div className="grid gap-4">
         <section className="panel p-5 max-[760px]:p-4" aria-labelledby="circuit-points">
-          <h2 id="circuit-points" className="text-[17px] font-extrabold">
+          <h2 id="circuit-points" className="text-[17px] font-bold">
             서킷 포인트
           </h2>
           {/* 휴대폰은 순위를 행으로 세움 */}
@@ -228,7 +228,7 @@ export default async function Page() {
           </KelScroll>
         </section>
         <section className="panel p-5 max-[760px]:p-4" aria-labelledby="game-points">
-          <h2 id="game-points" className="text-[17px] font-extrabold">
+          <h2 id="game-points" className="text-[17px] font-bold">
             게임 점수
           </h2>
           <p className="mt-1 text-[14px] text-fg-2">게임 점수는 순위 점수에 킬 점수를 더한 값입니다.</p>

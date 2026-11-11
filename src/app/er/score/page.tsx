@@ -29,7 +29,7 @@ export default async function ScorePage({ searchParams }: { searchParams: Promis
         )}
         <div className="grid grid-cols-[minmax(0,460px)_minmax(0,1fr)] items-start gap-10 max-[900px]:grid-cols-[minmax(0,1fr)] max-[900px]:gap-6">
           <section aria-labelledby="new-h">
-            <h1 className="mt-3 mb-[18px] text-[28px] font-extrabold tracking-[-0.5px]" id="new-h">
+            <h1 className="mt-3 mb-[18px] text-[26px] leading-tight font-bold tracking-[-0.5px]" id="new-h">
               대회 점수
             </h1>
             <CreateForm loggedIn={Boolean(user)} autoCreate={q.create === "1"} />

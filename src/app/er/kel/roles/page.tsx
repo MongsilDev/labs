@@ -17,7 +17,7 @@ const TOP = 5;
 function Top({ id, title, rows, value, per }: { id: string; title: string; rows: PlayerStat[]; value: (p: PlayerStat) => number; per?: [string, (p: PlayerStat) => string] }) {
   return (
     <section className="panel p-5 max-[760px]:p-4" aria-labelledby={id}>
-      <h2 id={id} className="text-[17px] font-extrabold">
+      <h2 id={id} className="text-[17px] font-bold">
         {title}
       </h2>
       <KelScroll label={title} className="mt-3">
@@ -119,7 +119,7 @@ export default async function Page() {
           </div>
         </section>
         <section className="panel col-span-2 p-5 max-[760px]:col-span-1 max-[760px]:p-4" aria-labelledby="all-players">
-          <h2 id="all-players" className="text-[17px] font-extrabold">
+          <h2 id="all-players" className="text-[17px] font-bold">
             {MIN_GAMES}게임 이상 출전한 선수 {players.length}명의 비중
           </h2>
           {/* 팀 순서 목록이라 팀이 두 열에 나뉘지 않는 자리에서 자름 */}

@@ -11,7 +11,7 @@ export default function Privacy() {
     <>
       <SiteHeader />
       <main id="main" className="wrap doc">
-        <h1 className="mt-3 mb-[18px] text-[28px] font-extrabold tracking-[-0.5px]">개인정보 처리방침</h1>
+        <h1 className="mt-3 mb-[18px] text-[26px] leading-tight font-bold tracking-[-0.5px]">개인정보 처리방침</h1>
         <p className="text-[14px] text-fg-3">2026년 10월 28일 시행</p>
         <p>
           labs.mongsil.dev가 처리하는 개인정보를 개인정보 보호법 제30조에 따라 공개합니다.<br />개인이 운영하는 무료 서비스이며, 이터널 리턴 도구와 Escape from Tarkov 도구가

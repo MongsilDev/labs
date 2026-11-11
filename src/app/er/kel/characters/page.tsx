@@ -75,7 +75,7 @@ function Card({ b }: { b: CharacterBuild }) {
   return (
     <section className="panel grid grid-cols-[minmax(0,4fr)_minmax(0,8fr)] gap-7 p-6 max-[1080px]:grid-cols-1 max-[760px]:p-4" aria-labelledby="character">
       <div className="min-w-0">
-        <h2 id="character" className="flex items-center gap-4 text-[32px] leading-tight font-extrabold tracking-[-0.5px] max-[760px]:text-[28px]">
+        <h2 id="character" className="flex items-center gap-4 text-[32px] leading-tight font-bold tracking-[-0.5px] max-[760px]:text-[28px]">
           <Char name={b.key} label="" size={64} />
           {characterName(b.key)}
         </h2>
@@ -87,7 +87,7 @@ function Card({ b }: { b: CharacterBuild }) {
           ].map(([label, value, sub]) => (
             <div key={label} className="min-w-0 rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
               <dt className="text-[13px] text-fg-3">{label}</dt>
-              <dd className="mt-1 text-[22px] leading-tight font-extrabold max-[420px]:text-[19px]">{value}</dd>
+              <dd className="mt-1 text-[22px] leading-tight font-bold max-[420px]:text-[19px]">{value}</dd>
               {sub && <dd className="mt-0.5 text-[13px] text-fg-3">{sub}</dd>}
             </div>
           ))}
@@ -150,7 +150,7 @@ function Card({ b }: { b: CharacterBuild }) {
             <>
               <ol className="flex flex-wrap gap-1.5" aria-label={b.order.name}>
                 {order.map((s, i) => (
-                  <li key={i} className="grid size-[34px] place-items-center rounded-lg bg-field font-extrabold">
+                  <li key={i} className="grid size-[34px] place-items-center rounded-lg bg-field font-bold">
                     {s}
                   </li>
                 ))}
@@ -174,7 +174,7 @@ function Card({ b }: { b: CharacterBuild }) {
 function RateTable({ title, rows, events }: { title: string; rows: PickRate[]; events: readonly (typeof KEL_EVENTS)[number][] }) {
   return (
     <section className="panel min-w-0 p-5 max-[760px]:p-4" aria-labelledby="tactical">
-      <h2 id="tactical" className="text-[17px] font-extrabold">
+      <h2 id="tactical" className="text-[17px] font-bold">
         {title}
       </h2>
       <KelScroll label={title} className="mt-3">
@@ -222,7 +222,7 @@ function Build({ data, b }: { data: Kel; b: CharacterBuild }) {
     <>
       <Card b={b} />
       <section className="panel p-5 max-[760px]:p-4" aria-labelledby="character-list">
-        <h2 id="character-list" className="text-[17px] font-extrabold">
+        <h2 id="character-list" className="text-[17px] font-bold">
           실험체 {builds.length}종
         </h2>
         <ul className="mt-3 flex flex-wrap gap-1.5">
@@ -248,7 +248,7 @@ function Build({ data, b }: { data: Kel; b: CharacterBuild }) {
       <div className="grid grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)] items-start gap-5 max-[1280px]:grid-cols-1">
         <RateTable title="전술 스킬 대회별 선택률" rows={season.tactical} events={events} />
         <section className="panel min-w-0 p-5 max-[760px]:p-4" aria-labelledby="traits">
-          <h2 id="traits" className="text-[17px] font-extrabold">
+          <h2 id="traits" className="text-[17px] font-bold">
             핵심 특성 선택률
           </h2>
           <KelScroll label="핵심 특성 선택률" className="mt-3">

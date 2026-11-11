@@ -54,7 +54,7 @@ function Event({ date, name, teams, slot, results, cut = SEMI_QUALIFY, champion,
     <section className="panel flex flex-col gap-3 p-5 max-[760px]:p-4" aria-label={name}>
       <div>
         <p className="text-[13px] text-fg-3">{date}</p>
-        <h2 className="text-[22px] font-extrabold tracking-[-0.3px]">{name}</h2>
+        <h2 className="text-[22px] font-bold tracking-[-0.3px]">{name}</h2>
       </div>
       {results ? (
         <Results results={results} cut={cut} champion={champion} />
@@ -128,7 +128,7 @@ export default async function Page() {
       </div>
       {rec && (
         <section aria-labelledby="best">
-          <h2 id="best" className="text-[17px] font-extrabold">
+          <h2 id="best" className="text-[17px] font-bold">
             시즌 최고 기록
           </h2>
           <div className="mt-3 grid grid-cols-3 gap-3 max-[760px]:grid-cols-2">

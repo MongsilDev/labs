@@ -42,7 +42,7 @@ export default function ExampleBoard({ rows = 4, bare }: { rows?: number; bare?:
             <div className="mb-[5px] min-w-0 truncate text-[14px] font-bold">{s.name}</div>
             <Bar s={s} max={max} rounds={res.played} height={10} labels={false} />
           </div>
-          <span className="text-right text-[18px] font-extrabold tabular-nums">{num(s.total)}</span>
+          <span className="text-right text-[18px] font-bold tabular-nums">{num(s.total)}</span>
         </div>
       ))}
       {!bare && (

@@ -253,7 +253,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
           <h2 className="text-[15px] font-bold" id="welcome-h">대회를 만들었습니다</h2>
           <div className="flex items-baseline gap-3">
             <span className="text-fg-3">대회 코드</span>
-            <b className="text-[30px] font-extrabold tracking-[4px]" translate="no">{view.code}</b>
+            <b className="text-[30px] font-bold tracking-[4px]" translate="no">{view.code}</b>
           </div>
           <div className="flex flex-wrap justify-start gap-2">
             <button type="button" className="btn primary" onClick={() => copy(`${origin}/er/t/${view.code}${view.keys ? `/${segment}` : ""}`, "보기 링크를 복사했습니다.")}>
@@ -278,7 +278,7 @@ export default function TournamentApp({ initial, groupIdx, basePath, created = f
 
       <div className="mb-3.5 flex flex-wrap items-end gap-4">
         <div>
-          <h1 className="flex flex-wrap items-center gap-2.5 text-[26px] font-extrabold tracking-[-0.4px]">
+          <h1 className="flex flex-wrap items-center gap-2.5 text-[26px] font-bold tracking-[-0.4px]">
             {view.name}
             {example && <span className="chip dashed">예시</span>}
           </h1>

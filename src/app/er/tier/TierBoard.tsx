@@ -283,7 +283,7 @@ export default function TierBoard(p: Props) {
           <img src="/img/er/rank/Titan.v1.png" alt="" width={75} height={96} />
         </span>
         <div className="min-w-0">
-          <h1 className="text-[28px] font-bold tracking-[-0.6px]">실험체 티어</h1>
+          <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px]">실험체 티어</h1>
           <p className="text-[14px] text-fg-3 tabular-nums">
             {p.server} 상위 1,000명이 참가한 경기, {view.season && `${view.season}, `}
             {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}

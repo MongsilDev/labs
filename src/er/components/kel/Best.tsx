@@ -44,7 +44,7 @@ export function Best({ label, value, unit, href, r, className = "", children }: 
   const body = (
     <>
       <p className="text-[13px] text-fg-3">{label}</p>
-      <p className="text-[28px] leading-none font-extrabold tabular-nums max-[760px]:text-[24px]">
+      <p className="text-[28px] leading-none font-bold tabular-nums max-[760px]:text-[24px]">
         {value}
         {unit && <span className="ml-0.5 text-[16px]">{unit}</span>}
       </p>

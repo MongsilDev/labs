@@ -49,7 +49,7 @@ function TeamWho({ g, sub, detail }: { g: TeamGame; sub: string; detail: string 
 function Ranking({ id, title, rows, label, value }: { id: string; title: string; rows: { r: KelRow; rank: number }[]; label: string; value: (r: KelRow) => React.ReactNode }) {
   return (
     <section className="panel p-5 max-[760px]:p-4" aria-labelledby={id}>
-      <h2 id={id} className="text-[17px] font-extrabold">
+      <h2 id={id} className="text-[17px] font-bold">
         {title}
       </h2>
       <KelScroll label={title} className="mt-3">

@@ -2,10 +2,10 @@ import Link from "next/link";
 import Shell from "@/next/Shell";
 
 const GO = [
-  ["/next/er/tier", "실험체 티어"],
-  ["/next/er/cut", "이터컷"],
-  ["/next/er/score", "대회 점수"],
-  ["/next/tarkov/players", "계정 조회"],
+  ["/er/tier", "실험체 티어"],
+  ["/er/cut", "이터컷"],
+  ["/er/score", "대회 점수"],
+  ["/tarkov/players", "계정 조회"],
 ] as const;
 
 export default function NextNotFound() {

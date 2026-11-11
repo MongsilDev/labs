@@ -31,7 +31,7 @@ export default function Highlights({ data }: { data: Data }) {
                     </span>
                   </span>
                   <span className="grid justify-items-end">
-                    <span className="text-[16px] leading-tight font-extrabold tabular-nums">{pct(c.rate)}</span>
+                    <span className="text-[16px] leading-tight font-bold tabular-nums">{pct(c.rate)}</span>
                     <span className="text-[12px] text-fg-3 tabular-nums">{c.games}게임</span>
                   </span>
                 </Link>
@@ -58,7 +58,7 @@ export default function Highlights({ data }: { data: Data }) {
                     </Link>
                   </span>
                   <Link className={`grid justify-items-end ${go} max-[1024px]:justify-items-start`} href={records.path}>
-                    <span className="text-[16px] leading-tight font-extrabold tabular-nums">{int(b.value)}</span>
+                    <span className="text-[16px] leading-tight font-bold tabular-nums">{int(b.value)}</span>
                     <span className="text-[12px] text-fg-3">{b.label}</span>
                   </Link>
                 </li>
@@ -86,7 +86,7 @@ export default function Highlights({ data }: { data: Data }) {
                     <span className="truncate text-[13px] text-fg-2" aria-hidden="true">
                       {names}
                     </span>
-                    <span className="text-[16px] font-extrabold whitespace-nowrap tabular-nums">{c.count}번</span>
+                    <span className="text-[16px] font-bold whitespace-nowrap tabular-nums">{c.count}번</span>
                   </Link>
                 </li>
               );

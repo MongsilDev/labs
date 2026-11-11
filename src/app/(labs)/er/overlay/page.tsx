@@ -22,7 +22,7 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
   const url = `${(process.env.BASE_URL || "https://labs.mongsil.dev").replace(/\/$/, "")}/er/rank/overlay?n=${encodeURIComponent(nick)}&p=${preset}${x || y ? `&x=${x}&y=${y}` : ""}`;
   return (
     <Live>
-      <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">오버레이</h1>
+      <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px]">오버레이</h1>
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_400px]">
         <section className="sec">
           <form id="rank-form" className="grid max-w-[560px] gap-6" noValidate>

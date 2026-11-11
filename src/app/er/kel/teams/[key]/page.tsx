@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 const CIRCUITS = KEL_EVENTS.filter((e) => /^c\d$/.test(e.key)).map((e) => e.name);
-const H2 = "text-[17px] font-extrabold";
+const H2 = "text-[17px] font-bold";
 const SUB = "text-[13px] font-semibold text-fg-3";
 const LINK = "decoration-line-strong underline-offset-[3px] hover:decoration-fg-3";
 
@@ -32,7 +32,7 @@ function Tile({ label, value, children }: { label: string; value: string; childr
   return (
     <div className="rounded-lg bg-field px-4 py-3.5 max-[420px]:px-3">
       <dt className="text-[13px] text-fg-3">{label}</dt>
-      <dd className="mt-1 text-[26px] leading-tight font-extrabold max-[420px]:text-[22px]">{value}</dd>
+      <dd className="mt-1 text-[26px] leading-tight font-bold max-[420px]:text-[22px]">{value}</dd>
       {children}
     </div>
   );
@@ -107,7 +107,7 @@ export default async function Page({ params }: Props) {
         <div className="flex items-center gap-4">
           <Logo team={team} size={64} label />
           <div className="min-w-0">
-            <h1 className="text-[28px] leading-tight font-extrabold tracking-[-0.5px] max-[760px]:text-[24px]">
+            <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px] max-[760px]:text-[24px]">
               <a className="decoration-line-strong underline-offset-[5px] hover:decoration-fg-3" href={wikiUrl(team.wiki)}>
                 {team.name}
               </a>

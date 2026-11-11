@@ -4,7 +4,7 @@ export default function Rank({ pool, rank, unit }: { pool: number; rank: number;
     <dd className="mt-0.5">
       <span className="sr-only">{`${pool}${unit} 중 ${rank}위`}</span>
       <span aria-hidden="true">
-        <b className="text-[16px] font-extrabold text-accent-text">{rank}위</b>{" "}
+        <b className="text-[16px] font-bold text-accent-text">{rank}위</b>{" "}
         <span className="text-[12px] text-fg-3">/ {`${pool}${unit}`}</span>
       </span>
     </dd>

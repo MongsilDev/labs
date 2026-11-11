@@ -77,7 +77,7 @@ export default async function Page() {
     >
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-5 max-[1080px]:grid-cols-1">
           <section className="panel p-5 max-[760px]:p-4" aria-labelledby="start-rank">
-            <h2 id="start-rank" className="text-[17px] font-extrabold">
+            <h2 id="start-rank" className="text-[17px] font-bold">
               시작 지역별 팀 순위
             </h2>
             <KelScroll label="시작 지역별 팀 순위" className="mt-3">
@@ -104,7 +104,7 @@ export default async function Page() {
             </KelScroll>
           </section>
           <section className="panel p-5 max-[760px]:p-4" aria-labelledby="deaths">
-            <h2 id="deaths" className="text-[17px] font-extrabold">
+            <h2 id="deaths" className="text-[17px] font-bold">
               사망이 많았던 지역
             </h2>
             <p className="mt-1 text-[13px] text-fg-3">굵은 숫자는 사망 수입니다.</p>
@@ -120,7 +120,7 @@ export default async function Page() {
             </ul>
           </section>
           <section className="panel col-span-full p-5 max-[760px]:p-4" aria-labelledby="team-starts">
-            <h2 id="team-starts" className="text-[17px] font-extrabold">
+            <h2 id="team-starts" className="text-[17px] font-bold">
               팀별로 많이 시작한 지역
             </h2>
             <KelScroll label="팀별로 많이 시작한 지역" className="mt-3">
@@ -145,7 +145,7 @@ export default async function Page() {
             </KelScroll>
           </section>
         <section className="panel col-span-full p-5 max-[760px]:p-4" aria-labelledby="player-starts">
-          <h2 id="player-starts" className="text-[17px] font-extrabold">
+          <h2 id="player-starts" className="text-[17px] font-bold">
             선수별로 많이 시작한 지역
           </h2>
           <KelScroll label="선수별로 많이 시작한 지역" className="mt-3">
