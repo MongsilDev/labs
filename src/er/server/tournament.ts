@@ -1254,6 +1254,7 @@ export function uploadWithToken(value: string, file: { name: string; text: strin
     const nicks = parsed.round.players.map((p) => p.nickname);
     const pick = pickGroup(cands.filter((c) => !c.ended), nicks, autoConfig());
     if (!pick.ok) {
+      if (pick.reason === "many") return { status: "invalid", message: pick.message };
       const done = pickGroup(cands.filter((c) => c.ended && c.names.size > 0), nicks, { ...autoConfig(), many: "latest", first: "reject" });
       if (done.ok) return { status: "ended", message: done.c.t.group_count > 1 ? `${groupLabel(done.c.g)}조 경기가 끝났습니다.` : "대회가 끝났습니다." };
       return { status: "invalid", message: pick.message };

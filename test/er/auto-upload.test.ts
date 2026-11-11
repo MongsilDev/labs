@@ -187,6 +187,16 @@ describe("352-3 명단이 맞는 조가 여럿일 때", () => {
     expect([rounds(one.code), rounds(two.code)]).toEqual([[[], []], [[7102], []]]);
   });
 
+  it("roster: 끝난 대회와도 맞아도 여럿이라는 안내를 그대로 돌려줌", async () => {
+    const old = await scrim({ plannedRounds: 1 });
+    const value = t.issueUploadToken(op);
+    expect((await send(value, lobby(7104, A))).status).toBe(200);
+    await scrim();
+    await scrim();
+    expect((await send(value, lobby(7105, A))).body).toMatchObject({ status: "invalid", message: "명단이 맞는 조가 여럿이라 반영하지 않았습니다. 디스코드나 Labs에서 직접 올려주세요." });
+    expect(rounds(old.code)).toEqual([[7104], []]);
+  });
+
   it("다른 대회에 이미 올린 경기는 명단이 맞는 새 대회에 넣지 않고 409", async () => {
     process.env.AUTO_UPLOAD_MANY = "latest";
     const one = await scrim();
@@ -219,6 +229,15 @@ describe("352-4 명단도 기록도 없는 조의 첫 경기", () => {
     plain();
     plain();
     expect((await send(t.issueUploadToken(owner), lobby(7204, A))).status).toBe(422);
+  });
+
+  it("single: 다른 조 명단과 일부라도 겹친 경기는 이름을 모르는 조에 넣지 않음", async () => {
+    const s = await scrim();
+    const code = plain();
+    const value = t.issueUploadToken(owner);
+    const mostlySubs = csv(7206, [team("가", 1), team("대타1", 2), team("대타2", 3)]);
+    expect((await send(value, mostlySubs)).status).toBe(422);
+    expect([rounds(s.code), rounds(code)]).toEqual([[[], []], [[]]]);
   });
 
   it("reject: 첫 경기는 직접 올려야 함", async () => {

@@ -29,21 +29,22 @@ export const nick = (s: string) => s.normalize("NFC").replace(/\s+/g, " ").trim(
 
 export type GroupNames = { t: { id: number; updated_at: number }; g: number; names: Set<string> };
 
-export type GroupPick<C extends GroupNames> = { ok: true; c: C } | { ok: false; message: string };
+export type GroupPick<C extends GroupNames> = { ok: true; c: C } | { ok: false; reason: "empty" | "many" | "none"; message: string };
 
 // 결과에 나온 닉네임의 절반 이상이 아는 이름인 조를 맞는 조로 봄. 대타와 닉네임 변경이 있어 전원 일치는 요구하지 않음
 export function pickGroup<C extends GroupNames>(groups: C[], players: string[], cfg: AutoConfig): GroupPick<C> {
   const seen = [...new Set(players.map(nick))];
-  if (!groups.length) return { ok: false, message: "자동 업로드를 받는 대회가 없습니다." };
+  if (!groups.length) return { ok: false, reason: "empty", message: "자동 업로드를 받는 대회가 없습니다." };
   const scored = groups.map((c) => ({ c, hit: seen.filter((n) => c.names.has(n)).length }));
   const matched = scored.filter((s) => s.c.names.size > 0 && s.hit * 2 >= seen.length && s.hit > 0);
   if (matched.length === 1) return { ok: true, c: matched[0].c };
   if (matched.length > 1) {
-    if (cfg.many === "roster") return { ok: false, message: "명단이 맞는 조가 여럿이라 반영하지 않았습니다. 디스코드나 Labs에서 직접 올려주세요." };
+    if (cfg.many === "roster") return { ok: false, reason: "many", message: "명단이 맞는 조가 여럿이라 반영하지 않았습니다. 디스코드나 Labs에서 직접 올려주세요." };
     matched.sort((a, b) => b.c.t.updated_at - a.c.t.updated_at || b.hit - a.hit);
     return { ok: true, c: matched[0].c };
   }
   const unknown = scored.filter((s) => s.c.names.size === 0);
-  if (cfg.first === "single" && unknown.length === 1) return { ok: true, c: unknown[0].c };
-  return { ok: false, message: "명단이 맞는 조가 없어 반영하지 않았습니다." };
+  // 명단과 조금이라도 겹친 경기는 대타가 많은 그 조의 경기일 수 있어 이름 모르는 조로 보내지 않음
+  if (cfg.first === "single" && unknown.length === 1 && scored.every((s) => s.hit === 0)) return { ok: true, c: unknown[0].c };
+  return { ok: false, reason: "none", message: "명단이 맞는 조가 없어 반영하지 않았습니다." };
 }
