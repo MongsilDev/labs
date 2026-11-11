@@ -108,7 +108,7 @@ export default async function Page({ params }: Props) {
           <Logo team={team} size={64} label />
           <div className="min-w-0">
             <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px] max-[760px]:text-[24px]">
-              <a className="tap decoration-line-strong underline-offset-[5px] [--tap:7px] hover:decoration-fg-3" href={wikiUrl(team.wiki)}>
+              <a className="tap decoration-line-strong underline-offset-[5px] [--tap:9px] hover:decoration-fg-3" href={wikiUrl(team.wiki)}>
                 {team.name}
               </a>
             </h1>

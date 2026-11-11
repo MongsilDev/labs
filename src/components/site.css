@@ -396,6 +396,18 @@
     height: 44px;
     transform: translateY(-50%);
   }
+  /* 링크가 있는 표의 행은 넓힌 범위가 위아래 행과 겹치지 않게 행 높이를 맞춤 */
+  .kel-table td:has(a.tap) {
+    height: 44px;
+  }
+  .kel-table td a.tap {
+    --tap: 14px;
+  }
+  /* 이름 아래 실험체 얼굴 줄이 넓힌 범위를 덮지 않게 올림 */
+  .kel-table td.pin a.tap {
+    position: relative;
+    z-index: 1;
+  }
   /* 아래 표의 고정 칸이 넓힌 범위를 덮지 않게 올림 */
   .sec-h a.more {
     position: relative;
