@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
+import { Fragment, type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { int } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
 import { comboPath, compareView, movedCombos, signed, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
@@ -25,8 +25,8 @@ const COLS: { key: SortKey; label: string; cls?: string; first: Dir; val: (c: Ti
     val: (c) => c.pick,
     show: (c) => (
       <>
-        <b>{c.pick.toFixed(2)}%</b>
         <small>{int(c.n)}판</small>
+        <b>{c.pick.toFixed(2)}%</b>
       </>
     ),
   },
@@ -134,7 +134,7 @@ function RankTable({ list, sort, dir, onSort, thin, href, onOpen }: { list: Tier
   const router = useRouter();
   const cls = (k: SortKey, base?: string) => [base, sort === k && "on"].filter(Boolean).join(" ") || undefined;
   return (
-    <table className="kel-table tier-table">
+    <table className="kel-table tier-table" data-band={sort === "score" || undefined}>
       <thead>
         <tr>
           <th className="tier-no">#</th>
@@ -156,9 +156,17 @@ function RankTable({ list, sort, dir, onSort, thin, href, onOpen }: { list: Tier
       <tbody>
         {list.map((c, i) => {
           const key = `${c.char}:${c.weapon}`;
+          const band = sort === "score" && (i === 0 || list[i - 1].grade !== c.grade);
           return (
+            <Fragment key={key}>
+            {band && (
+              <tr className="tier-band">
+                <th colSpan={8} scope="rowgroup">
+                  <span className="tier-grade" data-grade={c.grade}>{c.grade}</span>
+                </th>
+              </tr>
+            )}
             <tr
-              key={key}
               data-thin={thin(c) || undefined}
               onClick={(e) => {
                 if ((e.target as HTMLElement).closest("a")) return;
@@ -170,7 +178,7 @@ function RankTable({ list, sort, dir, onSort, thin, href, onOpen }: { list: Tier
               <td className="l">
                 <span className="tier-who">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={36} height={36} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+                  <img src={`/img/er/char/${c.key}.v1.webp`} alt="" width={28} height={28} loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
                   <Link href={href(c)} prefetch={false} onClick={onOpen}>
                     <b className="tier-wi">
                       <Weapon code={c.weapon} label={c.weaponName} />
@@ -191,6 +199,7 @@ function RankTable({ list, sort, dir, onSort, thin, href, onOpen }: { list: Tier
                 </td>
               ))}
             </tr>
+            </Fragment>
           );
         })}
       </tbody>
@@ -274,7 +283,7 @@ export default function TierBoard(p: Props) {
           <img src="/img/er/rank/Titan.v1.png" alt="" width={75} height={96} />
         </span>
         <div className="min-w-0">
-          <h1 className="text-[28px] font-extrabold tracking-[-0.5px]">실험체 티어</h1>
+          <h1 className="text-[28px] font-bold tracking-[-0.6px]">실험체 티어</h1>
           <p className="text-[14px] text-fg-3 tabular-nums">
             {p.server} 상위 1,000명이 참가한 경기, {view.season && `${view.season}, `}
             {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}
@@ -285,13 +294,6 @@ export default function TierBoard(p: Props) {
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
-        <div className="tabs" role="tablist" aria-label="기간">
-          {p.views.map((v) => (
-            <button key={v.id} type="button" role="tab" aria-selected={v.id === view.id} onClick={() => pick(v.id)}>
-              {v.id === `patch-${p.patch}` && !v.season ? `${v.label} ${kstDay(Math.min(p.updatedAt, p.seasonEnd)) - kstDay(v.from) + 1}일째` : v.label}
-            </button>
-          ))}
-        </div>
         {p.early && view.patch === p.early.patch && !view.patches && !view.season ? (
           <p className="text-[14px] text-fg-2" role="status">
             {p.early.label} 기록이 {int(p.publishRows)}판보다 적어 등급이 크게 바뀔 수 있습니다. 지금 {int(p.early.rows)}판입니다.
@@ -306,6 +308,27 @@ export default function TierBoard(p: Props) {
           )
         )}
         <div className="tier-ctl">
+          <div className="tabs tier-period" role="tablist" aria-label="기간">
+            {p.views.map((v) => (
+              <button key={v.id} type="button" role="tab" aria-selected={v.id === view.id} onClick={() => pick(v.id)}>
+                {v.id === `patch-${p.patch}` && !v.season ? `${v.label} ${kstDay(Math.min(p.updatedAt, p.seasonEnd)) - kstDay(v.from) + 1}일째` : v.label}
+              </button>
+            ))}
+          </div>
+          <select className="field sm tier-sel" aria-label="기간" value={view.id} onChange={(e) => pick(e.target.value)}>
+            {p.views.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.id === `patch-${p.patch}` && !v.season ? `${v.label} ${kstDay(Math.min(p.updatedAt, p.seasonEnd)) - kstDay(v.from) + 1}일째` : v.label}
+              </option>
+            ))}
+          </select>
+          <select className="field sm tier-sel" aria-label="역할군" value={role ?? ""} onChange={(e) => { const r = e.target.value || null; setRole(r); keep({ r }); }}>
+            {[null, ...roles].map((r) => (
+              <option key={r ?? "all"} value={r ?? ""}>
+                {r ?? "역할군 전체"}
+              </option>
+            ))}
+          </select>
           <div className="tabs tier-role" role="group" aria-label="역할군">
             {[null, ...roles].map((r) => (
               <button
@@ -354,9 +377,9 @@ export default function TierBoard(p: Props) {
           </div>
         </details>
         {prev && moved.length > 0 && (
-          <details className="tier-how tier-moved">
+          <details className="tier-how tier-moved tier-moved-fold">
             <summary>
-              {prev.patch} 패치보다 점수가 크게 바뀐 실험체 {moved.length}개
+              {prev.patch} 패치와 비교해 점수가 크게 바뀐 실험체 {moved.length}개
             </summary>
             <MovedList title="강해진 실험체" list={moved.filter((m) => m.c.score > m.o.score)} />
             <MovedList title="약해진 실험체" list={moved.filter((m) => m.c.score < m.o.score)} />
@@ -372,8 +395,17 @@ export default function TierBoard(p: Props) {
         </p>
       )}
       {shown.length > 0 && (
-        <div className="tier-board">
-          <RankTable list={ordered} sort={sort} dir={dir} onSort={order} thin={thin} href={href} onOpen={saveBack} />
+        <div className="tier-main">
+          <div className="tier-board">
+            <RankTable list={ordered} sort={sort} dir={dir} onSort={order} thin={thin} href={href} onOpen={saveBack} />
+          </div>
+          {prev && moved.length > 0 && (
+            <aside className="tier-side tier-moved">
+              <h2>{prev.patch} 패치와 비교해 점수가 크게 바뀐 실험체</h2>
+              <MovedList title="강해진 실험체" list={moved.filter((m) => m.c.score > m.o.score)} />
+              <MovedList title="약해진 실험체" list={moved.filter((m) => m.c.score < m.o.score)} />
+            </aside>
+          )}
         </div>
       )}
     </>

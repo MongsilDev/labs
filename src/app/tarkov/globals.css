@@ -384,7 +384,7 @@ select.field {
 }
 .dialog h2 {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   margin-bottom: 4px;
 }
 .dialog .acts {
@@ -432,7 +432,7 @@ table {
 
 .page-h1 {
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.5px;
   margin: 12px 0 18px;
 }
@@ -507,7 +507,7 @@ table {
   padding: 0 12px;
   border-radius: 2px;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   background: var(--field);
   border: 1px solid var(--line);
 }

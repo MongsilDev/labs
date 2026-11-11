@@ -365,7 +365,7 @@
     width: 30px;
     height: 30px;
     border-radius: 2px;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 15px;
     background: var(--field);
     flex: none;
@@ -543,7 +543,7 @@
   }
   .dialog h2 {
     font-size: 18px;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 4px;
   }
   .dialog .acts {
@@ -833,7 +833,7 @@
   }
   .stand .tot {
     position: relative;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 20px;
     white-space: nowrap;
   }
@@ -954,7 +954,7 @@
   }
   .rt .strong,
   .strong {
-    font-weight: 800;
+    font-weight: 700;
   }
   .rt tr:last-child td,
   .rt tr:last-child th {
@@ -988,7 +988,7 @@
     text-overflow: ellipsis;
   }
   .pstats .strong {
-    font-weight: 800;
+    font-weight: 700;
   }
   .pstats tr:last-child td {
     border-bottom: 0;
@@ -1059,7 +1059,7 @@
 
   .rt td.win {
     color: var(--gold-text);
-    font-weight: 800;
+    font-weight: 700;
   }
 
   /* KEL 기록 표. wide 칸은 좁은 화면에서 숨김. 접힌 테두리는 고정 칸과 함께 움직이지 않아 칸마다 따로 그림 */
@@ -1221,7 +1221,7 @@
   }
   .ov-hd b {
     font-size: 22px;
-    font-weight: 800;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1279,7 +1279,7 @@
   .ov-tt {
     text-align: right;
     font-size: 22px;
-    font-weight: 800;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
   .ov.left {
@@ -1449,7 +1449,7 @@
     height: 34px;
     border-radius: 2px;
     font-size: 17px;
-    font-weight: 800;
+    font-weight: 700;
     color: #0a0d14;
   }
   .tier-grade[data-grade="S"] {
@@ -1751,7 +1751,7 @@
     justify-content: center;
     background: rgb(255 255 255 / 0.07);
     font-size: calc(13 * var(--u));
-    font-weight: 800;
+    font-weight: 700;
   }
   .lv-r b {
     padding-left: calc(8 * var(--u));
@@ -1764,7 +1764,7 @@
   .lv-r .t {
     text-align: right;
     font-size: calc(15 * var(--u));
-    font-weight: 800;
+    font-weight: 700;
   }
   .lv-r .d {
     padding-right: calc(10 * var(--u));
@@ -1783,6 +1783,51 @@
     .lv-r {
       transition: none;
     }
+  }
+  /* 실험체 티어: 필터 한 줄, 등급 구분 줄, 표 옆 변동 목록 */
+  .tier-ctl { gap: 8px 20px; padding-bottom: 2px; }
+  .tier-period { flex: none; }
+  .tier-role { flex: 1 1 auto; }
+  .tier-role button { border-color: transparent; padding: 0 10px; font-weight: 500; }
+  .tier-role [aria-pressed="true"] { background: var(--field); color: var(--text); border-color: transparent; font-weight: 700; }
+  .tier-sel { display: none; }
+  .tier-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+  .tier-side { display: none; }
+  @media (width >= 1180px) {
+    .tier-main { grid-template-columns: minmax(0, 1fr) 320px; }
+    .tier-side { display: block; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+    .tier-side h2 { font-size: 13px; font-weight: 600; color: var(--text-2); padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+    .tier-side ul { grid-template-columns: minmax(0, 1fr) !important; }
+    .tier-moved-fold { display: none; }
+  }
+  .tier-board { border: 0; border-top: 1px solid var(--line-strong); background: none; }
+  .tier-table { width: 100%; }
+  .tier-table th, .tier-table td { padding-top: 5px; padding-bottom: 5px; }
+  .tier-table thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); height: 36px; }
+  .tier-table td:not(.l):not(.tier-no) { width: 104px; }
+  .tier-table td.tier-pk { width: 150px; }
+  .tier-who img { width: 28px; height: 28px; }
+  .tier-pk b { display: inline; }
+  .tier-pk small { display: inline; margin-right: 10px; }
+  .tier-table[data-band] .tier-gc { display: none; }
+  .tier-band th { text-align: left; padding: 14px 16px 6px; border-bottom: 1px solid var(--line); }
+  .tier-band .tier-grade { width: 22px; height: 22px; font-size: 13px; }
+  @media (width < 760px) {
+    .tier-period, .tier-role { display: none !important; }
+    .tier-sel { display: block; flex: 1 1 0; min-width: 0; height: 44px; }
+    .tier-ctl { gap: 8px; }
+    .tier-search { flex: 1 1 100%; height: 44px; }
+    .tier-table { font-size: 13px; }
+    .tier-table th, .tier-table td { padding-left: 4px; padding-right: 4px; }
+    .tier-table .tier-no, .tier-table thead th:last-child, .tier-table td:last-child, .tier-pk small { display: none; }
+    .tier-table .l { position: static !important; box-shadow: none !important; min-width: 0 !important; max-width: none !important; width: auto !important; }
+    .tier-board { overflow-x: visible; }
+    .tier-table td:not(.l):not(.tier-no), .tier-table td.tier-pk { width: 54px; }
+    .tier-table th:nth-child(2), .tier-table td:nth-child(2) { padding-left: 0; }
+    .tier-table th:nth-last-child(2), .tier-table td:nth-last-child(2) { padding-right: 0; }
+    .tier-band th { padding-left: 0; }
+    .tier-who { gap: 8px; }
+    .tier-who b { font-size: 13px; }
   }
 }
 

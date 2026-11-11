@@ -17,7 +17,7 @@
 }
 .pname h1 {
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.4px;
   margin-right: 4px;
   max-width: 100%;
@@ -79,7 +79,7 @@
 }
 .vrate b {
   color: var(--text);
-  font-weight: 800;
+  font-weight: 700;
 }
 .verdict.warn .vrate b {
   color: var(--warn);
@@ -156,7 +156,7 @@
 }
 .vbar-head .strong {
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .vbars .lv1 .strong {
   color: var(--warn);
@@ -246,7 +246,7 @@
 }
 .tiles.key .tile b {
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .tiles.key .tile {
   border-color: var(--line-strong);
@@ -338,7 +338,7 @@
   --perk: #b8442f;
 }
 .perks b {
-  font-weight: 800;
+  font-weight: 700;
   color: var(--perk);
 }
 .perk-icon {
@@ -574,7 +574,7 @@
 }
 .skills b {
   margin-left: auto;
-  font-weight: 800;
+  font-weight: 700;
 }
 .skills li {
   position: relative;
@@ -913,7 +913,7 @@
 }
 .tiles.combat .tile.strong b {
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* 인게임 장비 화면처럼 테마와 상관없이 어두운 칸 */

@@ -41,7 +41,7 @@ html:has(.kord) {
 }
 .kb-sum dd {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
 }
 .kb-left dd {
@@ -75,7 +75,7 @@ html:has(.kord) {
 }
 .kb-h {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   margin-bottom: 10px;
 }
 .kb-h .muted {
@@ -169,7 +169,7 @@ button.kb-card:hover:not([aria-disabled="true"]) {
 .kb-pts {
   margin-left: auto;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .kb-card.pos .kb-pts {
   color: var(--pos);
