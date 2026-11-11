@@ -116,7 +116,7 @@ export function OverlayOpen() {
       <label className="lbl" htmlFor="hub-ov">닉네임</label>
       <div className="grid max-w-[280px] grid-cols-[minmax(0,1fr)_auto] gap-2">
         <input id="hub-ov" name="n" className="field" autoComplete="off" spellCheck={false} maxLength={32} />
-        <button className="btn">주소 만들기</button>
+        <button className="btn primary">주소 만들기</button>
       </div>
     </form>
   );

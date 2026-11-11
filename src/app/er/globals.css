@@ -234,9 +234,9 @@
     background: var(--hover);
   }
   .btn.primary {
-    background: var(--text);
-    border-color: var(--text);
-    color: var(--bg);
+    background: #0071e3;
+    border-color: #0071e3;
+    color: #fff;
   }
   .btn.primary:hover:not(:disabled) {
     opacity: 0.9;
@@ -1065,6 +1065,7 @@
   /* KEL 기록 표. wide 칸은 좁은 화면에서 숨김. 접힌 테두리는 고정 칸과 함께 움직이지 않아 칸마다 따로 그림 */
   .kel-table {
     font-size: 14px;
+    font-variant-numeric: tabular-nums;
     border-collapse: separate;
     border-spacing: 0;
   }
@@ -1828,6 +1829,18 @@
     .tier-band th { padding-left: 0; }
     .tier-who { gap: 8px; }
     .tier-who b { font-size: 13px; }
+  }
+  /* KEL 화면 이동 줄 */
+  .kel-nav { border-bottom: 1px solid var(--line); }
+  .kel-nav-in { display: flex; margin: 0 auto; max-width: 1320px; padding: 0 15px; overflow-x: auto; scrollbar-width: none; }
+  .kel-nav ul { display: flex; flex: none; }
+  .kel-nav ul + ul { margin-left: 10px; padding-left: 10px; position: relative; }
+  .kel-nav ul + ul::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 1px; background: var(--line-strong); }
+  .kel-nav a { display: flex; align-items: center; height: 44px; padding: 0 9px; font-size: 13px; color: var(--text-3); white-space: nowrap; text-decoration: none; border-bottom: 2px solid transparent; }
+  .kel-nav a:hover { color: var(--text); }
+  .kel-nav a[aria-current="page"] { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+  @media (width < 760px) {
+    .kel-nav-in { padding: 0 7px; mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
   }
 }
 

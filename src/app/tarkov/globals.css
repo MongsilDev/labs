@@ -167,9 +167,9 @@ fieldset {
   background: var(--hover);
 }
 .btn.primary {
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--bg);
+  background: #0071e3;
+  border-color: #0071e3;
+  color: #fff;
 }
 .btn.primary:hover:not(:disabled) {
   opacity: 0.9;

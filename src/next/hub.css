@@ -79,3 +79,14 @@
   .hub-tk > div { flex-wrap: wrap; gap: 8px 12px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
   .hub-tk form { flex-basis: 100%; }
 }
+/* 1440x900 첫 화면을 채우는 줄 수. 좁은 폭은 일곱 줄과 네 줄만 보임 */
+@media (min-width: 1024px) {
+  .hub5-cut figure .h-16 { height: 244px; }
+}
+@media (max-width: 1023px) {
+  .hub5 .tierbig tbody tr:nth-child(n + 8) { display: none; }
+  .hub5-col:last-child .tierbig tbody tr:nth-child(n + 5) { display: none; }
+}
+@media (min-width: 1024px) {
+  .hub5 { --tb-h: 48px; }
+}

@@ -24,9 +24,8 @@ export default async function Overlay({ searchParams }: { searchParams: Promise<
     <Live>
       <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">오버레이</h1>
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <section className="sec" aria-labelledby="rank-h">
-          <h2 id="rank-h" className="sec-h">랭크 오버레이</h2>
-          <form id="rank-form" className="mt-4 grid max-w-[560px] gap-6" noValidate>
+        <section className="sec">
+          <form id="rank-form" className="grid max-w-[560px] gap-6" noValidate>
             <div className="relative">
               <label className="lbl" htmlFor="n">닉네임</label>
               <input id="n" name="n" className="field" defaultValue={nick} autoComplete="off" spellCheck={false} maxLength={32} aria-describedby="n-msg" />

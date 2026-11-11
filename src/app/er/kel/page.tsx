@@ -1,9 +1,8 @@
-import Link from "next/link";
 import Lines from "@/components/Lines";
 import { Best, Bests } from "@/er/components/kel/Best";
 import KelPage from "@/er/components/kel/KelPage";
 import { Logo, TeamName } from "@/er/components/kel/Team";
-import { championshipTeams, EVENT_NAME, KEL_SCREENS, KEL_SECTIONS, kelVisible, SEMI_QUALIFY, TEAM, type KelTeam } from "@/er/lib/kel";
+import { championshipTeams, EVENT_NAME, KEL_SCREENS, SEMI_QUALIFY, TEAM, type KelTeam } from "@/er/lib/kel";
 import { kelData, kelGate, kelMetadata, kelSummary } from "@/er/server/kel";
 import { finals, records, semifinal, wicklines } from "@/er/server/kel-stats";
 
@@ -162,26 +161,6 @@ export default async function Page() {
           </div>
         </section>
       )}
-      <nav className="panel grid grid-cols-2 gap-x-8 px-5 py-2 max-[1080px]:grid-cols-1 max-[760px]:px-4" aria-label="KEL 화면">
-        {KEL_SECTIONS.map((s) => {
-          const items = s.items.filter((key) => kelVisible(key, owner));
-          if (!items.length) return null;
-          return (
-            <div key={s.title} className="grid grid-cols-[120px_minmax(0,1fr)] items-baseline gap-x-5 gap-y-1.5 border-t border-line-soft py-3 min-[1081px]:[&:nth-child(-n+2)]:border-t-0 max-[1080px]:first:border-t-0 max-[760px]:grid-cols-1">
-              <h2 className="text-[14px] font-semibold text-fg-3">{s.title}</h2>
-              <ul className="flex flex-wrap gap-x-6 gap-y-1.5">
-                {items.map((key) => (
-                  <li key={key}>
-                    <Link className="font-bold decoration-line-strong underline-offset-[3px] hover:decoration-fg-3" href={KEL_SCREENS[key].path}>
-                      {KEL_SCREENS[key].title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
-      </nav>
     </KelPage>
   );
 }

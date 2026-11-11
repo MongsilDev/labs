@@ -18,7 +18,7 @@ export default async function Hub() {
         <div className="hub5-col hub-in">
           <section>
             <TierHead h={h} />
-            {h.view ? <TierBig list={h.combos.slice(0, 7)} /> : <TierMissing />}
+            {h.view ? <TierBig list={h.combos.slice(0, 10)} /> : <TierMissing />}
           </section>
         </div>
         <div className="hub5-col hub-in" style={{ ["--d" as string]: 1 }}>
@@ -47,7 +47,7 @@ export default async function Hub() {
         <div className="hub5-col hub-in" style={{ ["--d" as string]: 2 }}>
           <section>
             <KelHead h={h} />
-            <KelBig h={h} />
+            <KelBig h={h} rows={8} />
           </section>
           <HubScore mine={h.mine} />
         </div>

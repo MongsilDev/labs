@@ -2,7 +2,8 @@ import Link from "next/link";
 import Lines from "@/components/Lines";
 import Footer from "@/components/SiteFooter";
 import Header from "@/er/components/Header";
-import { DAKGG, KEL_SCREENS, KEL_SECTIONS, kelVisible, RULES, wikiUrl, type KelScreen } from "@/er/lib/kel";
+import KelScreens from "./KelScreens";
+import { DAKGG, KEL_SCREENS, RULES, wikiUrl, type KelScreen } from "@/er/lib/kel";
 import type { User } from "@/er/server/auth";
 
 type Text = string | (string | false | null | undefined)[];
@@ -66,14 +67,13 @@ export default function KelPage({
   const s = KEL_SCREENS[screen];
   const intro = missing ? join(owner ? [...missing] : [missing[0]]) : join(lead);
   const note = join(notes);
-  const section = KEL_SECTIONS.find((g) => g.items.includes(screen));
-  const siblings = section?.items.filter((k) => k !== screen && kelVisible(k, owner)) ?? [];
   return (
     <>
       <Header user={user} crumb="KEL 기록" crumbHref={KEL_SCREENS.home.path} />
+      <KelScreens owner={owner} />
       <main id="main" className="wrap grid grid-cols-1 content-start gap-5 pt-9 max-[760px]:pt-7">
         {head ?? (<div>
-          <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[28px] font-extrabold tracking-[-0.5px]">
+          <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[28px] font-bold tracking-[-0.5px]">
             {title ?? s.title}
             {owner && !s.public && <span className="chip">나만 보기</span>}
           </h1>
@@ -108,18 +108,6 @@ export default function KelPage({
             <br />
             부진한 기록을 포함한 모든 기록은 경기 결과를 정리한 자료이니, 선수나 팀을 비방하는 근거로 활용하지 말아주세요.
           </p>
-        )}
-        {section && siblings.length > 0 && (
-          <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label={section.title}>
-            {siblings.map((k) => (
-              <Link key={k} className="group font-bold no-underline" href={KEL_SCREENS[k].path}>
-                {KEL_SCREENS[k].title}
-                <svg className="ml-0.5 inline-block size-4 align-[-2px] text-fg-3 group-hover:text-fg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path d="M9 6l6 6-6 6" />
-                </svg>
-              </Link>
-            ))}
-          </nav>
         )}
       </main>
       <Footer />

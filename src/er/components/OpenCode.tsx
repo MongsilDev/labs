@@ -80,7 +80,7 @@ export default function OpenCode({ mine }: { mine: MyTournament[] }) {
                 setError("");
               }}
             />
-            <button className="btn primary h-10">열기</button>
+            <button className="btn h-10">열기</button>
           </div>
           {error && (
             <p className="text-[13px] text-minus" role="alert">
