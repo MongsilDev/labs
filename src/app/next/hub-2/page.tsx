@@ -6,6 +6,7 @@ import Live from "@/next/Live";
 import HubScore from "@/next/HubScore";
 import HubTabs from "@/next/HubTabs";
 import { CutNums, kelLead, TierBig } from "@/next/Hub5Parts";
+import { exampleView } from "@/er/lib/example";
 import { n, TierHead, TierMissing } from "@/next/HubParts";
 import RowLinks from "@/next/RowLinks";
 import { hubData } from "@/next/hub";
@@ -63,7 +64,7 @@ export default async function Hub2() {
             {
               id: "score",
               label: "대회 점수",
-              note: h.mine.length ? `내 대회 ${h.mine.length}개` : "새 대회 만들기, 대회 코드로 열기",
+              note: h.mine.length ? `내 대회 ${h.mine.length}개` : `예시 ${exampleView().name}`,
               panel: <HubScore mine={h.mine} rows={6} big className="border-t-0! pt-0!" />,
             },
           ]}
