@@ -637,16 +637,28 @@ async function collectPre(s) {
     }
   });
   await Promise.all(workers);
-  for (const id of misses) if (!abort && take(id, await get(`/v1/games/${id}`))) misses.delete(id);
-  // 같은 번호가 PRE_MISS_MAX회차 연속 실패하면 건너뛰고, 그 전까지는 그 앞까지만 범위를 넘겨 다음 회차가 다시 조회함
+  // 누락이 많으면 장애로 보고 재시도 없이 다음 회차에 맡김
+  if (misses.size <= PRE_RETRY_MAX) {
+    const retry = [...misses];
+    let k = 0;
+    await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
+      while (!abort && k < retry.length) {
+        const id = retry[k++];
+        if (take(id, await get(`/v1/games/${id}`))) misses.delete(id);
+      }
+    }));
+  }
+  // 범위를 막는 가장 낮은 번호만 실패 횟수를 셈. PRE_MISS_MAX회 연속 실패하면 그 번호만 건너뜀
   let stuck = Infinity;
   if (!abort) {
-    for (const id of misses) {
-      const n = (pre.prepare(`SELECT n FROM miss WHERE season = ? AND id = ?`).get(s.id, id)?.n ?? 0) + 1;
-      pre.prepare(`INSERT INTO miss VALUES (?, ?, ?) ON CONFLICT(season, id) DO UPDATE SET n = excluded.n`).run(s.id, id, n);
-      if (n < PRE_MISS_MAX) stuck = Math.min(stuck, id);
-      else log(`경기 번호 ${id}의 자료를 ${n}회 연속 받지 못해 건너뜁니다.`);
-    }
+    const low = [...misses].sort((x, y) => x - y);
+    const n = low.length ? (pre.prepare(`SELECT n FROM miss WHERE season = ? AND id = ?`).get(s.id, low[0])?.n ?? 0) + 1 : 0;
+    pre.exec("BEGIN");
+    pre.prepare(`DELETE FROM miss WHERE season = ?`).run(s.id);
+    if (low.length) pre.prepare(`INSERT INTO miss VALUES (?, ?, ?)`).run(s.id, low[0], n);
+    pre.exec("COMMIT");
+    if (n >= PRE_MISS_MAX) log(`경기 번호 ${low[0]}의 자료를 ${n}회 연속 받지 못해 건너뜁니다.`);
+    stuck = (n >= PRE_MISS_MAX ? low[1] : low[0]) ?? Infinity;
   }
   const done = Math.min(hi, stuck - 1);
   if (!abort && done > lo) {
@@ -660,6 +672,7 @@ async function collectPre(s) {
 const PRE_RPS = 40;
 const PRE_TAIL = 6 * 3600_000;
 const PRE_MISS_MAX = 3;
+const PRE_RETRY_MAX = 200;
 // 한 회차가 너무 길어지지 않게 조회할 번호 수의 상한. 넘으면 다음 회차가 이어서 조회함
 const PRE_MAX_IDS = 40_000;
 let pre = null;
