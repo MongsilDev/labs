@@ -8,7 +8,7 @@ export type AutoConfig = {
   many: "roster" | "latest";
   // 352-4 아무 조와도 맞지 않을 때 이름을 모르는 조가 하나뿐이면 반영(single) 또는 거절(reject)
   first: "single" | "reject";
-  // 352-5 새 대회의 처음 상태 꺼짐(off), 켜짐(on), 설정 없이 모든 대회(none). 스크림봇 대회는 off와 on에서 켜짐
+  // 352-5 새 대회의 처음 상태 꺼짐(off), 켜짐(on), 설정 없이 모든 대회(none). 스크림봇 대회는 off와 on에서 봇이 요청하면 켜짐
   optin: "off" | "on" | "none";
 };
 

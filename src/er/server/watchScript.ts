@@ -15,7 +15,8 @@ if not defined LABS_URL set "LABS_URL={{URL}}"
 if not defined LABS_CSV set "LABS_CSV=C:\Program Files (x86)\Steam\steamapps\common\Eternal Return\GameResult_.csv"
 if not defined LABS_CURL set "LABS_CURL=curl.exe"
 set "CSV=%LABS_CSV%"
-set "DIR=%TEMP%\labs-watch"
+rem 다시 받은 감시 파일과 이전 창이 함께 실행되어도 서로의 사본과 응답을 덮어쓰지 않게 창마다 폴더를 따로 씀
+set "DIR=%TEMP%\labs-watch\%RANDOM%%RANDOM%"
 if not exist "%DIR%" mkdir "%DIR%"
 set "LAST=%DIR%\last.csv"
 set "SNAP=%DIR%\snap.csv"
@@ -41,7 +42,7 @@ if exist "%DIR%\resp.txt" del "%DIR%\resp.txt"
 "%LABS_CURL%" -s -o "%DIR%\resp.txt" -w "%%{http_code}" -H "x-upload-token: %LABS_TOKEN%" -H "accept: text/plain" --data-binary "@%SNAP%" "%LABS_URL%" > "%DIR%\code.txt" 2>nul
 set /p CODE=<"%DIR%\code.txt"
 if exist "%DIR%\resp.txt" (type "%DIR%\resp.txt" & echo.)
-if "!CODE!"=="401" (pause & exit /b 1)
+if "!CODE!"=="401" (rd /s /q "%DIR%" 2>nul & pause & exit /b 1)
 rem 2xx와 4xx는 같은 파일을 다시 보내도 결과가 같아 다시 보내지 않음. 429, 5xx, 연결 실패는 30초 뒤 다시 보냄
 set "DONE="
 set "C1=!CODE:~0,1!"
