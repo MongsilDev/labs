@@ -91,7 +91,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
             ))}
             <span>굵은 선 휴면 반영 컷</span>
             <span>흐린 선 순위표 컷</span>
-            <span>점선과 음영 종료 예상</span>
+            {TIERS.some(({ key }) => data.tiers[key].forecast?.length) && <span>점선과 음영 종료 예상</span>}
           </p>
           {/* CutChart는 폭을 잰 뒤 높이를 300 또는 360으로 정해서 그 높이를 미리 잡아 둠 */}
           <div className="mt-3 min-h-[300px] sm:min-h-[360px]">

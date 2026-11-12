@@ -33,6 +33,8 @@ export default function CutChart({ data }: { data: CutData }) {
   const points = [...days.values()].sort((x, y) => x.t - y.t);
   const t0 = points[0].t;
   const t1 = points[points.length - 1].t;
+  // 시즌이 끝나면 예상이 없어 마지막 점이 오늘
+  const ahead = t1 > now;
 
   const values = points.flatMap((p) => Object.values(p.v).flatMap((v) => [v.a, v.b, v.lo, v.hi].filter((x): x is number => x != null)));
   const span = Math.max(...values) - Math.min(...values);
@@ -69,7 +71,7 @@ export default function CutChart({ data }: { data: CutData }) {
         viewBox={`0 0 ${w} ${h}`}
         className="block h-auto w-full touch-pan-y"
         role="img"
-        aria-label="이터니티와 데미갓 컷의 지난 기록과 시즌 종료까지 예상"
+        aria-label={ahead ? "이터니티와 데미갓 컷의 지난 기록과 시즌 종료까지 예상" : "이터니티와 데미갓 컷의 지난 기록"}
         onPointerMove={pick}
         onPointerDown={pick}
         onPointerLeave={() => setHover(null)}
@@ -92,11 +94,13 @@ export default function CutChart({ data }: { data: CutData }) {
               {md(t)}
             </text>
           ))}
-        <text x={x(now)} y={todayTop ? pad.t - 6 : h - 8} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--text)">
-          오늘
-        </text>
+        {ahead && (
+          <text x={x(now)} y={todayTop ? pad.t - 6 : h - 8} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--text)">
+            오늘
+          </text>
+        )}
         <text x={x(t1)} y={h - 8} textAnchor="end" fontSize="12" fontWeight="700" fill="var(--text)">
-          {md(t1)} 종료
+          {ahead ? `${md(t1)} 종료` : md(t1)}
         </text>
 
         {TIERS.map(({ key, color }) => {
