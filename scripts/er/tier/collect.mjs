@@ -619,24 +619,36 @@ async function collectPre(s) {
   if (hi <= lo || abort) return empty;
   let next = lo + 1;
   let games = 0;
-  let failed = Infinity;
+  // 받지 못했거나 저장하지 못한 번호. 회차 끝에 한 번 더 시도함
+  const misses = new Set();
+  const take = (id, body) => {
+    if (body === undefined) return false;
+    const list = body?.userGames ?? [];
+    // 일반 경기는 seasonId가 0이라 시작 시각으로 프리 시즌 경기를 가림
+    if (!list.length || kst(list[0].startDtm) < s.start) return true;
+    if (!putPre(s, id, list)) return false;
+    games++;
+    return true;
+  };
   const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
     while (!abort && next <= hi) {
       const id = next++;
-      const body = await get(`/v1/games/${id}`);
-      if (body === undefined) {
-        failed = Math.min(failed, id);
-        continue;
-      }
-      const list = body?.userGames ?? [];
-      // 일반 경기는 seasonId가 0이라 시작 시각으로 프리 시즌 경기를 가림
-      if (!list.length || kst(list[0].startDtm) < s.start) continue;
-      if (putPre(s, id, list)) games++;
+      if (!take(id, await get(`/v1/games/${id}`))) misses.add(id);
     }
   });
   await Promise.all(workers);
-  // 중간에 멈춘 회차는 범위를 넘기지 않고, 받지 못한 번호가 있으면 그 앞까지만 넘겨 다음 회차가 다시 조회함
-  const done = Math.min(hi, failed - 1);
+  for (const id of misses) if (!abort && take(id, await get(`/v1/games/${id}`))) misses.delete(id);
+  // 같은 번호가 PRE_MISS_MAX회차 연속 실패하면 건너뛰고, 그 전까지는 그 앞까지만 범위를 넘겨 다음 회차가 다시 조회함
+  let stuck = Infinity;
+  if (!abort) {
+    for (const id of misses) {
+      const n = (pre.prepare(`SELECT n FROM miss WHERE season = ? AND id = ?`).get(s.id, id)?.n ?? 0) + 1;
+      pre.prepare(`INSERT INTO miss VALUES (?, ?, ?) ON CONFLICT(season, id) DO UPDATE SET n = excluded.n`).run(s.id, id, n);
+      if (n < PRE_MISS_MAX) stuck = Math.min(stuck, id);
+      else log(`경기 번호 ${id}의 자료를 ${n}회 연속 받지 못해 건너뜁니다.`);
+    }
+  }
+  const done = Math.min(hi, stuck - 1);
   if (!abort && done > lo) {
     const found = pre.prepare(`SELECT COUNT(DISTINCT game) AS n FROM rows WHERE season = ?`).get(s.id).n;
     pre.prepare(`INSERT INTO scan VALUES (?, ?, ?, ?) ON CONFLICT(season) DO UPDATE SET hi = excluded.hi, ids = excluded.ids, found = excluded.found`)
@@ -647,6 +659,7 @@ async function collectPre(s) {
 
 const PRE_RPS = 40;
 const PRE_TAIL = 6 * 3600_000;
+const PRE_MISS_MAX = 3;
 // 한 회차가 너무 길어지지 않게 조회할 번호 수의 상한. 넘으면 다음 회차가 이어서 조회함
 const PRE_MAX_IDS = 40_000;
 let pre = null;
@@ -663,6 +676,7 @@ function openPre() {
       PRIMARY KEY (game, slot)
     );
     CREATE INDEX IF NOT EXISTS rows_season ON rows (season, mode);
+    CREATE TABLE IF NOT EXISTS miss (season INTEGER NOT NULL, id INTEGER NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (season, id));
   `);
   putPreRow = pre.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 }
