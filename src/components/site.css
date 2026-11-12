@@ -380,6 +380,7 @@
   .btn.sm,
   .tabs a,
   .tabs button,
+  .tdx-seg button,
   .chip.tap {
     position: relative;
   }
@@ -387,6 +388,7 @@
   .btn.sm::before,
   .tabs a::before,
   .tabs button::before,
+  .tdx-seg button::before,
   .chip.tap::before {
     content: "";
     position: absolute;
