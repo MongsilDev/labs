@@ -9,6 +9,7 @@ import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
 import { dakStopped } from "./dakstop.mjs";
 import { derive, writeDerived } from "./derive.mjs";
+import { derivePre, writePre } from "./preseason.mjs";
 import { RULE, scoreRows } from "./score.mjs";
 import { topView, writeTop } from "./top.mjs";
 
@@ -219,8 +220,10 @@ async function season() {
   const cur = list.find((s) => s.isCurrent === 1);
   if (!cur) return null;
   const n = Number(cur.seasonName.replace(/\D/g, "")) - SEASON_NAME_OFFSET;
+  const prev = list.filter((x) => x.seasonName.startsWith("Season") && x.seasonID < cur.seasonID).at(-1);
   return {
     id: cur.seasonID,
+    prev: prev?.seasonID ?? null,
     regular: cur.seasonName.startsWith("Season"),
     name: cur.seasonName.startsWith("Season") ? `정규 시즌 ${n}` : `프리 시즌 ${n}`,
     number: n,
@@ -271,6 +274,8 @@ async function names() {
   const skillKo = ko("Skill/Group/Name");
   const itemKo = ko("Item/Name");
   const areaKo = ko("Area/Name");
+  const stateKo = ko("CharacterState/Group/Name");
+  const weatherKo = ko("Weather/Name");
   const areas = new Map(((await get("/v2/data/Area"))?.data ?? []).map((a) => [a.code, areaKo.get(a.name) ?? a.name]));
   // 루트 아이템 칸의 바탕색에 쓰는 등급
   const grades = new Map();
@@ -293,6 +298,10 @@ async function names() {
     tac: (code) => tacKo.get(code) ?? `전술 스킬 ${code}`,
     item: (code) => [itemKo.get(String(code)) ?? `아이템 ${code}`, grades.get(code) ?? null],
     area: (code) => areas.get(code) ?? `지역 ${code}`,
+    // 가젯과 루미 지급품은 기록 코드의 백 단위 그룹 번호로 이름을 찾음
+    skill: (code) => skillKo.get(String(Math.floor(code / 100) * 100)) ?? `가젯 ${code}`,
+    state: (code) => stateKo.get(String(Math.floor(code / 100) * 100)) ?? `버프 ${code}`,
+    weather: (code) => weatherKo.get(String(code)) ?? `날씨 ${code}`,
   };
 }
 
@@ -551,6 +560,125 @@ async function collectAccount(s, acc, since, cuts, stop, measure) {
   const ok = complete && acc.mmr != null && after === acc.mmr;
   putAccount.run(player, complete ? top : newest, complete ? Date.now() : (prev?.checked ?? 0), ok ? acc.mmr : complete ? null : (prev?.mmr ?? null));
   return added;
+}
+
+/** 경기 번호 id부터 위로 열 개 안에서 처음 조회되는 경기의 시작 시각. 없으면 null */
+async function gameAt(id) {
+  for (let k = 0; k < 10 && !abort; k++) {
+    const y = (await get(`/v1/games/${id + k}`))?.userGames?.[0];
+    if (y) return { id: id + k, t: kst(y.startDtm) };
+  }
+  return null;
+}
+
+/** lo와 hi 사이에서 시작 시각이 t 이하인 마지막 경기 번호 */
+async function idBefore(t, lo, hi) {
+  while (hi - lo > 20 && !abort) {
+    const mid = Math.floor((lo + hi) / 2);
+    const g = await gameAt(mid);
+    if (g && g.t <= t) lo = g.id;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/**
+ * 프리 시즌의 모든 경기를 경기 번호 순서대로 빠짐없이 조회해 13.0 신규 기능 필드만 preseason.sqlite에 모음.
+ * 프리 시즌 순위표가 없어 계정 대신 경기 번호로 찾음. 닉네임과 uid는 저장하지 않고, 티어 행과 경기 원본도 만들지 않음
+ */
+async function collectPre(s) {
+  // 같은 키를 쓰는 몽실봇 몫을 남기려고 한도 50보다 낮춤
+  pace.set(Math.min(pace.rps, PRE_RPS));
+  // 끝난 지 한 시간이 안 된 번호에는 아직 진행 중인 경기가 섞여 있어 다음 회차로 미룸
+  const until = Math.min(Date.now() - 60 * 60_000, s.end);
+  const state = pre.prepare(`SELECT hi, ids, found FROM scan WHERE season = ?`).get(s.id) ?? { hi: 0, ids: 0, found: 0 };
+  // 위쪽 기준은 지난 시즌 상위권의 가장 최근 경기 번호
+  let seed = 0;
+  for (const x of ((await get(`/v1/rank/top/${s.prev}/3/10`))?.topRanks ?? []).slice(0, 3)) {
+    const uid = (await get(`/v1/user/nickname?query=${encodeURIComponent(x.nickname)}`))?.user?.userId;
+    for (const y of (uid && (await get(`/v1/user/games/uid/${uid}`))?.userGames) || []) seed = Math.max(seed, y.gameId);
+  }
+  const empty = { games: 0, ids: 0 };
+  if (!seed) return empty;
+  // 처음 회차는 시즌 시작 직전 번호를 찾음. 하루 약 4만 번호가 쓰여 50만 번호 아래에서 시작함
+  const lo = state.hi || (await idBefore(s.start, seed - 500_000, seed));
+  // 상위권이 한동안 게임을 하지 않았으면 기준 번호가 오래돼 있어 until을 넘는 번호가 나올 때까지 위로 넓힘
+  let top = seed;
+  for (let step = 2000; !abort; step *= 2) {
+    const g = await gameAt(top + step);
+    if (!g || g.t > until) {
+      top += step;
+      break;
+    }
+    top = g.id;
+  }
+  const hi = Math.min(await idBefore(until, lo, top), lo + PRE_MAX_IDS);
+  if (hi <= lo || abort) return empty;
+  let next = lo + 1;
+  let games = 0;
+  const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
+    while (!abort && next <= hi) {
+      const id = next++;
+      const list = (await get(`/v1/games/${id}`))?.userGames ?? [];
+      // 일반 경기는 seasonId가 0이라 시작 시각으로 프리 시즌 경기를 가림
+      if (!list.length || kst(list[0].startDtm) < s.start) continue;
+      putPre(s, id, list);
+      games++;
+    }
+  });
+  await Promise.all(workers);
+  // 중간에 멈춘 회차는 범위를 넘기지 않아 다음 회차가 같은 범위를 다시 조회함
+  if (!abort) {
+    pre.prepare(`INSERT INTO scan VALUES (?, ?, ?, ?) ON CONFLICT(season) DO UPDATE SET hi = excluded.hi, ids = excluded.ids, found = excluded.found`)
+      .run(s.id, hi, state.ids + hi - lo, state.found + games);
+  }
+  return { games, ids: hi - lo };
+}
+
+const PRE_RPS = 40;
+// 한 회차가 너무 길어지지 않게 조회할 번호 수의 상한. 넘으면 다음 회차가 이어서 조회함
+const PRE_MAX_IDS = 40_000;
+let pre = null;
+let putPreRow = null;
+function openPre() {
+  pre = new DatabaseSync(join(DIR, "preseason.sqlite"));
+  pre.exec(`
+    PRAGMA journal_mode = WAL;
+    CREATE TABLE IF NOT EXISTS scan (season INTEGER PRIMARY KEY, hi INTEGER NOT NULL, ids INTEGER NOT NULL, found INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS rows (
+      game INTEGER NOT NULL, slot INTEGER NOT NULL, season INTEGER NOT NULL, t INTEGER NOT NULL, mode INTEGER NOT NULL, server TEXT,
+      team INTEGER, rank INTEGER, char INTEGER, weapon INTEGER, bot INTEGER, weather INTEGER,
+      exp TEXT, exp_reward INTEGER, exp_credit INTEGER, gadgets TEXT, drops TEXT, lumi INTEGER,
+      PRIMARY KEY (game, slot)
+    );
+    CREATE INDEX IF NOT EXISTS rows_season ON rows (season, mode);
+  `);
+  putPreRow = pre.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+}
+
+function putPre(s, game, list) {
+  pre.exec("BEGIN");
+  list.forEach((y, i) => {
+    const drops = (y.guideRobotWeatherDropPickUpCount ?? []).filter((d) => d.count > 0).map((d) => [d.buffCode, d.count]);
+    putPreRow.run(
+      game, i, s.id, kst(y.startDtm), y.matchingMode, y.serverName ?? null,
+      y.teamNumber ?? null, y.gameRank ?? null, y.characterNum ?? null, y.bestWeapon ?? null, y.isMLBot ? 1 : 0, y.mainWeather ?? null,
+      y.experimentResultType ?? null, y.crExperimentReward ?? null, y.crExperimentalCredit ?? null,
+      JSON.stringify(Object.keys(y.useGadget ?? {}).map(Number)), JSON.stringify(drops), y.guideRobotWeatherObjectCount ?? 0,
+    );
+  });
+  pre.exec("COMMIT");
+}
+
+/** 프리 시즌 특집 집계. 저장한 행만 읽고 공식 API에는 요청하지 않음 */
+function publishPre(s, nm) {
+  try {
+    const scan = pre.prepare(`SELECT ids, found FROM scan WHERE season = ?`).get(s.id);
+    const out = derivePre(pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.id), s, nm, scan);
+    if (out && writePre(join(OUT, ".."), out)) log(`프리 시즌 특집 집계 ${out.modes.map((m) => `${m.label} ${m.games}경기`).join(", ")}`);
+  } catch (e) {
+    log(`프리 시즌 특집 집계 실패: ${e.message}`);
+  }
 }
 
 /** 일꾼 여럿이 계정 목록을 나눠 받음. measure면 단계마다 속도를 올리고 첫 429에서 멈춤 */
@@ -939,6 +1067,12 @@ async function once(measure) {
       log(`새 행 ${run.added}, 요청 ${stats.sent}, RP가 그대로라 건너뛴 계정 ${stats.skipped}, 429 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
       writeFileSync(join(DIR, "status.json"), JSON.stringify({ at: Date.now(), abort, ...run, stats: { ...stats, lat: undefined } }));
     }
+    if (!s.regular && !pre) openPre();
+    if (!s.regular && s.prev && Date.now() < s.end && !PUBLISH_ONLY) {
+      run = await collectPre(s);
+      log(`경기 번호 ${run.ids}개를 조회해 프리 시즌 경기 ${run.games}개를 저장했습니다. 요청 ${stats.sent}, 한도 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
+    }
+    if (!s.regular && !abort) publishPre(s, nm);
     if (!abort) await publish(s, nm);
   } finally {
     unwatch();
