@@ -221,7 +221,10 @@ async function season() {
   if (!cur) return null;
   const n = Number(cur.seasonName.replace(/\D/g, "")) - SEASON_NAME_OFFSET;
   const prev = list.filter((x) => x.seasonName.startsWith("Season") && x.seasonID < cur.seasonID).at(-1);
+  const before = list.filter((x) => x.seasonID < cur.seasonID).at(-1);
   return {
+    // 정규 시즌으로 넘어간 뒤에도 직전 프리 시즌의 마지막 구간을 조회하려고 남김
+    pre: before && !before.seasonName.startsWith("Season") ? { id: before.seasonID, prev: prev?.seasonID ?? null, regular: false, name: `프리 시즌 ${Number(before.seasonName.replace(/\D/g, "")) - SEASON_NAME_OFFSET}`, start: kst(`${before.seasonStart}+0900`), end: kst(`${before.seasonEnd}+0900`) } : null,
     id: cur.seasonID,
     prev: prev?.seasonID ?? null,
     regular: cur.seasonName.startsWith("Season"),
@@ -616,26 +619,34 @@ async function collectPre(s) {
   if (hi <= lo || abort) return empty;
   let next = lo + 1;
   let games = 0;
+  let failed = Infinity;
   const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
     while (!abort && next <= hi) {
       const id = next++;
-      const list = (await get(`/v1/games/${id}`))?.userGames ?? [];
+      const body = await get(`/v1/games/${id}`);
+      if (body === undefined) {
+        failed = Math.min(failed, id);
+        continue;
+      }
+      const list = body?.userGames ?? [];
       // 일반 경기는 seasonId가 0이라 시작 시각으로 프리 시즌 경기를 가림
       if (!list.length || kst(list[0].startDtm) < s.start) continue;
-      putPre(s, id, list);
-      games++;
+      if (putPre(s, id, list)) games++;
     }
   });
   await Promise.all(workers);
-  // 중간에 멈춘 회차는 범위를 넘기지 않아 다음 회차가 같은 범위를 다시 조회함
-  if (!abort) {
+  // 중간에 멈춘 회차는 범위를 넘기지 않고, 받지 못한 번호가 있으면 그 앞까지만 넘겨 다음 회차가 다시 조회함
+  const done = Math.min(hi, failed - 1);
+  if (!abort && done > lo) {
+    const found = pre.prepare(`SELECT COUNT(DISTINCT game) AS n FROM rows WHERE season = ?`).get(s.id).n;
     pre.prepare(`INSERT INTO scan VALUES (?, ?, ?, ?) ON CONFLICT(season) DO UPDATE SET hi = excluded.hi, ids = excluded.ids, found = excluded.found`)
-      .run(s.id, hi, state.ids + hi - lo, state.found + games);
+      .run(s.id, done, state.ids + done - lo, found);
   }
   return { games, ids: hi - lo };
 }
 
 const PRE_RPS = 40;
+const PRE_TAIL = 6 * 3600_000;
 // 한 회차가 너무 길어지지 않게 조회할 번호 수의 상한. 넘으면 다음 회차가 이어서 조회함
 const PRE_MAX_IDS = 40_000;
 let pre = null;
@@ -658,16 +669,25 @@ function openPre() {
 
 function putPre(s, game, list) {
   pre.exec("BEGIN");
-  list.forEach((y, i) => {
-    const drops = (y.guideRobotWeatherDropPickUpCount ?? []).filter((d) => d.count > 0).map((d) => [d.buffCode, d.count]);
-    putPreRow.run(
-      game, i, s.id, kst(y.startDtm), y.matchingMode, y.serverName ?? null,
-      y.teamNumber ?? null, y.gameRank ?? null, y.characterNum ?? null, y.bestWeapon ?? null, y.isMLBot ? 1 : 0, y.mainWeather ?? null,
-      y.experimentResultType ?? null, y.crExperimentReward ?? null, y.crExperimentalCredit ?? null,
-      JSON.stringify(Object.keys(y.useGadget ?? {}).map(Number)), JSON.stringify(drops), y.guideRobotWeatherObjectCount ?? 0,
-    );
-  });
-  pre.exec("COMMIT");
+  try {
+    list.forEach((y, i) => putPreOne(s, game, i, y));
+    pre.exec("COMMIT");
+    return true;
+  } catch (e) {
+    pre.exec("ROLLBACK");
+    log(`프리 시즌 경기 ${game}을 저장하지 못했습니다: ${e.message}`);
+    return false;
+  }
+}
+
+function putPreOne(s, game, i, y) {
+  const drops = Array.isArray(y.guideRobotWeatherDropPickUpCount) ? y.guideRobotWeatherDropPickUpCount.filter((d) => d.count > 0).map((d) => [d.buffCode, d.count]) : [];
+  putPreRow.run(
+    game, i, s.id, kst(y.startDtm), y.matchingMode, y.serverName ?? null,
+    y.teamNumber ?? null, y.gameRank ?? null, y.characterNum ?? null, y.bestWeapon ?? null, y.isMLBot ? 1 : 0, y.mainWeather ?? null,
+    y.experimentResultType ?? null, y.crExperimentReward ?? null, y.crExperimentalCredit ?? null,
+    JSON.stringify(Object.keys(y.useGadget ?? {}).map(Number)), JSON.stringify(drops), y.guideRobotWeatherObjectCount ?? 0,
+  );
 }
 
 /** 프리 시즌 특집 집계. 저장한 행만 읽고 공식 API에는 요청하지 않음 */
@@ -1067,12 +1087,16 @@ async function once(measure) {
       log(`새 행 ${run.added}, 요청 ${stats.sent}, RP가 그대로라 건너뛴 계정 ${stats.skipped}, 429 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
       writeFileSync(join(DIR, "status.json"), JSON.stringify({ at: Date.now(), abort, ...run, stats: { ...stats, lat: undefined } }));
     }
-    if (!s.regular && !pre) openPre();
-    if (!s.regular && s.prev && Date.now() < s.end && !PUBLISH_ONLY) {
-      run = await collectPre(s);
-      log(`경기 번호 ${run.ids}개를 조회해 프리 시즌 경기 ${run.games}개를 저장했습니다. 요청 ${stats.sent}, 한도 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
+    // 프리 시즌이 끝난 뒤 두 회차 동안은 끝 시각까지 남은 번호를 마저 조회함
+    const ps = !s.regular ? s : s.pre && Date.now() < s.pre.end + PRE_TAIL ? s.pre : null;
+    if (ps && !pre) openPre();
+    if (ps?.prev && Date.now() < ps.end + PRE_TAIL && !PUBLISH_ONLY && !abort) {
+      const rps = pace.rps;
+      const pr = await collectPre(ps);
+      pace.set(rps);
+      log(`경기 번호 ${pr.ids}개를 조회해 프리 시즌 경기 ${pr.games}개를 저장했습니다. 요청 ${stats.sent}, 한도 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
     }
-    if (!s.regular && !abort) publishPre(s, nm);
+    if (ps && !abort) publishPre(ps, nm);
     if (!abort) await publish(s, nm);
   } finally {
     unwatch();
