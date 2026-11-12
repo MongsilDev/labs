@@ -16,8 +16,8 @@ if not defined LABS_CSV set "LABS_CSV=C:\Program Files (x86)\Steam\steamapps\com
 if not defined LABS_CURL set "LABS_CURL=curl.exe"
 set "CSV=%LABS_CSV%"
 if not exist "%TEMP%\labs-watch" mkdir "%TEMP%\labs-watch"
-rem 창을 닫으면 폴더가 남으므로 하루 넘게 바뀌지 않은 폴더를 지움
-forfiles /p "%TEMP%\labs-watch" /d -1 /c "cmd /c if @isdir==TRUE rd /s /q @path" >nul 2>&1
+rem 창을 닫으면 폴더가 남으므로 이틀 넘게 바뀌지 않은 폴더를 지움. 실행 중인 창의 폴더가 지워지면 그 창은 아래 :loop에서 기준을 다시 잡음
+forfiles /p "%TEMP%\labs-watch" /d -2 /c "cmd /c if @isdir==TRUE rd /s /q @path" >nul 2>&1
 rem 다시 받은 감시 파일과 이전 창이 함께 실행되어도 서로의 사본과 응답을 덮어쓰지 않게 창마다 새 폴더를 씀. 같은 초에 시작한 창은 %RANDOM%이 같아 새 폴더를 만들 때까지 다시 고름
 set "TRY=0"
 :newdir
@@ -34,6 +34,7 @@ set "WAIT=4"
 :loop
 ping -n !WAIT! 127.0.0.1 >nul
 set "WAIT=4"
+if not exist "%DIR%" (mkdir "%DIR%" 2>nul & (if exist "%CSV%" copy /y "%CSV%" "%LAST%" >nul) & goto loop)
 if not exist "%CSV%" goto loop
 if exist "%LAST%" (fc /b "%CSV%" "%LAST%" >nul 2>&1 && goto loop)
 rem 게임이 쓰는 중이면 크기가 바뀌므로 2초 동안 그대로일 때만 보냄
@@ -41,7 +42,6 @@ for %%F in ("%CSV%") do set "S1=%%~zF"
 ping -n 3 127.0.0.1 >nul
 for %%F in ("%CSV%") do set "S2=%%~zF"
 if not "!S1!"=="!S2!" goto loop
-if not exist "%DIR%" mkdir "%DIR%"
 copy /y "%CSV%" "%SNAP%" >nul 2>&1 || goto loop
 fc /b "%CSV%" "%SNAP%" >nul 2>&1 || goto loop
 set "CODE=000"
