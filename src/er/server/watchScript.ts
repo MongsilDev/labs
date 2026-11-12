@@ -15,9 +15,15 @@ if not defined LABS_URL set "LABS_URL={{URL}}"
 if not defined LABS_CSV set "LABS_CSV=C:\Program Files (x86)\Steam\steamapps\common\Eternal Return\GameResult_.csv"
 if not defined LABS_CURL set "LABS_CURL=curl.exe"
 set "CSV=%LABS_CSV%"
-rem 다시 받은 감시 파일과 이전 창이 함께 실행되어도 서로의 사본과 응답을 덮어쓰지 않게 창마다 폴더를 따로 씀
+if not exist "%TEMP%\labs-watch" mkdir "%TEMP%\labs-watch"
+rem 창을 닫으면 폴더가 남으므로 하루 넘게 바뀌지 않은 폴더를 지움
+forfiles /p "%TEMP%\labs-watch" /d -1 /c "cmd /c if @isdir==TRUE rd /s /q @path" >nul 2>&1
+rem 다시 받은 감시 파일과 이전 창이 함께 실행되어도 서로의 사본과 응답을 덮어쓰지 않게 창마다 새 폴더를 씀. 같은 초에 시작한 창은 %RANDOM%이 같아 새 폴더를 만들 때까지 다시 고름
+set "TRY=0"
+:newdir
+set /a TRY+=1
 set "DIR=%TEMP%\labs-watch\%RANDOM%%RANDOM%"
-if not exist "%DIR%" mkdir "%DIR%"
+mkdir "%DIR%" 2>nul || (if !TRY! lss 20 (goto newdir) else (echo 임시 폴더를 만들지 못했습니다. & pause & exit /b 1))
 set "LAST=%DIR%\last.csv"
 set "SNAP=%DIR%\snap.csv"
 rem 창을 연 시점의 파일은 지난 경기라 보내지 않고 기준으로만 둠
@@ -35,6 +41,7 @@ for %%F in ("%CSV%") do set "S1=%%~zF"
 ping -n 3 127.0.0.1 >nul
 for %%F in ("%CSV%") do set "S2=%%~zF"
 if not "!S1!"=="!S2!" goto loop
+if not exist "%DIR%" mkdir "%DIR%"
 copy /y "%CSV%" "%SNAP%" >nul 2>&1 || goto loop
 fc /b "%CSV%" "%SNAP%" >nul 2>&1 || goto loop
 set "CODE=000"
