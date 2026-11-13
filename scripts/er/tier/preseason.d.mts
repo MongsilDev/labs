@@ -11,3 +11,4 @@ export function derivePre(rows: Iterable<Record<string, unknown>>, season: { id:
 export const BASE_DONE: string;
 export function baseReady(dir: string, id: number): boolean;
 export function writePre(root: string, data: PreData | null): boolean;
+export function preRow(season: number, game: number, i: number, y: Record<string, unknown>): (string | number | null)[];

@@ -77,6 +77,23 @@ function baseline(rows) {
   return b;
 }
 
+const kst = (s) => Date.parse(s.replace(" ", "T").replace(/([+-]\d{2})(\d{2})$/, "$1:$2"));
+
+/** 경기 응답 한 사람분을 rows 표 한 행의 값 순서로. 수집기와 경기 보관기가 함께 씀 */
+export function preRow(season, game, i, y) {
+  const drops = Array.isArray(y.guideRobotWeatherDropPickUpCount) ? y.guideRobotWeatherDropPickUpCount.filter((d) => d.count > 0).map((d) => [d.buffCode, d.count]) : [];
+  return [
+    game, i, season, kst(y.startDtm), y.matchingMode, y.serverName ?? null,
+    y.teamNumber ?? null, y.gameRank ?? null, y.characterNum ?? null, y.bestWeapon ?? null, y.isMLBot ? 1 : 0, y.mainWeather ?? null,
+    y.experimentResultType ?? null, y.crExperimentReward ?? null, y.crExperimentalCredit ?? null,
+    JSON.stringify(y.useGadget ?? {}), JSON.stringify(drops), y.guideRobotWeatherObjectCount ?? 0,
+    JSON.stringify((y.questStepClear ?? []).map((q) => [q.experimentGroupId, Math.round(q.firstClearElapsedSeconds), q.clearCount])),
+    // 슬롯 0~5 순서의 최종 장비 코드. 빈 슬롯은 0
+    JSON.stringify([0, 1, 2, 3, 4, 5].map((k) => y.equipment?.[k] ?? 0)),
+    y.crGetByGuideRobot ?? 0,
+  ];
+}
+
 /** rows는 preseason.sqlite rows 행을 game, slot 순서로. nm은 이름 찾기 함수 묶음, scan은 훑은 번호 수와 찾은 경기 수, baseRows는 직전 정규 시즌 비교 경기 */
 export function derivePre(rows, season, nm, scan = null, baseRows = []) {
   const x = fresh();

@@ -1,6 +1,5 @@
 // 아시아1 in1000 경기 기록 수집과 티어 집계. 호스트에서 실행, 원시 행은 TIER_DIR SQLite, 집계는 TIER_OUT/tier.json
 // 사용: node scripts/er/tier/collect.mjs [--measure] [--rps 10] [--days 7] [--every 180] [--once] [--rebuild]
-import { execFileSync } from "node:child_process";
 import { createHmac, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -9,7 +8,8 @@ import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
 import { dakStopped } from "./dakstop.mjs";
 import { derive, writeDerived } from "./derive.mjs";
-import { BASE_DONE, baseReady, derivePre, writePre } from "./preseason.mjs";
+import { Pace, botLast429 } from "./pace.mjs";
+import { BASE_DONE, baseReady, derivePre, preRow, writePre } from "./preseason.mjs";
 import { RULE, scoreRows } from "./score.mjs";
 import { topView, writeTop } from "./top.mjs";
 
@@ -131,29 +131,6 @@ const markDak = db.prepare(`UPDATE dak_routes SET t = ?, body = ? WHERE route = 
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
 const putAccount = db.prepare(`INSERT INTO accounts (player, newest, checked, mmr) VALUES (?,?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked, mmr = excluded.mmr`);
 
-class Pace {
-  constructor(rps) {
-    this.set(rps);
-    this.next = 0;
-    this.slowUntil = 0;
-  }
-  set(rps) {
-    this.rps = rps;
-    this.gap = 1000 / rps;
-  }
-  async take() {
-    const now = Date.now();
-    const gap = now < this.slowUntil ? this.gap * 2 : this.gap;
-    const at = Math.max(now, this.next);
-    this.next = at + gap;
-    if (at > now) await sleep(at - now);
-  }
-  limited(waitMs) {
-    this.slowUntil = Date.now() + 300_000;
-    this.next = Math.max(this.next, Date.now() + waitMs);
-  }
-}
-
 const stats = { sent: 0, ok: 0, limited: 0, failed: 0, skipped: 0, lat: [] };
 const RATE = join(DIR, "rate.json");
 const measured = existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : null;
@@ -188,20 +165,6 @@ async function get(path) {
   }
   // 404는 null, 다섯 번 실패나 중단은 undefined
   return undefined;
-}
-
-/** 몽실봇 로그의 마지막 429 대기 시각, 확인하지 못하면 null */
-function botLast429() {
-  try {
-    const line = execFileSync("docker", ["exec", "bots", "sh", "-c", "grep 'API Rate limit' /var/log/supervisor/mongsil-bot.log | tail -1"], {
-      encoding: "utf8",
-      timeout: 10_000,
-      env: { ...process.env, PATH: `/Applications/OrbStack.app/Contents/MacOS/xbin:${process.env.PATH}` },
-    }).trim();
-    return line ? Date.parse(`${line.slice(0, 19).replace(" ", "T")}+09:00`) : 0;
-  } catch {
-    return null;
-  }
 }
 
 function watchBot(since, everyMs) {
@@ -743,17 +706,7 @@ function putPre(s, game, list) {
 }
 
 function putPreOne(s, game, i, y) {
-  const drops = Array.isArray(y.guideRobotWeatherDropPickUpCount) ? y.guideRobotWeatherDropPickUpCount.filter((d) => d.count > 0).map((d) => [d.buffCode, d.count]) : [];
-  putPreRow.run(
-    game, i, s.id, kst(y.startDtm), y.matchingMode, y.serverName ?? null,
-    y.teamNumber ?? null, y.gameRank ?? null, y.characterNum ?? null, y.bestWeapon ?? null, y.isMLBot ? 1 : 0, y.mainWeather ?? null,
-    y.experimentResultType ?? null, y.crExperimentReward ?? null, y.crExperimentalCredit ?? null,
-    JSON.stringify(y.useGadget ?? {}), JSON.stringify(drops), y.guideRobotWeatherObjectCount ?? 0,
-    JSON.stringify((y.questStepClear ?? []).map((q) => [q.experimentGroupId, Math.round(q.firstClearElapsedSeconds), q.clearCount])),
-    // 슬롯 0~5 순서의 최종 장비 코드. 빈 슬롯은 0
-    JSON.stringify([0, 1, 2, 3, 4, 5].map((k) => y.equipment?.[k] ?? 0)),
-    y.crGetByGuideRobot ?? 0,
-  );
+  putPreRow.run(...preRow(s.id, game, i, y));
 }
 
 /** 프리 시즌 특집 집계. 저장한 행만 읽고 공식 API에는 요청하지 않음 */
