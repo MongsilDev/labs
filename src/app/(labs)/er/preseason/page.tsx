@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { avatarUrl, currentUser } from "@/er/server/auth";
 import Live from "@/next/Live";
-import MoreRows from "./MoreRows";
+import SortTable from "./SortTable";
 import { EXP_NAME, EXP_ORDER, getPreseason, type PreChar, type PreMove, type PreStat } from "@/next/preseason";
 import { itemIcon } from "@/er/lib/tier";
 
@@ -12,7 +12,7 @@ const n = (v: number) => v.toLocaleString("ko-KR");
 const server = (name: string) => name.replace(/^Asia(\d?)$/, (_, k) => `아시아${k || 1}`);
 const servers = (list: { name: string }[]) => (list.length > 2 ? "전체 서버" : list.map((x) => server(x.name)).join(", "));
 // 모드 평균 승률과의 차이가 95% 범위를 넘을 때만 칠함
-const tint = (s: PreStat, base: number) =>
+const tint = (s: { win: number; winCi: number }, base: number) =>
   Math.abs(s.win - base) <= s.winCi ? undefined : { background: `color-mix(in srgb, var(${s.win > base ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(s.win - base) / 10, 1) * 50)}%, transparent)` };
 
 function Who({ c }: { c: PreChar }) {
@@ -99,26 +99,25 @@ export default async function PreseasonPage() {
       {data.tier && (
         <section className="sec mt-6 min-w-0">
           <h2 className="sec-h">프리 시즌 티어리스트<small className="num">{n(data.tier.rows)}명</small></h2>
-          <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
-            <MoreRows
-              head={
-                <thead>
-                  <tr>
-                    <th className="pin-n">#</th>
-                    <th className="l pin-c">실험체</th>
-                    <th>등급</th>
-                    <th>점수</th>
-                    <th>픽률</th>
-                    <th>승률</th>
-                    <th>TOP 3</th>
-                    <th>평균 순위</th>
-                  </tr>
-                </thead>
-              }
-            >
-              {data.tier.combos.map((c, i) => (
-                <tr key={`${c.char}-${c.weapon}`} className={c.n < data.tier!.thin ? "opacity-50" : undefined}>
-                  <td className="pin-n text-ink-3">{i + 1}</td>
+          <SortTable
+            numbered
+            search
+            cols={[
+              { label: "실험체", cls: "l pin-c" },
+              { label: "등급" },
+              { label: "점수", first: "desc" },
+              { label: "픽률", first: "desc" },
+              { label: "승률", first: "desc" },
+              { label: "TOP 3", first: "desc" },
+              { label: "평균 순위", first: "asc" },
+            ]}
+            rows={data.tier.combos.map((c) => ({
+              id: `${c.char}-${c.weapon}`,
+              find: `${c.weaponName}${c.name}${c.name}${c.weaponName}`,
+              dim: c.n < data.tier!.thin,
+              vals: [null, null, c.z, c.pick, c.win, c.top3, c.place],
+              cells: (
+                <>
                   <td className="l pin-c"><Who c={c} /></td>
                   <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
                   <td className="font-bold">{signed(c.z)}</td>
@@ -126,10 +125,10 @@ export default async function PreseasonPage() {
                   <td>{c.win.toFixed(1)}%</td>
                   <td>{c.top3.toFixed(1)}%</td>
                   <td>{c.place.toFixed(2)}</td>
-                </tr>
-              ))}
-            </MoreRows>
-          </div>
+                </>
+              ),
+            }))}
+          />
         </section>
       )}
 
@@ -145,6 +144,32 @@ export default async function PreseasonPage() {
             <Moves head="승률이 오른 실험체" list={data.change.up} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
             <Moves head="승률이 내린 실험체" list={data.change.down} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
           </div>
+        </section>
+      ) : null}
+
+      {data.trios?.length ? (
+        <section className="sec mt-10 min-w-0">
+          <h2 className="sec-h">3인 조합<small className="num">30팀 이상</small></h2>
+          <SortTable
+            search
+            cols={[{ label: "조합", cls: "l" }, { label: "팀", first: "desc" }, { label: "승률", first: "desc" }, { label: "TOP 3", first: "desc" }, { label: "평균 순위", first: "asc" }]}
+            rows={data.trios.map((t) => ({
+              id: t.key,
+              find: t.members.map((c) => `${c.weaponName}${c.name}`).join(""),
+              vals: [null, t.n, t.win, t.top3, t.rank],
+              cells: (
+                <>
+                  <td className="l">
+                    <span className="flex flex-col gap-1 py-1">{t.members.map((c) => <Who key={`${c.char}-${c.weapon}`} c={c} />)}</span>
+                  </td>
+                  <td className="text-ink-3">{n(t.n)}</td>
+                  <td className="font-bold" style={tint(t, data.base)} data-tip={`평균 승률 ${data.base}%, 95% 범위 ±${t.winCi}`}>{t.win.toFixed(1)}%</td>
+                  <td>{t.top3.toFixed(1)}%</td>
+                  <td>{t.rank?.toFixed(2) ?? "-"}</td>
+                </>
+              ),
+            }))}
+          />
         </section>
       ) : null}
 
@@ -253,24 +278,23 @@ export default async function PreseasonPage() {
               </h3>
               <p className="mt-1 text-[13px] text-ink-3 num">{w.drop ? `${w.drop} 획득 ${w.dropShare.toFixed(1)}%` : "지급품 없음"}</p>
               {w.top.length ? (
-                <table className="tbl mt-2">
-                  <thead>
-                    <tr>
-                      <th className="l">승률 상위</th>
-                      <th>승률</th>
-                      <th>명</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {w.top.map((c) => (
-                      <tr key={`${c.char}-${c.weapon}`}>
-                        <td className="l"><Who c={c} /></td>
-                        <td className="font-bold" style={tint(c, data.base)} data-tip={`평균 승률 ${data.base}%, 95% 범위 ±${c.winCi}`}>{c.win.toFixed(1)}%</td>
-                        <td className="text-ink-3">{n(c.n)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="mt-2">
+                  <SortTable
+                    show={5}
+                    cols={[{ label: "실험체", cls: "l" }, { label: "승률", first: "desc" }, { label: "명", first: "desc" }]}
+                    rows={w.top.map((c) => ({
+                      id: `${c.char}-${c.weapon}`,
+                      vals: [null, c.win, c.n],
+                      cells: (
+                        <>
+                          <td className="l"><Who c={c} /></td>
+                          <td className="font-bold" style={tint(c, data.base)} data-tip={`평균 승률 ${data.base}%, 95% 범위 ±${c.winCi}`}>{c.win.toFixed(1)}%</td>
+                          <td className="text-ink-3">{n(c.n)}</td>
+                        </>
+                      ),
+                    }))}
+                  />
+                </div>
               ) : (
                 <p className="mt-2 text-[13px] text-ink-3">40명 이상인 실험체가 아직 없습니다.</p>
               )}
@@ -279,37 +303,64 @@ export default async function PreseasonPage() {
         </div>
       </section>
 
-      <section className="sec mt-10 min-w-0">
-        <h2 className="sec-h">실험체별 실험 과제<small className="num">30명 이상</small></h2>
-        {data.expChars.length ? (
-          <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
-            <MoreRows
-              head={
-                <thead>
-                  <tr>
-                    <th className="l">실험체</th>
-                    {EXP_ORDER.map((t) => <th key={t}>{EXP_NAME[t]}</th>)}
-                    <th>명</th>
-                  </tr>
-                </thead>
-              }
-            >
-              {data.expChars.map((c) => {
-                const top = Math.max(...EXP_ORDER.map((t) => c.exp[t] ?? 0));
-                return (
-                  <tr key={`${c.char}-${c.weapon}`}>
+      {data.expChars.length ? (
+        <section className="sec mt-10 min-w-0">
+          <h2 className="sec-h">실험체별 실험 과제<small className="num">30명 이상</small></h2>
+          <SortTable
+            search
+            cols={[{ label: "실험체", cls: "l" }, ...EXP_ORDER.map((t) => ({ label: EXP_NAME[t], first: "desc" as const })), { label: "명", first: "desc" }]}
+            rows={data.expChars.map((c) => {
+              // 분야마다 30명 이상일 때만 성적을 적고, 평균 순위가 가장 좋은 분야를 칠함
+              const ranks = EXP_ORDER.map((t) => c.rank?.[t]).filter((v): v is number => v != null);
+              const best = ranks.length > 1 ? Math.min(...ranks) : null;
+              const top = Math.max(...EXP_ORDER.map((t) => c.exp[t] ?? 0));
+              return {
+                id: `${c.char}-${c.weapon}`,
+                find: `${c.weaponName}${c.name}${c.name}${c.weaponName}`,
+                vals: [null, ...EXP_ORDER.map((t) => c.exp[t] ?? 0), c.n],
+                cells: (
+                  <>
                     <td className="l"><Who c={c} /></td>
-                    {EXP_ORDER.map((t) => <td key={t} className={c.exp[t] === top ? "font-bold" : "text-ink-3"}>{(c.exp[t] ?? 0).toFixed(1)}%</td>)}
+                    {EXP_ORDER.map((t) => {
+                      const rank = c.rank?.[t];
+                      return (
+                        <td key={t} data-tip={rank == null ? undefined : `평균 순위 ${rank.toFixed(2)}, TOP 3 ${c.top3?.[t]?.toFixed(1)}%`}>
+                          <span className={c.exp[t] === top ? "font-bold" : "text-ink-3"}>{(c.exp[t] ?? 0).toFixed(1)}%</span>
+                          {rank != null && <small className="block" style={rank === best ? { color: "var(--up)" } : undefined}>{rank.toFixed(2)}위</small>}
+                        </td>
+                      );
+                    })}
                     <td className="text-ink-3">{n(c.n)}</td>
-                  </tr>
-                );
-              })}
-            </MoreRows>
-          </div>
-        ) : (
-          <p className="text-[13px] text-ink-3">30명 이상인 실험체가 아직 없습니다.</p>
-        )}
-      </section>
+                  </>
+                ),
+              };
+            })}
+          />
+        </section>
+      ) : null}
+
+      {data.expChars.some((c) => c.gadget != null) && (
+        <section className="sec mt-10 min-w-0">
+          <h2 className="sec-h">실험체별 가젯<small className="num">30명 이상</small></h2>
+          <SortTable
+            search
+            cols={[{ label: "실험체", cls: "l" }, { label: "가젯 쓴 사람", first: "desc" }, { label: "많이 쓴 가젯", cls: "l" }, { label: "명", first: "desc" }]}
+            rows={data.expChars.map((c) => ({
+              id: `${c.char}-${c.weapon}`,
+              find: `${c.weaponName}${c.name}${c.name}${c.weaponName}`,
+              vals: [null, c.gadget ?? null, null, c.n],
+              cells: (
+                <>
+                  <td className="l"><Who c={c} /></td>
+                  <td>{c.gadget?.toFixed(1) ?? "-"}%</td>
+                  <td className="l">{c.topGadget ? <>{c.topGadget.name} <small className="text-ink-3">{c.topGadget.share.toFixed(1)}%</small></> : "-"}</td>
+                  <td className="text-ink-3">{n(c.n)}</td>
+                </>
+              ),
+            }))}
+          />
+        </section>
+      )}
 
       <p className="mt-12 text-[13px] text-ink-3">자료: 이터널 리턴 공식 API</p>
     </Live>

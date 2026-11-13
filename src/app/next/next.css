@@ -100,6 +100,9 @@ td[data-tip]:hover { box-shadow: inset 0 0 0 1px var(--ink); }
 .tbl th[aria-sort] a { color: inherit; }
 .tbl th[aria-sort="descending"]::after { content: "↓"; margin-left: 3px; }
 .tbl th[aria-sort="ascending"]::after { content: "↑"; margin-left: 3px; }
+.tbl .sort-h { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.tbl .sort-h:hover { color: var(--ink); }
+.tbl .sort-h:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
 /* 감싼 요소가 가로로 밀리지 않는 표에서만 헤더가 화면 위에 남음 */
 .tbl.stick thead th { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 0; box-shadow: inset 0 -1px 0 var(--rule-2); }
 /* 좁은 폭에서 합계 열을 오른쪽에 남김. 감싼 요소의 좌우 여백 16px만큼 더 밀어 여백으로 뒤 칸이 비치지 않게 함 */

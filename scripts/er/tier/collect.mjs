@@ -10,7 +10,7 @@ import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "nod
 import { dakStopped } from "./dakstop.mjs";
 import { derive, writeDerived } from "./derive.mjs";
 import { derivePre, writePre } from "./preseason.mjs";
-import { RULE, scoreRows } from "./score.mjs";
+import { LOBBY, RULE, scoreRows } from "./score.mjs";
 import { topView, writeTop } from "./top.mjs";
 
 const HOME = homedir();
@@ -963,6 +963,13 @@ function view(id, label, rows, nm, extra = {}, k) {
 
 const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
 
+/** 픽률을 참가자 비율로 쓰던 예전 파일은 경기당 등장률(참가자 비율 × 24)로 바꿔 읽음 */
+function lobbyPick(t) {
+  if (!t || t.pickBasis === "lobby") return t;
+  const fix = (views) => views?.map((v) => ({ ...v, combos: v.combos.map((c) => ({ ...c, pick: round(c.pick * LOBBY, 2) })) }));
+  return { ...t, pickBasis: "lobby", views: fix(t.views), ...(t.past && { past: { ...t.past, views: fix(t.past.views) } }) };
+}
+
 function writeTier(data) {
   for (const dir of [OUT, DIR]) {
     mkdirSync(dir, { recursive: true });
@@ -1046,7 +1053,7 @@ function routeUse(rows, ids) {
 async function publish(s, nm) {
   const now = Date.now();
   const lastFile = join(DIR, "tier.json");
-  const last = existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null;
+  const last = lobbyPick(existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null);
   // 끝난 정규 시즌이 아직 현재 행이면 종료 뒤 첫 발행만 집계함. 다시 집계하면 최근 N일 탭이 줄고 오래된 행이 지워짐
   const ended = s.regular && now >= s.end && last?.season?.id === s.id && last.updatedAt >= s.end && !PUBLISH_ONLY;
   const all = s.regular && !ended ? selectRows.all(s.id, SERVER, s.start, s.id) : [];
@@ -1112,6 +1119,7 @@ async function publish(s, nm) {
     patch: cur ?? null,
     band: { name: "in1000", server: "아시아1", floor: RANKED_GATE, cut: cuts.at(-1)?.[1] ?? null },
     rule: { ...RULE, publishRows: PUBLISH_ROWS },
+    pickBasis: "lobby",
     rate: existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : undefined,
     views,
     routes: info,

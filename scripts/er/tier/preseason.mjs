@@ -15,6 +15,7 @@ export const CHAR_MIN = 30;
 export const WEATHER_CHAR_MIN = 40;
 const WEATHER_TOP = 5;
 const CHANGE_TOP = 10;
+export const TRIO_MIN = 30;
 export const EXP = { Energy: "에너지 공학", Material: "재료 공학", Biotechnology: "생명 공학" };
 // questStepClear의 experimentGroupId 앞자리. 실험 결과 분야와 맞춰 본 값이고 끝자리는 단계
 const QUEST = { 1: "Material", 2: "Energy", 3: "Biotechnology" };
@@ -38,10 +39,13 @@ function fresh() {
   return {
     games: 0, players: 0, bots: 0, teams: 0, winTeams: 0, from: Infinity, to: 0, servers: new Map(),
     exp: new Map(Object.keys(EXP).map((k) => [k, acc()])), none: acc(),
-    chars: new Map(), combos: new Map(), gadgets: new Map(), noGadget: 0, weathers: new Map(), equipped: 0, equipGames: 0, equipLast: null, armor: new Map(),
+    chars: new Map(), combos: new Map(), trios: new Map(), gadgets: new Map(), noGadget: 0, weathers: new Map(), equipped: 0, equipGames: 0, equipLast: null, armor: new Map(),
     quest: new Map(Object.keys(EXP).map((k) => [k, { n1: 0, t1: 0, n2: 0, c2: 0 }])),
   };
 }
+
+/** 95% 범위의 아래 끝으로 세운 목록에서 처음 보이는 WEATHER_TOP줄만 보이는 승률 순으로 다시 세움. 나머지는 더 보기로 펼침 */
+const winFirst = (list) => [...list.slice(0, WEATHER_TOP).sort((a, b) => b.win - a.win || b.n - a.n), ...list.slice(WEATHER_TOP)];
 
 /** 직전 정규 시즌 경기에서 조합별 판 수와 1위 수. 봇과 MODES 밖 경기는 뺌 */
 function baseline(rows) {
@@ -69,6 +73,17 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
     // 팀 수는 봇 팀까지 세야 경기 규모가 맞음
     const size = new Set(list.map((r) => r.team)).size;
     for (const r of list) if (!r.bot) tier.push({ game: r.game, player: `${r.game}-${r.slot}`, char: r.char, weapon: r.weapon, rank: r.rank, gain: 0, mmr: size });
+    // 3인 조합은 봇이 없는 세 명 팀만 셈. 실험체와 무기를 정렬한 키라 자리 순서와 관계없음
+    const byTeam = new Map();
+    for (const r of list) byTeam.set(r.team, [...(byTeam.get(r.team) ?? []), r]);
+    for (const team of byTeam.values()) {
+      if (team.length !== 3 || team.some((r) => r.bot)) continue;
+      const key = team.map((r) => `${r.char}-${r.weapon}`).sort().join("+");
+      const a = x.trios.get(key) ?? { ...acc(), t3: 0 };
+      add(a, team[0].rank);
+      if (team[0].rank <= 3) a.t3++;
+      x.trios.set(key, a);
+    }
     list = [];
   };
   for (const r of rows) {
@@ -114,15 +129,19 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
     }
     m.players++;
     const key = `${r.char}-${r.weapon}`;
-    const c = m.chars.get(key) ?? { n: 0, exp: {} };
+    const c = m.chars.get(key) ?? { n: 0, exp: {}, rk: {}, t3: {}, used: 0, gc: new Map() };
     c.n++;
     const t = r.exp in EXP ? r.exp : "none";
     c.exp[t] = (c.exp[t] ?? 0) + 1;
+    c.rk[t] = (c.rk[t] ?? 0) + rank;
+    c.t3[t] = (c.t3[t] ?? 0) + (rank <= 3 ? 1 : 0);
     m.chars.set(key, c);
     // 예전 행은 쓴 가젯 코드 배열만 있고, 지금 행은 코드별 사용 횟수
     const raw = JSON.parse(r.gadgets || "[]");
     const used = Array.isArray(raw) ? raw.map((code) => [code, null]) : Object.entries(raw).map(([code, k]) => [Number(code), k]);
     if (!used.length) m.noGadget++;
+    else c.used++;
+    for (const [code] of used) c.gc.set(Math.floor(code / 100) * 100, (c.gc.get(Math.floor(code / 100) * 100) ?? 0) + 1);
     for (const [code, k] of used) {
       const x = m.gadgets.get(code) ?? { n: 0, known: 0, uses: 0 };
       x.n++;
@@ -182,7 +201,7 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       const ci = 1.96 * Math.sqrt((now * (1 - now)) / a.n + (then * (1 - then)) / p.n) * 100;
       // 프리 시즌에는 7팀 경기와 봇 팀이 섞여 평균 승률이 달라서, 기간마다 평균과의 차이를 견줌
       const d = (now - avgNow - (then - avgThen)) * 100;
-      return { ...named(key), n: a.n, win: pct(a.win, a.n), pick: +((a.n / x.players) * 100).toFixed(2), d: fix1(d), dCi: fix1(ci), dPick: +((a.n / x.players - p.n / b.players) * 100).toFixed(2), edge: Math.abs(d) - ci };
+      return { ...named(key), n: a.n, win: pct(a.win, a.n), pick: +((a.n / x.games) * 100).toFixed(2), d: fix1(d), dCi: fix1(ci), dPick: +((a.n / x.games - p.n / b.games.size) * 100).toFixed(2), edge: Math.abs(d) - ci };
     })
     .filter((c) => c.edge > 0)
     .sort((a, c) => c.edge - a.edge);
@@ -210,7 +229,24 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
     },
     expChars: [...x.chars]
       .filter(([, c]) => c.n >= CHAR_MIN)
-      .map(([key, c]) => ({ ...named(key), n: c.n, exp: Object.fromEntries(Object.keys(EXP).map((k) => [k, pct(c.exp[k] ?? 0, c.n)])) }))
+      .map(([key, c]) => {
+        // 분야마다 CHAR_MIN명이 안 되면 성적은 비움
+        const field = (f) => Object.fromEntries(Object.keys(EXP).map((k) => [k, (c.exp[k] ?? 0) >= CHAR_MIN ? f(k) : null]));
+        const [code, k] = [...c.gc].sort((a, b) => b[1] - a[1])[0] ?? [];
+        return {
+          ...named(key),
+          n: c.n,
+          exp: Object.fromEntries(Object.keys(EXP).map((k) => [k, pct(c.exp[k] ?? 0, c.n)])),
+          rank: field((k) => avg(c.rk[k], c.exp[k])),
+          top3: field((k) => pct(c.t3[k], c.exp[k])),
+          gadget: pct(c.used, c.n),
+          topGadget: code ? { name: nm.skill(code), share: pct(k, c.n) } : null,
+        };
+      })
+      .sort((a, b) => b.n - a.n),
+    trios: [...x.trios]
+      .filter(([, a]) => a.n >= TRIO_MIN)
+      .map(([key, a]) => ({ key, members: key.split("+").map(named), n: a.n, win: pct(a.win, a.n), winCi: pctCi(a.win, a.n), top3: pct(a.t3, a.n), rank: avg(a.rank, a.n) }))
       .sort((a, b) => b.n - a.n),
     // 오래 살아남을수록 쓸 기회가 많아 승률과 순위는 싣지 않고 쓰임새만 셈
     gadgets: [...x.gadgets]
@@ -236,13 +272,11 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
         players: v.players,
         drop: v.buff ? nm.state(v.buff) : null,
         dropShare: pct(v.drop, v.players),
-        top: [...v.chars]
+        top: winFirst([...v.chars]
           .filter(([, a]) => a.n >= WEATHER_CHAR_MIN)
           .map(([key, a]) => ({ ...named(key), ...out(a, v.players) }))
           // 표본이 적어 범위가 넓은 줄이 뽑히지 않게 95% 범위의 아래 끝으로 고른 뒤, 보이는 승률 순으로 다시 세움
-          .sort((a, b) => fix1(b.win - b.winCi) - fix1(a.win - a.winCi) || b.n - a.n)
-          .slice(0, WEATHER_TOP)
-          .sort((a, b) => b.win - a.win || b.n - a.n),
+          .sort((a, b) => fix1(b.win - b.winCi) - fix1(a.win - a.winCi) || b.n - a.n)),
       }))
       .sort((a, b) => b.games - a.games),
     change: b.players ? { games: b.games.size, from: b.from, to: b.to, avgNow: pct(wn, nn), avgThen: pct(wt, nt), up: pick(true), down: pick(false) } : null,
@@ -255,7 +289,8 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
         z: +c.z.toFixed(3),
         half: +c.half.toFixed(3),
         n: c.n,
-        pick: +(c.pick * 100).toFixed(2),
+        // 프리 시즌은 경기마다 모든 참가자 행이 있어 경기당 등장률을 바로 셈. 봇은 등장 수에서 빠짐
+        pick: +((c.n / x.games) * 100).toFixed(2),
         win: +(c.win * 100).toFixed(1),
         top3: +(c.top3 * 100).toFixed(1),
         place: +c.place.toFixed(2),

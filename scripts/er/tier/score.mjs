@@ -20,6 +20,9 @@ const METRICS = {
 };
 const NAMES = Object.keys(METRICS);
 
+/** 한 경기 인원. 8팀 3인 */
+export const LOBBY = 24;
+
 /** 표준화 점수 z의 등급 경계 */
 export const GRADES = [
   ["S", 1.0],
@@ -196,7 +199,8 @@ export function scoreRows(rows, rule = RULE) {
     for (const a of NAMES)
       for (const b of NAMES) v += ((w[a] * w[b] * rho[a + b]) * Math.sqrt(c.m[a].post * c.m[b].post)) / (scale[a].sd * scale[b].sd);
     c.half = (1.645 * rp.sd * Math.sqrt(v)) / mix.sd;
-    c.pick = c.n / rows.length;
+    // 경기 행이 상위권 계정 몫만 있어 경기당 등장률은 참가자 비율 × 한 경기 인원으로 추정함
+    c.pick = (c.n / rows.length) * LOBBY;
   }
   combos.sort((a, b) => b.score - a.score || b.n - a.n);
   for (const c of combos) delete c.m;

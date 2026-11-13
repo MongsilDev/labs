@@ -16,7 +16,16 @@ export type PreData = {
   from: number;
   to: number;
   exp: { teams: number; rows: (PreStat & { type: string; name: string; step1: number | null; step2: number | null })[]; none: PreStat };
-  expChars: (PreChar & { n: number; exp: Record<string, number> })[];
+  expChars: (PreChar & {
+    n: number;
+    exp: Record<string, number>;
+    // 아래 값은 실험체별 분야 성적과 가젯을 넣기 전에 쓴 파일에는 없음
+    rank?: Record<string, number | null>;
+    top3?: Record<string, number | null>;
+    gadget?: number;
+    topGadget?: { name: string; share: number } | null;
+  })[];
+  trios?: { key: string; members: PreChar[]; n: number; win: number; winCi: number; top3: number; rank: number | null }[];
   gadgets: { code: number; name: string; n: number; share: number; per: number | null }[];
   noGadget: { n: number; share: number };
   // 최종 장비를 저장하기 전에 쓴 파일에는 없음

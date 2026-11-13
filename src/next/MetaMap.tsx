@@ -35,7 +35,7 @@ export default function MetaMap({ list, median, label, w: W = 860, h: H = 540, f
   const y0 = Math.floor(Math.min(...ys) - 0.5), y1 = Math.ceil(Math.max(...ys) + 0.5);
   const sx = (p: number) => L + ((Math.log10(Math.max(p, 0.01)) - x0) / (x1 - x0)) * (W - L - R);
   const sy = (s: number) => T + ((y1 - s) / (y1 - y0)) * (H - T - B);
-  const ticksX = [0.1, 0.2, 0.5, 1, 2, 5].filter((p) => Math.log10(p) >= x0 && Math.log10(p) <= x1);
+  const ticksX = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50].filter((p) => Math.log10(p) >= x0 && Math.log10(p) <= x1);
   const ticksY: number[] = [];
   for (let v = Math.ceil(y0 / 2) * 2; v <= y1; v += 2) ticksY.push(v);
   const mx = sx(median), zy = sy(0);

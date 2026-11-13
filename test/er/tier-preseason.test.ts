@@ -101,7 +101,9 @@ describe("프리 시즌 특집 집계", () => {
     expect(last).toMatchObject({ char: 2, top3: 0 });
     expect(last.place).toBe(7.5);
     expect(res.tier!.thin).toBe(30);
-    expect(res.tier!.combos.reduce((a, c) => a + c.pick, 0)).toBeCloseTo(100, 0);
+    // 픽률은 경기당 등장률이라 합은 경기당 평균 인원(24명 20경기, 21명 20경기)의 100배
+    expect(res.tier!.combos.reduce((a, c) => a + c.pick, 0)).toBeCloseTo(2250, 0);
+    expect(first.pick).toBe(300);
   });
 
   it("실험체 줄은 표본이 모자라면 싣지 않는다", () => {
