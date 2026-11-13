@@ -274,6 +274,8 @@ async function retryMisses() {
     if (await waitRound()) return;
     const part = ids.slice(i, i + CHUNK);
     const still = new Set(await fetchIds(part));
+    // 절반 넘게 또 받지 못했으면 장애로 보고 실패 횟수를 올리지 않음. 몇 개뿐이면 그 번호만의 문제로 봄
+    if (part.length >= 20 && still.size >= part.length / 2) return;
     db.exec("BEGIN");
     for (const id of part) {
       if (still.has(id)) putMiss.run(id);
@@ -306,7 +308,7 @@ for (;;) {
     const end = Math.min(cursor + CHUNK, hi);
     const missed = await fetchIds(Array.from({ length: end - cursor }, (_, i) => cursor + 1 + i));
     // 절반 넘게 받지 못했으면 API 장애로 보고 커서를 올리지 않고 나중에 다시 받음
-    if (missed.length >= CHUNK / 2) {
+    if (missed.length >= (end - cursor) / 2) {
       log(`번호 ${cursor + 1}~${end} 중 ${missed.length}개를 받지 못해 5분 뒤 다시 받습니다.`);
       down = true;
       break;
