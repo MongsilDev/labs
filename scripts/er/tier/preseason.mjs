@@ -39,10 +39,13 @@ const fix1 = (v) => +v.toFixed(1);
 const pct = (k, n) => (n ? fix1((k / n) * 100) : 0);
 const pctCi = (k, n) => (n ? fix1(1.96 * Math.sqrt(((k / n) * (1 - k / n)) / n) * 100) : 0);
 const avg = (s, n) => (n ? +(s / n).toFixed(2) : null);
-const acc = () => ({ n: 0, rank: 0, win: 0 });
+const acc = () => ({ n: 0, rank: 0, rank2: 0, win: 0 });
+// 평균의 표준오차 제곱. sum2는 제곱합
+const se2 = (n, sum, sum2) => (n ? Math.max(sum2 / n - (sum / n) ** 2, 0) / n : 0);
 const add = (a, rank) => {
   a.n++;
   a.rank += rank;
+  a.rank2 += rank * rank;
   if (rank === 1) a.win++;
 };
 const out = (a, total) => ({ n: a.n, share: pct(a.n, total), rank: avg(a.rank, a.n), win: pct(a.win, a.n), winCi: pctCi(a.win, a.n) });
@@ -157,12 +160,11 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
     }
     m.players++;
     const key = `${r.char}-${r.weapon}`;
-    const c = m.chars.get(key) ?? { n: 0, exp: {}, rk: {}, rk2: {}, t3: {} };
+    const c = m.chars.get(key) ?? { n: 0, exp: {}, rk: {}, t3: {} };
     c.n++;
     const t = r.exp in EXP ? r.exp : "none";
     c.exp[t] = (c.exp[t] ?? 0) + 1;
     c.rk[t] = (c.rk[t] ?? 0) + rank;
-    c.rk2[t] = (c.rk2[t] ?? 0) + rank * rank;
     c.t3[t] = (c.t3[t] ?? 0) + (rank <= 3 ? 1 : 0);
     m.chars.set(key, c);
     // 최종 장비는 오래 살수록 완성돼 있어, 신규 방어구는 같은 부위에 같은 등급을 쓴 사람과 견줌
@@ -244,22 +246,16 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       .map(([key, c]) => {
         // 분야마다 CHAR_MIN명이 안 되면 성적은 비움
         const field = (f) => Object.fromEntries(Object.keys(EXP).map((k) => [k, (c.exp[k] ?? 0) >= CHAR_MIN ? f(k) : null]));
-        // 분야의 평균 순위가 같은 실험체의 나머지 분야와 95% 범위를 넘게 다르면 1(좋음)이나 -1(나쁨)
-        const all = Object.keys(EXP).reduce((s, k) => ({ n: s.n + (c.exp[k] ?? 0), rk: s.rk + (c.rk[k] ?? 0), rk2: s.rk2 + (c.rk2[k] ?? 0) }), { n: 0, rk: 0, rk2: 0 });
-        const se2 = (n, rk, rk2) => Math.max(rk2 / n - (rk / n) ** 2, 0) / n;
-        const edge = field((k) => {
-          const rest = { n: all.n - c.exp[k], rk: all.rk - c.rk[k], rk2: all.rk2 - c.rk2[k] };
-          if (rest.n < CHAR_MIN) return 0;
-          const d = rest.rk / rest.n - c.rk[k] / c.exp[k];
-          return Math.abs(d) > 1.96 * Math.sqrt(se2(c.exp[k], c.rk[k], c.rk2[k]) + se2(rest.n, rest.rk, rest.rk2)) ? Math.sign(d) : 0;
-        });
+        // 재료 공학은 거의 모든 실험체에서 나빠, 분야끼리 견줘 평균 순위가 가장 좋은 하나만 고름
+        const mean = (k) => c.rk[k] / c.exp[k];
+        const [best, next] = Object.keys(EXP).filter((k) => (c.exp[k] ?? 0) >= CHAR_MIN).sort((a, b) => mean(a) - mean(b));
         return {
           ...named(key),
           n: c.n,
           exp: Object.fromEntries(Object.keys(EXP).map((k) => [k, pct(c.exp[k] ?? 0, c.n)])),
           rank: field((k) => avg(c.rk[k], c.exp[k])),
           top3: field((k) => pct(c.t3[k], c.exp[k])),
-          edge,
+          best: next == null ? null : best,
         };
       })
       .sort((a, b) => b.n - a.n),
@@ -274,8 +270,9 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       const a = x.armor.get(code);
       const g = x.armor.get(`${Math.floor(code / 1000)}-${grade}`);
       // 견줄 쪽은 같은 부위, 같은 등급에서 이 장비를 뺀 사람
-      const rest = { n: g.n - a.n, rank: g.rank - a.rank, win: g.win - a.win };
-      return { code, name, grade: GRADE_KO[grade] ?? grade, ...out(a, g.n), restWin: rest.n ? pct(rest.win, rest.n) : null, restRank: avg(rest.rank, rest.n) };
+      const rest = { n: g.n - a.n, rank: g.rank - a.rank, rank2: g.rank2 - a.rank2, win: g.win - a.win };
+      const rankCi = rest.n ? +(1.96 * Math.sqrt(se2(a.n, a.rank, a.rank2) + se2(rest.n, rest.rank, rest.rank2))).toFixed(2) : null;
+      return { code, name, grade: GRADE_KO[grade] ?? grade, ...out(a, g.n), restWin: rest.n ? pct(rest.win, rest.n) : null, restRank: avg(rest.rank, rest.n), rankCi };
     }),
     weather: [...x.weathers]
       .filter(([code]) => code)

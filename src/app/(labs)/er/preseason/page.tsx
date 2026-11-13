@@ -19,6 +19,11 @@ const ci = (win: number, k: number) => (k ? 1.96 * Math.sqrt(((win / 100) * (1 -
 // 기준 승률과의 차이가 95% 범위를 넘는 칸만 칠함. 농도는 차이에 비례
 const tint = (win: number, range: number, base: number) =>
   Math.abs(win - base) <= range ? undefined : { background: `color-mix(in srgb, var(${win > base ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(win - base) / 10, 1) * 50)}%, transparent)` };
+// 평균 순위는 낮을수록 좋음. 견주는 값과 95% 범위를 넘게 다를 때만 칠함
+const rankTint = (rank: number | null, rest: number | null, range?: number | null) =>
+  rank == null || rest == null || range == null || Math.abs(rank - rest) <= range
+    ? undefined
+    : { background: `color-mix(in srgb, var(${rank < rest ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(rank - rest) / 0.5, 1) * 40) + 10}%, transparent)` };
 const pp = (v: number, k: number) => `${v > 0 ? "+" : ""}${v.toFixed(k)}%p`;
 const clock = (sec: number | null) => (sec == null ? "-" : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
 
@@ -167,12 +172,12 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
               <li>승률 칸은 전체 승률과 95% 범위를 넘게 다를 때 칠합니다.</li>
             </How>
           </section>
-          <section className="sec mt-10 min-w-0">
+          <section className="sec mt-10 min-w-0 xl:w-[calc(60%-16px)]">
             <h2 className="sec-h">실험체 통계</h2>
             <SortTable
               numbered
               cols={[
-                { label: "실험체", cls: "l pin-c" },
+                { label: "실험체", cls: "l pin-c w-px sm:pr-6" },
                 { label: "등급", first: "asc" },
                 { label: "픽률", first: "desc" },
                 { label: "승률", first: "desc" },
@@ -184,7 +189,7 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                 vals: [null, i, c.pick, c.win, c.n],
                 cells: (
                   <>
-                    <td className="l pin-c"><Who c={c} /></td>
+                    <td className="l pin-c w-px sm:pr-6"><Who c={c} /></td>
                     <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
                     <td><Bar v={c.pick} max={maxPick} />{c.pick.toFixed(2)}%</td>
                     <td className="font-bold" style={tint(c.win, c.winCi, cobalt.base)} data-tip={`95% 범위 ±${c.winCi}`}>{c.win.toFixed(1)}%</td>
@@ -211,12 +216,18 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                   <li>승률 칸은 평균 승률 {data.base}%와 95% 범위를 넘게 다를 때 칠합니다.</li>
                 </How>
               </section>
-              <section className="sec mt-10 min-w-0">
+            </>
+          )}
+
+          <div className="mt-10 grid items-start gap-10 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          {data.tier && (
+            <>
+              <section className="sec min-w-0">
                 <h2 className="sec-h">실험체 통계</h2>
                 <SortTable
                   numbered
                   cols={[
-                    { label: "실험체", cls: "l pin-c" },
+                    { label: "실험체", cls: "l pin-c w-px sm:pr-6" },
                     { label: "등급", first: "asc" },
                     { label: "픽률", first: "desc" },
                     { label: "승률", first: "desc" },
@@ -231,7 +242,7 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                     vals: [null, i, c.pick, c.win, c.top3, c.place],
                     cells: (
                       <>
-                        <td className="l pin-c"><Who c={c} /></td>
+                        <td className="l pin-c w-px sm:pr-6"><Who c={c} /></td>
                         <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
                         <td data-tip={`${n(c.n)}명`}><Bar v={c.pick} max={maxPick} />{c.pick.toFixed(2)}%</td>
                         <td className="font-bold" style={tint(c.win, ci(c.win, c.n), data.base)}>{c.win.toFixed(1)}%</td>
@@ -246,19 +257,20 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
           )}
 
           {data.change && (data.change.up.length || data.change.down.length) ? (
-            <section className="sec mt-10 min-w-0">
+            <section className="sec min-w-0">
               <h2 className="sec-h">
                 시즌 {Number(data.season.name.replace(/\D/g, "")) - 1} 대비
                 <small className="num">
                   {day.format(data.change.from) === day.format(data.change.to) ? day.format(data.change.from) : `${day.format(data.change.from)}~${day.format(data.change.to)}`} {n(data.change.games)}경기
                 </small>
               </h2>
-              <div className="grid items-start gap-10 lg:grid-cols-2">
+              <div className="grid items-start gap-8 lg:grid-cols-2 xl:grid-cols-1">
                 <Moves head="승률이 오른 실험체" list={data.change.up} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
                 <Moves head="승률이 내린 실험체" list={data.change.down} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
               </div>
             </section>
           ) : null}
+          </div>
 
           {data.trios?.length ? (
             <section className="sec mt-10 min-w-0">
@@ -288,15 +300,15 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
           <div className="mt-10 grid items-start gap-10 lg:grid-cols-2 xl:grid-cols-3">
             <section className="sec min-w-0">
               <h2 className="sec-h">실험 과제<small className="num">{n(data.exp.teams)}팀</small></h2>
-              <table className="tbl">
+              <table className="tbl snug">
                 <thead>
                   <tr>
                     <th className="l">완료한 분야</th>
                     <th>비율</th>
                     <th>평균 순위</th>
                     <th>승률</th>
-                    {step1 && <th data-tip="1단계를 처음 완료하기까지 걸린 평균 시간">1단계</th>}
-                    {step2 && <th data-tip="2단계를 완료한 팀의 평균 완료 횟수">2단계</th>}
+                    {step1 && <th data-tip="1단계를 처음 완료하기까지 걸린 평균 시간">1단계 시간</th>}
+                    {step2 && <th data-tip="2단계를 완료한 팀의 평균 완료 횟수">2단계 횟수</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -316,15 +328,15 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
 
             {data.armor?.length ? (
               <section className="sec min-w-0">
-                <h2 className="sec-h">신규 방어구<small className="num">{n(data.equipGames ?? 0)}경기</small></h2>
+                <h2 className="sec-h">신규 방어구<small className="num">경기 종료 때 낀 장비, {n(data.equipGames ?? 0)}경기</small></h2>
                 <table className="tbl">
                   <thead>
                     <tr>
                       <th className="l">방어구</th>
                       <th>등급</th>
                       <th data-tip="같은 부위에 같은 등급 장비를 쓴 사람 가운데 이 방어구를 쓴 사람의 비율">채용률</th>
-                      <th>승률</th>
-                      <th data-tip="같은 부위에 같은 등급의 다른 장비를 쓴 사람의 승률">다른 장비</th>
+                      <th>평균 순위</th>
+                      <th data-tip="같은 부위에 같은 등급의 다른 장비를 낀 사람의 평균 순위">같은 등급 평균</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -338,8 +350,8 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                         </td>
                         <td className="text-ink-3">{a.grade}</td>
                         <td>{a.share.toFixed(1)}%</td>
-                        <td className="font-bold" style={a.restWin == null ? undefined : tint(a.win, a.winCi, a.restWin)} data-tip={`${n(a.n)}명, 평균 ${a.rank?.toFixed(2) ?? "-"}위, 95% 범위 ±${a.winCi}`}>{a.win.toFixed(1)}%</td>
-                        <td className="text-ink-3" data-tip={`평균 ${a.restRank?.toFixed(2) ?? "-"}위`}>{a.restWin == null ? "-" : `${a.restWin.toFixed(1)}%`}</td>
+                        <td className="font-bold" style={rankTint(a.rank, a.restRank, a.rankCi)} data-tip={`${n(a.n)}명, 승률 ${a.win.toFixed(1)}%`}>{a.rank?.toFixed(2) ?? "-"}</td>
+                        <td className="text-ink-3" data-tip={a.restWin == null ? undefined : `승률 ${a.restWin.toFixed(1)}%`}>{a.restRank?.toFixed(2) ?? "-"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -376,7 +388,7 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
             <section className="sec mt-10 min-w-0">
               <h2 className="sec-h">실험체별 실험 과제<small className="num">30명 이상</small></h2>
               <SortTable
-                groups={[{ label: "", span: 1 }, { label: "완료한 분야 비율", span: 3 }, { label: "평균 순위", span: 3, shade: "평균 순위 칸은 다른 분야를 완료했을 때의 평균 순위와 95% 범위를 넘게 다를 때 칠합니다." }, { label: "", span: 1 }]}
+                groups={[{ label: "", span: 1 }, { label: "완료한 분야 비율", span: 3 }, { label: "평균 순위", span: 3 }, { label: "", span: 1 }]}
                 cols={[
                   { label: "실험체", cls: "l pin-l" },
                   ...EXP_ORDER.map((t, i) => ({ label: EXP_NAME[t], first: "desc" as const, cls: i ? undefined : "grp-l" })),
@@ -394,12 +406,11 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                       ))}
                       {EXP_ORDER.map((t, i) => {
                         const rank = c.rank?.[t];
-                        const edge = c.edge?.[t] ?? 0;
+                        const best = c.best === t;
                         return (
                           <td
                             key={t}
-                            className={`${i ? "" : "grp-l "}${edge ? "font-bold" : ""}`}
-                            style={edge ? { background: `color-mix(in srgb, var(${edge > 0 ? "--up" : "--down"}) 22%, transparent)` } : undefined}
+                            className={`${i ? "" : "grp-l "}${best ? "font-bold" : "text-ink-2"}`}
                             data-tip={rank == null ? undefined : `TOP 3 ${c.top3?.[t]?.toFixed(1)}%`}
                           >
                             {rank == null ? "" : rank.toFixed(2)}

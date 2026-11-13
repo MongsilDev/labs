@@ -14,7 +14,7 @@ export type PreData = {
   bots: number;
   base: number;
   servers: { name: string; games: number }[];
-  // 아래 modes, cobalt, weather의 share, expChars의 edge는 실험실 개편 전에 쓴 파일에는 없음
+  // 아래 modes, cobalt, weather의 share, expChars의 best, armor의 rankCi는 실험실 개편 전에 쓴 파일에는 없음
   modes?: { mode: number; games: number }[];
   cobalt?: { games: number; teams: number; from: number; to: number; base: number; combos: (PreChar & { grade: PreGrade; n: number; pick: number; win: number; winCi: number })[] } | null;
   from: number;
@@ -27,7 +27,7 @@ export type PreData = {
     rank?: Record<string, number | null>;
     top3?: Record<string, number | null>;
     // 같은 실험체의 나머지 분야보다 평균 순위가 확실히 좋으면 1, 나쁘면 -1
-    edge?: Record<string, number | null>;
+    best?: string | null;
   })[];
   trios?: { key: string; members: PreChar[]; n: number; win: number; winCi: number; top3: number; rank: number | null }[];
   // 최종 장비를 저장하기 전에 쓴 파일에는 없음
@@ -35,7 +35,7 @@ export type PreData = {
   equipGames?: number;
   // 직전 정규 시즌 마지막 이틀과 견준 승률 변화. 비교 경기를 모으기 전에는 null
   change?: { games: number; from: number; to: number; avgNow: number; avgThen: number; up: PreMove[]; down: PreMove[] } | null;
-  armor?: (PreStat & { code: number; name: string; grade: string; restWin: number | null; restRank: number | null })[];
+  armor?: (PreStat & { code: number; name: string; grade: string; restWin: number | null; restRank: number | null; rankCi?: number | null })[];
   weather: { code: number; name: string; games: number; share?: number; players: number; drop: string | null; dropShare: number }[];
   tier: { rows: number; thin: number; combos: PreTier[] } | null;
 };

@@ -45,7 +45,7 @@ describe("프리 시즌 특집 집계", () => {
     const g = derivePre([...rows(1, 3, (slot) => ({ equip: JSON.stringify([101101, 0, head(slot), 0, 0, 0]) })), ...rows(2, 3)], season, nm)!;
     expect(g.equipped).toBe(24);
     expect(g.equipGames).toBe(1);
-    expect(g.armor).toEqual([{ code: 201538, name: "제왕의 투구", grade: "전설", n: 3, share: 25, rank: 1, win: 100, winCi: 0, restWin: 0, restRank: 3 }]);
+    expect(g.armor).toEqual([{ code: 201538, name: "제왕의 투구", grade: "전설", n: 3, share: 25, rank: 1, win: 100, winCi: 0, restWin: 0, restRank: 3, rankCi: 0.53 }]);
   });
 
   const start = 1_794_390_000_000;
@@ -116,10 +116,10 @@ describe("프리 시즌 특집 집계", () => {
   it("실험체 줄은 표본이 모자라면 싣지 않는다", () => {
     expect(derivePre(rows(1, 3), season, nm)!.expChars).toEqual([]);
     const many = derivePre([1, 2].flatMap((g) => rows(g, 3)), season, nm)!;
-    // 분야마다 30명이 안 되면 성적과 좋고 나쁨을 비움
-    expect(many.expChars[0]).toMatchObject({ name: "나딘", weaponName: "활", n: 48, edge: { Energy: null, Material: 0, Biotechnology: null } });
+    // 30명이 넘는 분야가 하나뿐이면 가장 좋은 분야를 고르지 않음
+    expect(many.expChars[0]).toMatchObject({ name: "나딘", weaponName: "활", n: 48, best: null });
     // 에너지 공학은 1~2위 팀, 재료 공학은 3~7위 팀
-    expect(derivePre([1, 2, 3, 4, 5].flatMap((g) => rows(g, 3)), season, nm)!.expChars[0]).toMatchObject({ n: 120, edge: { Energy: 1, Material: -1, Biotechnology: null } });
+    expect(derivePre([1, 2, 3, 4, 5].flatMap((g) => rows(g, 3)), season, nm)!.expChars[0]).toMatchObject({ n: 120, best: "Energy" });
   });
 
   it("경기가 없으면 쓰지 않는다", () => {

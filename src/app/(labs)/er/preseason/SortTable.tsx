@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 
 export type Col = { label: string; cls?: string; tip?: string; first?: "asc" | "desc" };
 export type Row = { id: string; vals: (number | null)[]; cells: ReactNode; dim?: boolean; no?: number };
-export type Group = { label: string; span: number; shade?: string };
+export type Group = { label: string; span: number };
 
 /**
  * 숫자 열 헤더를 누르면 그 열로 정렬하고, 다시 누르면 방향을 바꾸는 표. first가 없는 열은 정렬하지 않음.
@@ -33,7 +33,7 @@ export default function SortTable({ cols, rows, show = 20, numbered, groups }: {
               <tr>
                 {numbered && <th className="pin-n" />}
                 {groups.map((g, i) => (
-                  <th key={i} colSpan={g.span} scope="colgroup" className={g.label ? "grp" : i === 0 ? "pin-l" : undefined} data-tip={g.shade}>
+                  <th key={i} colSpan={g.span} scope="colgroup" className={g.label ? "grp" : i === 0 ? "pin-l" : undefined}>
                     {g.label}
                   </th>
                 ))}
