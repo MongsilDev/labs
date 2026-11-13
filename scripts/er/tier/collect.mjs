@@ -591,7 +591,8 @@ async function idBefore(t, lo, hi) {
  */
 async function collectPre(s) {
   const r = await scanPre(s);
-  return { ...r, refilled: abort ? 0 : await refillPre(s) };
+  // 기준 번호조차 못 받은 회차는 API 장애로 보고 다시 받기도 건너뜀
+  return { ...r, refilled: abort || r.down ? 0 : await refillPre(s) };
 }
 
 /** 단계 기록과 가젯 횟수를 저장하기 전에 받은 경기를 회차마다 PRE_REFILL개씩 다시 받아 채움 */
@@ -606,7 +607,7 @@ async function refillPre(s) {
       const list = body?.userGames ?? [];
       if (list.length) {
         if (putPre(s, id, list)) refilled++;
-      } else if (body !== undefined) {
+      } else if (body === null || body?.code === 200) {
         // 더는 조회되지 않는 경기는 빈 기록으로 두어 다음 회차가 다시 고르지 않게 함
         gone.run(s.id, id);
       }
@@ -628,7 +629,7 @@ async function scanPre(s) {
     for (const y of (uid && (await get(`/v1/user/games/uid/${uid}`))?.userGames) || []) seed = Math.max(seed, y.gameId);
   }
   const empty = { games: 0, ids: 0 };
-  if (!seed) return empty;
+  if (!seed) return { ...empty, down: true };
   // 처음 회차는 시즌 시작 직전 번호를 찾음. 하루 약 4만 번호가 쓰여 50만 번호 아래에서 시작함
   const lo = state.hi || (await idBefore(s.start, seed - 500_000, seed));
   // 상위권이 한동안 게임을 하지 않았으면 기준 번호가 오래돼 있어 until을 넘는 번호가 나올 때까지 위로 넓힘
