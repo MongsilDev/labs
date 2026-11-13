@@ -6,7 +6,7 @@ import { EXP_NAME, EXP_ORDER, getPreseason, type PreChar, type PreMove, type Pre
 import { itemIcon } from "@/er/lib/tier";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "프리 시즌 신규 요소" };
+export const metadata = { title: "실험실" };
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 const server = (name: string) => name.replace(/^Asia(\d?)$/, (_, k) => `아시아${k || 1}`);
@@ -73,7 +73,7 @@ export default async function PreseasonPage() {
   const me = await currentUser();
   const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
   const data = await getPreseason();
-  if (!data) return <Live user={user}><h1 className="text-[26px] font-black">프리 시즌 신규 요소</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
+  if (!data) return <Live user={user}><h1 className="text-[26px] font-black">실험실</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
   const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
   const fmt = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "numeric" });
   // Intl은 정오를 「오후 12시」로 적음
@@ -89,7 +89,7 @@ export default async function PreseasonPage() {
   return (
     <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
-        <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">{data.season.name} 신규 요소</h1>
+        <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">실험실</h1>
         <p className="text-[13px] text-ink-3 num">
           {servers(data.servers)} {n(data.games)}경기, {span}
         </p>

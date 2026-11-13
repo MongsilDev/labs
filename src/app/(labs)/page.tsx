@@ -5,13 +5,14 @@ import HubScore from "@/next/HubScore";
 import { CutNums, KelBig, OverlayOpen, TarkovGroup, TierBig } from "@/next/Hub5Parts";
 import { KelHead, TierHead, TierMissing } from "@/next/HubParts";
 import { hubData } from "@/next/hub";
+import { getPreseason } from "@/next/preseason";
 import "@/next/hub.css";
 
 export const dynamic = "force-dynamic";
 
 // 위쪽 메뉴의 묶음(실험체, 랭크, 대회)대로 세 기둥에 이터널 리턴 기능 다섯을 같은 줄 높이로 두고 타르코프는 아래에 따로 묶음
 export default async function Hub() {
-  const h = await hubData();
+  const [h, lab] = await Promise.all([hubData(), getPreseason()]);
   return (
     <Live user={h.user}>
       <div className="hub5 hub-lg">
@@ -20,6 +21,14 @@ export default async function Hub() {
             <TierHead h={h} />
             {h.view ? <TierBig list={h.combos.slice(0, 10)} /> : <TierMissing />}
           </section>
+          {lab && (
+            <section>
+              <h2 className="sec-h">
+                <Link href="/er/preseason">실험실</Link>
+                <small className="num">{lab.season.name}, {lab.games.toLocaleString("ko-KR")}경기</small>
+              </h2>
+            </section>
+          )}
         </div>
         <div className="hub5-col hub-in" style={{ ["--d" as string]: 1 }}>
           <section className="hub5-cut">

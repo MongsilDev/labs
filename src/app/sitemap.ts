@@ -15,6 +15,7 @@ const PATHS = [
   "/er/tier",
   "/er/meta",
   "/er/late",
+  "/er/preseason",
   "/er/rp",
   "/er/overlay",
   "/er/example/a",

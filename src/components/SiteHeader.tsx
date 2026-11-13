@@ -16,6 +16,7 @@ const ER: Sect[] = [
       { href: "/er/tier", label: "실험체 티어" },
       { href: "/er/meta", label: "메타 지도" },
       { href: "/er/late", label: "초반과 막판" },
+      { href: "/er/preseason", label: "실험실" },
     ],
   },
   {
