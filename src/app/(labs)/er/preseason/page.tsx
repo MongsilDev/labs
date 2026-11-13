@@ -37,7 +37,7 @@ function Stats({ s, base }: { s: PreStat; base: number }) {
   );
 }
 
-function Moves({ head, list }: { head: string; list: PreMove[] }) {
+function Moves({ head, list, avg }: { head: string; list: PreMove[]; avg: string }) {
   const pp = (v: number, k: number) => `${v > 0 ? "+" : ""}${v.toFixed(k)}%p`;
   return (
     <table className="tbl">
@@ -52,7 +52,7 @@ function Moves({ head, list }: { head: string; list: PreMove[] }) {
         {list.map((c) => (
           <tr key={`${c.char}-${c.weapon}`}>
             <td className="l"><Who c={c} /></td>
-            <td data-tip={`${n(c.n)}명, 95% 범위 ±${c.dCi}%p`}>
+            <td data-tip={`${n(c.n)}명, 평균 승률 차이 ${avg}를 뺀 승률 변화, 95% 범위 ±${c.dCi}%p`}>
               <span className="font-bold">{c.win.toFixed(1)}%</span>
               <small className="block" style={{ color: `var(${c.d > 0 ? "--up" : "--down"})` }}>{pp(c.d, 1)}</small>
             </td>
@@ -140,8 +140,8 @@ export default async function PreseasonPage() {
             <small className="num">{day.format(data.change.from)}~{day.format(data.change.to)} {n(data.change.games)}경기</small>
           </h2>
           <div className="grid gap-10 lg:grid-cols-2">
-            <Moves head="승률이 오른 실험체" list={data.change.up} />
-            <Moves head="승률이 내린 실험체" list={data.change.down} />
+            <Moves head="승률이 오른 실험체" list={data.change.up} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
+            <Moves head="승률이 내린 실험체" list={data.change.down} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
           </div>
         </section>
       ) : null}
@@ -231,7 +231,7 @@ export default async function PreseasonPage() {
                     </td>
                     <td data-tip={`같은 부위 ${a.grade} 장비를 쓴 사람 중`}>{a.share.toFixed(1)}%</td>
                     <td data-tip={`같은 부위 ${a.grade} 장비 ${a.restRank?.toFixed(2) ?? "-"}`}>{a.rank?.toFixed(2) ?? "-"}</td>
-                    <td className="font-bold" style={tint(a, a.restWin)} data-tip={`${n(a.n)}명, 같은 부위 ${a.grade} 장비 ${a.restWin}%, 95% 범위 ±${a.winCi}`}>{a.win.toFixed(1)}%</td>
+                    <td className="font-bold" style={a.restWin == null ? undefined : tint(a, a.restWin)} data-tip={`${n(a.n)}명, 같은 부위 ${a.grade} 장비 ${a.restWin ?? "-"}%, 95% 범위 ±${a.winCi}`}>{a.win.toFixed(1)}%</td>
                   </tr>
                 ))}
               </tbody>

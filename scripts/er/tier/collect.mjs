@@ -644,7 +644,9 @@ async function scanPre(s) {
     }
     top = g.id;
   }
-  const hi = Math.min(await idBefore(until, lo, top), lo + PRE_MAX_IDS);
+  // deadline이 있으면 그 3분 전까지 지금 속도로 받을 수 있는 만큼만 맡음
+  const room = s.deadline ? Math.floor(((pace.rps * (s.deadline - Date.now() - 3 * 60_000)) / 1000) * 0.8) : Infinity;
+  const hi = Math.min(await idBefore(until, lo, top), lo + PRE_MAX_IDS, lo + Math.max(0, room));
   if (hi <= lo || abort) return empty;
   let next = lo + 1;
   let games = 0;
@@ -660,7 +662,7 @@ async function scanPre(s) {
     return true;
   };
   const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
-    while (!abort && next <= hi) {
+    while (!abort && next <= hi && !(s.deadline && Date.now() > s.deadline)) {
       const id = next++;
       if (!take(id, await get(`/v1/games/${id}`))) misses.add(id);
     }
@@ -689,7 +691,8 @@ async function scanPre(s) {
     if (n >= PRE_MISS_MAX) log(`경기 번호 ${low[0]}의 자료를 ${n}회 연속 받지 못해 건너뜁니다.`);
     stuck = (n >= PRE_MISS_MAX ? low[1] : low[0]) ?? Infinity;
   }
-  const done = Math.min(hi, stuck - 1);
+  // 마감으로 멈췄으면 아직 꺼내지 않은 번호부터 다음에 받음
+  const done = Math.min(hi, next - 1, stuck - 1);
   if (!abort && done > lo) {
     const found = pre.prepare(`SELECT COUNT(DISTINCT game) AS n FROM rows WHERE season = ?`).get(s.id).n;
     pre.prepare(`INSERT INTO scan VALUES (?, ?, ?, ?) ON CONFLICT(season) DO UPDATE SET hi = excluded.hi, ids = excluded.ids, found = excluded.found`)
@@ -1190,7 +1193,7 @@ if (flag("pre-base")) {
         log("다음 정규 회차가 가까워 멈춥니다. 회차가 끝난 뒤 다시 실행하면 이어서 받습니다.");
         break;
       }
-      const r = await scanPre(base);
+      const r = await scanPre({ ...base, deadline: next - 10 * 60_000 });
       log(`직전 시즌과 비교할 경기 번호 ${r.ids}개를 조회해 경기 ${r.games}개를 저장했습니다. 요청 ${stats.sent}, 429 응답 ${stats.limited}, 실패 ${stats.failed}`);
       if (abort || r.down || !r.ids) break;
     }

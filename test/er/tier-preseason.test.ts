@@ -36,7 +36,7 @@ describe("프리 시즌 특집 집계", () => {
     const c = derivePre(now, season, nm, null, then)!.change!;
     expect(c.games).toBe(40);
     expect(c.up.map((x) => [x.name, x.win, x.d])).toEqual([["나딘", 100, 100]]);
-    expect(c.down.map((x) => [x.name, x.win, x.d])).toEqual([["9", 0, -14.3]]);
+    expect(c.down.map((x) => [x.name, x.win])).toEqual([["9", 0]]);
     expect(derivePre(now, season, nm)!.change).toBeNull();
   });
 

@@ -170,6 +170,9 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
   if (!x.games) return null;
   const scored = scoreRows(tier, TIER_RULE);
   const b = baseline(baseRows);
+  const wins = (map) => [...map.values()].reduce((s, a) => [s[0] + a.win, s[1] + a.n], [0, 0]);
+  const [wn, nn] = wins(x.combos), [wt, nt] = wins(b.chars);
+  const avgNow = nn ? wn / nn : 0, avgThen = nt ? wt / nt : 0;
   // 두 기간 모두 표본 thin 이상이고 승률 차이가 95% 범위를 넘는 조합만, 범위를 뺀 차이가 큰 순서로 고름
   const moved = [...x.combos]
     .filter(([key, a]) => a.n >= TIER_RULE.thin && (b.chars.get(key)?.n ?? 0) >= TIER_RULE.thin)
@@ -177,7 +180,8 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       const p = b.chars.get(key);
       const now = a.win / a.n, then = p.win / p.n;
       const ci = 1.96 * Math.sqrt((now * (1 - now)) / a.n + (then * (1 - then)) / p.n) * 100;
-      const d = (now - then) * 100;
+      // 프리 시즌에는 7팀 경기와 봇 팀이 섞여 평균 승률이 달라서, 기간마다 평균과의 차이를 견줌
+      const d = (now - avgNow - (then - avgThen)) * 100;
       return { ...named(key), n: a.n, win: pct(a.win, a.n), pick: +((a.n / x.players) * 100).toFixed(2), d: fix1(d), dCi: fix1(ci), dPick: +((a.n / x.players - p.n / b.players) * 100).toFixed(2), edge: Math.abs(d) - ci };
     })
     .filter((c) => c.edge > 0)
@@ -221,7 +225,7 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       const g = x.armor.get(`${Math.floor(code / 1000)}-${grade}`);
       // 견줄 쪽은 같은 부위, 같은 등급에서 이 장비를 뺀 사람
       const rest = { n: g.n - a.n, rank: g.rank - a.rank, win: g.win - a.win };
-      return { code, name, grade: GRADE_KO[grade] ?? grade, ...out(a, g.n), restWin: pct(rest.win, rest.n), restRank: avg(rest.rank, rest.n) };
+      return { code, name, grade: GRADE_KO[grade] ?? grade, ...out(a, g.n), restWin: rest.n ? pct(rest.win, rest.n) : null, restRank: avg(rest.rank, rest.n) };
     }),
     weather: [...x.weathers]
       .filter(([code]) => code)
@@ -241,7 +245,7 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
           .sort((a, b) => b.win - a.win || b.n - a.n),
       }))
       .sort((a, b) => b.games - a.games),
-    change: b.players ? { games: b.games.size, from: b.from, to: b.to, up: pick(true), down: pick(false) } : null,
+    change: b.players ? { games: b.games.size, from: b.from, to: b.to, avgNow: pct(wn, nn), avgThen: pct(wt, nt), up: pick(true), down: pick(false) } : null,
     tier: scored && {
       rows: scored.rows,
       thin: TIER_RULE.thin,
@@ -277,7 +281,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const dir = process.env.TIER_DIR || "/Volumes/SSD/ertier/live";
   const outDir = process.env.TIER_OUT || join(homedir(), "docker/_data/labs/er-tier");
   const id = Number(process.argv[2]);
-  if (!id) throw new Error("사용: node preseason.mjs <프리 시즌 ID> [이름] [시작 시각, 예: 2026-11-12T12:00+09:00]");
+  if (!id) throw new Error("사용: node preseason.mjs <프리 시즌 ID> [이름] [시작 시각, 예: 2026-11-12T12:00+09:00] [직전 정규 시즌 ID]");
   const text = existsSync(join(dir, "l10n-ko.txt")) ? readFileSync(join(dir, "l10n-ko.txt"), "utf8") : "";
   const ko = (prefix) => new Map([...text.matchAll(new RegExp(`^${prefix}/([^┃\\r\\n]+)┃([^\\r\\n]*)`, "gm"))].map((x) => [x[1], x[2].trim()]));
   const [skill, state, weather, item] = ["Skill/Group/Name", "CharacterState/Group/Name", "Weather/Name", "Item/Name"].map(ko);
@@ -298,8 +302,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   };
   const db = new DatabaseSync(join(dir, "preseason.sqlite"), { readOnly: true });
   const scan = db.prepare("SELECT ids, found FROM scan WHERE season = ?").get(id) ?? null;
-  const prev = db.prepare("SELECT MAX(season) AS s FROM rows WHERE season < ?").get(id)?.s;
-  const base = prev == null ? [] : db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(prev);
+  const prev = Number(process.argv[5]);
+  const base = prev ? db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(prev) : [];
   const res = derivePre(db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(id), { id, name: process.argv[3] ?? `시즌 ${id}`, start: process.argv[4] ? Date.parse(process.argv[4]) : undefined }, nm, scan, base);
   console.log(writePre(join(outDir, ".."), res) ? `${res.games}경기, 티어 ${res.tier?.combos.length ?? 0}개 조합` : "해당 경기 없음");
 }
