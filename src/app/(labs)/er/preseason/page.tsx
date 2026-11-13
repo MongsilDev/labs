@@ -68,7 +68,6 @@ function Moves({ head, list, avg }: { head: string; list: PreMove[]; avg: string
 }
 
 const clock = (sec: number | null) => (sec == null ? "-" : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
-const signed = (v: number) => (v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
 
 export default async function PreseasonPage() {
   const me = await currentUser();
@@ -104,8 +103,7 @@ export default async function PreseasonPage() {
             search
             cols={[
               { label: "실험체", cls: "l pin-c" },
-              { label: "등급" },
-              { label: "점수", first: "desc" },
+              { label: "등급", first: "desc" },
               { label: "픽률", first: "desc" },
               { label: "승률", first: "desc" },
               { label: "TOP 3", first: "desc" },
@@ -116,12 +114,12 @@ export default async function PreseasonPage() {
               no: i + 1,
               find: `${c.weaponName}${c.name}${c.name}${c.weaponName}`,
               dim: c.n < data.tier!.thin,
-              vals: [null, null, c.z, c.pick, c.win, c.top3, c.place],
+              // 프리 시즌 점수는 RP가 아니라 표준편차 배수라 숫자 대신 등급만 보이고, 등급 열은 점수로 정렬함
+              vals: [null, c.z, c.pick, c.win, c.top3, c.place],
               cells: (
                 <>
                   <td className="l pin-c"><Who c={c} /></td>
                   <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
-                  <td className="font-bold">{signed(c.z)}</td>
                   <td><small className="mr-1.5 text-ink-3">{n(c.n)}판</small>{c.pick.toFixed(2)}%</td>
                   <td>{c.win.toFixed(1)}%</td>
                   <td>{c.top3.toFixed(1)}%</td>
@@ -153,6 +151,7 @@ export default async function PreseasonPage() {
           <h2 className="sec-h">3인 조합<small className="num">30팀 이상</small></h2>
           <SortTable
             search
+            show={10}
             cols={[{ label: "조합", cls: "l" }, { label: "팀", first: "desc" }, { label: "승률", first: "desc" }, { label: "TOP 3", first: "desc" }, { label: "평균 순위", first: "asc" }]}
             rows={data.trios.map((t) => ({
               id: t.key,
@@ -161,7 +160,7 @@ export default async function PreseasonPage() {
               cells: (
                 <>
                   <td className="l">
-                    <span className="flex flex-col gap-1 py-1">{t.members.map((c) => <Who key={`${c.char}-${c.weapon}`} c={c} />)}</span>
+                    <span className="flex flex-wrap gap-x-4 gap-y-1">{t.members.map((c) => <Who key={`${c.char}-${c.weapon}`} c={c} />)}</span>
                   </td>
                   <td className="text-ink-3">{n(t.n)}</td>
                   <td className="font-bold" style={tint(t, data.base)} data-tip={`평균 승률 ${data.base}%, 95% 범위 ±${t.winCi}`}>{t.win.toFixed(1)}%</td>
