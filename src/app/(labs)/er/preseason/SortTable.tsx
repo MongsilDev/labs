@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 
 export type Col = { label: string; cls?: string; tip?: string; first?: "asc" | "desc" };
-export type Row = { id: string; vals: (number | null)[]; cells: ReactNode; find?: string; dim?: boolean };
+export type Row = { id: string; vals: (number | null)[]; cells: ReactNode; find?: string; dim?: boolean; no?: number };
 
 /**
  * 숫자 열 헤더를 누르면 그 열로 정렬하고, 다시 누르면 방향을 바꾸는 표. first가 없는 열은 정렬하지 않음.
@@ -49,7 +49,7 @@ export default function SortTable({ cols, rows, show = 20, numbered, search }: {
           <tbody>
             {shown.map((r, i) => (
               <tr key={r.id} className={r.dim ? "opacity-50" : undefined}>
-                {numbered && <td className="pin-n text-ink-3">{i + 1}</td>}
+                {numbered && <td className="pin-n text-ink-3">{r.no ?? i + 1}</td>}
                 {r.cells}
               </tr>
             ))}

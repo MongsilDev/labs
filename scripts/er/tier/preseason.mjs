@@ -144,7 +144,7 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
     const used = Array.isArray(raw) ? raw.map((code) => [code, null]) : Object.entries(raw).map(([code, k]) => [Number(code), k]);
     if (!used.length) m.noGadget++;
     else c.used++;
-    for (const [code] of used) c.gc.set(Math.floor(code / 100) * 100, (c.gc.get(Math.floor(code / 100) * 100) ?? 0) + 1);
+    for (const g of new Set(used.map(([code]) => Math.floor(code / 100) * 100))) c.gc.set(g, (c.gc.get(g) ?? 0) + 1);
     for (const [code, k] of used) {
       const x = m.gadgets.get(code) ?? { n: 0, known: 0, uses: 0 };
       x.n++;

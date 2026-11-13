@@ -111,8 +111,9 @@ export default async function PreseasonPage() {
               { label: "TOP 3", first: "desc" },
               { label: "평균 순위", first: "asc" },
             ]}
-            rows={data.tier.combos.map((c) => ({
+            rows={data.tier.combos.map((c, i) => ({
               id: `${c.char}-${c.weapon}`,
+              no: i + 1,
               find: `${c.weaponName}${c.name}${c.name}${c.weaponName}`,
               dim: c.n < data.tier!.thin,
               vals: [null, null, c.z, c.pick, c.win, c.top3, c.place],
