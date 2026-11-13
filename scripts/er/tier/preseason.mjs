@@ -171,7 +171,8 @@ export function derivePre(rows, season, nm, scan = null) {
         top: [...v.chars]
           .filter(([, a]) => a.n >= WEATHER_CHAR_MIN)
           .map(([key, a]) => ({ ...named(key), ...out(a, v.players) }))
-          .sort((a, b) => b.win - a.win || b.n - a.n)
+          // 표본이 적어 범위가 넓은 줄이 위로 오지 않게 95% 범위의 아래 끝으로 줄 세움
+          .sort((a, b) => b.win - b.winCi - (a.win - a.winCi) || b.n - a.n)
           .slice(0, WEATHER_TOP),
       }))
       .sort((a, b) => b.games - a.games),

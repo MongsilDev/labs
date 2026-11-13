@@ -45,11 +45,17 @@ export default async function PreseasonPage() {
   const data = await getPreseason();
   if (!data) return <Live user={user}><h1 className="text-[26px] font-black">프리 시즌 신규 요소</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
   const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
-  const hour = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "numeric" });
+  const fmt = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "numeric" });
+  // Intl은 정오를 「오후 12시」, 자정을 「오전 12시」로 적음
+  const hour = (t: number) => fmt.format(t).replace("오후 12시", "낮 12시").replace("오전 12시", "밤 12시");
   const span = day.format(data.from) === day.format(data.to)
-    ? `${day.format(data.from)} ${hour.format(data.from)}~${hour.format(data.to).replace(/^(오전|오후) /, (m) => (hour.format(data.from).startsWith(m) ? "" : m))}`
-    : `${day.format(data.from)} ${hour.format(data.from)}~${day.format(data.to)} ${hour.format(data.to)}`;
+    ? `${day.format(data.from)} ${hour(data.from)}~${hour(data.to).replace(/^(오전|오후) /, (m) => (hour(data.from).startsWith(m) ? "" : m))}`
+    : `${day.format(data.from)} ${hour(data.from)}~${day.format(data.to)} ${hour(data.to)}`;
   const exp = EXP_ORDER.map((t) => data.exp.rows.find((r) => r.type === t)).filter((r) => r != null);
+  // 예전 경기를 다시 받기 전에는 값이 없어 칸을 숨김
+  const step1 = exp.some((r) => r.step1 != null);
+  const step2 = exp.some((r) => r.step2 != null);
+  const per = data.gadgets.some((g) => g.per != null);
   return (
     <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
@@ -67,8 +73,8 @@ export default async function PreseasonPage() {
               head={
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th className="l">실험체</th>
+                    <th className="pin-n">#</th>
+                    <th className="l pin-c">실험체</th>
                     <th>등급</th>
                     <th>점수</th>
                     <th>픽률</th>
@@ -81,8 +87,8 @@ export default async function PreseasonPage() {
             >
               {data.tier.combos.map((c, i) => (
                 <tr key={`${c.char}-${c.weapon}`} className={c.n < data.tier!.thin ? "opacity-50" : undefined}>
-                  <td className="text-ink-3">{i + 1}</td>
-                  <td className="l"><Who c={c} /></td>
+                  <td className="pin-n text-ink-3">{i + 1}</td>
+                  <td className="l pin-c"><Who c={c} /></td>
                   <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
                   <td className="font-bold">{signed(c.z)}</td>
                   <td><small className="mr-1.5 text-ink-3">{n(c.n)}판</small>{c.pick.toFixed(2)}%</td>
@@ -106,8 +112,8 @@ export default async function PreseasonPage() {
                 <th>비율</th>
                 <th>평균 순위</th>
                 <th>승률</th>
-                <th>1단계</th>
-                <th>2단계</th>
+                {step1 && <th>1단계</th>}
+                {step2 && <th>2단계</th>}
               </tr>
             </thead>
             <tbody>
@@ -115,15 +121,15 @@ export default async function PreseasonPage() {
                 <tr key={r.type}>
                   <td className="l font-semibold">{r.name}</td>
                   <Stats s={r} base={data.base} />
-                  <td className="text-ink-3" data-tip="첫 완료까지 걸린 평균 시간">{clock(r.step1)}</td>
-                  <td className="text-ink-3" data-tip="팀당 평균 완료 횟수">{r.step2 == null ? "-" : `${r.step2.toFixed(1)}회`}</td>
+                  {step1 && <td className="text-ink-3" data-tip="첫 완료까지 걸린 평균 시간">{clock(r.step1)}</td>}
+                  {step2 && <td className="text-ink-3" data-tip="팀당 평균 완료 횟수">{r.step2 == null ? "-" : `${r.step2.toFixed(1)}회`}</td>}
                 </tr>
               ))}
               <tr className="text-ink-3">
                 <td className="l">미완료</td>
                 <Stats s={data.exp.none} base={data.base} />
-                <td />
-                <td />
+                {step1 && <td />}
+                {step2 && <td />}
               </tr>
             </tbody>
           </table>
@@ -136,7 +142,7 @@ export default async function PreseasonPage() {
               <tr>
                 <th className="l">쓴 가젯</th>
                 <th>쓴 사람</th>
-                <th>판당 횟수</th>
+                {per && <th>판당 횟수</th>}
               </tr>
             </thead>
             <tbody>
@@ -144,13 +150,13 @@ export default async function PreseasonPage() {
                 <tr key={g.code}>
                   <td className="l font-semibold">{g.name}</td>
                   <td>{g.share.toFixed(1)}%</td>
-                  <td>{g.per?.toFixed(2) ?? "-"}</td>
+                  {per && <td>{g.per?.toFixed(2) ?? "-"}</td>}
                 </tr>
               ))}
               <tr className="text-ink-3">
                 <td className="l">쓰지 않음</td>
                 <td>{data.noGadget.share.toFixed(1)}%</td>
-                <td />
+                {per && <td />}
               </tr>
             </tbody>
           </table>
