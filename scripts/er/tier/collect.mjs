@@ -590,6 +590,32 @@ async function idBefore(t, lo, hi) {
  * 프리 시즌 순위표가 없어 계정 대신 경기 번호로 찾음. 닉네임과 uid는 저장하지 않고, 티어 행과 경기 원본도 만들지 않음
  */
 async function collectPre(s) {
+  const r = await scanPre(s);
+  return { ...r, refilled: abort ? 0 : await refillPre(s) };
+}
+
+/** 단계 기록과 가젯 횟수를 저장하기 전에 받은 경기를 회차마다 PRE_REFILL개씩 다시 받아 채움 */
+async function refillPre(s) {
+  const old = pre.prepare(`SELECT DISTINCT game FROM rows WHERE season = ? AND quest IS NULL ORDER BY game LIMIT ?`).all(s.id, PRE_REFILL).map((r) => r.game);
+  const gone = pre.prepare(`UPDATE rows SET quest = '[]' WHERE season = ? AND game = ?`);
+  let j = 0, refilled = 0;
+  await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
+    while (!abort && j < old.length) {
+      const id = old[j++];
+      const body = await get(`/v1/games/${id}`);
+      const list = body?.userGames ?? [];
+      if (list.length) {
+        if (putPre(s, id, list)) refilled++;
+      } else if (body !== undefined) {
+        // 더는 조회되지 않는 경기는 빈 기록으로 두어 다음 회차가 다시 고르지 않게 함
+        gone.run(s.id, id);
+      }
+    }
+  }));
+  return refilled;
+}
+
+async function scanPre(s) {
   // 같은 키를 쓰는 몽실봇 몫을 남기려고 한도 50보다 낮춤
   pace.set(Math.min(pace.rps, PRE_RPS));
   // 끝난 지 한 시간이 안 된 번호에는 아직 진행 중인 경기가 섞여 있어 다음 회차로 미룸
@@ -666,17 +692,7 @@ async function collectPre(s) {
     pre.prepare(`INSERT INTO scan VALUES (?, ?, ?, ?) ON CONFLICT(season) DO UPDATE SET hi = excluded.hi, ids = excluded.ids, found = excluded.found`)
       .run(s.id, done, state.ids + done - lo, found);
   }
-  // 단계 기록과 가젯 횟수를 저장하기 전에 받은 경기는 회차마다 PRE_REFILL개씩 다시 받아 채움
-  const old = abort ? [] : pre.prepare(`SELECT DISTINCT game FROM rows WHERE season = ? AND quest IS NULL ORDER BY game LIMIT ?`).all(s.id, PRE_REFILL).map((r) => r.game);
-  let j = 0, refilled = 0;
-  await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
-    while (!abort && j < old.length) {
-      const id = old[j++];
-      const list = (await get(`/v1/games/${id}`))?.userGames ?? [];
-      if (list.length && putPre(s, id, list)) refilled++;
-    }
-  }));
-  return { games, ids: hi - lo, refilled };
+  return { games, ids: hi - lo };
 }
 
 const PRE_RPS = 40;

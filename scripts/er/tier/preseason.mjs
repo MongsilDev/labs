@@ -231,5 +231,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const db = new DatabaseSync(join(dir, "preseason.sqlite"), { readOnly: true });
   const scan = db.prepare("SELECT ids, found FROM scan WHERE season = ?").get(id) ?? null;
   const res = derivePre(db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(id), { id, name: process.argv[3] ?? `시즌 ${id}`, start: process.argv[4] ? Date.parse(process.argv[4]) : undefined }, nm, scan);
-  console.log(writePre(join(outDir, ".."), res) ? `${res.games}경기, 티어 ${res.tier.combos.length}개 조합` : "해당 경기 없음");
+  console.log(writePre(join(outDir, ".."), res) ? `${res.games}경기, 티어 ${res.tier?.combos.length ?? 0}개 조합` : "해당 경기 없음");
 }
