@@ -302,7 +302,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   };
   const db = new DatabaseSync(join(dir, "preseason.sqlite"), { readOnly: true });
   const scan = db.prepare("SELECT ids, found FROM scan WHERE season = ?").get(id) ?? null;
-  const prev = Number(process.argv[5]);
+  // 이 DB는 프리 시즌 13부터 쓰기 시작해 직전 시즌 행은 --pre-base로 모은 정규 시즌뿐임
+  const prev = Number(process.argv[5]) || db.prepare("SELECT MAX(season) AS s FROM rows WHERE season < ?").get(id)?.s;
   const base = prev ? db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(prev) : [];
   const res = derivePre(db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(id), { id, name: process.argv[3] ?? `시즌 ${id}`, start: process.argv[4] ? Date.parse(process.argv[4]) : undefined }, nm, scan, base);
   console.log(writePre(join(outDir, ".."), res) ? `${res.games}경기, 티어 ${res.tier?.combos.length ?? 0}개 조합` : "해당 경기 없음");

@@ -673,7 +673,7 @@ async function scanPre(s) {
     const retry = [...misses];
     let k = 0;
     await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
-      while (!abort && k < retry.length) {
+      while (!abort && k < retry.length && !(s.deadline && Date.now() > s.deadline)) {
         const id = retry[k++];
         if (take(id, await get(`/v1/games/${id}`))) misses.delete(id);
       }
