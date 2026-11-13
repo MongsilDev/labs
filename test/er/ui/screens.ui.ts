@@ -68,6 +68,8 @@ async function seed() {
   // 실험체 티어는 호스트 수집기 대신 고정 집계를 읽음
   mkdirSync(join(DATA, "er-tier"), { recursive: true });
   cpSync(join(ROOT, "test/er/fixtures/tier.json"), join(DATA, "er-tier/tier.json"));
+  mkdirSync(join(DATA, "er-preseason"), { recursive: true });
+  cpSync(join(ROOT, "test/er/fixtures/preseason.json"), join(DATA, "er-preseason/preseason.json"));
   code = t.createTournament(owner, {
     name: "조별 예선 아주 긴 대회 이름을 넣어서 줄바꿈 확인하기",
     mode: "checkpoint",
@@ -158,6 +160,7 @@ const SCREENS: Screen[] = [
   { name: "실험체 티어", path: () => "/er/tier" },
   { name: "실험체 티어 최근 3일", path: () => "/er/tier?v=3d" },
   { name: "실험체 티어 카드에서 상세", path: () => "/er/tier", card: true },
+  { name: "프리 시즌 신규 요소", path: () => "/er/preseason" },
   { name: "실험체 상세", path: () => "/er/tier/tsubame-directfire" },
   { name: "실험체 상세 기록 없는 기간", path: () => "/er/tier/tsubame-directfire?v=1d" },
   { name: "없는 실험체 상세", path: () => "/er/tier/nobody-glove", status: 404 },

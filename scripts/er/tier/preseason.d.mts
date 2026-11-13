@@ -7,5 +7,5 @@ type Names = {
   state: (code: number) => string;
   weather: (code: number) => string;
 };
-export function derivePre(rows: Iterable<Record<string, unknown>>, season: { id: number; name: string }, nm: Names, scan?: PreData["scan"]): PreData | null;
+export function derivePre(rows: Iterable<Record<string, unknown>>, season: { id: number; name: string; start?: number }, nm: Names, scan?: PreData["scan"]): PreData | null;
 export function writePre(root: string, data: PreData | null): boolean;

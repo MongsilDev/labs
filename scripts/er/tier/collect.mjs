@@ -666,10 +666,21 @@ async function collectPre(s) {
     pre.prepare(`INSERT INTO scan VALUES (?, ?, ?, ?) ON CONFLICT(season) DO UPDATE SET hi = excluded.hi, ids = excluded.ids, found = excluded.found`)
       .run(s.id, done, state.ids + done - lo, found);
   }
-  return { games, ids: hi - lo };
+  // 단계 기록과 가젯 횟수를 저장하기 전에 받은 경기는 회차마다 PRE_REFILL개씩 다시 받아 채움
+  const old = abort ? [] : pre.prepare(`SELECT DISTINCT game FROM rows WHERE season = ? AND quest IS NULL ORDER BY game LIMIT ?`).all(s.id, PRE_REFILL).map((r) => r.game);
+  let j = 0, refilled = 0;
+  await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
+    while (!abort && j < old.length) {
+      const id = old[j++];
+      const list = (await get(`/v1/games/${id}`))?.userGames ?? [];
+      if (list.length && putPre(s, id, list)) refilled++;
+    }
+  }));
+  return { games, ids: hi - lo, refilled };
 }
 
 const PRE_RPS = 40;
+const PRE_REFILL = 10_000;
 const PRE_TAIL = 6 * 3600_000;
 const PRE_MISS_MAX = 3;
 const PRE_RETRY_MAX = 200;
@@ -691,7 +702,9 @@ function openPre() {
     CREATE INDEX IF NOT EXISTS rows_season ON rows (season, mode);
     CREATE TABLE IF NOT EXISTS miss (season INTEGER NOT NULL, id INTEGER NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (season, id));
   `);
-  putPreRow = pre.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+  // 실험 과제 단계 기록은 나중에 더한 열이라 예전 행은 NULL
+  if (!pre.prepare(`SELECT 1 FROM pragma_table_info('rows') WHERE name = 'quest'`).get()) pre.exec(`ALTER TABLE rows ADD COLUMN quest TEXT`);
+  putPreRow = pre.prepare(`INSERT OR REPLACE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 }
 
 function putPre(s, game, list) {
@@ -713,7 +726,8 @@ function putPreOne(s, game, i, y) {
     game, i, s.id, kst(y.startDtm), y.matchingMode, y.serverName ?? null,
     y.teamNumber ?? null, y.gameRank ?? null, y.characterNum ?? null, y.bestWeapon ?? null, y.isMLBot ? 1 : 0, y.mainWeather ?? null,
     y.experimentResultType ?? null, y.crExperimentReward ?? null, y.crExperimentalCredit ?? null,
-    JSON.stringify(Object.keys(y.useGadget ?? {}).map(Number)), JSON.stringify(drops), y.guideRobotWeatherObjectCount ?? 0,
+    JSON.stringify(y.useGadget ?? {}), JSON.stringify(drops), y.guideRobotWeatherObjectCount ?? 0,
+    JSON.stringify((y.questStepClear ?? []).map((q) => [q.experimentGroupId, Math.round(q.firstClearElapsedSeconds), q.clearCount])),
   );
 }
 
@@ -722,7 +736,7 @@ function publishPre(s, nm) {
   try {
     const scan = pre.prepare(`SELECT ids, found FROM scan WHERE season = ?`).get(s.id);
     const out = derivePre(pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.id), s, nm, scan);
-    if (out && writePre(join(OUT, ".."), out)) log(`프리 시즌 특집 집계 ${out.modes.map((m) => `${m.label} ${m.games}경기`).join(", ")}`);
+    if (out && writePre(join(OUT, ".."), out)) log(`프리 시즌 특집 집계 ${out.games}경기, 티어 ${out.tier?.combos.length ?? 0}개 조합`);
   } catch (e) {
     log(`프리 시즌 특집 집계 실패: ${e.message}`);
   }
@@ -1121,7 +1135,7 @@ async function once(measure) {
       const rps = pace.rps;
       const pr = await collectPre(ps);
       pace.set(rps);
-      log(`경기 번호 ${pr.ids}개를 조회해 프리 시즌 경기 ${pr.games}개를 저장했습니다. 요청 ${stats.sent}, 한도 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
+      log(`경기 번호 ${pr.ids}개를 조회해 프리 시즌 경기 ${pr.games}개를 저장했습니다.${pr.refilled ? ` 예전 경기 ${pr.refilled}개를 다시 받았습니다.` : ""} 요청 ${stats.sent}, 429 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
     }
     if (ps && !abort) publishPre(ps, nm);
     if (!abort) await publish(s, nm);

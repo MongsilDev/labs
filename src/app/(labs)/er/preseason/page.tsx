@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { avatarUrl, currentUser } from "@/er/server/auth";
 import Live from "@/next/Live";
-import Filters from "@/next/Filters";
 import MoreRows from "./MoreRows";
 import { EXP_NAME, EXP_ORDER, getPreseason, type PreChar, type PreStat } from "@/next/preseason";
 
@@ -37,13 +36,14 @@ function Stats({ s, base }: { s: PreStat; base: number }) {
   );
 }
 
-export default async function PreseasonPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
-  const q = await searchParams;
+const clock = (sec: number | null) => (sec == null ? "-" : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
+const signed = (v: number) => (v > 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
+
+export default async function PreseasonPage() {
   const me = await currentUser();
   const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
-  const all = await getPreseason();
-  if (!all?.modes.length) return <Live user={user}><h1 className="text-[26px] font-black">프리 시즌 신규 요소</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
-  const data = all?.modes.find((x) => x.id === q.m) ?? all?.modes[0];
+  const data = await getPreseason();
+  if (!data) return <Live user={user}><h1 className="text-[26px] font-black">프리 시즌 신규 요소</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
   const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
   const hour = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "numeric" });
   const span = day.format(data.from) === day.format(data.to)
@@ -53,14 +53,50 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
   return (
     <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
-        <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">{all.season.name} 신규 요소</h1>
+        <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">{data.season.name} 신규 요소</h1>
         <p className="text-[13px] text-ink-3 num">
           {servers(data.servers)} {n(data.games)}경기, {span}
         </p>
       </div>
-      <Filters groups={[{ name: "모드", items: all.modes.map((x, i) => ({ href: i ? `/er/preseason?m=${x.id}` : "/er/preseason", label: x.label, on: x === data })) }]} />
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-2">
+      {data.tier && (
+        <section className="sec mt-6 min-w-0">
+          <h2 className="sec-h">프리 시즌 티어리스트<small className="num">{n(data.tier.rows)}명</small></h2>
+          <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
+            <MoreRows
+              head={
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th className="l">실험체</th>
+                    <th>등급</th>
+                    <th>점수</th>
+                    <th>픽률</th>
+                    <th>승률</th>
+                    <th>TOP 3</th>
+                    <th>평균 순위</th>
+                  </tr>
+                </thead>
+              }
+            >
+              {data.tier.combos.map((c, i) => (
+                <tr key={`${c.char}-${c.weapon}`} className={c.n < data.tier!.thin ? "opacity-50" : undefined}>
+                  <td className="text-ink-3">{i + 1}</td>
+                  <td className="l"><Who c={c} /></td>
+                  <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
+                  <td className="font-bold" data-tip={`90% 범위 ±${c.half.toFixed(2)}`}>{signed(c.z)}</td>
+                  <td><small className="mr-1.5 text-ink-3">{n(c.n)}판</small>{c.pick.toFixed(2)}%</td>
+                  <td>{c.win.toFixed(1)}%</td>
+                  <td>{c.top3.toFixed(1)}%</td>
+                  <td>{c.place.toFixed(2)}</td>
+                </tr>
+              ))}
+            </MoreRows>
+          </div>
+        </section>
+      )}
+
+      <div className="mt-10 grid gap-10 lg:grid-cols-2">
         <section className="sec min-w-0">
           <h2 className="sec-h">실험 과제<small className="num">{n(data.exp.teams)}팀</small></h2>
           <table className="tbl">
@@ -70,6 +106,8 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                 <th>비율</th>
                 <th>평균 순위</th>
                 <th>승률</th>
+                <th>1단계</th>
+                <th>2단계</th>
               </tr>
             </thead>
             <tbody>
@@ -77,11 +115,15 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                 <tr key={r.type}>
                   <td className="l font-semibold">{r.name}</td>
                   <Stats s={r} base={data.base} />
+                  <td className="text-ink-3" data-tip="첫 완료까지 걸린 평균 시간">{clock(r.step1)}</td>
+                  <td className="text-ink-3" data-tip="팀당 평균 완료 횟수">{r.step2 == null ? "-" : `${r.step2.toFixed(1)}회`}</td>
                 </tr>
               ))}
               <tr className="text-ink-3">
                 <td className="l">미완료</td>
                 <Stats s={data.exp.none} base={data.base} />
+                <td />
+                <td />
               </tr>
             </tbody>
           </table>
@@ -93,21 +135,25 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
             <thead>
               <tr>
                 <th className="l">쓴 가젯</th>
-                <th>비율</th>
-                <th>평균 순위</th>
-                <th>승률</th>
+                <th>쓴 사람</th>
+                <th>판당 횟수</th>
+                <th>2회 이상</th>
               </tr>
             </thead>
             <tbody>
               {data.gadgets.map((g) => (
                 <tr key={g.code}>
                   <td className="l font-semibold">{g.name}</td>
-                  <Stats s={g} base={data.base} />
+                  <td>{g.share.toFixed(1)}%</td>
+                  <td>{g.per?.toFixed(2) ?? "-"}</td>
+                  <td>{g.multi == null ? "-" : `${g.multi.toFixed(1)}%`}</td>
                 </tr>
               ))}
               <tr className="text-ink-3">
                 <td className="l">쓰지 않음</td>
-                <Stats s={data.noGadget} base={data.base} />
+                <td>{data.noGadget.share.toFixed(1)}%</td>
+                <td />
+                <td />
               </tr>
             </tbody>
           </table>
