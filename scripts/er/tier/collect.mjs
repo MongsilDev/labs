@@ -304,7 +304,6 @@ async function names() {
     item: (code) => [itemKo.get(String(code)) ?? `아이템 ${code}`, grades.get(code) ?? null],
     area: (code) => areas.get(code) ?? `지역 ${code}`,
     // 가젯과 루미 지급품은 기록 코드의 백 단위 그룹 번호로 이름을 찾음
-    skill: (code) => skillKo.get(String(Math.floor(code / 100) * 100)) ?? `가젯 ${code}`,
     state: (code) => stateKo.get(String(Math.floor(code / 100) * 100)) ?? `버프 ${code}`,
     weather: (code) => weatherKo.get(String(code)) ?? `날씨 ${code}`,
   };

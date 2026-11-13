@@ -1,336 +1,418 @@
 import Image from "next/image";
 import { avatarUrl, currentUser } from "@/er/server/auth";
+import Filters from "@/next/Filters";
 import Live from "@/next/Live";
 import SortTable from "./SortTable";
-import { EXP_NAME, EXP_ORDER, getPreseason, type PreChar, type PreMove, type PreStat } from "@/next/preseason";
-import { itemIcon } from "@/er/lib/tier";
+import { EXP_NAME, EXP_ORDER, getPreseason, type PreChar, type PreGrade, type PreMove } from "@/next/preseason";
+import { WEAPON_SPRITE, itemIcon } from "@/er/lib/tier";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "실험실" };
 
+const GRADES: PreGrade[] = ["S", "A", "B", "C", "D"];
+const MODE_NAME: Record<number, string> = { 2: "일반", 3: "랭크" };
+
 const n = (v: number) => v.toLocaleString("ko-KR");
 const server = (name: string) => name.replace(/^Asia(\d?)$/, (_, k) => `아시아${k || 1}`);
 const servers = (list: { name: string }[]) => (list.length > 2 ? "전체 서버" : list.map((x) => server(x.name)).join(", "));
-// 모드 평균 승률과의 차이가 95% 범위를 넘을 때만 칠함
-const tint = (s: { win: number; winCi: number }, base: number) =>
-  Math.abs(s.win - base) <= s.winCi ? undefined : { background: `color-mix(in srgb, var(${s.win > base ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(s.win - base) / 10, 1) * 50)}%, transparent)` };
+const ci = (win: number, k: number) => (k ? 1.96 * Math.sqrt(((win / 100) * (1 - win / 100)) / k) * 100 : 0);
+// 기준 승률과의 차이가 95% 범위를 넘는 칸만 칠함. 농도는 차이에 비례
+const tint = (win: number, range: number, base: number) =>
+  Math.abs(win - base) <= range ? undefined : { background: `color-mix(in srgb, var(${win > base ? "--up" : "--down"}) ${Math.round(Math.min(Math.abs(win - base) / 10, 1) * 50)}%, transparent)` };
+const pp = (v: number, k: number) => `${v > 0 ? "+" : ""}${v.toFixed(k)}%p`;
+const clock = (sec: number | null) => (sec == null ? "-" : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
 
-function Who({ c }: { c: PreChar }) {
+/** 무기와 실험체 이름을 한 줄로. slim이면 좁은 폭에서 무기 이름을 숨김 */
+function Who({ c, slim }: { c: PreChar; slim?: boolean }) {
   return (
-    <span className="flex items-center gap-2">
+    <span className={`inline-flex items-center whitespace-nowrap ${slim ? "gap-1.5 sm:gap-2" : "gap-2"}`}>
       <Image className="portrait" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={24} height={24} unoptimized />
-      <span className="flex flex-wrap gap-x-1.5">
-        <span className="text-ink-3">{c.weaponName}</span>
-        <span className="font-semibold">{c.name}</span>
+      <span>
+        <span className={slim ? "hidden text-ink-3 sm:inline" : "text-ink-3"}>{c.weaponName} </span>
+        <b className="font-semibold">{c.name}</b>
       </span>
     </span>
   );
 }
 
-function Stats({ s, base }: { s: PreStat; base: number }) {
+/** 값 앞에 놓는 막대. 같은 열의 가장 큰 값이 꽉 찬 길이 */
+function Bar({ v, max }: { v: number; max: number }) {
   return (
-    <>
-      <td>{s.share.toFixed(1)}%</td>
-      <td>{s.rank?.toFixed(2) ?? "-"}</td>
-      <td className="font-bold" style={tint(s, base)} data-tip={`${n(s.n)}명, 평균 승률 ${base}%, 95% 범위 ±${s.winCi}`}>{s.win.toFixed(1)}%</td>
-    </>
+    <span className="mr-2 hidden h-[6px] w-20 bg-row align-middle sm:inline-block" aria-hidden>
+      <span className="block h-full bg-ink-3" style={{ width: `${Math.min(v / max, 1) * 100}%` }} />
+    </span>
+  );
+}
+
+/** 등급마다 한 줄씩 실험체 얼굴을 늘어놓음. 얼굴 오른쪽 아래 칸은 무기 */
+function Board({ list, note }: { list: (PreChar & { grade: PreGrade })[]; note: (i: number) => string }) {
+  return (
+    <div className="mt-3 border-t border-rule">
+      {GRADES.map((g) => {
+        const row = list.map((c, i) => ({ c, i })).filter((x) => x.c.grade === g);
+        if (!row.length) return null;
+        return (
+          <div key={g} className="flex items-start gap-3 border-b border-rule py-2">
+            <span className={`grade grade-${g} h-10 w-7 flex-none text-[15px] sm:h-11`}>{g}</span>
+            <ul className="flex flex-wrap gap-1">
+              {row.map(({ c, i }) => {
+                const w = WEAPON_SPRITE.indexOf(c.weapon);
+                return (
+                  <li key={`${c.char}-${c.weapon}`} className="relative size-10 sm:size-11" data-tip={note(i)}>
+                    <Image className="size-full rounded-[2px] bg-row object-cover" src={`/img/er/char/${c.key}.v1.webp`} alt={`${c.weaponName} ${c.name}`} width={44} height={44} unoptimized />
+                    {w >= 0 && (
+                      <span className="absolute right-0 bottom-0 grid size-[18px] place-items-center overflow-hidden rounded-tl-[2px] bg-bg" aria-hidden>
+                        <span className="wg scale-[0.89] bg-ink" style={{ ["--i" as string]: w }} />
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 function Moves({ head, list, avg }: { head: string; list: PreMove[]; avg: string }) {
-  const pp = (v: number, k: number) => `${v > 0 ? "+" : ""}${v.toFixed(k)}%p`;
   return (
-    <table className="tbl">
-      <thead>
-        <tr>
-          <th className="l">{head}</th>
-          <th>승률</th>
-          <th>픽률</th>
-        </tr>
-      </thead>
-      <tbody>
-        {list.map((c) => (
-          <tr key={`${c.char}-${c.weapon}`}>
-            <td className="l"><Who c={c} /></td>
-            <td data-tip={`${n(c.n)}명, 평균 승률 차이 ${avg}를 뺀 승률 변화, 95% 범위 ±${c.dCi}%p`}>
-              <span className="font-bold">{c.win.toFixed(1)}%</span>
-              <small className="block" style={{ color: `var(${c.d > 0 ? "--up" : "--down"})` }}>{pp(c.d, 1)}</small>
-            </td>
-            <td>
-              {c.pick.toFixed(2)}%
-              <small className="block text-ink-3">{pp(c.dPick, 2)}</small>
-            </td>
+    <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
+      <table className="tbl">
+        <thead>
+          <tr>
+            <th className="l pin-l">{head}</th>
+            <th>승률</th>
+            <th data-tip={`두 기간의 평균 승률 차이 ${avg}를 뺀 값`}>승률 변화</th>
+            <th>픽률 변화</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {[...list].sort((a, b) => Math.abs(b.d) - Math.abs(a.d)).map((c) => (
+            <tr key={`${c.char}-${c.weapon}`}>
+              <td className="l pin-l"><Who c={c} /></td>
+              <td>{c.win.toFixed(1)}%</td>
+              <td className="font-bold" style={{ color: `var(${c.d > 0 ? "--up" : "--down"})` }} data-tip={`${n(c.n)}명, 95% 범위 ±${c.dCi}%p`}>{pp(c.d, 1)}</td>
+              <td className="text-ink-3">{pp(c.dPick, 2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
-const clock = (sec: number | null) => (sec == null ? "-" : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
+function How({ children }: { children: React.ReactNode }) {
+  return (
+    <details className="mt-4 text-[13px] text-ink-2">
+      <summary className="w-fit cursor-pointer text-ink-3">계산 방법</summary>
+      <ul className="mt-2 grid max-w-[720px] list-disc gap-1 pl-5">{children}</ul>
+    </details>
+  );
+}
 
-export default async function PreseasonPage() {
+export default async function PreseasonPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
   const me = await currentUser();
   const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
   const data = await getPreseason();
   if (!data) return <Live user={user}><h1 className="text-[26px] font-black">실험실</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
+  const cobalt = (await searchParams).mode === "cobalt" ? data.cobalt : null;
   const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
   const fmt = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "numeric", minute: "2-digit" });
   const hour = (t: number) => fmt.format(t);
-  const span = day.format(data.from) === day.format(data.to)
-    ? `${day.format(data.from)} ${hour(data.from)}~${hour(data.to).replace(/^(오전|오후) /, (m) => (hour(data.from).startsWith(m) ? "" : m))}`
-    : `${day.format(data.from)} ${hour(data.from)}~${day.format(data.to)} ${hour(data.to)}`;
+  const [from, to] = cobalt ? [cobalt.from, cobalt.to] : [data.from, data.to];
+  const span = day.format(from) === day.format(to)
+    ? `${day.format(from)} ${hour(from)}~${hour(to).replace(/^(오전|오후) /, (m) => (hour(from).startsWith(m) ? "" : m))}`
+    : `${day.format(from)} ${hour(from)}~${day.format(to)} ${hour(to)}`;
   const exp = EXP_ORDER.map((t) => data.exp.rows.find((r) => r.type === t)).filter((r) => r != null);
   // 예전 경기를 다시 받기 전에는 값이 없어 칸을 숨김
   const step1 = exp.some((r) => r.step1 != null);
   const step2 = exp.some((r) => r.step2 != null);
-  const per = data.gadgets.some((g) => g.per != null);
+  const tier = data.tier?.combos ?? [];
+  const maxPick = Math.max(...(cobalt?.combos ?? tier).map((c) => c.pick), 0.01);
+  const modes = (data.modes ?? []).filter((m) => m.games).sort((a, b) => b.games - a.games).map((m) => `${MODE_NAME[m.mode] ?? m.mode} ${n(m.games)}경기`);
   return (
     <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">실험실</h1>
         <p className="text-[13px] text-ink-3 num" data-tip={`갱신 ${day.format(data.updatedAt)} ${hour(data.updatedAt)}`}>
-          {servers(data.servers)} {n(data.games)}경기, {span}
+          <span className="whitespace-nowrap">{data.season.name}, {cobalt ? "" : `${servers(data.servers)} `}{n(cobalt ? cobalt.games : data.games)}경기,</span>{" "}
+          <span className="whitespace-nowrap">{span}</span>
         </p>
       </div>
-
-      {data.tier && (
-        <section className="sec mt-6 min-w-0">
-          <h2 className="sec-h">프리 시즌 티어리스트<small className="num">{n(data.tier.rows)}명</small></h2>
-          <SortTable
-            numbered
-            cols={[
-              { label: "실험체", cls: "l pin-c" },
-              { label: "등급", first: "desc" },
-              { label: "픽률", first: "desc", tip: "사람이 한 명 이상 있는 팀 가운데 이 조합을 고른 팀의 비율" },
-              { label: "승률", first: "desc" },
-              { label: "TOP 3", first: "desc" },
-              { label: "평균 순위", first: "asc" },
-            ]}
-            rows={data.tier.combos.map((c, i) => ({
-              id: `${c.char}-${c.weapon}`,
-              no: i + 1,
-              dim: c.n < data.tier!.thin,
-              // 프리 시즌 점수는 RP가 아니라 표준편차 배수라 숫자 대신 등급만 보이고, 등급 열은 점수로 정렬함
-              vals: [null, c.z, c.pick, c.win, c.top3, c.place],
-              cells: (
-                <>
-                  <td className="l pin-c"><Who c={c} /></td>
-                  <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
-                  <td><small className="mr-1.5 text-ink-3">{n(c.n)}명</small>{c.pick.toFixed(2)}%</td>
-                  <td>{c.win.toFixed(1)}%</td>
-                  <td>{c.top3.toFixed(1)}%</td>
-                  <td>{c.place.toFixed(2)}</td>
-                </>
-              ),
-            }))}
-          />
-        </section>
+      {data.cobalt && (
+        <Filters
+          groups={[{
+            name: "모드",
+            items: [
+              { href: "/er/preseason", label: "일반과 랭크", on: !cobalt },
+              { href: "/er/preseason?mode=cobalt", label: "코발트 프로토콜", on: !!cobalt },
+            ],
+          }]}
+        />
       )}
 
-      {data.change && (data.change.up.length || data.change.down.length) ? (
-        <section className="sec mt-10 min-w-0">
-          <h2 className="sec-h">
-            시즌 {Number(data.season.name.replace(/\D/g, "")) - 1} 대비
-            <small className="num">
-              {day.format(data.change.from) === day.format(data.change.to) ? day.format(data.change.from) : `${day.format(data.change.from)}~${day.format(data.change.to)}`} {n(data.change.games)}경기
-            </small>
-          </h2>
-          <div className="grid items-start gap-10 lg:grid-cols-2">
-            <Moves head="승률이 오른 실험체" list={data.change.up} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
-            <Moves head="승률이 내린 실험체" list={data.change.down} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
-          </div>
-        </section>
-      ) : null}
-
-      {data.trios?.length ? (
-        <section className="sec mt-10 min-w-0">
-          <h2 className="sec-h">3인 조합<small className="num">30팀 이상</small></h2>
-          <SortTable
-            show={10}
-            cols={[{ label: "조합", cls: "l" }, { label: "팀", first: "desc" }, { label: "승률", first: "desc" }, { label: "TOP 3", first: "desc" }, { label: "평균 순위", first: "asc" }]}
-            rows={data.trios.map((t) => ({
-              id: t.key,
-              vals: [null, t.n, t.win, t.top3, t.rank],
-              cells: (
-                <>
-                  <td className="l">
-                    <span className="flex flex-wrap gap-x-4 gap-y-1">{t.members.map((c) => <Who key={`${c.char}-${c.weapon}`} c={c} />)}</span>
-                  </td>
-                  <td className="text-ink-3">{n(t.n)}</td>
-                  <td className="font-bold" style={tint(t, data.base)} data-tip={`평균 승률 ${data.base}%, 95% 범위 ±${t.winCi}`}>{t.win.toFixed(1)}%</td>
-                  <td>{t.top3.toFixed(1)}%</td>
-                  <td>{t.rank?.toFixed(2) ?? "-"}</td>
-                </>
-              ),
-            }))}
-          />
-        </section>
-      ) : null}
-
-      <div className="mt-10 grid gap-10 lg:grid-cols-2">
-        <section className="sec min-w-0">
-          <h2 className="sec-h">실험 과제<small className="num">{n(data.exp.teams)}팀</small></h2>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th className="l">완료한 분야</th>
-                <th>비율</th>
-                <th>평균 순위</th>
-                <th>승률</th>
-                {step1 && <th>1단계</th>}
-                {step2 && <th>2단계</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {exp.map((r) => (
-                <tr key={r.type}>
-                  <td className="l font-semibold">{r.name}</td>
-                  <Stats s={r} base={data.base} />
-                  {step1 && <td className="text-ink-3" data-tip="첫 완료까지 걸린 평균 시간">{clock(r.step1)}</td>}
-                  {step2 && <td className="text-ink-3" data-tip="팀당 평균 완료 횟수">{r.step2 == null ? "-" : `${r.step2.toFixed(1)}회`}</td>}
-                </tr>
-              ))}
-              <tr className="text-ink-3">
-                <td className="l">미완료</td>
-                <Stats s={data.exp.none} base={data.base} />
-                {step1 && <td />}
-                {step2 && <td />}
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        <section className="sec min-w-0">
-          <h2 className="sec-h">가젯<small className="num">{n(data.players)}명</small></h2>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th className="l">쓴 가젯</th>
-                <th>쓴 사람</th>
-                {per && <th>판당 횟수</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {data.gadgets.map((g) => (
-                <tr key={g.code}>
-                  <td className="l font-semibold">{g.name}</td>
-                  <td>{g.share.toFixed(1)}%</td>
-                  {per && <td>{g.per?.toFixed(2) ?? "-"}</td>}
-                </tr>
-              ))}
-              <tr className="text-ink-3">
-                <td className="l">쓰지 않음</td>
-                <td>{data.noGadget.share.toFixed(1)}%</td>
-                {per && <td />}
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      </div>
-
-      {data.armor?.length ? (
-        <div className="mt-10 grid gap-10 lg:grid-cols-2">
-          <section className="sec min-w-0">
-            <h2 className="sec-h">신규 방어구<small className="num">{n(data.equipGames ?? 0)}경기</small></h2>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th className="l">방어구</th>
-                  <th>채용률</th>
-                  <th>평균 순위</th>
-                  <th>승률</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.armor.map((a) => (
-                  <tr key={a.code} className={a.n < (data.tier?.thin ?? 30) ? "opacity-50" : undefined}>
-                    <td className="l">
-                      <span className="flex items-center gap-2">
-                        {itemIcon(a.code) && <Image className="portrait" src={itemIcon(a.code)!} alt="" width={24} height={24} unoptimized />}
-                        <span className="font-semibold">{a.name}</span>
-                      </span>
-                    </td>
-                    <td data-tip={`같은 부위 ${a.grade} 장비를 쓴 사람 중`}>{a.share.toFixed(1)}%</td>
-                    <td data-tip={`같은 부위 ${a.grade} 장비 ${a.restRank?.toFixed(2) ?? "-"}`}>{a.rank?.toFixed(2) ?? "-"}</td>
-                    <td className="font-bold" style={a.restWin == null ? undefined : tint(a, a.restWin)} data-tip={`${n(a.n)}명, 같은 부위 ${a.grade} 장비 ${a.restWin ?? "-"}%, 95% 범위 ±${a.winCi}`}>{a.win.toFixed(1)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {cobalt ? (
+        <>
+          <section className="sec mt-6 min-w-0">
+            <h2 className="sec-h">티어리스트</h2>
+            <Board list={cobalt.combos} note={(i) => `${cobalt.combos[i].weaponName} ${cobalt.combos[i].name}, 승률 ${cobalt.combos[i].win.toFixed(1)}%`} />
+            <How>
+              <li>코발트 프로토콜은 4인 두 팀 경기라 순위 없이 승률만 셉니다.</li>
+              <li>등급은 승률의 순위로 나눕니다. S는 위 10%, A는 다음 20%, B는 40%, C는 20%, D는 아래 10%입니다.</li>
+              <li>판 수가 적은 조합은 승률을 전체 승률 {cobalt.base}% 쪽으로 당겨서 순위를 매깁니다.</li>
+              <li>픽률은 팀 가운데 그 실험체와 무기 조합을 고른 팀의 비율입니다.</li>
+              <li>승률 칸은 전체 승률과 95% 범위를 넘게 다를 때 칠합니다.</li>
+            </How>
           </section>
-        </div>
-      ) : null}
-
-      <section className="sec mt-10 min-w-0">
-        <h2 className="sec-h">날씨</h2>
-        <div className="mt-3 grid gap-x-10 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
-          {data.weather.map((w) => (
-            <div key={w.code} className="min-w-0">
-              <h3 className="font-bold">
-                {w.name}
-                <small className="ml-2 font-normal text-ink-3 num">{n(w.games)}경기</small>
-              </h3>
-              <p className="mt-1 text-[13px] text-ink-3 num">{w.drop ? `${w.drop} 획득 ${w.dropShare.toFixed(1)}%` : "지급품 없음"}</p>
-              {w.top.length ? (
-                <div className="mt-2">
-                  <SortTable
-                    show={5}
-                    cols={[{ label: "실험체", cls: "l" }, { label: "승률", first: "desc" }, { label: "명", first: "desc" }]}
-                    rows={w.top.map((c) => ({
-                      id: `${c.char}-${c.weapon}`,
-                      vals: [null, c.win, c.n],
-                      cells: (
-                        <>
-                          <td className="l"><Who c={c} /></td>
-                          <td className="font-bold" style={tint(c, data.base)} data-tip={`평균 승률 ${data.base}%, 95% 범위 ±${c.winCi}`}>{c.win.toFixed(1)}%</td>
-                          <td className="text-ink-3">{n(c.n)}</td>
-                        </>
-                      ),
-                    }))}
-                  />
-                </div>
-              ) : (
-                <p className="mt-2 text-[13px] text-ink-3">40명 이상인 실험체가 아직 없습니다.</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {data.expChars.length ? (
-        <section className="sec mt-10 min-w-0">
-          <h2 className="sec-h">실험체별 실험 과제<small className="num">30명 이상</small></h2>
-          <SortTable
-            cols={[{ label: "실험체", cls: "l" }, ...EXP_ORDER.map((t) => ({ label: EXP_NAME[t], first: "desc" as const })), { label: "명", first: "desc" }]}
-            rows={data.expChars.map((c) => {
-              // 분야마다 30명 이상일 때만 성적을 적고, 평균 순위가 가장 좋은 분야를 칠함
-              const ranks = EXP_ORDER.map((t) => c.rank?.[t]).filter((v): v is number => v != null);
-              const best = ranks.length > 1 ? Math.min(...ranks) : null;
-              const top = Math.max(...EXP_ORDER.map((t) => c.exp[t] ?? 0));
-              return {
+          <section className="sec mt-10 min-w-0">
+            <h2 className="sec-h">실험체 통계</h2>
+            <SortTable
+              numbered
+              cols={[
+                { label: "실험체", cls: "l pin-c" },
+                { label: "등급", first: "asc" },
+                { label: "픽률", first: "desc" },
+                { label: "승률", first: "desc" },
+                { label: "명", first: "desc" },
+              ]}
+              rows={cobalt.combos.map((c, i) => ({
                 id: `${c.char}-${c.weapon}`,
-                vals: [null, ...EXP_ORDER.map((t) => c.exp[t] ?? 0), c.n],
+                no: i + 1,
+                vals: [null, i, c.pick, c.win, c.n],
                 cells: (
                   <>
-                    <td className="l"><Who c={c} /></td>
-                    {EXP_ORDER.map((t) => {
-                      const rank = c.rank?.[t];
-                      return (
-                        <td key={t} data-tip={rank == null ? undefined : `평균 순위 ${rank.toFixed(2)}, TOP 3 ${c.top3?.[t]?.toFixed(1)}%`}>
-                          <span className={c.exp[t] === top ? "font-bold" : "text-ink-3"}>{(c.exp[t] ?? 0).toFixed(1)}%</span>
-                          {rank != null && <small className={rank === best ? "block font-bold" : "block text-ink-3"} style={rank === best ? { color: "var(--up)" } : undefined}>{rank.toFixed(2)}위</small>}
-                        </td>
-                      );
-                    })}
+                    <td className="l pin-c"><Who c={c} /></td>
+                    <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
+                    <td><Bar v={c.pick} max={maxPick} />{c.pick.toFixed(2)}%</td>
+                    <td className="font-bold" style={tint(c.win, c.winCi, cobalt.base)} data-tip={`95% 범위 ±${c.winCi}`}>{c.win.toFixed(1)}%</td>
                     <td className="text-ink-3">{n(c.n)}</td>
                   </>
                 ),
-              };
-            })}
-          />
-        </section>
-      ) : null}
+              }))}
+            />
+          </section>
+        </>
+      ) : (
+        <>
+          {data.tier && (
+            <>
+              <section className="sec mt-6 min-w-0">
+                <h2 className="sec-h">티어리스트</h2>
+                <Board list={tier} note={(i) => `${tier[i].weaponName} ${tier[i].name}, 평균 ${tier[i].place.toFixed(2)}위`} />
+                <How>
+                  {modes.length > 0 && <li>{modes.join("와 ")}를 합쳐 셉니다. 봇은 뺍니다.</li>}
+                  <li>등급은 평균 순위와 TOP 3 비율을 반씩 합친 점수의 순위로 나눕니다. S는 위 10%, A는 다음 20%, B는 40%, C는 20%, D는 아래 10%입니다.</li>
+                  <li>판 수가 적은 무기는 점수를 같은 실험체의 모든 무기를 합친 점수에 가깝게 맞춥니다.</li>
+                  <li>픽률은 사람이 한 명 이상 있는 팀 가운데 그 실험체와 무기 조합을 고른 팀의 비율입니다.</li>
+                  <li>승률 칸은 평균 승률 {data.base}%와 95% 범위를 넘게 다를 때 칠합니다.</li>
+                </How>
+              </section>
+              <section className="sec mt-10 min-w-0">
+                <h2 className="sec-h">실험체 통계</h2>
+                <SortTable
+                  numbered
+                  cols={[
+                    { label: "실험체", cls: "l pin-c" },
+                    { label: "등급", first: "asc" },
+                    { label: "픽률", first: "desc" },
+                    { label: "승률", first: "desc" },
+                    { label: "TOP 3", first: "desc" },
+                    { label: "평균 순위", first: "asc" },
+                  ]}
+                  rows={tier.map((c, i) => ({
+                    id: `${c.char}-${c.weapon}`,
+                    no: i + 1,
+                    dim: c.n < data.tier!.thin,
+                    // 프리 시즌 점수는 RP가 아닌 표준편차 배수라 숫자를 숨김. 등급 열의 정렬 값은 점수 순위
+                    vals: [null, i, c.pick, c.win, c.top3, c.place],
+                    cells: (
+                      <>
+                        <td className="l pin-c"><Who c={c} /></td>
+                        <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
+                        <td data-tip={`${n(c.n)}명`}><Bar v={c.pick} max={maxPick} />{c.pick.toFixed(2)}%</td>
+                        <td className="font-bold" style={tint(c.win, ci(c.win, c.n), data.base)}>{c.win.toFixed(1)}%</td>
+                        <td>{c.top3.toFixed(1)}%</td>
+                        <td>{c.place.toFixed(2)}</td>
+                      </>
+                    ),
+                  }))}
+                />
+              </section>
+            </>
+          )}
+
+          {data.change && (data.change.up.length || data.change.down.length) ? (
+            <section className="sec mt-10 min-w-0">
+              <h2 className="sec-h">
+                시즌 {Number(data.season.name.replace(/\D/g, "")) - 1} 대비
+                <small className="num">
+                  {day.format(data.change.from) === day.format(data.change.to) ? day.format(data.change.from) : `${day.format(data.change.from)}~${day.format(data.change.to)}`} {n(data.change.games)}경기
+                </small>
+              </h2>
+              <div className="grid items-start gap-10 lg:grid-cols-2">
+                <Moves head="승률이 오른 실험체" list={data.change.up} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
+                <Moves head="승률이 내린 실험체" list={data.change.down} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
+              </div>
+            </section>
+          ) : null}
+
+          {data.trios?.length ? (
+            <section className="sec mt-10 min-w-0">
+              <h2 className="sec-h">3인 조합<small className="num">30팀 이상</small></h2>
+              <SortTable
+                show={10}
+                cols={[{ label: "조합", cls: "l" }, { label: "팀", first: "desc", cls: "max-sm:hidden" }, { label: "승률", first: "desc" }, { label: "TOP 3", first: "desc", cls: "max-sm:hidden" }, { label: "평균 순위", first: "asc" }]}
+                rows={data.trios.map((t) => ({
+                  id: t.key,
+                  vals: [null, t.n, t.win, t.top3, t.rank],
+                  cells: (
+                    <>
+                      <td className="l">
+                        <span className="inline-flex gap-x-4 sm:gap-x-5">{t.members.map((c) => <Who key={`${c.char}-${c.weapon}`} c={c} slim />)}</span>
+                      </td>
+                      <td className="text-ink-3 max-sm:hidden">{n(t.n)}</td>
+                      <td className="font-bold" style={tint(t.win, t.winCi, data.base)} data-tip={`${n(t.n)}팀, 평균 승률 ${data.base}%, 95% 범위 ±${t.winCi}`}>{t.win.toFixed(1)}%</td>
+                      <td className="max-sm:hidden">{t.top3.toFixed(1)}%</td>
+                      <td>{t.rank?.toFixed(2) ?? "-"}</td>
+                    </>
+                  ),
+                }))}
+              />
+            </section>
+          ) : null}
+
+          <div className="mt-10 grid items-start gap-10 lg:grid-cols-2 xl:grid-cols-3">
+            <section className="sec min-w-0">
+              <h2 className="sec-h">실험 과제<small className="num">{n(data.exp.teams)}팀</small></h2>
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th className="l">완료한 분야</th>
+                    <th>비율</th>
+                    <th>평균 순위</th>
+                    <th>승률</th>
+                    {step1 && <th data-tip="1단계를 처음 완료하기까지 걸린 평균 시간">1단계</th>}
+                    {step2 && <th data-tip="2단계를 완료한 팀의 평균 완료 횟수">2단계</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...exp, { ...data.exp.none, type: "none", name: "미완료", step1: null, step2: null }].map((r) => (
+                    <tr key={r.type} className={r.type === "none" ? "text-ink-3" : undefined}>
+                      <td className={r.type === "none" ? "l" : "l font-semibold"}>{r.name}</td>
+                      <td>{r.share.toFixed(1)}%</td>
+                      <td>{r.rank?.toFixed(2) ?? "-"}</td>
+                      <td className="font-bold" style={tint(r.win, r.winCi, data.base)} data-tip={`${n(r.n)}팀, 평균 승률 ${data.base}%, 95% 범위 ±${r.winCi}`}>{r.win.toFixed(1)}%</td>
+                      {step1 && <td>{r.type === "none" ? "" : clock(r.step1)}</td>}
+                      {step2 && <td>{r.step2 == null ? "" : `${r.step2.toFixed(1)}회`}</td>}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+
+            {data.armor?.length ? (
+              <section className="sec min-w-0">
+                <h2 className="sec-h">신규 방어구<small className="num">{n(data.equipGames ?? 0)}경기</small></h2>
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th className="l">방어구</th>
+                      <th>등급</th>
+                      <th data-tip="같은 부위에 같은 등급 장비를 쓴 사람 가운데 이 방어구를 쓴 사람의 비율">채용률</th>
+                      <th>승률</th>
+                      <th data-tip="같은 부위에 같은 등급의 다른 장비를 쓴 사람의 승률">다른 장비</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.armor.map((a) => (
+                      <tr key={a.code} className={a.n < (data.tier?.thin ?? 30) ? "opacity-50" : undefined}>
+                        <td className="l">
+                          <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                            {itemIcon(a.code) && <Image className="portrait" src={itemIcon(a.code)!} alt="" width={24} height={24} unoptimized />}
+                            <b className="font-semibold">{a.name}</b>
+                          </span>
+                        </td>
+                        <td className="text-ink-3">{a.grade}</td>
+                        <td>{a.share.toFixed(1)}%</td>
+                        <td className="font-bold" style={a.restWin == null ? undefined : tint(a.win, a.winCi, a.restWin)} data-tip={`${n(a.n)}명, 평균 ${a.rank?.toFixed(2) ?? "-"}위, 95% 범위 ±${a.winCi}`}>{a.win.toFixed(1)}%</td>
+                        <td className="text-ink-3" data-tip={`평균 ${a.restRank?.toFixed(2) ?? "-"}위`}>{a.restWin == null ? "-" : `${a.restWin.toFixed(1)}%`}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+            ) : null}
+
+            <section className="sec min-w-0">
+              <h2 className="sec-h">날씨</h2>
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th className="l">날씨</th>
+                    <th>경기</th>
+                    <th className="l">지급품</th>
+                    <th data-tip="지급품을 얻은 사람의 비율">획득</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.weather.map((w) => (
+                    <tr key={w.code}>
+                      <td className="l font-semibold">{w.name}</td>
+                      <td>{(w.share ?? (w.games / data.games) * 100).toFixed(1)}%</td>
+                      <td className="l text-ink-3">{w.drop ?? "없음"}</td>
+                      <td>{w.drop ? `${w.dropShare.toFixed(1)}%` : ""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          </div>
+
+          {data.expChars.length ? (
+            <section className="sec mt-10 min-w-0">
+              <h2 className="sec-h">실험체별 실험 과제<small className="num">30명 이상</small></h2>
+              <SortTable
+                groups={[{ label: "", span: 1 }, { label: "완료한 분야 비율", span: 3 }, { label: "평균 순위", span: 3, shade: "평균 순위 칸은 다른 분야를 완료했을 때의 평균 순위와 95% 범위를 넘게 다를 때 칠합니다." }, { label: "", span: 1 }]}
+                cols={[
+                  { label: "실험체", cls: "l pin-l" },
+                  ...EXP_ORDER.map((t, i) => ({ label: EXP_NAME[t], first: "desc" as const, cls: i ? undefined : "grp-l" })),
+                  ...EXP_ORDER.map((t, i) => ({ label: EXP_NAME[t], first: "asc" as const, cls: i ? undefined : "grp-l" })),
+                  { label: "명", first: "desc", cls: "grp-l" },
+                ]}
+                rows={data.expChars.map((c) => ({
+                  id: `${c.char}-${c.weapon}`,
+                  vals: [null, ...EXP_ORDER.map((t) => c.exp[t] ?? 0), ...EXP_ORDER.map((t) => c.rank?.[t] ?? null), c.n],
+                  cells: (
+                    <>
+                      <td className="l pin-l"><Who c={c} /></td>
+                      {EXP_ORDER.map((t, i) => (
+                        <td key={t} className={i ? "text-ink-2" : "grp-l text-ink-2"}>{(c.exp[t] ?? 0).toFixed(1)}%</td>
+                      ))}
+                      {EXP_ORDER.map((t, i) => {
+                        const rank = c.rank?.[t];
+                        const edge = c.edge?.[t] ?? 0;
+                        return (
+                          <td
+                            key={t}
+                            className={`${i ? "" : "grp-l "}${edge ? "font-bold" : ""}`}
+                            style={edge ? { background: `color-mix(in srgb, var(${edge > 0 ? "--up" : "--down"}) 22%, transparent)` } : undefined}
+                            data-tip={rank == null ? undefined : `TOP 3 ${c.top3?.[t]?.toFixed(1)}%`}
+                          >
+                            {rank == null ? "" : rank.toFixed(2)}
+                          </td>
+                        );
+                      })}
+                      <td className="grp-l text-ink-3">{n(c.n)}</td>
+                    </>
+                  ),
+                }))}
+              />
+            </section>
+          ) : null}
+        </>
+      )}
 
       <p className="mt-12 text-[13px] text-ink-3">자료: 이터널 리턴 공식 API</p>
     </Live>

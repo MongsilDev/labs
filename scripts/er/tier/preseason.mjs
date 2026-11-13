@@ -7,13 +7,22 @@ import { RULE, scoreRows } from "./score.mjs";
 
 // 합쳐 싣는 모드는 랭크와 일반. 코발트 프로토콜과 이벤트 모드에는 실험 과제가 없음
 export const MODES = [3, 2];
+// 코발트 프로토콜은 4인 두 팀 경기라 순위 대신 승패만 따로 셈
+export const COBALT = 6;
+// 승률을 전체 승률 쪽으로 당기는 가상의 판 수. 판 수가 적은 조합이 위아래 끝에 몰리지 않게 함
+const COBALT_PRIOR = 100;
+/**
+ * 등급별 누적 비율. 프리 시즌 점수는 많이 고른 조합이 아래로 몰려 분포가 한쪽으로 치우쳐 있어,
+ * 정규 티어의 표준편차 경계를 쓰면 S가 30%를 넘음. 그래서 점수 순위의 비율로 나눔
+ */
+export const GRADE_SHARE = [["S", 0.1], ["A", 0.3], ["B", 0.7], ["C", 0.9]];
+// 순위의 가운데 값으로 나눠야 위아래 등급의 수가 같아짐
+const gradeAt = (i, total) => GRADE_SHARE.find(([, upto]) => (i + 0.5) / total < upto)?.[0] ?? "D";
 // RP와 플레이어 식별값을 저장하지 않아 정규 티어 계산에서 RP와 한 사람 몫 제한을 빼고 평균 순위와 TOP 3만 씀.
 // mmr 자리에 경기의 팀 수를 넣어 7팀 경기와 8팀 경기의 순위 평균 차이를 구간 보정으로 뺌
 export const TIER_RULE = { ...RULE, few: undefined, weights: { gain: 0, place: 0.5, top3: 0.5 }, bands: [8] };
 // 실험체 줄은 이 판 수를 넘을 때만 보여 줌
 export const CHAR_MIN = 30;
-export const WEATHER_CHAR_MIN = 40;
-const WEATHER_TOP = 5;
 const CHANGE_TOP = 10;
 export const TRIO_MIN = 30;
 /** collect.mjs --pre-base가 직전 시즌 비교 경기를 끝까지 받으면 시즌 ID를 적는 파일 */
@@ -40,15 +49,12 @@ const out = (a, total) => ({ n: a.n, share: pct(a.n, total), rank: avg(a.rank, a
 
 function fresh() {
   return {
-    games: 0, players: 0, bots: 0, teams: 0, winTeams: 0, from: Infinity, to: 0, servers: new Map(),
+    games: 0, players: 0, bots: 0, teams: 0, winTeams: 0, from: Infinity, to: 0, servers: new Map(), modes: new Map(),
     exp: new Map(Object.keys(EXP).map((k) => [k, acc()])), none: acc(),
-    chars: new Map(), combos: new Map(), trios: new Map(), gadgets: new Map(), noGadget: 0, weathers: new Map(), equipped: 0, equipGames: 0, equipLast: null, armor: new Map(),
+    chars: new Map(), combos: new Map(), trios: new Map(), weathers: new Map(), equipped: 0, equipGames: 0, equipLast: null, armor: new Map(),
     quest: new Map(Object.keys(EXP).map((k) => [k, { n1: 0, t1: 0, n2: 0, c2: 0 }])),
   };
 }
-
-/** 95% 범위의 아래 끝으로 세운 목록에서 처음 보이는 WEATHER_TOP줄만 보이는 승률 순으로 다시 세움. 나머지는 더 보기로 펼침 */
-const winFirst = (list) => [...list.slice(0, WEATHER_TOP).sort((a, b) => b.win - a.win || b.n - a.n), ...list.slice(WEATHER_TOP)];
 
 /** 직전 정규 시즌 경기에서 조합별 판 수와 1위 수. 봇과 MODES 밖 경기는 뺌 */
 function baseline(rows) {
@@ -72,6 +78,7 @@ function baseline(rows) {
 export function derivePre(rows, season, nm, scan = null, baseRows = []) {
   const x = fresh();
   const tier = [];
+  const cb = { games: 0, teams: 0, from: Infinity, to: 0, combos: new Map() };
   let game = null, m = null, w = null, teams = null, list = [];
   const flush = () => {
     // 팀 수는 봇 팀까지 세야 경기 규모가 맞음
@@ -95,15 +102,32 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       flush();
       game = r.game;
       m = MODES.includes(r.mode) ? x : null;
-      if (!m) continue;
-      m.games++;
-      m.servers.set(r.server, (m.servers.get(r.server) ?? 0) + 1);
-      m.from = Math.min(m.from, r.t);
-      m.to = Math.max(m.to, r.t);
-      w = m.weathers.get(r.weather) ?? { games: 0, players: 0, drop: 0, buff: null, chars: new Map() };
-      w.games++;
-      m.weathers.set(r.weather, w);
       teams = new Set();
+      if (r.mode === COBALT) {
+        cb.games++;
+        cb.from = Math.min(cb.from, r.t);
+        cb.to = Math.max(cb.to, r.t);
+      }
+      if (m) {
+        m.games++;
+        m.modes.set(r.mode, (m.modes.get(r.mode) ?? 0) + 1);
+        m.servers.set(r.server, (m.servers.get(r.server) ?? 0) + 1);
+        m.from = Math.min(m.from, r.t);
+        m.to = Math.max(m.to, r.t);
+        w = m.weathers.get(r.weather) ?? { games: 0, players: 0, drop: 0, buff: null };
+        w.games++;
+        m.weathers.set(r.weather, w);
+      }
+    }
+    if (r.mode === COBALT && !r.bot) {
+      if (!teams.has(r.team)) {
+        teams.add(r.team);
+        cb.teams++;
+      }
+      const key = `${r.char}-${r.weapon}`;
+      const a = cb.combos.get(key) ?? acc();
+      add(a, r.rank);
+      cb.combos.set(key, a);
     }
     if (!m) continue;
     list.push(r);
@@ -133,28 +157,14 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
     }
     m.players++;
     const key = `${r.char}-${r.weapon}`;
-    const c = m.chars.get(key) ?? { n: 0, exp: {}, rk: {}, t3: {}, used: 0, gc: new Map() };
+    const c = m.chars.get(key) ?? { n: 0, exp: {}, rk: {}, rk2: {}, t3: {} };
     c.n++;
     const t = r.exp in EXP ? r.exp : "none";
     c.exp[t] = (c.exp[t] ?? 0) + 1;
     c.rk[t] = (c.rk[t] ?? 0) + rank;
+    c.rk2[t] = (c.rk2[t] ?? 0) + rank * rank;
     c.t3[t] = (c.t3[t] ?? 0) + (rank <= 3 ? 1 : 0);
     m.chars.set(key, c);
-    // 예전 행은 쓴 가젯 코드 배열만 있고, 지금 행은 코드별 사용 횟수
-    const raw = JSON.parse(r.gadgets || "[]");
-    const used = Array.isArray(raw) ? raw.map((code) => [code, null]) : Object.entries(raw).map(([code, k]) => [Number(code), k]);
-    if (!used.length) m.noGadget++;
-    else c.used++;
-    for (const g of new Set(used.map(([code]) => Math.floor(code / 100) * 100))) c.gc.set(g, (c.gc.get(g) ?? 0) + 1);
-    for (const [code, k] of used) {
-      const x = m.gadgets.get(code) ?? { n: 0, known: 0, uses: 0 };
-      x.n++;
-      if (k != null) {
-        x.known++;
-        x.uses += k;
-      }
-      m.gadgets.set(code, x);
-    }
     // 최종 장비는 오래 살수록 완성돼 있어, 신규 방어구는 같은 부위에 같은 등급을 쓴 사람과 견줌
     const equip = r.equip ? JSON.parse(r.equip) : [];
     if (equip.length) {
@@ -177,9 +187,6 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       w.drop++;
       w.buff = drops[0][0];
     }
-    const wc = w.chars.get(key) ?? acc();
-    add(wc, rank);
-    w.chars.set(key, wc);
     const cc = m.combos.get(key) ?? acc();
     add(cc, rank);
     m.combos.set(key, cc);
@@ -220,7 +227,7 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
     // 7팀 경기가 섞여 있어 기준 승률은 팀 수로 구함
     base: pct(x.winTeams, x.teams),
     servers: [...x.servers].sort((a, b) => b[1] - a[1]).map(([name, games]) => ({ name, games })),
-    // 시즌 시작부터 모은 기록이라 기간은 첫 경기 대신 시즌 시작부터 적음
+    modes: MODES.map((mode) => ({ mode, games: x.modes.get(mode) ?? 0 })),
     // 시즌 시작 시각이 아니라 실제로 받은 첫 경기부터 적음. 점검이 늦게 끝나면 둘이 다름
     from: x.from,
     to: x.to,
@@ -237,15 +244,22 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       .map(([key, c]) => {
         // 분야마다 CHAR_MIN명이 안 되면 성적은 비움
         const field = (f) => Object.fromEntries(Object.keys(EXP).map((k) => [k, (c.exp[k] ?? 0) >= CHAR_MIN ? f(k) : null]));
-        const [code, k] = [...c.gc].sort((a, b) => b[1] - a[1])[0] ?? [];
+        // 분야의 평균 순위가 같은 실험체의 나머지 분야와 95% 범위를 넘게 다르면 1(좋음)이나 -1(나쁨)
+        const all = Object.keys(EXP).reduce((s, k) => ({ n: s.n + (c.exp[k] ?? 0), rk: s.rk + (c.rk[k] ?? 0), rk2: s.rk2 + (c.rk2[k] ?? 0) }), { n: 0, rk: 0, rk2: 0 });
+        const se2 = (n, rk, rk2) => Math.max(rk2 / n - (rk / n) ** 2, 0) / n;
+        const edge = field((k) => {
+          const rest = { n: all.n - c.exp[k], rk: all.rk - c.rk[k], rk2: all.rk2 - c.rk2[k] };
+          if (rest.n < CHAR_MIN) return 0;
+          const d = rest.rk / rest.n - c.rk[k] / c.exp[k];
+          return Math.abs(d) > 1.96 * Math.sqrt(se2(c.exp[k], c.rk[k], c.rk2[k]) + se2(rest.n, rest.rk, rest.rk2)) ? Math.sign(d) : 0;
+        });
         return {
           ...named(key),
           n: c.n,
           exp: Object.fromEntries(Object.keys(EXP).map((k) => [k, pct(c.exp[k] ?? 0, c.n)])),
           rank: field((k) => avg(c.rk[k], c.exp[k])),
           top3: field((k) => pct(c.t3[k], c.exp[k])),
-          gadget: pct(c.used, c.n),
-          topGadget: code ? { name: nm.skill(code), share: pct(k, c.n) } : null,
+          edge,
         };
       })
       .sort((a, b) => b.n - a.n),
@@ -253,11 +267,6 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       .filter(([, a]) => a.n >= TRIO_MIN)
       .map(([key, a]) => ({ key, members: key.split("+").map(named), n: a.n, win: pct(a.win, a.n), winCi: pctCi(a.win, a.n), top3: pct(a.t3, a.n), rank: avg(a.rank, a.n) }))
       .sort((a, b) => b.n - a.n),
-    // 오래 살아남을수록 쓸 기회가 많아 승률과 순위는 싣지 않고 쓰임새만 셈
-    gadgets: [...x.gadgets]
-      .map(([code, a]) => ({ code, name: nm.skill(code), n: a.n, share: pct(a.n, x.players), per: avg(a.uses, a.known) }))
-      .sort((a, b) => b.n - a.n),
-    noGadget: { n: x.noGadget, share: pct(x.noGadget, x.players) },
     equipped: x.equipped,
     equipGames: x.equipGames,
     armor: NEW_ARMOR.filter((code) => x.armor.has(code)).map((code) => {
@@ -274,23 +283,20 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
         code,
         name: nm.weather(code),
         games: v.games,
+        share: pct(v.games, x.games),
         players: v.players,
         drop: v.buff ? nm.state(v.buff) : null,
         dropShare: pct(v.drop, v.players),
-        top: winFirst([...v.chars]
-          .filter(([, a]) => a.n >= WEATHER_CHAR_MIN)
-          .map(([key, a]) => ({ ...named(key), ...out(a, v.players) }))
-          // 표본이 적어 범위가 넓은 줄이 뽑히지 않게 95% 범위의 아래 끝으로 고른 뒤, 보이는 승률 순으로 다시 세움
-          .sort((a, b) => fix1(b.win - b.winCi) - fix1(a.win - a.winCi) || b.n - a.n)),
       }))
       .sort((a, b) => b.games - a.games),
+    cobalt: cobalt(cb, named),
     change: b.players ? { games: b.games.size, from: b.from, to: b.to, avgNow: pct(wn, nn), avgThen: pct(wt, nt), up: pick(true), down: pick(false) } : null,
     tier: scored && {
       rows: scored.rows,
       thin: TIER_RULE.thin,
-      combos: scored.combos.map((c) => ({
+      combos: [...scored.combos].sort((a, c) => c.z - a.z).map((c, i, all) => ({
         ...named(`${c.char}-${c.weapon}`),
-        grade: c.grade,
+        grade: gradeAt(i, all.length),
         z: +c.z.toFixed(3),
         half: +c.half.toFixed(3),
         n: c.n,
@@ -301,6 +307,24 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
         place: +c.place.toFixed(2),
       })),
     },
+  };
+}
+
+/** 코발트 조합은 전체 승률 쪽으로 당긴 승률로 줄을 세우고 같은 비율로 등급을 나눔 */
+function cobalt(cb, named) {
+  const list = [...cb.combos].filter(([, a]) => a.n >= CHAR_MIN);
+  if (!list.length) return null;
+  const base = list.reduce((s, [, a]) => s + a.win, 0) / list.reduce((s, [, a]) => s + a.n, 0);
+  return {
+    games: cb.games,
+    teams: cb.teams,
+    from: cb.from,
+    to: cb.to,
+    base: fix1(base * 100),
+    combos: list
+      .map(([key, a]) => ({ ...named(key), n: a.n, pick: +((a.n / cb.teams) * 100).toFixed(2), win: pct(a.win, a.n), winCi: pctCi(a.win, a.n), score: (a.win + COBALT_PRIOR * base) / (a.n + COBALT_PRIOR) }))
+      .sort((a, c) => c.score - a.score)
+      .map(({ score, ...c }, i, all) => ({ ...c, grade: gradeAt(i, all.length) })),
   };
 }
 
@@ -324,7 +348,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (!id) throw new Error("사용: node preseason.mjs <프리 시즌 ID> [이름] [시작 시각, 예: 2026-11-12T12:00+09:00] [직전 정규 시즌 ID]");
   const text = existsSync(join(dir, "l10n-ko.txt")) ? readFileSync(join(dir, "l10n-ko.txt"), "utf8") : "";
   const ko = (prefix) => new Map([...text.matchAll(new RegExp(`^${prefix}/([^┃\\r\\n]+)┃([^\\r\\n]*)`, "gm"))].map((x) => [x[1], x[2].trim()]));
-  const [skill, state, weather, item] = ["Skill/Group/Name", "CharacterState/Group/Name", "Weather/Name", "Item/Name"].map(ko);
+  const [state, weather, item] = ["CharacterState/Group/Name", "Weather/Name", "Item/Name"].map(ko);
   const grades = existsSync(join(dir, "item-grades.json")) ? JSON.parse(readFileSync(join(dir, "item-grades.json"), "utf8")) : {};
   const tier = JSON.parse(readFileSync(join(outDir, "tier.json"), "utf8"));
   const chars = new Map(), weapons = new Map();
@@ -335,7 +359,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const nm = {
     char: (code) => chars.get(code) ?? { key: String(code), name: String(code) },
     weapon: (code) => weapons.get(code) ?? `무기 ${code}`,
-    skill: (code) => skill.get(String(Math.floor(code / 100) * 100)) ?? `가젯 ${code}`,
     state: (code) => state.get(String(Math.floor(code / 100) * 100)) ?? `버프 ${code}`,
     weather: (code) => weather.get(String(code)) ?? `날씨 ${code}`,
     item: (code) => [item.get(String(code)) ?? `아이템 ${code}`, grades[code] ?? null],

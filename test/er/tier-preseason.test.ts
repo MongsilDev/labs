@@ -9,7 +9,6 @@ type R = Record<string, unknown>;
 const nm = {
   char: (c: number) => ({ key: c === 6 ? "Nadine" : String(c), name: c === 6 ? "나딘" : String(c) }),
   weapon: (w: number) => (w === 7 ? "활" : `무기 ${w}`),
-  skill: (c: number) => (Math.floor(c / 100) * 100 === 8310700 ? "Vector 게이트" : `가젯 ${c}`),
   state: (c: number) => (Math.floor(c / 100) * 100 === 8500600 ? "루미의 고글" : `버프 ${c}`),
   weather: (c: number) => (c === 10004 ? "모래바람" : `날씨 ${c}`),
   item: (c: number) => [c === 201538 ? "제왕의 투구" : `아이템 ${c}`, c === 201999 ? "Epic" : "Legend"] as [string, string],
@@ -54,6 +53,9 @@ describe("프리 시즌 특집 집계", () => {
 
   it("랭크와 일반을 합쳐 싣고 코발트는 뺀다", () => {
     expect(out.games).toBe(2);
+    expect(out.modes).toEqual([{ mode: 3, games: 1 }, { mode: 2, games: 1 }]);
+    // 코발트 한 경기의 조합은 표본이 모자라 싣지 않음
+    expect(out.cobalt).toBeNull();
     expect(out.servers).toEqual([{ name: "Asia", games: 2 }]);
     expect(out.scan).toEqual({ ids: 10, found: 3 });
   });
@@ -73,15 +75,19 @@ describe("프리 시즌 특집 집계", () => {
     expect(exp.none).toMatchObject({ n: 1, rank: 8, win: 0 });
   });
 
-  it("가젯은 쓴 사람 비율과 판당 횟수만 싣는다", () => {
-    const res = derivePre(rows(1, 3, (slot) => ({ gadgets: slot === 0 ? '{"8310701":3}' : slot === 1 ? '{"8310701":1}' : slot === 2 ? "[8310701]" : "{}" })), season, nm)!;
-    expect(res.gadgets).toEqual([{ code: 8310701, name: "Vector 게이트", n: 3, share: 12.5, per: 2 }]);
-    expect(res.noGadget).toEqual({ n: 21, share: 87.5 });
+  it("코발트는 승패만 따로 세고 픽률을 팀 수로 나눈다", () => {
+    // 4인 두 팀 30경기. 1~4번 실험체 팀이 늘 이김
+    const game = (id: number) => rows(id, 6, (slot) => ({ char: slot + 1, weapon: 1, team: slot < 4 ? 1 : 2, rank: slot < 4 ? 1 : 2 })).slice(0, 8);
+    const c = derivePre([...rows(1, 3), ...Array.from({ length: 30 }, (_, i) => game(10 + i)).flat()], season, nm)!.cobalt!;
+    expect(c).toMatchObject({ games: 30, teams: 60, base: 50 });
+    expect(c.combos).toHaveLength(8);
+    expect(c.combos[0]).toMatchObject({ n: 30, pick: 50, win: 100, grade: "S" });
+    expect(c.combos[7]).toMatchObject({ win: 0, grade: "D" });
   });
 
   it("날씨와 지급품 이름을 찾는다", () => {
     expect(out.base).toBe(12.5);
-    expect(out.weather[0]).toMatchObject({ name: "모래바람", games: 2, drop: "루미의 고글", dropShare: 50 });
+    expect(out.weather[0]).toMatchObject({ name: "모래바람", games: 2, share: 100, drop: "루미의 고글", dropShare: 50 });
   });
 
   it("봇은 플레이어와 팀 지표, 티어에서 뺀다", () => {
@@ -97,7 +103,8 @@ describe("프리 시즌 특집 집계", () => {
       rows(game, 3, (slot) => ({ char: slot < 3 ? 1 : slot >= (size - 1) * 3 ? 2 : 3, weapon: 1 })).slice(0, size * 3);
     const res = derivePre([...Array.from({ length: 20 }, (_, i) => g(10 + i, 8)), ...Array.from({ length: 20 }, (_, i) => g(40 + i, 7))].flat(), season, nm)!;
     const [first, , last] = res.tier!.combos;
-    expect(first).toMatchObject({ char: 1, grade: "S", win: 100, top3: 100, place: 1, n: 120 });
+    // 등급은 순위 비율로 나눠 조합이 셋이면 첫째가 A
+    expect(first).toMatchObject({ char: 1, grade: "A", win: 100, top3: 100, place: 1, n: 120 });
     expect(last).toMatchObject({ char: 2, top3: 0 });
     expect(last.place).toBe(7.5);
     expect(res.tier!.thin).toBe(30);
@@ -109,7 +116,10 @@ describe("프리 시즌 특집 집계", () => {
   it("실험체 줄은 표본이 모자라면 싣지 않는다", () => {
     expect(derivePre(rows(1, 3), season, nm)!.expChars).toEqual([]);
     const many = derivePre([1, 2].flatMap((g) => rows(g, 3)), season, nm)!;
-    expect(many.expChars[0]).toMatchObject({ name: "나딘", weaponName: "활", n: 48 });
+    // 분야마다 30명이 안 되면 성적과 좋고 나쁨을 비움
+    expect(many.expChars[0]).toMatchObject({ name: "나딘", weaponName: "활", n: 48, edge: { Energy: null, Material: 0, Biotechnology: null } });
+    // 에너지 공학은 1~2위 팀, 재료 공학은 3~7위 팀
+    expect(derivePre([1, 2, 3, 4, 5].flatMap((g) => rows(g, 3)), season, nm)!.expChars[0]).toMatchObject({ n: 120, edge: { Energy: 1, Material: -1, Biotechnology: null } });
   });
 
   it("경기가 없으면 쓰지 않는다", () => {
