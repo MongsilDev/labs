@@ -518,13 +518,14 @@ async function collectAccount(s, acc, since, cuts, stop, measure) {
     const seen = [];
     for (const y of list) {
       const t = kst(y.startDtm);
+      seen.push({ nickname: y.nickname, t });
       if (t < since || (!BACKFILL && t <= newest)) {
+        // 멈춘 판도 변경 감지에는 넣어야 지난 회차와 이번 회차 사이에 바뀐 이름을 놓치지 않음
         done = true;
         break;
       }
       top = Math.max(top, t);
       added += insertGame(s, y, cuts, player);
-      seen.push({ nickname: y.nickname, t });
     }
     const r = renameSteps(seen, last);
     last = r.last;
