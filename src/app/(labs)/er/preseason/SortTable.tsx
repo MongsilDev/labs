@@ -2,9 +2,9 @@
 
 import { useState, type ReactNode } from "react";
 
-export type Col = { label: string; cls?: string; tip?: string; first?: "asc" | "desc" };
+export type Col = { label: ReactNode; cls?: string; tip?: string; first?: "asc" | "desc" };
 export type Row = { id: string; vals: (number | null)[]; cells: ReactNode; dim?: boolean; no?: number };
-export type Group = { label: string; span: number };
+export type Group = { label: string; span: number; cls?: string };
 
 /**
  * 숫자 열 헤더를 누르면 그 열로 정렬하고, 다시 누르면 방향을 바꾸는 표. first가 없는 열은 정렬하지 않음.
@@ -27,20 +27,20 @@ export default function SortTable({ cols, rows, show = 20, numbered, groups }: {
   return (
     <>
       <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
-        <table className="tbl">
+        <table className="tbl snug">
           <thead>
             {groups && (
               <tr>
-                {numbered && <th className="pin-n" />}
+                {numbered && <th className="max-sm:hidden" />}
                 {groups.map((g, i) => (
-                  <th key={i} colSpan={g.span} scope="colgroup" className={g.label ? "grp" : i === 0 ? "pin-l" : undefined}>
+                  <th key={i} colSpan={g.span} scope="colgroup" className={`${g.label ? "grp" : ""} ${g.cls ?? ""}`}>
                     {g.label}
                   </th>
                 ))}
               </tr>
             )}
             <tr>
-              {numbered && <th className="pin-n">#</th>}
+              {numbered && <th className="max-sm:hidden">#</th>}
               {cols.map((c, i) => (
                 <th key={i} className={c.cls} data-tip={c.tip} aria-sort={order?.[0] === i ? (order[1] === "asc" ? "ascending" : "descending") : undefined}>
                   {c.first ? (
@@ -57,7 +57,7 @@ export default function SortTable({ cols, rows, show = 20, numbered, groups }: {
           <tbody>
             {shown.map((r, i) => (
               <tr key={r.id} className={r.dim ? "opacity-50" : undefined}>
-                {numbered && <td className="pin-n text-ink-3">{r.no ?? i + 1}</td>}
+                {numbered && <td className="text-ink-3 max-sm:hidden">{r.no ?? i + 1}</td>}
                 {r.cells}
               </tr>
             ))}
