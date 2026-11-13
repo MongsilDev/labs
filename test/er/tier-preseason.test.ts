@@ -52,7 +52,7 @@ describe("프리 시즌 특집 집계", () => {
 
   it("가젯은 쓴 사람 비율과 판당 횟수만 싣는다", () => {
     const res = derivePre(rows(1, 3, (slot) => ({ gadgets: slot === 0 ? '{"8310701":3}' : slot === 1 ? '{"8310701":1}' : slot === 2 ? "[8310701]" : "{}" })), season, nm)!;
-    expect(res.gadgets).toEqual([{ code: 8310701, name: "Vector 게이트", n: 3, share: 12.5, per: 2, multi: 50 }]);
+    expect(res.gadgets).toEqual([{ code: 8310701, name: "Vector 게이트", n: 3, share: 12.5, per: 2 }]);
     expect(res.noGadget).toEqual({ n: 21, share: 87.5 });
   });
 

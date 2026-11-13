@@ -103,12 +103,11 @@ export function derivePre(rows, season, nm, scan = null) {
     const used = Array.isArray(raw) ? raw.map((code) => [code, null]) : Object.entries(raw).map(([code, k]) => [Number(code), k]);
     if (!used.length) m.noGadget++;
     for (const [code, k] of used) {
-      const x = m.gadgets.get(code) ?? { n: 0, known: 0, uses: 0, multi: 0 };
+      const x = m.gadgets.get(code) ?? { n: 0, known: 0, uses: 0 };
       x.n++;
       if (k != null) {
         x.known++;
         x.uses += k;
-        if (k > 1) x.multi++;
       }
       m.gadgets.set(code, x);
     }
@@ -157,7 +156,7 @@ export function derivePre(rows, season, nm, scan = null) {
       .sort((a, b) => b.n - a.n),
     // 오래 살아남을수록 쓸 기회가 많아 승률과 순위는 싣지 않고 쓰임새만 셈
     gadgets: [...x.gadgets]
-      .map(([code, a]) => ({ code, name: nm.skill(code), n: a.n, share: pct(a.n, x.players), per: avg(a.uses, a.known), multi: a.known ? pct(a.multi, a.known) : null }))
+      .map(([code, a]) => ({ code, name: nm.skill(code), n: a.n, share: pct(a.n, x.players), per: avg(a.uses, a.known) }))
       .sort((a, b) => b.n - a.n),
     noGadget: { n: x.noGadget, share: pct(x.noGadget, x.players) },
     weather: [...x.weathers]

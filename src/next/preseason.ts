@@ -17,7 +17,7 @@ export type PreData = {
   to: number;
   exp: { teams: number; rows: (PreStat & { type: string; name: string; step1: number | null; step2: number | null })[]; none: PreStat };
   expChars: (PreChar & { n: number; exp: Record<string, number> })[];
-  gadgets: { code: number; name: string; n: number; share: number; per: number | null; multi: number | null }[];
+  gadgets: { code: number; name: string; n: number; share: number; per: number | null }[];
   noGadget: { n: number; share: number };
   weather: { code: number; name: string; games: number; players: number; drop: string | null; dropShare: number; top: (PreChar & PreStat)[] }[];
   tier: { rows: number; thin: number; combos: PreTier[] } | null;

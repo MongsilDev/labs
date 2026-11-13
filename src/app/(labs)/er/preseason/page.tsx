@@ -84,7 +84,7 @@ export default async function PreseasonPage() {
                   <td className="text-ink-3">{i + 1}</td>
                   <td className="l"><Who c={c} /></td>
                   <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
-                  <td className="font-bold" data-tip={`90% 범위 ±${c.half.toFixed(2)}`}>{signed(c.z)}</td>
+                  <td className="font-bold">{signed(c.z)}</td>
                   <td><small className="mr-1.5 text-ink-3">{n(c.n)}판</small>{c.pick.toFixed(2)}%</td>
                   <td>{c.win.toFixed(1)}%</td>
                   <td>{c.top3.toFixed(1)}%</td>
@@ -137,7 +137,6 @@ export default async function PreseasonPage() {
                 <th className="l">쓴 가젯</th>
                 <th>쓴 사람</th>
                 <th>판당 횟수</th>
-                <th>2회 이상</th>
               </tr>
             </thead>
             <tbody>
@@ -146,13 +145,11 @@ export default async function PreseasonPage() {
                   <td className="l font-semibold">{g.name}</td>
                   <td>{g.share.toFixed(1)}%</td>
                   <td>{g.per?.toFixed(2) ?? "-"}</td>
-                  <td>{g.multi == null ? "-" : `${g.multi.toFixed(1)}%`}</td>
                 </tr>
               ))}
               <tr className="text-ink-3">
                 <td className="l">쓰지 않음</td>
                 <td>{data.noGadget.share.toFixed(1)}%</td>
-                <td />
                 <td />
               </tr>
             </tbody>
