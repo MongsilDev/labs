@@ -598,7 +598,7 @@ async function collectPre(s) {
 /** 단계 기록, 가젯 횟수, 최종 장비, 크레딧을 저장하기 전에 받은 경기를 회차마다 PRE_REFILL개씩 다시 받아 채움 */
 async function refillPre(s) {
   const old = pre.prepare(`SELECT DISTINCT game FROM rows WHERE season = ? AND (quest IS NULL OR equip IS NULL) ORDER BY game LIMIT ?`).all(s.id, PRE_REFILL).map((r) => r.game);
-  const gone = pre.prepare(`UPDATE rows SET quest = '[]', equip = '[]', robot = 0 WHERE season = ? AND game = ?`);
+  const gone = pre.prepare(`UPDATE rows SET quest = coalesce(quest, '[]'), equip = coalesce(equip, '[]'), robot = coalesce(robot, 0) WHERE season = ? AND game = ?`);
   let j = 0, refilled = 0;
   await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
     while (!abort && j < old.length) {
