@@ -180,7 +180,9 @@ function watchBot(since, everyMs) {
 
 async function season() {
   const list = (await get("/v2/data/Season"))?.data ?? [];
-  const cur = list.find((s) => s.isCurrent === 1);
+  // 시작 시각에 바로 넘어가려고 기간으로 먼저 찾음. isCurrent는 API가 늦게 바꿀 수 있음
+  const now = Date.now();
+  const cur = list.find((x) => x.seasonStart && x.seasonEnd && kst(`${x.seasonStart}+0900`) <= now && now < kst(`${x.seasonEnd}+0900`)) ?? list.find((x) => x.isCurrent === 1);
   if (!cur) return null;
   const n = Number(cur.seasonName.replace(/\D/g, "")) - SEASON_NAME_OFFSET;
   const prev = list.filter((x) => x.seasonName.startsWith("Season") && x.seasonID < cur.seasonID).at(-1);
