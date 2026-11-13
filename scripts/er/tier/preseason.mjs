@@ -14,6 +14,7 @@ export const TIER_RULE = { ...RULE, few: undefined, weights: { gain: 0, place: 0
 export const CHAR_MIN = 30;
 export const WEATHER_CHAR_MIN = 40;
 const WEATHER_TOP = 5;
+const CHANGE_TOP = 10;
 export const EXP = { Energy: "에너지 공학", Material: "재료 공학", Biotechnology: "생명 공학" };
 // questStepClear의 experimentGroupId 앞자리. 실험 결과 분야와 맞춰 본 값이고 끝자리는 단계
 const QUEST = { 1: "Material", 2: "Energy", 3: "Biotechnology" };
@@ -37,13 +38,30 @@ function fresh() {
   return {
     games: 0, players: 0, bots: 0, teams: 0, winTeams: 0, from: Infinity, to: 0, servers: new Map(),
     exp: new Map(Object.keys(EXP).map((k) => [k, acc()])), none: acc(),
-    chars: new Map(), gadgets: new Map(), noGadget: 0, weathers: new Map(), equipped: 0, armor: new Map(),
+    chars: new Map(), combos: new Map(), gadgets: new Map(), noGadget: 0, weathers: new Map(), equipped: 0, equipGames: 0, equipLast: null, armor: new Map(),
     quest: new Map(Object.keys(EXP).map((k) => [k, { n1: 0, t1: 0, n2: 0, c2: 0 }])),
   };
 }
 
-/** rows는 preseason.sqlite rows 행을 game, slot 순서로. nm은 이름 찾기 함수 묶음, scan은 훑은 번호 수와 찾은 경기 수 */
-export function derivePre(rows, season, nm, scan = null) {
+/** 직전 정규 시즌 경기에서 조합별 판 수와 1위 수. 봇과 MODES 밖 경기는 뺌 */
+function baseline(rows) {
+  const b = { games: new Set(), from: Infinity, to: 0, players: 0, chars: new Map() };
+  for (const r of rows) {
+    if (!MODES.includes(r.mode) || r.bot) continue;
+    b.games.add(r.game);
+    b.from = Math.min(b.from, r.t);
+    b.to = Math.max(b.to, r.t);
+    b.players++;
+    const key = `${r.char}-${r.weapon}`;
+    const a = b.chars.get(key) ?? acc();
+    add(a, r.rank);
+    b.chars.set(key, a);
+  }
+  return b;
+}
+
+/** rows는 preseason.sqlite rows 행을 game, slot 순서로. nm은 이름 찾기 함수 묶음, scan은 훑은 번호 수와 찾은 경기 수, baseRows는 직전 정규 시즌 비교 경기 */
+export function derivePre(rows, season, nm, scan = null, baseRows = []) {
   const x = fresh();
   const tier = [];
   let game = null, m = null, w = null, teams = null, list = [];
@@ -116,7 +134,11 @@ export function derivePre(rows, season, nm, scan = null) {
     }
     // 최종 장비는 오래 살수록 완성돼 있어, 신규 방어구는 같은 부위에 같은 등급을 쓴 사람과 견줌
     const equip = r.equip ? JSON.parse(r.equip) : [];
-    if (equip.length) m.equipped++;
+    if (equip.length) {
+      m.equipped++;
+      if (m.equipLast !== r.game) m.equipGames++;
+      m.equipLast = r.game;
+    }
     for (const code of equip.slice(1)) {
       if (!code) continue;
       const g = `${Math.floor(code / 1000)}-${nm.item(code)[1]}`;
@@ -135,6 +157,9 @@ export function derivePre(rows, season, nm, scan = null) {
     const wc = w.chars.get(key) ?? acc();
     add(wc, rank);
     w.chars.set(key, wc);
+    const cc = m.combos.get(key) ?? acc();
+    add(cc, rank);
+    m.combos.set(key, cc);
   }
   flush();
   const named = (key) => {
@@ -144,6 +169,20 @@ export function derivePre(rows, season, nm, scan = null) {
   };
   if (!x.games) return null;
   const scored = scoreRows(tier, TIER_RULE);
+  const b = baseline(baseRows);
+  // 두 기간 모두 표본 thin 이상이고 승률 차이가 95% 범위를 넘는 조합만, 범위를 뺀 차이가 큰 순서로 고름
+  const moved = [...x.combos]
+    .filter(([key, a]) => a.n >= TIER_RULE.thin && (b.chars.get(key)?.n ?? 0) >= TIER_RULE.thin)
+    .map(([key, a]) => {
+      const p = b.chars.get(key);
+      const now = a.win / a.n, then = p.win / p.n;
+      const ci = 1.96 * Math.sqrt((now * (1 - now)) / a.n + (then * (1 - then)) / p.n) * 100;
+      const d = (now - then) * 100;
+      return { ...named(key), n: a.n, win: pct(a.win, a.n), pick: +((a.n / x.players) * 100).toFixed(2), d: fix1(d), dCi: fix1(ci), dPick: +((a.n / x.players - p.n / b.players) * 100).toFixed(2), edge: Math.abs(d) - ci };
+    })
+    .filter((c) => c.edge > 0)
+    .sort((a, c) => c.edge - a.edge);
+  const pick = (up) => moved.filter((c) => (c.d > 0) === up).slice(0, CHANGE_TOP).map(({ edge, ...c }) => c);
   return {
     updatedAt: Date.now(),
     season: { id: season.id, name: season.name },
@@ -175,6 +214,7 @@ export function derivePre(rows, season, nm, scan = null) {
       .sort((a, b) => b.n - a.n),
     noGadget: { n: x.noGadget, share: pct(x.noGadget, x.players) },
     equipped: x.equipped,
+    equipGames: x.equipGames,
     armor: NEW_ARMOR.filter((code) => x.armor.has(code)).map((code) => {
       const [name, grade] = nm.item(code);
       const a = x.armor.get(code);
@@ -201,6 +241,7 @@ export function derivePre(rows, season, nm, scan = null) {
           .sort((a, b) => b.win - a.win || b.n - a.n),
       }))
       .sort((a, b) => b.games - a.games),
+    change: b.players ? { games: b.games.size, from: b.from, to: b.to, up: pick(true), down: pick(false) } : null,
     tier: scored && {
       rows: scored.rows,
       thin: TIER_RULE.thin,
@@ -257,6 +298,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   };
   const db = new DatabaseSync(join(dir, "preseason.sqlite"), { readOnly: true });
   const scan = db.prepare("SELECT ids, found FROM scan WHERE season = ?").get(id) ?? null;
-  const res = derivePre(db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(id), { id, name: process.argv[3] ?? `시즌 ${id}`, start: process.argv[4] ? Date.parse(process.argv[4]) : undefined }, nm, scan);
+  const prev = db.prepare("SELECT MAX(season) AS s FROM rows WHERE season < ?").get(id)?.s;
+  const base = prev == null ? [] : db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(prev);
+  const res = derivePre(db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(id), { id, name: process.argv[3] ?? `시즌 ${id}`, start: process.argv[4] ? Date.parse(process.argv[4]) : undefined }, nm, scan, base);
   console.log(writePre(join(outDir, ".."), res) ? `${res.games}경기, 티어 ${res.tier?.combos.length ?? 0}개 조합` : "해당 경기 없음");
 }

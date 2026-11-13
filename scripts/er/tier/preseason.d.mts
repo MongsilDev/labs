@@ -8,5 +8,5 @@ type Names = {
   weather: (code: number) => string;
   item: (code: number) => [string, string | null];
 };
-export function derivePre(rows: Iterable<Record<string, unknown>>, season: { id: number; name: string; start?: number }, nm: Names, scan?: PreData["scan"]): PreData | null;
+export function derivePre(rows: Iterable<Record<string, unknown>>, season: { id: number; name: string; start?: number }, nm: Names, scan?: PreData["scan"], baseRows?: Iterable<Record<string, unknown>>): PreData | null;
 export function writePre(root: string, data: PreData | null): boolean;

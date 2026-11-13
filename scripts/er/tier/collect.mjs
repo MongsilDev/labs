@@ -758,7 +758,8 @@ function putPreOne(s, game, i, y) {
 function publishPre(s, nm) {
   try {
     const scan = pre.prepare(`SELECT ids, found FROM scan WHERE season = ?`).get(s.id);
-    const out = derivePre(pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.id), s, nm, scan);
+    const base = pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.prev);
+    const out = derivePre(pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.id), s, nm, scan, base);
     if (out && writePre(join(OUT, ".."), out)) log(`프리 시즌 특집 집계 ${out.games}경기, 티어 ${out.tier?.combos.length ?? 0}개 조합`);
   } catch (e) {
     log(`프리 시즌 특집 집계 실패: ${e.message}`);
@@ -1171,6 +1172,33 @@ async function once(measure) {
 if (flag("rebuild")) {
   rebuild();
   process.exit(0);
+}
+
+// 프리 시즌 화면의 비교 기준으로 직전 정규 시즌 마지막 이틀의 경기를 한 번 모음. 정규 회차 20분 전에는 새 묶음을 시작하지 않음
+if (flag("pre-base")) {
+  const s = await season();
+  if (!s || s.regular) throw new Error("프리 시즌이 아니라 실행하지 않습니다.");
+  openPre();
+  const base = { id: s.prev, prev: s.prev, start: s.start - 2 * 86_400_000, end: s.start };
+  const unwatch = watchBot(Date.now(), 30_000);
+  const slot = 3 * 3600_000;
+  const offset = (2 * 60 + 25) * 60_000 - 9 * 3600_000;
+  try {
+    for (;;) {
+      const next = Math.ceil((Date.now() - offset) / slot) * slot + offset;
+      if (next - Date.now() < 20 * 60_000) {
+        log("다음 정규 회차가 가까워 멈춥니다. 회차가 끝난 뒤 다시 실행하면 이어서 받습니다.");
+        break;
+      }
+      const r = await scanPre(base);
+      log(`직전 시즌과 비교할 경기 번호 ${r.ids}개를 조회해 경기 ${r.games}개를 저장했습니다. 요청 ${stats.sent}, 429 응답 ${stats.limited}, 실패 ${stats.failed}`);
+      if (abort || r.down || !r.ids) break;
+    }
+  } finally {
+    unwatch();
+  }
+  if (!abort) publishPre(s, await names());
+  process.exit(abort ? 3 : 0);
 }
 
 const every = opt("every", 0);

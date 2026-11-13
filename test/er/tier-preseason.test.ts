@@ -27,11 +27,25 @@ function rows(game: number, mode: number, over: (slot: number) => R = () => ({})
 }
 
 describe("프리 시즌 특집 집계", () => {
+  it("직전 시즌보다 승률이 확실히 오르거나 내린 조합만 싣는다", () => {
+    // 지금은 6번 실험체가 1위 팀(3명)만 쓰고 나머지는 9번. 직전 시즌은 6번이 8위만, 9번은 고르게
+    const games = (from: number, k: number, slotChar: (slot: number) => number) =>
+      Array.from({ length: k }, (_, i) => rows(from + i, 3, (slot) => ({ char: slotChar(slot), weapon: 7 }))).flat();
+    const now = games(100, 40, (slot) => (slot < 3 ? 6 : 9));
+    const then = games(1, 40, (slot) => (slot >= 21 ? 6 : 9)).map((r) => ({ ...r, season: 41 }));
+    const c = derivePre(now, season, nm, null, then)!.change!;
+    expect(c.games).toBe(40);
+    expect(c.up.map((x) => [x.name, x.win, x.d])).toEqual([["나딘", 100, 100]]);
+    expect(c.down.map((x) => [x.name, x.win, x.d])).toEqual([["9", 0, -14.3]]);
+    expect(derivePre(now, season, nm)!.change).toBeNull();
+  });
+
   it("신규 방어구는 같은 부위, 같은 등급을 낀 사람과 견준다", () => {
     // 1위 팀만 제왕의 투구, 2~4위 팀은 다른 전설 머리, 나머지는 영웅 머리. 예전 행(equip 없음)은 세지 않음
     const head = (slot: number) => (slot < 3 ? 201538 : slot < 12 ? 201501 : 201999);
     const g = derivePre([...rows(1, 3, (slot) => ({ equip: JSON.stringify([101101, 0, head(slot), 0, 0, 0]) })), ...rows(2, 3)], season, nm)!;
     expect(g.equipped).toBe(24);
+    expect(g.equipGames).toBe(1);
     expect(g.armor).toEqual([{ code: 201538, name: "제왕의 투구", grade: "전설", n: 3, share: 25, rank: 1, win: 100, winCi: 0, restWin: 0, restRank: 3 }]);
   });
 

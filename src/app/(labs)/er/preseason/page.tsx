@@ -2,7 +2,7 @@ import Image from "next/image";
 import { avatarUrl, currentUser } from "@/er/server/auth";
 import Live from "@/next/Live";
 import MoreRows from "./MoreRows";
-import { EXP_NAME, EXP_ORDER, getPreseason, type PreChar, type PreStat } from "@/next/preseason";
+import { EXP_NAME, EXP_ORDER, getPreseason, type PreChar, type PreMove, type PreStat } from "@/next/preseason";
 import { itemIcon } from "@/er/lib/tier";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +34,36 @@ function Stats({ s, base }: { s: PreStat; base: number }) {
       <td>{s.rank?.toFixed(2) ?? "-"}</td>
       <td className="font-bold" style={tint(s, base)} data-tip={`${n(s.n)}명, 평균 승률 ${base}%, 95% 범위 ±${s.winCi}`}>{s.win.toFixed(1)}%</td>
     </>
+  );
+}
+
+function Moves({ head, list }: { head: string; list: PreMove[] }) {
+  const pp = (v: number, k: number) => `${v > 0 ? "+" : ""}${v.toFixed(k)}%p`;
+  return (
+    <table className="tbl">
+      <thead>
+        <tr>
+          <th className="l">{head}</th>
+          <th>승률</th>
+          <th>픽률</th>
+        </tr>
+      </thead>
+      <tbody>
+        {list.map((c) => (
+          <tr key={`${c.char}-${c.weapon}`}>
+            <td className="l"><Who c={c} /></td>
+            <td data-tip={`${n(c.n)}명, 95% 범위 ±${c.dCi}%p`}>
+              <span className="font-bold">{c.win.toFixed(1)}%</span>
+              <small className="block" style={{ color: `var(${c.d > 0 ? "--up" : "--down"})` }}>{pp(c.d, 1)}</small>
+            </td>
+            <td>
+              {c.pick.toFixed(2)}%
+              <small className="block text-ink-3">{pp(c.dPick, 2)}</small>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -103,6 +133,19 @@ export default async function PreseasonPage() {
         </section>
       )}
 
+      {data.change && (data.change.up.length || data.change.down.length) ? (
+        <section className="sec mt-10 min-w-0">
+          <h2 className="sec-h">
+            시즌 {Number(data.season.name.replace(/\D/g, "")) - 1} 대비
+            <small className="num">{day.format(data.change.from)}~{day.format(data.change.to)} {n(data.change.games)}경기</small>
+          </h2>
+          <div className="grid gap-10 lg:grid-cols-2">
+            <Moves head="승률이 오른 실험체" list={data.change.up} />
+            <Moves head="승률이 내린 실험체" list={data.change.down} />
+          </div>
+        </section>
+      ) : null}
+
       <div className="mt-10 grid gap-10 lg:grid-cols-2">
         <section className="sec min-w-0">
           <h2 className="sec-h">실험 과제<small className="num">{n(data.exp.teams)}팀</small></h2>
@@ -167,7 +210,7 @@ export default async function PreseasonPage() {
       {data.armor?.length ? (
         <div className="mt-10 grid gap-10 lg:grid-cols-2">
           <section className="sec min-w-0">
-            <h2 className="sec-h">신규 방어구<small className="num">{n(data.equipped ?? 0)}명</small></h2>
+            <h2 className="sec-h">신규 방어구<small className="num">{n(data.equipGames ?? 0)}경기</small></h2>
             <table className="tbl">
               <thead>
                 <tr>

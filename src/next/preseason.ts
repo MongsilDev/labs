@@ -21,10 +21,15 @@ export type PreData = {
   noGadget: { n: number; share: number };
   // 최종 장비를 저장하기 전에 쓴 파일에는 없음
   equipped?: number;
+  equipGames?: number;
+  // 직전 정규 시즌 마지막 이틀과 견준 승률 변화. 비교 경기를 모으기 전에는 null
+  change?: { games: number; from: number; to: number; up: PreMove[]; down: PreMove[] } | null;
   armor?: (PreStat & { code: number; name: string; grade: string; restWin: number; restRank: number | null })[];
   weather: { code: number; name: string; games: number; players: number; drop: string | null; dropShare: number; top: (PreChar & PreStat)[] }[];
   tier: { rows: number; thin: number; combos: PreTier[] } | null;
 };
+
+export type PreMove = PreChar & { n: number; win: number; pick: number; d: number; dCi: number; dPick: number };
 
 // 수집기의 scripts/er/tier/preseason.mjs가 프리 시즌 회차마다 쓰는 파일
 export async function getPreseason(): Promise<PreData | null> {
