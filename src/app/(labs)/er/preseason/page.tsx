@@ -46,8 +46,8 @@ export default async function PreseasonPage() {
   if (!data) return <Live user={user}><h1 className="text-[26px] font-black">프리 시즌 신규 요소</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
   const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
   const fmt = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "numeric" });
-  // Intl은 정오를 「오후 12시」, 자정을 「오전 12시」로 적음
-  const hour = (t: number) => fmt.format(t).replace("오후 12시", "낮 12시").replace("오전 12시", "밤 12시");
+  // Intl은 정오를 「오후 12시」로 적음
+  const hour = (t: number) => fmt.format(t).replace("오후 12시", "낮 12시");
   const span = day.format(data.from) === day.format(data.to)
     ? `${day.format(data.from)} ${hour(data.from)}~${hour(data.to).replace(/^(오전|오후) /, (m) => (hour(data.from).startsWith(m) ? "" : m))}`
     : `${day.format(data.from)} ${hour(data.from)}~${day.format(data.to)} ${hour(data.to)}`;
