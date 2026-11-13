@@ -203,7 +203,8 @@ async function fetchIds(ids) {
       while (k < ids.length) {
         const id = ids[k++];
         const r = await get(`/v1/games/${id}`);
-        if (r === undefined) missed.push(id);
+        // 본문 code가 200도 404도 아닌 응답은 일시 오류로 보고 다시 받음
+        if (r === undefined || (r && r.body?.code !== 200)) missed.push(id);
         else if (r) {
           const g = shape(id, r);
           if (g) done.push(g);
@@ -230,17 +231,22 @@ function roundDone(start) {
   }
 }
 
-/** 회차가 가까우면 회차가 끝날 때까지 기다리고 true. 한 시간이 지나도 끝난 기록이 없으면 이어 감 */
+/** 회차가 가깝거나 진행 중이면 회차가 끝날 때까지 기다리고 true. 회차 시작 뒤 한 시간이 지나도 끝난 기록이 없으면 이어 감 */
 async function waitRound() {
   const now = Date.now();
-  const next = nextRound(now);
-  if (next - now > QUIET_MS) return false;
-  log(`${clock(next)} 3시간 수집 회차 전이라 쉽니다.`);
-  await sleep(next - now + 60_000);
-  while (Date.now() < next + 3600_000 && !roundDone(next)) await sleep(30_000);
+  let round = nextRound(now);
+  // 이미 시작한 회차가 아직 끝나지 않았으면 그 회차를 기다림
+  if (round - ROUND_MS <= now && now < round - ROUND_MS + 3600_000 && !roundDone(round - ROUND_MS)) round -= ROUND_MS;
+  else if (round - now > QUIET_MS) return false;
+  log(`${clock(round)} 3시간 수집 회차 때문에 쉽니다.`);
+  if (round > now) await sleep(round - now + 60_000);
+  while (Date.now() < round + 3600_000 && !roundDone(round)) await sleep(30_000);
   log("회차가 끝나 경기를 이어 받습니다.");
   return true;
 }
+
+/** 다음 회차의 쉬는 시간에 걸리지 않을 만큼만 잠 */
+const nap = (ms) => sleep(Math.max(0, Math.min(ms, nextRound(Date.now()) - QUIET_MS - Date.now())));
 
 let lastReport = 0;
 let lastSeason = null;
@@ -259,19 +265,25 @@ function report(cursor, hi, force = false) {
   lastReport = now;
 }
 
-/** 받지 못한 번호를 한 번 더 받음. MISS_MAX회 실패한 번호는 건너뜀 */
+/** 받지 못한 번호를 CHUNK개씩 한 번 더 받음. MISS_MAX회 실패한 번호는 건너뜀 */
 async function retryMisses() {
   const ids = db.prepare(`SELECT id FROM miss WHERE n < ? ORDER BY id`).all(MISS_MAX).map((r) => r.id);
   if (!ids.length) return;
-  const still = new Set(await fetchIds(ids));
-  db.exec("BEGIN");
-  for (const id of ids) {
-    if (still.has(id)) putMiss.run(id);
-    else db.prepare(`DELETE FROM miss WHERE id = ?`).run(id);
+  let fixed = 0;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    if (await waitRound()) return;
+    const part = ids.slice(i, i + CHUNK);
+    const still = new Set(await fetchIds(part));
+    db.exec("BEGIN");
+    for (const id of part) {
+      if (still.has(id)) putMiss.run(id);
+      else db.prepare(`DELETE FROM miss WHERE id = ?`).run(id);
+    }
+    db.exec("COMMIT");
+    fixed += part.length - still.size;
   }
-  db.exec("COMMIT");
   const gave = db.prepare(`SELECT count(*) AS n FROM miss WHERE n >= ?`).get(MISS_MAX).n;
-  log(`받지 못한 번호 ${ids.length}개를 다시 받아 ${ids.length - still.size}개를 처리했습니다.${gave ? ` ${MISS_MAX}회 실패해 건너뛴 번호는 모두 ${gave}개입니다.` : ""}`);
+  log(`받지 못한 번호 ${ids.length}개를 다시 받아 ${fixed}개를 처리했습니다.${gave ? ` ${MISS_MAX}회 실패해 건너뛴 번호는 모두 ${gave}개입니다.` : ""}`);
 }
 
 let cursor = getState("cursor") ?? opt("from", NaN) - 1;
@@ -280,13 +292,25 @@ log(`경기 보관을 시작합니다. 번호 ${cursor + 1}부터 초당 ${pace.
 for (;;) {
   await waitRound();
   await loadSeasons();
+  // 시즌 목록 없이 저장하면 일반 경기가 시즌 0으로 남음
+  if (!seasons.length) {
+    await nap(60_000);
+    continue;
+  }
   const from = cursor;
+  let down = false;
   const hi = await lastBefore(cursor, Date.now() - LAG_MS);
   report(cursor, hi, true);
   while (cursor < hi) {
     if (await waitRound()) break;
     const end = Math.min(cursor + CHUNK, hi);
     const missed = await fetchIds(Array.from({ length: end - cursor }, (_, i) => cursor + 1 + i));
+    // 절반 넘게 받지 못했으면 API 장애로 보고 커서를 올리지 않고 나중에 다시 받음
+    if (missed.length >= CHUNK / 2) {
+      log(`번호 ${cursor + 1}~${end} 중 ${missed.length}개를 받지 못해 5분 뒤 다시 받습니다.`);
+      down = true;
+      break;
+    }
     db.exec("BEGIN");
     for (const id of missed) putMiss.run(id);
     setState.run("cursor", end);
@@ -297,10 +321,14 @@ for (;;) {
     if (s !== null) lastSeason = s;
     report(cursor, hi);
   }
+  if (down) {
+    await nap(5 * 60_000);
+    continue;
+  }
   await retryMisses();
   report(cursor, hi, true);
   if (ONCE) break;
   // 최근 번호까지 따라잡았으면 새 경기가 쌓일 때까지 쉼
-  if (cursor - from < CHUNK) await sleep(IDLE_MS);
+  if (cursor - from < CHUNK) await nap(IDLE_MS);
 }
 db.close();
