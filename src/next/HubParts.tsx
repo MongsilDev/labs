@@ -10,7 +10,7 @@ export function TierHead({ h, more = true }: { h: Hub; more?: boolean }) {
   return (
     <h2 className="sec-h">
       <Link href="/er/tier">실험체 티어</Link>
-      {h.view && <small className="num">{h.view.label}, {n(h.view.rows)}판</small>}
+      {h.view && <small className="num">{h.view.label}, {n(h.view.games)}경기</small>}
       {more && <Link className="more" href="/er/tier">전체 {h.combos.length}개</Link>}
     </h2>
   );

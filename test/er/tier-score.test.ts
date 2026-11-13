@@ -30,8 +30,8 @@ describe("실험체 티어 산식", () => {
     expect(s.raw).toBeGreaterThan(90);
     expect(s.score).toBeLessThan(s.raw / 3);
     expect(r.combos[0].key).toBe("1:1");
-    // 픽률은 참가자 비율 × 24로 추정한 경기당 등장률
-    expect(s.pick).toBeCloseTo((3 / 803) * 24);
+    // 픽률은 등장 수 / 경기 수. 행마다 경기 번호가 달라 경기 803개
+    expect(s.pick).toBeCloseTo(3 / 803);
   });
 
   it("조합 사이 차이가 잡음보다 작으면 k는 상한", () => {

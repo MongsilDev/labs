@@ -288,7 +288,7 @@ export default function TierBoard(p: Props) {
             {p.server} 상위 1,000명이 참가한 경기, {view.season && `${view.season}, `}
             {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}
             {view.patches && `${view.patches[0]}~${view.patches.at(-1)} 패치, `}
-            {int(view.rows)}판, <span className="whitespace-nowrap">{view.season ? `${dayKo(view.to)} 경기까지` : `${timeKo(p.updatedAt)} 갱신`}</span>
+            {int(view.games)}경기, <span className="whitespace-nowrap">{view.season ? `${dayKo(view.to)} 경기까지` : `${timeKo(p.updatedAt)} 갱신`}</span>
           </p>
         </div>
       </div>
