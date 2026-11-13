@@ -136,6 +136,8 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
   const step2 = exp.some((r) => r.step2 != null);
   const tier = data.tier?.combos ?? [];
   const maxPick = Math.max(...(cobalt?.combos ?? tier).map((c) => c.pick), 0.01);
+  // 견줄 직전 시즌 경기를 다 받기 전에는 비교 표가 없음
+  const moves = !!data.change && data.change.up.length + data.change.down.length > 0;
   const modes = (data.modes ?? []).filter((m) => m.games).sort((a, b) => b.games - a.games).map((m) => `${MODE_NAME[m.mode] ?? m.mode} ${n(m.games)}경기`);
   return (
     <Live user={user}>
@@ -219,7 +221,7 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
             </>
           )}
 
-          <div className="mt-10 grid items-start gap-10 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className={`mt-10 grid items-start gap-10 ${data.tier && moves ? "xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : ""}`}>
           {data.tier && (
             <>
               <section className="sec min-w-0">
@@ -256,7 +258,7 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
             </>
           )}
 
-          {data.change && (data.change.up.length || data.change.down.length) ? (
+          {data.change && moves ? (
             <section className="sec min-w-0">
               <h2 className="sec-h">
                 시즌 {Number(data.season.name.replace(/\D/g, "")) - 1} 대비
@@ -350,7 +352,7 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                         </td>
                         <td className="text-ink-3">{a.grade}</td>
                         <td>{a.share.toFixed(1)}%</td>
-                        <td className="font-bold" style={rankTint(a.rank, a.restRank, a.rankCi)} data-tip={`${n(a.n)}명, 승률 ${a.win.toFixed(1)}%`}>{a.rank?.toFixed(2) ?? "-"}</td>
+                        <td className="font-bold" style={a.n < (data.tier?.thin ?? 30) ? undefined : rankTint(a.rank, a.restRank, a.rankCi)} data-tip={`${n(a.n)}명, 승률 ${a.win.toFixed(1)}%`}>{a.rank?.toFixed(2) ?? "-"}</td>
                         <td className="text-ink-3" data-tip={a.restWin == null ? undefined : `승률 ${a.restWin.toFixed(1)}%`}>{a.restRank?.toFixed(2) ?? "-"}</td>
                       </tr>
                     ))}
