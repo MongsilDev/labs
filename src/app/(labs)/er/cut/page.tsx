@@ -79,7 +79,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
         })}
       </dl>
 
-      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-x-10 gap-y-10 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-x-10 gap-y-10 lg:grid-flow-row-dense lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
         {/* 새 시즌 첫날처럼 기록이 이틀이 안 되면 선이 없어 칸을 뺌 */}
         {TIERS.some(({ key }) => data.tiers[key].history.length >= 2 || data.tiers[key].forecast?.length) && (
         <section className="sec min-w-0 self-start lg:col-span-8" aria-labelledby="chart-h">
@@ -101,7 +101,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
           </div>
         </section>
         )}
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-10 lg:col-span-4 lg:row-span-2">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-10 lg:col-span-4 lg:col-start-9 lg:row-span-2">
           <section className="sec" aria-labelledby="check-h">
             <h2 className="sec-h mb-3" id="check-h">내 RP 진단</h2>
             <div className="rpcheck"><RpCheck data={data} initial={rpParam(query.rp)} /></div>
