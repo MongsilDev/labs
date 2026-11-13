@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
 import { dakStopped } from "./dakstop.mjs";
+import { renameSteps } from "./renames.mjs";
 import { derive, writeDerived } from "./derive.mjs";
 import { Pace, botLast429 } from "./pace.mjs";
 import { BASE_DONE, baseReady, derivePre, preRow, writePre } from "./preseason.mjs";
@@ -100,6 +101,9 @@ db.exec(`
 db.exec(`CREATE TABLE IF NOT EXISTS dak_routes (route INTEGER PRIMARY KEY, t INTEGER NOT NULL, title TEXT, nick TEXT, trait INTEGER, tac INTEGER)`);
 // body는 11-12에 더한 dak.gg weaponRoute 원본(userNum 뺌). 이 열이 빈 옛 행은 아이템과 지역을 받으려고 한 번 다시 물음
 if (!db.prepare(`PRAGMA table_info(dak_routes)`).all().some((c) => c.name === "body")) db.exec(`ALTER TABLE dak_routes ADD COLUMN body BLOB`);
+// 닉네임 평문이라 화면, tier.json, cdn으로 내보내지 않음
+db.exec(`CREATE TABLE IF NOT EXISTS renames (old TEXT NOT NULL, new TEXT NOT NULL, old_last INTEGER NOT NULL, new_first INTEGER NOT NULL, seen INTEGER NOT NULL, PRIMARY KEY (old, new, new_first))`);
+const putRename = db.prepare(`INSERT OR IGNORE INTO renames VALUES (?, ?, ?, ?, ?)`);
 const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 const fillRow = db.prepare(`UPDATE rows SET route = coalesce(route, ?), tac = coalesce(tac, ?), assists = coalesce(assists, ?), deaths = coalesce(deaths, ?), monsters = coalesce(monsters, ?)
   WHERE game = ? AND player = ? AND (route IS NULL OR assists IS NULL)`);
@@ -131,7 +135,7 @@ const markDak = db.prepare(`UPDATE dak_routes SET t = ?, body = ? WHERE route = 
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
 const putAccount = db.prepare(`INSERT INTO accounts (player, newest, checked, mmr) VALUES (?,?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked, mmr = excluded.mmr`);
 
-const stats = { sent: 0, ok: 0, limited: 0, failed: 0, skipped: 0, lat: [] };
+const stats = { sent: 0, ok: 0, limited: 0, failed: 0, skipped: 0, renames: 0, lat: [] };
 const RATE = join(DIR, "rate.json");
 const measured = existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : null;
 const pace = new Pace(opt("rps", measured?.rps ?? 2));
@@ -500,6 +504,7 @@ async function collectAccount(s, acc, since, cuts, stop, measure) {
   let complete = false;
   // 마지막 랭크 경기 뒤 RP. rank/top RP와 같을 때만 저장해, 목록에 아직 안 올라온 판이 있으면 다음 회차에 다시 받음
   let after;
+  let last = null;
   for (let page = 0; !abort && !stop(); page++) {
     if (page === MAX_PAGES) {
       complete = true;
@@ -510,6 +515,7 @@ async function collectAccount(s, acc, since, cuts, stop, measure) {
     const list = g?.userGames ?? [];
     if (page === 0) after = Number(list.find((y) => y.matchingMode === 3 && y.seasonId === s.id)?.mmrAfter);
     let done = !g?.next || !list.length;
+    const seen = [];
     for (const y of list) {
       const t = kst(y.startDtm);
       if (t < since || (!BACKFILL && t <= newest)) {
@@ -518,7 +524,11 @@ async function collectAccount(s, acc, since, cuts, stop, measure) {
       }
       top = Math.max(top, t);
       added += insertGame(s, y, cuts, player);
+      seen.push({ nickname: y.nickname, t });
     }
+    const r = renameSteps(seen, last);
+    last = r.last;
+    for (const x of r.steps) stats.renames += Number(putRename.run(x.old, x.new, x.oldLast, x.newFirst, Date.now()).changes);
     if (done) {
       complete = true;
       break;
@@ -1120,7 +1130,7 @@ async function once(measure) {
     if (s.regular && Date.now() < s.end && !PUBLISH_ONLY) {
       const since = Math.max(s.start, Date.now() - opt("days", 11) * 86_400_000);
       run = await collect(s, since, { measure });
-      log(`새 행 ${run.added}, 요청 ${stats.sent}, RP가 그대로라 건너뛴 계정 ${stats.skipped}, 429 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
+      log(`새 행 ${run.added}, 요청 ${stats.sent}, RP가 그대로라 건너뛴 계정 ${stats.skipped}, 닉네임 변경 ${stats.renames}, 429 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
       writeFileSync(join(DIR, "status.json"), JSON.stringify({ at: Date.now(), abort, ...run, stats: { ...stats, lat: undefined } }));
     }
     // 프리 시즌이 끝난 뒤 두 회차 동안은 끝 시각까지 남은 번호를 마저 조회함
