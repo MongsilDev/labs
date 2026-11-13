@@ -75,9 +75,8 @@ export default async function PreseasonPage() {
   const data = await getPreseason();
   if (!data) return <Live user={user}><h1 className="text-[26px] font-black">실험실</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
   const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
-  const fmt = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "numeric" });
-  // Intl은 정오를 「오후 12시」로 적음
-  const hour = (t: number) => fmt.format(t).replace("오후 12시", "낮 12시");
+  const fmt = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "numeric", minute: "2-digit" });
+  const hour = (t: number) => fmt.format(t);
   const span = day.format(data.from) === day.format(data.to)
     ? `${day.format(data.from)} ${hour(data.from)}~${hour(data.to).replace(/^(오전|오후) /, (m) => (hour(data.from).startsWith(m) ? "" : m))}`
     : `${day.format(data.from)} ${hour(data.from)}~${day.format(data.to)} ${hour(data.to)}`;
@@ -90,7 +89,7 @@ export default async function PreseasonPage() {
     <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">실험실</h1>
-        <p className="text-[13px] text-ink-3 num">
+        <p className="text-[13px] text-ink-3 num" data-tip={`갱신 ${day.format(data.updatedAt)} ${hour(data.updatedAt)}`}>
           {servers(data.servers)} {n(data.games)}경기, {span}
         </p>
       </div>
@@ -100,7 +99,6 @@ export default async function PreseasonPage() {
           <h2 className="sec-h">프리 시즌 티어리스트<small className="num">{n(data.tier.rows)}명</small></h2>
           <SortTable
             numbered
-            search
             cols={[
               { label: "실험체", cls: "l pin-c" },
               { label: "등급", first: "desc" },
@@ -112,7 +110,6 @@ export default async function PreseasonPage() {
             rows={data.tier.combos.map((c, i) => ({
               id: `${c.char}-${c.weapon}`,
               no: i + 1,
-              find: `${c.weaponName}${c.name}${c.name}${c.weaponName}`,
               dim: c.n < data.tier!.thin,
               // 프리 시즌 점수는 RP가 아니라 표준편차 배수라 숫자 대신 등급만 보이고, 등급 열은 점수로 정렬함
               vals: [null, c.z, c.pick, c.win, c.top3, c.place],
@@ -150,12 +147,10 @@ export default async function PreseasonPage() {
         <section className="sec mt-10 min-w-0">
           <h2 className="sec-h">3인 조합<small className="num">30팀 이상</small></h2>
           <SortTable
-            search
             show={10}
             cols={[{ label: "조합", cls: "l" }, { label: "팀", first: "desc" }, { label: "승률", first: "desc" }, { label: "TOP 3", first: "desc" }, { label: "평균 순위", first: "asc" }]}
             rows={data.trios.map((t) => ({
               id: t.key,
-              find: t.members.map((c) => `${c.weaponName}${c.name}`).join(""),
               vals: [null, t.n, t.win, t.top3, t.rank],
               cells: (
                 <>
@@ -307,7 +302,6 @@ export default async function PreseasonPage() {
         <section className="sec mt-10 min-w-0">
           <h2 className="sec-h">실험체별 실험 과제<small className="num">30명 이상</small></h2>
           <SortTable
-            search
             cols={[{ label: "실험체", cls: "l" }, ...EXP_ORDER.map((t) => ({ label: EXP_NAME[t], first: "desc" as const })), { label: "명", first: "desc" }]}
             rows={data.expChars.map((c) => {
               // 분야마다 30명 이상일 때만 성적을 적고, 평균 순위가 가장 좋은 분야를 칠함
@@ -316,7 +310,6 @@ export default async function PreseasonPage() {
               const top = Math.max(...EXP_ORDER.map((t) => c.exp[t] ?? 0));
               return {
                 id: `${c.char}-${c.weapon}`,
-                find: `${c.weaponName}${c.name}${c.name}${c.weaponName}`,
                 vals: [null, ...EXP_ORDER.map((t) => c.exp[t] ?? 0), c.n],
                 cells: (
                   <>

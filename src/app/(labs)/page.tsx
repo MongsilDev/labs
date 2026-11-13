@@ -2,7 +2,7 @@ import Link from "next/link";
 import CutMini from "@/er/components/cut/CutMini";
 import Live from "@/next/Live";
 import HubScore from "@/next/HubScore";
-import { CutNums, KelBig, OverlayOpen, TarkovGroup, TierBig } from "@/next/Hub5Parts";
+import { CutNums, KelBig, LabMini, OverlayOpen, TarkovGroup, TierBig } from "@/next/Hub5Parts";
 import { KelHead, TierHead, TierMissing } from "@/next/HubParts";
 import { hubData } from "@/next/hub";
 import { getPreseason } from "@/next/preseason";
@@ -19,7 +19,7 @@ export default async function Hub() {
         <div className="hub5-col hub-in">
           <section>
             <TierHead h={h} />
-            {h.view ? <TierBig list={h.combos.slice(0, 10)} /> : <TierMissing />}
+            {h.view ? <TierBig list={h.combos.slice(0, 8)} /> : <TierMissing />}
           </section>
           {lab && (
             <section>
@@ -27,6 +27,7 @@ export default async function Hub() {
                 <Link href="/er/preseason">실험실</Link>
                 <small className="num">{lab.season.name}, {lab.games.toLocaleString("ko-KR")}경기</small>
               </h2>
+              <LabMini lab={lab} />
             </section>
           )}
         </div>

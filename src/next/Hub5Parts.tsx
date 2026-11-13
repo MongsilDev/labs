@@ -8,12 +8,43 @@ import { comboPath, signed, type TierCombo } from "@/er/lib/tier";
 import HubSearch from "@/tarkov/components/players/HubSearch";
 import { face, n } from "./HubParts";
 import type { Hub } from "./hub";
+import type { PreData } from "./preseason";
 
 export function Chev({ className = "" }: { className?: string }) {
   return (
     <svg className={`size-4 flex-none ${className}`} viewBox="0 0 16 16" aria-hidden="true">
       <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
     </svg>
+  );
+}
+
+/** 실험실 칸. 위 실험체 티어와 겹치지 않게 프리 시즌 1위와 최다 선택 조합만 보임 */
+export function LabMini({ lab }: { lab: PreData }) {
+  const list = lab.tier?.combos ?? [];
+  if (!list.length) return null;
+  const most = list.reduce((a, c) => (c.pick > a.pick ? c : a));
+  const rows = [
+    { label: "프리 시즌 1위", c: list[0], val: `평균 ${list[0].place.toFixed(2)}위` },
+    { label: "최다 선택", c: most, val: `경기당 ${(most.pick / 100).toFixed(2)}명` },
+  ];
+  return (
+    <table className="tbl mt-3">
+      <tbody>
+        {rows.map(({ label, c, val }) => (
+          <tr key={label}>
+            <td className="l w-[112px] text-ink-3">{label}</td>
+            <td className="l">
+              <Link href="/er/preseason" className="flex items-center gap-2">
+                <Image className="portrait" src={`/img/er/char/${c.key}.v1.webp`} alt="" width={24} height={24} unoptimized />
+                <span className="text-ink-3">{c.weaponName}</span>
+                <b>{c.name}</b>
+              </Link>
+            </td>
+            <td className="font-bold">{val}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

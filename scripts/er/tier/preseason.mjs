@@ -220,7 +220,8 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
     base: pct(x.winTeams, x.teams),
     servers: [...x.servers].sort((a, b) => b[1] - a[1]).map(([name, games]) => ({ name, games })),
     // 시즌 시작부터 모은 기록이라 기간은 첫 경기 대신 시즌 시작부터 적음
-    from: Math.min(season.start ?? x.from, x.from),
+    // 시즌 시작 시각이 아니라 실제로 받은 첫 경기부터 적음. 점검이 늦게 끝나면 둘이 다름
+    from: x.from,
     to: x.to,
     exp: {
       teams: x.teams,

@@ -58,8 +58,8 @@ describe("프리 시즌 특집 집계", () => {
     expect(out.scan).toEqual({ ids: 10, found: 3 });
   });
 
-  it("기간은 시즌 시작부터 적는다", () => {
-    expect(out.from).toBe(start);
+  it("기간은 실제로 받은 첫 경기부터 적는다", () => {
+    expect(out.from).toBe(1_794_400_000_001);
     expect(derivePre(rows(1, 3), season, nm)!.from).toBe(1_794_400_000_001);
   });
 
