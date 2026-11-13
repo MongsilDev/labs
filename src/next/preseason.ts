@@ -19,6 +19,9 @@ export type PreData = {
   expChars: (PreChar & { n: number; exp: Record<string, number> })[];
   gadgets: { code: number; name: string; n: number; share: number; per: number | null }[];
   noGadget: { n: number; share: number };
+  // 최종 장비를 저장하기 전에 쓴 파일에는 없음
+  equipped?: number;
+  armor?: (PreStat & { code: number; name: string; grade: string; restWin: number; restRank: number | null })[];
   weather: { code: number; name: string; games: number; players: number; drop: string | null; dropShare: number; top: (PreChar & PreStat)[] }[];
   tier: { rows: number; thin: number; combos: PreTier[] } | null;
 };

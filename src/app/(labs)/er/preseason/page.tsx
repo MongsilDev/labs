@@ -3,6 +3,7 @@ import { avatarUrl, currentUser } from "@/er/server/auth";
 import Live from "@/next/Live";
 import MoreRows from "./MoreRows";
 import { EXP_NAME, EXP_ORDER, getPreseason, type PreChar, type PreStat } from "@/next/preseason";
+import { itemIcon } from "@/er/lib/tier";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "프리 시즌 신규 요소" };
@@ -162,6 +163,39 @@ export default async function PreseasonPage() {
           </table>
         </section>
       </div>
+
+      {data.armor?.length ? (
+        <div className="mt-10 grid gap-10 lg:grid-cols-2">
+          <section className="sec min-w-0">
+            <h2 className="sec-h">신규 방어구<small className="num">{n(data.equipped ?? 0)}명</small></h2>
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th className="l">방어구</th>
+                  <th>채용률</th>
+                  <th>평균 순위</th>
+                  <th>승률</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.armor.map((a) => (
+                  <tr key={a.code} className={a.n < (data.tier?.thin ?? 30) ? "opacity-50" : undefined}>
+                    <td className="l">
+                      <span className="flex items-center gap-2">
+                        {itemIcon(a.code) && <Image className="portrait" src={itemIcon(a.code)!} alt="" width={24} height={24} unoptimized />}
+                        <span className="font-semibold">{a.name}</span>
+                      </span>
+                    </td>
+                    <td data-tip={`같은 부위 ${a.grade} 장비를 쓴 사람 중`}>{a.share.toFixed(1)}%</td>
+                    <td data-tip={`같은 부위 ${a.grade} 장비 ${a.restRank?.toFixed(2) ?? "-"}`}>{a.rank?.toFixed(2) ?? "-"}</td>
+                    <td className="font-bold" style={tint(a, a.restWin)} data-tip={`${n(a.n)}명, 같은 부위 ${a.grade} 장비 ${a.restWin}%, 95% 범위 ±${a.winCi}`}>{a.win.toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </div>
+      ) : null}
 
       <section className="sec mt-10 min-w-0">
         <h2 className="sec-h">날씨</h2>

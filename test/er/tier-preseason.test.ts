@@ -12,6 +12,7 @@ const nm = {
   skill: (c: number) => (Math.floor(c / 100) * 100 === 8310700 ? "Vector 게이트" : `가젯 ${c}`),
   state: (c: number) => (Math.floor(c / 100) * 100 === 8500600 ? "루미의 고글" : `버프 ${c}`),
   weather: (c: number) => (c === 10004 ? "모래바람" : `날씨 ${c}`),
+  item: (c: number) => [c === 201538 ? "제왕의 투구" : `아이템 ${c}`, c === 201999 ? "Epic" : "Legend"] as [string, string],
 };
 const season = { id: 42, name: "프리 시즌 13" };
 
@@ -26,6 +27,14 @@ function rows(game: number, mode: number, over: (slot: number) => R = () => ({})
 }
 
 describe("프리 시즌 특집 집계", () => {
+  it("신규 방어구는 같은 부위, 같은 등급을 낀 사람과 견준다", () => {
+    // 1위 팀만 제왕의 투구, 2~4위 팀은 다른 전설 머리, 나머지는 영웅 머리. 예전 행(equip 없음)은 세지 않음
+    const head = (slot: number) => (slot < 3 ? 201538 : slot < 12 ? 201501 : 201999);
+    const g = derivePre([...rows(1, 3, (slot) => ({ equip: JSON.stringify([101101, 0, head(slot), 0, 0, 0]) })), ...rows(2, 3)], season, nm)!;
+    expect(g.equipped).toBe(24);
+    expect(g.armor).toEqual([{ code: 201538, name: "제왕의 투구", grade: "전설", n: 3, share: 25, rank: 1, win: 100, winCi: 0, restWin: 0, restRank: 3 }]);
+  });
+
   const start = 1_794_390_000_000;
   const out = derivePre([...rows(1, 3), ...rows(2, 2), ...rows(3, 6)], { ...season, start }, nm, { ids: 10, found: 3 })!;
 

@@ -17,6 +17,9 @@ const WEATHER_TOP = 5;
 export const EXP = { Energy: "에너지 공학", Material: "재료 공학", Biotechnology: "생명 공학" };
 // questStepClear의 experimentGroupId 앞자리. 실험 결과 분야와 맞춰 본 값이고 끝자리는 단계
 const QUEST = { 1: "Material", 2: "Energy", 3: "Biotechnology" };
+/** 13.0에 추가된 방어구. 펄스 자켓 202424, 제너레이터 202532, 제왕의 투구 201538, 아이보리 스텝 204515 */
+export const NEW_ARMOR = [202424, 202532, 201538, 204515];
+export const GRADE_KO = { Common: "일반", Uncommon: "고급", Rare: "희귀", Epic: "영웅", Legend: "전설", Mythic: "초월" };
 
 const fix1 = (v) => +v.toFixed(1);
 const pct = (k, n) => (n ? fix1((k / n) * 100) : 0);
@@ -34,7 +37,7 @@ function fresh() {
   return {
     games: 0, players: 0, bots: 0, teams: 0, winTeams: 0, from: Infinity, to: 0, servers: new Map(),
     exp: new Map(Object.keys(EXP).map((k) => [k, acc()])), none: acc(),
-    chars: new Map(), gadgets: new Map(), noGadget: 0, weathers: new Map(),
+    chars: new Map(), gadgets: new Map(), noGadget: 0, weathers: new Map(), equipped: 0, armor: new Map(),
     quest: new Map(Object.keys(EXP).map((k) => [k, { n1: 0, t1: 0, n2: 0, c2: 0 }])),
   };
 }
@@ -111,6 +114,18 @@ export function derivePre(rows, season, nm, scan = null) {
       }
       m.gadgets.set(code, x);
     }
+    // 최종 장비는 오래 살수록 완성돼 있어, 신규 방어구는 같은 부위에 같은 등급을 쓴 사람과 견줌
+    const equip = r.equip ? JSON.parse(r.equip) : [];
+    if (equip.length) m.equipped++;
+    for (const code of equip.slice(1)) {
+      if (!code) continue;
+      const g = `${Math.floor(code / 1000)}-${nm.item(code)[1]}`;
+      for (const k of NEW_ARMOR.includes(code) ? [g, code] : [g]) {
+        const a = m.armor.get(k) ?? acc();
+        add(a, rank);
+        m.armor.set(k, a);
+      }
+    }
     w.players++;
     const drops = JSON.parse(r.drops || "[]");
     if (drops.length) {
@@ -159,6 +174,15 @@ export function derivePre(rows, season, nm, scan = null) {
       .map(([code, a]) => ({ code, name: nm.skill(code), n: a.n, share: pct(a.n, x.players), per: avg(a.uses, a.known) }))
       .sort((a, b) => b.n - a.n),
     noGadget: { n: x.noGadget, share: pct(x.noGadget, x.players) },
+    equipped: x.equipped,
+    armor: NEW_ARMOR.filter((code) => x.armor.has(code)).map((code) => {
+      const [name, grade] = nm.item(code);
+      const a = x.armor.get(code);
+      const g = x.armor.get(`${Math.floor(code / 1000)}-${grade}`);
+      // 견줄 쪽은 같은 부위, 같은 등급에서 이 장비를 뺀 사람
+      const rest = { n: g.n - a.n, rank: g.rank - a.rank, win: g.win - a.win };
+      return { code, name, grade: GRADE_KO[grade] ?? grade, ...out(a, g.n), restWin: pct(rest.win, rest.n), restRank: avg(rest.rank, rest.n) };
+    }),
     weather: [...x.weathers]
       .filter(([code]) => code)
       .map(([code, v]) => ({
@@ -215,7 +239,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (!id) throw new Error("사용: node preseason.mjs <프리 시즌 ID> [이름] [시작 시각, 예: 2026-11-12T12:00+09:00]");
   const text = existsSync(join(dir, "l10n-ko.txt")) ? readFileSync(join(dir, "l10n-ko.txt"), "utf8") : "";
   const ko = (prefix) => new Map([...text.matchAll(new RegExp(`^${prefix}/([^┃\\r\\n]+)┃([^\\r\\n]*)`, "gm"))].map((x) => [x[1], x[2].trim()]));
-  const [skill, state, weather] = ["Skill/Group/Name", "CharacterState/Group/Name", "Weather/Name"].map(ko);
+  const [skill, state, weather, item] = ["Skill/Group/Name", "CharacterState/Group/Name", "Weather/Name", "Item/Name"].map(ko);
+  const grades = existsSync(join(dir, "item-grades.json")) ? JSON.parse(readFileSync(join(dir, "item-grades.json"), "utf8")) : {};
   const tier = JSON.parse(readFileSync(join(outDir, "tier.json"), "utf8"));
   const chars = new Map(), weapons = new Map();
   for (const v of [...(tier.views ?? []), ...(tier.past?.views ?? [])]) for (const c of v.combos ?? []) {
@@ -228,6 +253,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     skill: (code) => skill.get(String(Math.floor(code / 100) * 100)) ?? `가젯 ${code}`,
     state: (code) => state.get(String(Math.floor(code / 100) * 100)) ?? `버프 ${code}`,
     weather: (code) => weather.get(String(code)) ?? `날씨 ${code}`,
+    item: (code) => [item.get(String(code)) ?? `아이템 ${code}`, grades[code] ?? null],
   };
   const db = new DatabaseSync(join(dir, "preseason.sqlite"), { readOnly: true });
   const scan = db.prepare("SELECT ids, found FROM scan WHERE season = ?").get(id) ?? null;

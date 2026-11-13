@@ -283,6 +283,8 @@ async function names() {
   // 루트 아이템 칸의 바탕색에 쓰는 등급
   const grades = new Map();
   for (const t of ["ItemWeapon", "ItemArmor"]) for (const x of (await get(`/v2/data/${t}`))?.data ?? []) grades.set(x.code, x.itemGrade ?? null);
+  // preseason.mjs를 직접 실행할 때 API 없이 방어구 등급을 찾도록 남김
+  if (grades.size) writeFileSync(join(DIR, "item-grades.json"), JSON.stringify(Object.fromEntries(grades)));
   // 전술 스킬 그룹 이름은 시작 스킬 코드의 천 단위 그룹 번호로 찾음. 120은 아이콘 번호에 이름이 없음
   const sets = new Map(((await get("/v2/data/TacticalSkillSet"))?.data ?? []).map((x) => [x.code, Number(x.skillCode)]));
   const tacKo = new Map(
