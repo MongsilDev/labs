@@ -339,29 +339,6 @@ export default async function PreseasonPage() {
         </section>
       ) : null}
 
-      {data.expChars.some((c) => c.gadget != null) && (
-        <section className="sec mt-10 min-w-0">
-          <h2 className="sec-h">실험체별 가젯<small className="num">30명 이상</small></h2>
-          <SortTable
-            search
-            cols={[{ label: "실험체", cls: "l" }, { label: "가젯 쓴 사람", first: "desc" }, { label: "많이 쓴 가젯", cls: "l" }, { label: "명", first: "desc" }]}
-            rows={data.expChars.map((c) => ({
-              id: `${c.char}-${c.weapon}`,
-              find: `${c.weaponName}${c.name}${c.name}${c.weaponName}`,
-              vals: [null, c.gadget ?? null, null, c.n],
-              cells: (
-                <>
-                  <td className="l"><Who c={c} /></td>
-                  <td>{c.gadget?.toFixed(1) ?? "-"}%</td>
-                  <td className="l">{c.topGadget ? <>{c.topGadget.name} <small className="text-ink-3">{c.topGadget.share.toFixed(1)}%</small></> : "-"}</td>
-                  <td className="text-ink-3">{n(c.n)}</td>
-                </>
-              ),
-            }))}
-          />
-        </section>
-      )}
-
       <p className="mt-12 text-[13px] text-ink-3">자료: 이터널 리턴 공식 API</p>
     </Live>
   );
