@@ -326,7 +326,7 @@ export default async function PreseasonPage() {
                       return (
                         <td key={t} data-tip={rank == null ? undefined : `평균 순위 ${rank.toFixed(2)}, TOP 3 ${c.top3?.[t]?.toFixed(1)}%`}>
                           <span className={c.exp[t] === top ? "font-bold" : "text-ink-3"}>{(c.exp[t] ?? 0).toFixed(1)}%</span>
-                          {rank != null && <small className="block" style={rank === best ? { color: "var(--up)" } : undefined}>{rank.toFixed(2)}위</small>}
+                          {rank != null && <small className={rank === best ? "block font-bold" : "block text-ink-3"} style={rank === best ? { color: "var(--up)" } : undefined}>{rank.toFixed(2)}위</small>}
                         </td>
                       );
                     })}
