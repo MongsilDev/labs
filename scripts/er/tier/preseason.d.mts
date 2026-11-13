@@ -9,4 +9,6 @@ type Names = {
   item: (code: number) => [string, string | null];
 };
 export function derivePre(rows: Iterable<Record<string, unknown>>, season: { id: number; name: string; start?: number }, nm: Names, scan?: PreData["scan"], baseRows?: Iterable<Record<string, unknown>>): PreData | null;
+export const BASE_DONE: string;
+export function baseReady(dir: string, id: number): boolean;
 export function writePre(root: string, data: PreData | null): boolean;

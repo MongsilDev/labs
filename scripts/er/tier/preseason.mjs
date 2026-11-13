@@ -16,6 +16,9 @@ export const WEATHER_CHAR_MIN = 40;
 const WEATHER_TOP = 5;
 const CHANGE_TOP = 10;
 export const TRIO_MIN = 30;
+/** collect.mjs --pre-base가 직전 시즌 비교 경기를 끝까지 받으면 시즌 ID를 적는 파일 */
+export const BASE_DONE = "pre-base.done";
+export const baseReady = (dir, id) => existsSync(join(dir, BASE_DONE)) && readFileSync(join(dir, BASE_DONE), "utf8").trim() === String(id);
 export const EXP = { Energy: "에너지 공학", Material: "재료 공학", Biotechnology: "생명 공학" };
 // questStepClear의 experimentGroupId 앞자리. 실험 결과 분야와 맞춰 본 값이고 끝자리는 단계
 const QUEST = { 1: "Material", 2: "Energy", 3: "Biotechnology" };
@@ -339,7 +342,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const scan = db.prepare("SELECT ids, found FROM scan WHERE season = ?").get(id) ?? null;
   // 이 DB는 프리 시즌 13부터 쓰기 시작해 직전 시즌 행은 --pre-base로 모은 정규 시즌뿐임
   const prev = Number(process.argv[5]) || db.prepare("SELECT MAX(season) AS s FROM rows WHERE season < ?").get(id)?.s;
-  const base = prev ? db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(prev) : [];
+  const base = prev && baseReady(dir, prev) ? db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(prev) : [];
   const res = derivePre(db.prepare("SELECT * FROM rows WHERE season = ? ORDER BY game, slot").iterate(id), { id, name: process.argv[3] ?? `시즌 ${id}`, start: process.argv[4] ? Date.parse(process.argv[4]) : undefined }, nm, scan, base);
   console.log(writePre(join(outDir, ".."), res) ? `${res.games}경기, 티어 ${res.tier?.combos.length ?? 0}개 조합` : "해당 경기 없음");
 }

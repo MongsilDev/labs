@@ -9,7 +9,7 @@ import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
 import { dakStopped } from "./dakstop.mjs";
 import { derive, writeDerived } from "./derive.mjs";
-import { derivePre, writePre } from "./preseason.mjs";
+import { BASE_DONE, baseReady, derivePre, writePre } from "./preseason.mjs";
 import { LOBBY, RULE, scoreRows } from "./score.mjs";
 import { topView, writeTop } from "./top.mjs";
 
@@ -761,7 +761,7 @@ function putPreOne(s, game, i, y) {
 function publishPre(s, nm) {
   try {
     const scan = pre.prepare(`SELECT ids, found FROM scan WHERE season = ?`).get(s.id);
-    const base = pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.prev);
+    const base = baseReady(DIR, s.prev) ? pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.prev) : [];
     const out = derivePre(pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.id), s, nm, scan, base);
     if (out && writePre(join(OUT, ".."), out)) log(`프리 시즌 특집 집계 ${out.games}경기, 티어 ${out.tier?.combos.length ?? 0}개 조합`);
   } catch (e) {
@@ -1203,7 +1203,13 @@ if (flag("pre-base")) {
       }
       const r = await scanPre({ ...base, deadline: next - 10 * 60_000 });
       log(`직전 시즌과 비교할 경기 번호 ${r.ids}개를 조회해 경기 ${r.games}개를 저장했습니다. 요청 ${stats.sent}, 429 응답 ${stats.limited}, 실패 ${stats.failed}`);
-      if (abort || r.down || !r.ids) break;
+      if (abort || r.down) break;
+      if (!r.ids) {
+        // 끝까지 받았을 때만 비교 표를 싣도록 표시를 남김
+        writeFileSync(join(DIR, BASE_DONE), String(base.id));
+        log("직전 시즌과 비교할 경기를 끝까지 받았습니다.");
+        break;
+      }
     }
   } finally {
     unwatch();
