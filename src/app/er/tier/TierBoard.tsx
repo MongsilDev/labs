@@ -365,6 +365,7 @@ export default function TierBoard(p: Props) {
                 </li>
               )}
             </ol>
+            <p>픽률은 경기에 참가한 팀 가운데 그 실험체와 무기 조합을 고른 팀의 비율입니다.</p>
             <p>{p.few ? `${p.thin}판 미만이거나 유효 플레이어가 ${p.few}명 미만인 실험체는 흐리게 표시합니다.` : `${p.thin}판 미만인 실험체는 흐리게 표시합니다.`}</p>
             {p.few && (
               <p>

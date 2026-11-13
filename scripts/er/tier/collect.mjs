@@ -843,11 +843,12 @@ function cmpPatch(a, b) {
   return 0;
 }
 
-// 상위 1,000명이 한 명이라도 참가한 경기는 참가자 전원을 씀
+// 상위 1,000명이 한 명이라도 참가한 경기는 참가자 전원을 씀. 픽률 분모가 팀 수라 참가자를 다 채운 경기만 씀
 const selectRows = db.prepare(`SELECT game, player, char, weapon, rank, gain_in AS gain, mmr_before AS mmr, t, patch, in1000, route, tac, trait, gain AS net,
   kills, assists, deaths, damage, monsters FROM rows
   WHERE season = ? AND server = ? AND gain_in IS NOT NULL AND mmr_before IS NOT NULL AND t >= ?
-  AND game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1) ORDER BY t`);
+  AND game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1)
+  AND game IN (SELECT game FROM raw.games WHERE n > 0) ORDER BY t`);
 
 /** 상위 1,000명 행을 루트, 특성, 전술 스킬별로 나눔. [코드, 플레이어 수, 판 수, 평균 RP 획득] */
 function split(rows, key) {
@@ -933,6 +934,7 @@ function view(id, label, rows, nm, extra = {}, k) {
     to: rows.at(-1).t,
     rows: r.rows,
     games: r.games,
+    teams: r.teams,
     base: round(r.base, 1),
     k: Math.round(r.k),
     ks: Object.fromEntries(Object.entries(r.ks).map(([m, v]) => [m, Math.round(v)])),
@@ -963,12 +965,15 @@ function view(id, label, rows, nm, extra = {}, k) {
 
 const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
 
-/** 픽률을 참가자 비율로 쓰던 예전 파일은 경기당 등장률로 바꿔 읽음. "lobby"는 잠깐 배포한 참가자 비율 × 24 */
-function gamePick(t) {
-  if (!t || t.pickBasis === "game") return t;
+/**
+ * 픽률을 참가자 비율로 쓰던 예전 파일은 등장 수 / 팀 수로 바꿔 읽음. "lobby"는 잠깐 배포한 참가자 비율 × 24.
+ * 예전 파일에는 팀 수가 없지만 집계 경기 팀은 거의 다 3명이라 참가자 비율의 3배로 봄
+ */
+function teamPick(t) {
+  if (!t || t.pickBasis === "team") return t;
   const k = t.pickBasis === "lobby" ? 24 : 1;
-  const fix = (views) => views?.map((v) => ({ ...v, combos: v.combos.map((c) => ({ ...c, pick: round((c.pick / k) * (v.games ? v.rows / v.games : 1), 2) })) }));
-  return { ...t, pickBasis: "game", views: fix(t.views), ...(t.past && { past: { ...t.past, views: fix(t.past.views) } }) };
+  const fix = (views) => views?.map((v) => ({ ...v, combos: v.combos.map((c) => ({ ...c, pick: round((c.pick / k) * 3, 2) })) }));
+  return { ...t, pickBasis: "team", views: fix(t.views), ...(t.past && { past: { ...t.past, views: fix(t.past.views) } }) };
 }
 
 function writeTier(data) {
@@ -1054,7 +1059,7 @@ function routeUse(rows, ids) {
 async function publish(s, nm) {
   const now = Date.now();
   const lastFile = join(DIR, "tier.json");
-  const last = gamePick(existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null);
+  const last = teamPick(existsSync(lastFile) ? JSON.parse(readFileSync(lastFile, "utf8")) : null);
   // 끝난 정규 시즌이 아직 현재 행이면 종료 뒤 첫 발행만 집계함. 다시 집계하면 최근 N일 탭이 줄고 오래된 행이 지워짐
   const ended = s.regular && now >= s.end && last?.season?.id === s.id && last.updatedAt >= s.end && !PUBLISH_ONLY;
   const all = s.regular && !ended ? selectRows.all(s.id, SERVER, s.start, s.id) : [];
@@ -1120,7 +1125,7 @@ async function publish(s, nm) {
     patch: cur ?? null,
     band: { name: "in1000", server: "아시아1", floor: RANKED_GATE, cut: cuts.at(-1)?.[1] ?? null },
     rule: { ...RULE, publishRows: PUBLISH_ROWS },
-    pickBasis: "game",
+    pickBasis: "team",
     rate: existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : undefined,
     views,
     routes: info,

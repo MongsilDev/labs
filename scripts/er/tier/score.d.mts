@@ -30,4 +30,4 @@ export function estimateK(groups: Group[], rule?: Rule): { k: number; within: nu
 export function scoreRows(
   rows: TierRow[],
   rule?: Rule,
-): { base: number; games: number; rows: number; k: number; ks: Record<Metric, number>; within: number; between: number; combos: ComboScore[] } | null;
+): { base: number; games: number; teams: number; rows: number; k: number; ks: Record<Metric, number>; within: number; between: number; combos: ComboScore[] } | null;

@@ -102,7 +102,7 @@ export default async function PreseasonPage() {
             cols={[
               { label: "실험체", cls: "l pin-c" },
               { label: "등급", first: "desc" },
-              { label: "픽률", first: "desc" },
+              { label: "픽률", first: "desc", tip: "사람이 한 명 이상 있는 팀 가운데 이 조합을 고른 팀의 비율" },
               { label: "승률", first: "desc" },
               { label: "TOP 3", first: "desc" },
               { label: "평균 순위", first: "asc" },
@@ -117,7 +117,7 @@ export default async function PreseasonPage() {
                 <>
                   <td className="l pin-c"><Who c={c} /></td>
                   <td><span className={`grade grade-${c.grade}`}>{c.grade}</span></td>
-                  <td><small className="mr-1.5 text-ink-3">{n(c.n)}판</small>{c.pick.toFixed(2)}%</td>
+                  <td><small className="mr-1.5 text-ink-3">{n(c.n)}명</small>{c.pick.toFixed(2)}%</td>
                   <td>{c.win.toFixed(1)}%</td>
                   <td>{c.top3.toFixed(1)}%</td>
                   <td>{c.place.toFixed(2)}</td>

@@ -123,6 +123,8 @@ export type TierView = {
   to: number;
   rows: number;
   games: number;
+  // 픽률 분모. 팀 수를 싣기 전에 쓴 파일에는 없음
+  teams?: number;
   base: number;
   k: number;
   ks?: { gain: number; place: number; top3: number };

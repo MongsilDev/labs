@@ -52,10 +52,11 @@ const winFirst = (list) => [...list.slice(0, WEATHER_TOP).sort((a, b) => b.win -
 
 /** 직전 정규 시즌 경기에서 조합별 판 수와 1위 수. 봇과 MODES 밖 경기는 뺌 */
 function baseline(rows) {
-  const b = { games: new Set(), from: Infinity, to: 0, players: 0, chars: new Map() };
+  const b = { games: new Set(), teams: new Set(), from: Infinity, to: 0, players: 0, chars: new Map() };
   for (const r of rows) {
     if (!MODES.includes(r.mode) || r.bot) continue;
     b.games.add(r.game);
+    b.teams.add(`${r.game}:${r.team}`);
     b.from = Math.min(b.from, r.t);
     b.to = Math.max(b.to, r.t);
     b.players++;
@@ -204,7 +205,7 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
       const ci = 1.96 * Math.sqrt((now * (1 - now)) / a.n + (then * (1 - then)) / p.n) * 100;
       // 프리 시즌에는 7팀 경기와 봇 팀이 섞여 평균 승률이 달라서, 기간마다 평균과의 차이를 견줌
       const d = (now - avgNow - (then - avgThen)) * 100;
-      return { ...named(key), n: a.n, win: pct(a.win, a.n), pick: +((a.n / x.games) * 100).toFixed(2), d: fix1(d), dCi: fix1(ci), dPick: +((a.n / x.games - p.n / b.games.size) * 100).toFixed(2), edge: Math.abs(d) - ci };
+      return { ...named(key), n: a.n, win: pct(a.win, a.n), pick: +((a.n / x.teams) * 100).toFixed(2), d: fix1(d), dCi: fix1(ci), dPick: +((a.n / x.teams - p.n / b.teams.size) * 100).toFixed(2), edge: Math.abs(d) - ci };
     })
     .filter((c) => c.edge > 0)
     .sort((a, c) => c.edge - a.edge);
@@ -293,8 +294,8 @@ export function derivePre(rows, season, nm, scan = null, baseRows = []) {
         z: +c.z.toFixed(3),
         half: +c.half.toFixed(3),
         n: c.n,
-        // 프리 시즌은 경기마다 모든 참가자 행이 있어 경기당 등장률을 바로 셈. 봇은 등장 수에서 빠짐
-        pick: +((c.n / x.games) * 100).toFixed(2),
+        // 픽률은 등장 수 / 팀 수. 한 팀은 같은 실험체를 둘 고를 수 없어 모든 팀이 고르면 100%. 봇은 등장 수에서 빼고, 사람이 한 명이라도 있는 팀만 팀 수에 넣음
+        pick: +((c.n / x.teams) * 100).toFixed(2),
         win: +(c.win * 100).toFixed(1),
         top3: +(c.top3 * 100).toFixed(1),
         place: +c.place.toFixed(2),

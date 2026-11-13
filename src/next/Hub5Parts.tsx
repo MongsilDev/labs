@@ -25,7 +25,7 @@ export function LabMini({ lab }: { lab: PreData }) {
   const most = list.reduce((a, c) => (c.pick > a.pick ? c : a));
   const rows = [
     { label: "프리 시즌 1위", c: list[0], val: `평균 ${list[0].place.toFixed(2)}위` },
-    { label: "최다 선택", c: most, val: `경기당 ${(most.pick / 100).toFixed(2)}명` },
+    { label: "최다 선택", c: most, val: `픽률 ${most.pick.toFixed(1)}%` },
   ];
   return (
     <table className="tbl mt-3">

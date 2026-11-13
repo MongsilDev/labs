@@ -161,6 +161,8 @@ export function scoreRows(rows, rule = RULE) {
   if (rule.bands && rows.every((r) => r.mmr != null)) rows = bandAdjust(rows, rule.bands);
   const base = Object.fromEntries(NAMES.map((name) => [name, rows.reduce((a, r) => a + METRICS[name](r), 0) / rows.length]));
   const games = new Set(rows.map((r) => r.game)).size;
+  // 같은 경기의 같은 순위가 한 팀. 6~8팀 경기가 섞여 있어 팀 수를 직접 셈
+  const teams = new Set(rows.map((r) => `${r.game}:${r.rank}`)).size;
   const combos = [...groupBy(rows, (r) => `${r.char}:${r.weapon}`)].map(([key, rs]) => ({
     char: rs[0].char,
     weapon: rs[0].weapon,
@@ -196,10 +198,10 @@ export function scoreRows(rows, rule = RULE) {
     for (const a of NAMES)
       for (const b of NAMES) v += ((w[a] * w[b] * rho[a + b]) * Math.sqrt(c.m[a].post * c.m[b].post)) / (scale[a].sd * scale[b].sd);
     c.half = (1.645 * rp.sd * Math.sqrt(v)) / mix.sd;
-    // 픽률은 경기당 등장률. 집계 경기는 참가자 전원 행이 있어 등장 수를 경기 수로 바로 나눔
-    c.pick = c.n / games;
+    // 픽률은 등장 수 / 팀 수. 한 팀은 같은 실험체를 둘 고를 수 없어 모든 팀이 고르면 100%
+    c.pick = c.n / teams;
   }
   combos.sort((a, b) => b.score - a.score || b.n - a.n);
   for (const c of combos) delete c.m;
-  return { base: base.gain, games, rows: rows.length, k: ks.gain, ks, within: est.gain.within, between: est.gain.between, combos };
+  return { base: base.gain, games, teams, rows: rows.length, k: ks.gain, ks, within: est.gain.within, between: est.gain.between, combos };
 }
