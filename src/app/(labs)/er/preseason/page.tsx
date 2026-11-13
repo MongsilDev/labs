@@ -160,7 +160,8 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
             <Board list={cobalt.combos} note={(i) => `${cobalt.combos[i].weaponName} ${cobalt.combos[i].name}, 승률 ${cobalt.combos[i].win.toFixed(1)}%`} />
             <How>
               <li>코발트 프로토콜은 4인 두 팀 경기라 순위 없이 승률만 셉니다.</li>
-              <li>등급은 승률의 순위로 나눕니다. S는 위 10%, A는 다음 20%, B는 40%, C는 20%, D는 아래 10%입니다.</li>
+              <li>등급은 승률의 순위로 나눕니다.</li>
+              <li>S는 위 10%, A는 다음 20%, B는 40%, C는 20%, D는 아래 10%입니다.</li>
               <li>판 수가 적은 조합은 승률을 전체 승률 {cobalt.base}% 쪽으로 당겨서 순위를 매깁니다.</li>
               <li>픽률은 팀 가운데 그 실험체와 무기 조합을 고른 팀의 비율입니다.</li>
               <li>승률 칸은 전체 승률과 95% 범위를 넘게 다를 때 칠합니다.</li>
@@ -202,8 +203,9 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                 <h2 className="sec-h">티어리스트</h2>
                 <Board list={tier} note={(i) => `${tier[i].weaponName} ${tier[i].name}, 평균 ${tier[i].place.toFixed(2)}위`} />
                 <How>
-                  {modes.length > 0 && <li>{modes.join("와 ")}를 합쳐 셉니다. 봇은 뺍니다.</li>}
-                  <li>등급은 평균 순위와 TOP 3 비율을 반씩 합친 점수의 순위로 나눕니다. S는 위 10%, A는 다음 20%, B는 40%, C는 20%, D는 아래 10%입니다.</li>
+                  {modes.length > 0 && <li>봇을 뺀 {modes.join("와 ")}를 합쳐 셉니다.</li>}
+                  <li>등급은 평균 순위와 TOP 3 비율을 반씩 합친 점수의 순위로 나눕니다.</li>
+                  <li>S는 위 10%, A는 다음 20%, B는 40%, C는 20%, D는 아래 10%입니다.</li>
                   <li>판 수가 적은 무기는 점수를 같은 실험체의 모든 무기를 합친 점수에 가깝게 맞춥니다.</li>
                   <li>픽률은 사람이 한 명 이상 있는 팀 가운데 그 실험체와 무기 조합을 고른 팀의 비율입니다.</li>
                   <li>승률 칸은 평균 승률 {data.base}%와 95% 범위를 넘게 다를 때 칠합니다.</li>
