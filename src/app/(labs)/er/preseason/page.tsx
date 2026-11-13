@@ -341,7 +341,7 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
 
             {data.armor?.length ? (
               <section className="sec min-w-0">
-                <h2 className="sec-h">신규 방어구<small className="num">경기 종료 때 낀 장비, {n(data.equipGames ?? 0)}경기</small></h2>
+                <h2 className="sec-h">신규 방어구<small className="num">경기가 끝날 때 착용한 장비, {n(data.equipGames ?? 0)}경기</small></h2>
                 <div className="scroll-fade -mx-4 px-4 lg:mx-0 lg:px-0">
                 <table className="tbl snug">
                   <thead>
@@ -350,7 +350,7 @@ export default async function PreseasonPage({ searchParams }: { searchParams: Pr
                       <th className="max-[399px]:hidden">등급</th>
                       <th data-tip="같은 부위에 같은 등급 장비를 쓴 사람 가운데 이 방어구를 쓴 사람의 비율">채용률</th>
                       <th>평균 순위</th>
-                      <th data-tip="같은 부위에 같은 등급의 다른 장비를 낀 사람의 평균 순위">같은 등급 평균</th>
+                      <th data-tip="같은 부위에 같은 등급의 다른 장비를 착용한 사람의 평균 순위">같은 등급 평균</th>
                     </tr>
                   </thead>
                   <tbody>
