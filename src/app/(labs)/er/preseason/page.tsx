@@ -137,9 +137,11 @@ export default async function PreseasonPage() {
         <section className="sec mt-10 min-w-0">
           <h2 className="sec-h">
             시즌 {Number(data.season.name.replace(/\D/g, "")) - 1} 대비
-            <small className="num">{day.format(data.change.from)}~{day.format(data.change.to)} {n(data.change.games)}경기</small>
+            <small className="num">
+              {day.format(data.change.from) === day.format(data.change.to) ? day.format(data.change.from) : `${day.format(data.change.from)}~${day.format(data.change.to)}`} {n(data.change.games)}경기
+            </small>
           </h2>
-          <div className="grid gap-10 lg:grid-cols-2">
+          <div className="grid items-start gap-10 lg:grid-cols-2">
             <Moves head="승률이 오른 실험체" list={data.change.up} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
             <Moves head="승률이 내린 실험체" list={data.change.down} avg={`${data.change.avgThen}%→${data.change.avgNow}%`} />
           </div>
