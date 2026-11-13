@@ -113,8 +113,8 @@ function Moves({ head, list, avg }: { head: string; list: PreMove[]; avg: string
 
 /** 분야 이름. 휴대폰 폭에서는 「공학」을 숨김 */
 const field = (name: string) => {
-  const [head, tail] = name.split(" ");
-  return tail ? <>{head}<span className="max-sm:hidden"> {tail}</span></> : name;
+  const i = name.lastIndexOf(" ");
+  return i < 0 ? name : <>{name.slice(0, i)}<span className="max-sm:hidden">{name.slice(i)}</span></>;
 };
 
 function How({ children }: { children: React.ReactNode }) {
