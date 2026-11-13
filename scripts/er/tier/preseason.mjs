@@ -171,9 +171,10 @@ export function derivePre(rows, season, nm, scan = null) {
         top: [...v.chars]
           .filter(([, a]) => a.n >= WEATHER_CHAR_MIN)
           .map(([key, a]) => ({ ...named(key), ...out(a, v.players) }))
-          // 표본이 적어 범위가 넓은 줄이 위로 오지 않게 95% 범위의 아래 끝으로 줄 세움
+          // 표본이 적어 범위가 넓은 줄이 뽑히지 않게 95% 범위의 아래 끝으로 고른 뒤, 보이는 승률 순으로 다시 세움
           .sort((a, b) => fix1(b.win - b.winCi) - fix1(a.win - a.winCi) || b.n - a.n)
-          .slice(0, WEATHER_TOP),
+          .slice(0, WEATHER_TOP)
+          .sort((a, b) => b.win - a.win || b.n - a.n),
       }))
       .sort((a, b) => b.games - a.games),
     tier: scored && {

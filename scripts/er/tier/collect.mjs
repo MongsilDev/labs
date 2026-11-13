@@ -595,10 +595,10 @@ async function collectPre(s) {
   return { ...r, refilled: abort || r.down ? 0 : await refillPre(s) };
 }
 
-/** 단계 기록과 가젯 횟수를 저장하기 전에 받은 경기를 회차마다 PRE_REFILL개씩 다시 받아 채움 */
+/** 단계 기록, 가젯 횟수, 최종 장비, 크레딧을 저장하기 전에 받은 경기를 회차마다 PRE_REFILL개씩 다시 받아 채움 */
 async function refillPre(s) {
-  const old = pre.prepare(`SELECT DISTINCT game FROM rows WHERE season = ? AND quest IS NULL ORDER BY game LIMIT ?`).all(s.id, PRE_REFILL).map((r) => r.game);
-  const gone = pre.prepare(`UPDATE rows SET quest = '[]' WHERE season = ? AND game = ?`);
+  const old = pre.prepare(`SELECT DISTINCT game FROM rows WHERE season = ? AND (quest IS NULL OR equip IS NULL) ORDER BY game LIMIT ?`).all(s.id, PRE_REFILL).map((r) => r.game);
+  const gone = pre.prepare(`UPDATE rows SET quest = '[]', equip = '[]', robot = 0 WHERE season = ? AND game = ?`);
   let j = 0, refilled = 0;
   await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
     while (!abort && j < old.length) {
@@ -719,9 +719,10 @@ function openPre() {
     CREATE INDEX IF NOT EXISTS rows_season ON rows (season, mode);
     CREATE TABLE IF NOT EXISTS miss (season INTEGER NOT NULL, id INTEGER NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (season, id));
   `);
-  // 실험 과제 단계 기록은 나중에 더한 열이라 예전 행은 NULL
-  if (!pre.prepare(`SELECT 1 FROM pragma_table_info('rows') WHERE name = 'quest'`).get()) pre.exec(`ALTER TABLE rows ADD COLUMN quest TEXT`);
-  putPreRow = pre.prepare(`INSERT OR REPLACE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+  // 실험 과제 단계 기록, 최종 장비, 안내 로봇 크레딧은 나중에 더한 열이라 예전 행은 NULL
+  for (const [col, type] of [["quest", "TEXT"], ["equip", "TEXT"], ["robot", "INTEGER"]])
+    if (!pre.prepare(`SELECT 1 FROM pragma_table_info('rows') WHERE name = ?`).get(col)) pre.exec(`ALTER TABLE rows ADD COLUMN ${col} ${type}`);
+  putPreRow = pre.prepare(`INSERT OR REPLACE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 }
 
 function putPre(s, game, list) {
@@ -745,6 +746,9 @@ function putPreOne(s, game, i, y) {
     y.experimentResultType ?? null, y.crExperimentReward ?? null, y.crExperimentalCredit ?? null,
     JSON.stringify(y.useGadget ?? {}), JSON.stringify(drops), y.guideRobotWeatherObjectCount ?? 0,
     JSON.stringify((y.questStepClear ?? []).map((q) => [q.experimentGroupId, Math.round(q.firstClearElapsedSeconds), q.clearCount])),
+    // 슬롯 0~5 순서의 최종 장비 코드. 빈 슬롯은 0
+    JSON.stringify([0, 1, 2, 3, 4, 5].map((k) => y.equipment?.[k] ?? 0)),
+    y.crGetByGuideRobot ?? 0,
   );
 }
 
