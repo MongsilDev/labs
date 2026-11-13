@@ -1205,11 +1205,12 @@ if (flag("pre-base")) {
       const r = await scanPre({ ...base, deadline: next - 10 * 60_000 });
       log(`직전 시즌과 비교할 경기 번호 ${r.ids}개를 조회해 경기 ${r.games}개를 저장했습니다. 요청 ${stats.sent}, 429 응답 ${stats.limited}, 실패 ${stats.failed}`);
       if (abort || r.down) break;
-      // 끝 번호를 찾는 요청이 실패해도 조회할 번호가 0개로 나오므로, 실패가 없던 묶음만 끝으로 봄
-      if (!r.ids && stats.failed === failed) {
-        // 끝까지 받았을 때만 비교 표를 싣도록 표시를 남김
-        writeFileSync(join(DIR, BASE_DONE), String(base.id));
-        log("직전 시즌과 비교할 경기를 끝까지 받았습니다.");
+      if (!r.ids) {
+        // 끝 번호를 찾는 요청이 실패해도 조회할 번호가 0개로 나오므로, 실패가 없던 묶음만 끝으로 보고 비교 표를 싣도록 표시를 남김
+        if (stats.failed === failed) {
+          writeFileSync(join(DIR, BASE_DONE), String(base.id));
+          log("직전 시즌과 비교할 경기를 끝까지 받았습니다.");
+        } else log("끝 번호를 확인하는 요청이 실패해 멈춥니다. 다시 실행하면 이어서 확인합니다.");
         break;
       }
     }
