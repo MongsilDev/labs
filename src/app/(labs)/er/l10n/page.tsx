@@ -6,7 +6,8 @@ import Live from "@/next/Live";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "l10n", robots: { index: false, follow: false } };
 
-const time = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+// 판 이름(versionLabel)과 같은 YYYY-MM-DD HH:mm
+const time = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 
 function counts(v: L10nVersion): string[] {
   if (!v.from) return [];
