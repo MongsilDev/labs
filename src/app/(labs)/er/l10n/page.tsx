@@ -29,7 +29,7 @@ export default async function L10nPage() {
     <Live user={{ name: me.name, avatar: avatarUrl(me) }}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">l10n</h1>
-        {checked && <p className="num text-[13px] text-ink-3">Korean, {time.format(new Date(checked))} 확인</p>}
+        {checked && <p className="num text-[13px] text-ink-3">{time.format(new Date(checked))} 확인</p>}
       </div>
       {versions.length ? (
         <table className="tbl mt-6">
