@@ -102,8 +102,10 @@ function archiveActivity(sid, todo, now) {
 
 /** 몽실봇 last_ranked_game과 같음. uid와 이 시즌 마지막 랭크 게임 시각. 기록 끝까지 없으면 NO_RECENT, 다 읽지 못하면 UNREADABLE, 실패는 null */
 async function lastRankedGame(name, sid, uid) {
+  const cached = Boolean(uid);
   if (!uid) {
     const data = await get(`/v1/user/nickname?query=${encodeURIComponent(name)}`);
+    if (data === undefined) return [null, null];
     const user = data?.user ?? {};
     uid = user.userId ?? user.uid;
     if (!uid) return [null, null];
@@ -111,6 +113,9 @@ async function lastRankedGame(name, sid, uid) {
   let path = `/v1/user/games/uid/${uid}`;
   for (let i = 0; i < PAGES; i++) {
     const data = await get(path);
+    if (data === undefined) return [uid, null];
+    // 저장해 둔 uid가 무효가 되면 404가 나서 닉네임으로 다시 찾는다
+    if (data === null && i === 0 && cached) return lastRankedGame(name, sid, null);
     const games = data?.userGames ?? [];
     for (const g of games) if (g.matchingMode === 3 && g.seasonId === sid) return [uid, kst(g.startDtm) / 1000];
     if (!games.length || !data.next) return [uid, NO_RECENT];
@@ -204,6 +209,7 @@ await step("collect", () => run("collect", "collect.mjs", []));
 
 status.ms = Date.now() - started;
 status.api = stats;
-writeAtomic(join(TIER, "hourly.json"), JSON.stringify(status));
+// SSD가 붙지 않았을 때 내장 디스크에 TIER 경로를 만들지 않는다
+if (existsSync(TIER)) writeAtomic(join(TIER, "hourly.json"), JSON.stringify(status));
 log(`정각 회차 ${failed ? "일부 실패" : "완료"}, ${Math.round(status.ms / 1000)}초, ${status.steps.map((s) => `${s.name} ${Math.round(s.ms / 1000)}초${s.ok ? "" : " 실패"}`).join(", ")}`);
 if (failed) process.exitCode = 1;

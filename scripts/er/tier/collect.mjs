@@ -53,6 +53,8 @@ const opt = (name, def) => {
   return i >= 0 ? Number(args[i + 1]) : def;
 };
 
+// SSD가 늦게 붙으면 내장 디스크에 같은 경로와 새 키가 생기므로 보관기 DB부터 확인한다
+if (!existsSync(join(ARCHIVE, "games.sqlite"))) throw new Error(`${ARCHIVE}에 games.sqlite가 없습니다. SSD 마운트를 확인하세요.`);
 mkdirSync(DIR, { recursive: true });
 const log = (...a) => console.log(new Date().toLocaleString("sv-SE", { timeZone: "Asia/Seoul" }), ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -108,7 +110,6 @@ db.exec(`
 const getState = (k) => db.prepare(`SELECT v FROM state WHERE k = ?`).get(k)?.v ?? null;
 const setState = db.prepare(`INSERT INTO state VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v`);
 const putSrc = db.prepare(`INSERT OR REPLACE INTO src VALUES (?, ?, ?, ?, ?, ?)`);
-if (!existsSync(join(ARCHIVE, "games.sqlite"))) throw new Error(`${ARCHIVE}에 games.sqlite가 없습니다. SSD 마운트를 확인하세요.`);
 db.prepare(`ATTACH DATABASE ? AS arc`).run(`file:${join(ARCHIVE, "games.sqlite")}?mode=ro`);const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 const getRoute = db.prepare(`SELECT author, title, nick, trait, tac FROM routes WHERE route = ?`);
 const putRoute = db.prepare(`INSERT INTO routes (route, author, version, checked, title, nick, trait, tac) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -457,15 +458,20 @@ function ingest(s) {
   // 보관기가 다음 회차에 다시 받을 번호가 있으면 그 번호부터 다시 훑음
   const pending = getState(`pending:${s.id}`);
   const from = pending != null ? Math.min(lo, pending - 1) : lo;
-  const list = db.prepare(`SELECT game, t, body FROM arc.games WHERE game > ? AND season = ? AND mode = 3 AND game NOT IN (SELECT game FROM src) ORDER BY game`);
+  // 보관기 커서 위의 번호는 장애로 멈춘 묶음일 수 있어 다음 회차에 빠진 번호를 채운 뒤 읽는다
+  const cursor = db.prepare(`SELECT v FROM arc.state WHERE k = 'cursor'`).get()?.v ?? -1;
+  // 경기 뒤 CUT_NEAR 안에 컷 기록이 더 생길 수 있으면 판정을 다음 회차로 미룬다
+  const lastCut = cuts.at(-1)?.[0] ?? -Infinity;
+  const list = db.prepare(`SELECT game, t, body FROM arc.games WHERE game > ? AND game <= ? AND season = ? AND mode = 3 AND game NOT IN (SELECT game FROM src) ORDER BY game`);
   let games = 0, rows = 0, top = 0, unknown = 0, hi = lo;
   let batch = 0;
   db.exec("BEGIN");
   try {
-    for (const g of list.iterate(from, s.id)) {
+    for (const g of list.iterate(from, cursor, s.id)) {
+      const cut = cutAt(cuts, g.t);
+      if (cut == null && lastCut < g.t + CUT_NEAR && Date.now() < g.t + CUT_NEAR) break;
       hi = Math.max(hi, g.game);
       const ys = JSON.parse(brotliDecompressSync(g.body)).userGames ?? [];
-      const cut = cutAt(cuts, g.t);
       const flags = ys.map((y) => in1000Of(y, cut));
       const isTop = cut == null ? null : flags.some((f) => f === 1) ? 1 : 0;
       const mine = ys.filter((y) => tracked.has(y.nickname));
@@ -527,7 +533,7 @@ function cmpPatch(a, b) {
 const selectRows = db.prepare(`SELECT game, player, char, weapon, rank, gain_in AS gain, mmr_before AS mmr, t, patch, in1000, route, tac, trait, gain AS net,
   kills, assists, deaths, damage, monsters FROM rows
   WHERE season = ? AND server = ? AND gain_in IS NOT NULL AND mmr_before IS NOT NULL AND t >= ?
-  AND game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1) ORDER BY t`);
+  AND game IN (SELECT game FROM src WHERE season = ? AND top = 1) ORDER BY t`);
 
 /** 상위 1,000명 행을 루트, 특성, 전술 스킬별로 나눔. [코드, 플레이어 수, 판 수, 평균 RP 획득] */
 function split(rows, key) {
