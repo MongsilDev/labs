@@ -1,4 +1,4 @@
-// 프리 시즌 특집 집계. 수집기가 preseason.sqlite에 모은 행만 읽고 공식 API에는 요청하지 않음
+// 프리 시즌 특집 집계. 보관기 rows(예전에는 preseason.sqlite)와 같은 열의 행만 읽고 공식 API에는 요청하지 않음
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -94,7 +94,7 @@ export function preRow(season, game, i, y) {
   ];
 }
 
-/** rows는 preseason.sqlite rows 행을 game, slot 순서로. nm은 이름 찾기 함수 묶음, scan은 훑은 번호 수와 찾은 경기 수, baseRows는 직전 정규 시즌 비교 경기 */
+/** rows는 보관기 rows와 같은 열의 행을 game, slot 순서로. nm은 이름 찾기 함수 묶음, scan은 훑은 번호 수와 찾은 경기 수, baseRows는 직전 정규 시즌 비교 경기 */
 export function derivePre(rows, season, nm, scan = null, baseRows = []) {
   const x = fresh();
   const tier = [];

@@ -1,4 +1,4 @@
-// 몽실봇 /api/cut 응답. 계산은 봇의 /이터컷과 같고 여기서는 화면용 파생 값만 계산
+// 정각 회차의 cut.json(전환 전에는 몽실봇 /api/cut) 형식. 계산은 scripts/er/tier/etercut.mjs가 하고 여기서는 화면용 파생 값만 계산
 
 export type CutTier = {
   place: number;

@@ -1,5 +1,5 @@
-// 아시아1 in1000 경기 기록 수집과 티어 집계. 호스트에서 실행, 원시 행은 TIER_DIR SQLite, 집계는 TIER_OUT/tier.json
-// 사용: node scripts/er/tier/collect.mjs [--measure] [--rps 10] [--days 7] [--every 180] [--once] [--rebuild]
+// 보관기 DB(ARCHIVE_DIR/games.sqlite)의 랭크 경기로 아시아1 in1000 행을 쌓고 티어, RP 손익, 막판, 실험실 집계를 씀. 경기는 받지 않음
+// 사용: node scripts/er/tier/collect.mjs [--publish] [--rps 10]. 정각 회차(hourly.mjs)가 보관기 다음에 띄움
 import { createHmac, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -7,10 +7,9 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
 import { dakStopped } from "./dakstop.mjs";
-import { renameSteps } from "./renames.mjs";
 import { derive, writeDerived } from "./derive.mjs";
 import { Pace, botLast429 } from "./pace.mjs";
-import { BASE_DONE, baseReady, derivePre, preRow, writePre } from "./preseason.mjs";
+import { derivePre, writePre } from "./preseason.mjs";
 import { RULE, scoreRows } from "./score.mjs";
 import { topView, writeTop } from "./top.mjs";
 
@@ -18,6 +17,11 @@ const HOME = homedir();
 const DIR = process.env.TIER_DIR || "/Volumes/SSD/ertier/live";
 const OUT = process.env.TIER_OUT || join(HOME, "docker/_data/labs/er-tier");
 const BOT = process.env.BOT_DIR || join(HOME, "docker/mongsil-bot");
+const ARCHIVE = process.env.ARCHIVE_DIR || "/Volumes/SSD/ertier/archive";
+// 정각 회차가 쓰는 순위 스냅숏, 이터컷 상태, 순위표. 닉네임이 들어 있어 labs 화면 경로 밖에 둠
+const SNAPSHOTS = process.env.CUT_SNAPSHOTS || join(BOT, "data/labs/rank_snapshots.jsonl");
+const CUT_STATE = process.env.CUT_STATE || join(BOT, "data/labs/rank_history.json");
+const TOP_FILE = process.env.CUT_TOP || join(BOT, "data/labs/top.json");
 // TIER_API는 사본 DB 시험에서 가짜 서버를 쓰려고 바꾸는 값
 const API = process.env.TIER_API || "https://open-api.bser.io";
 const SERVER = "Asia";
@@ -29,9 +33,6 @@ const AUTHOR_BADGE = [
   [1000, "d"],
 ];
 const PUBLISH_ROWS = Number(process.env.TIER_PUBLISH_ROWS || 15000);
-const MAX_PAGES = 80;
-const STEPS = [5, 10, 20, 30, 50];
-const STEP_MS = 60_000;
 const WINDOWS = [7];
 // 패치와 상관없이 날짜로 세는 기간. 수집 기간이 모자라면 탭을 숨김
 const SPANS = [28, 14];
@@ -45,8 +46,6 @@ const WEAPON = {
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(`--${name}`);
-// 이미 받은 최신 경기에서 멈추지 않고 since까지 거슬러 받음
-const BACKFILL = flag("backfill");
 // 수집 없이 DB에 있는 행으로 tier.json만 다시 씀
 const PUBLISH_ONLY = flag("publish");
 const opt = (name, def) => {
@@ -85,39 +84,32 @@ db.exec(`
 // route와 tac은 11-09, 경기 지표 세 열은 11-10에 더한 열. 기존 행은 --rebuild가 raw에서 채움
 const rowCols = new Set(db.prepare(`PRAGMA table_info(rows)`).all().map((c) => c.name));
 for (const c of ["route", "tac", "assists", "deaths", "monsters"]) if (!rowCols.has(c)) db.exec(`ALTER TABLE rows ADD COLUMN ${c} INTEGER`);
-// mmr은 11-12에 더한 열. 마지막으로 경기 목록을 끝까지 받은 회차의 rank/top RP이고, 다음 회차 RP가 같으면 그 계정은 요청하지 않음
-if (!db.prepare(`PRAGMA table_info(accounts)`).all().some((c) => c.name === "mmr")) db.exec(`ALTER TABLE accounts ADD COLUMN mmr INTEGER`);
 // 작성자 닉네임은 게임 안 루트 목록에서 공개되는 값이라 이 표에만 평문으로 둠. 경기 원본과 rows는 playerId
 const routeCols = new Set(db.prepare(`PRAGMA table_info(routes)`).all().map((c) => c.name));
 for (const [c, t] of [["title", "TEXT"], ["nick", "TEXT"], ["trait", "INTEGER"], ["tac", "INTEGER"]]) if (!routeCols.has(c)) db.exec(`ALTER TABLE routes ADD COLUMN ${c} ${t}`);
-// /v1/games 응답 원본. 경기마다 한 번만 받고 쓸 값은 여기서 다시 고름
+// 루트 recommend 응답 원본. raw.games는 11-19까지 계정 수집기가 쓰던 표라 더 쓰지 않음
 db.prepare(`ATTACH DATABASE ? AS raw`).run(join(DIR, "raw.sqlite"));
 db.exec(`
   PRAGMA raw.journal_mode = WAL;
-  CREATE TABLE IF NOT EXISTS raw.games (game INTEGER PRIMARY KEY, season INTEGER NOT NULL, t INTEGER NOT NULL, n INTEGER NOT NULL, body BLOB NOT NULL);
   CREATE TABLE IF NOT EXISTS raw.routes (route INTEGER PRIMARY KEY, t INTEGER NOT NULL, body BLOB NOT NULL);
 `);
 // recommend가 404인 루트를 dak.gg에서 받은 값. 모든 칸이 null인 행은 dak.gg에도 없던 루트라 다시 묻지 않음
 db.exec(`CREATE TABLE IF NOT EXISTS dak_routes (route INTEGER PRIMARY KEY, t INTEGER NOT NULL, title TEXT, nick TEXT, trait INTEGER, tac INTEGER)`);
 // body는 11-12에 더한 dak.gg weaponRoute 원본(userNum 뺌). 이 열이 빈 옛 행은 아이템과 지역을 받으려고 한 번 다시 물음
 if (!db.prepare(`PRAGMA table_info(dak_routes)`).all().some((c) => c.name === "body")) db.exec(`ALTER TABLE dak_routes ADD COLUMN body BLOB`);
-// 닉네임 평문이라 화면, tier.json, cdn으로 내보내지 않음
-db.exec(`CREATE TABLE IF NOT EXISTS renames (old TEXT NOT NULL, new TEXT NOT NULL, old_last INTEGER NOT NULL, new_first INTEGER NOT NULL, seen INTEGER NOT NULL, PRIMARY KEY (old, new, new_first))`);
-const putRename = db.prepare(`INSERT OR IGNORE INTO renames VALUES (?, ?, ?, ?, ?)`);
-const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
-const fillRow = db.prepare(`UPDATE rows SET route = coalesce(route, ?), tac = coalesce(tac, ?), assists = coalesce(assists, ?), deaths = coalesce(deaths, ?), monsters = coalesce(monsters, ?)
-  WHERE game = ? AND player = ? AND (route IS NULL OR assists IS NULL)`);
-/** 원본 한 사람분으로 뒤에 더한 열이 빈 행을 채우고 바뀐 행 수를 돌려줌 */
-const fill = (y, game, player) =>
-  Number(fillRow.run(y.routeIdOfStart ?? null, y.tacticalSkillGroup ?? null, y.playerAssistant ?? null, y.playerDeaths ?? null, y.monsterKill ?? null, game, player).changes);
-const getAccount = db.prepare(`SELECT newest, checked, mmr FROM accounts WHERE player = ?`);
-const openGames = db.prepare(`SELECT game, max(coalesce(in1000, 0)) AS top FROM rows
-  WHERE season = ? AND t >= ? AND game NOT IN (SELECT game FROM raw.games) GROUP BY game ORDER BY max(t) DESC`);
-const putRaw = db.prepare(`INSERT OR REPLACE INTO raw.games VALUES (?, ?, ?, ?, ?)`);
-// 원본을 저장한 뒤 상위 1,000명이 새로 들어와 참가자 행이 모자란 경기
-const shortGames = db.prepare(`SELECT g.game, g.body FROM raw.games g
-  WHERE g.season = ? AND g.t >= ? AND g.game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1)
-  AND g.n > (SELECT count(*) FROM rows x WHERE x.game = g.game)`);
+// 닉네임 변경 기록은 그만두기로 함(510-1)
+db.exec(`DROP TABLE IF EXISTS renames`);
+// 보관기에서 읽은 랭크 경기. top은 상위 1,000명 참가 여부(컷을 모르면 NULL), sample은 순위표에 오른 닉네임 참가 여부, body는 RP 손익 집계용 필드만
+db.exec(`
+  CREATE TABLE IF NOT EXISTS src (game INTEGER PRIMARY KEY, season INTEGER NOT NULL, t INTEGER NOT NULL, top INTEGER, sample INTEGER NOT NULL, body BLOB);
+  CREATE INDEX IF NOT EXISTS src_season ON src (season, sample);
+  CREATE TABLE IF NOT EXISTS state (k TEXT PRIMARY KEY, v INTEGER);
+`);
+const getState = (k) => db.prepare(`SELECT v FROM state WHERE k = ?`).get(k)?.v ?? null;
+const setState = db.prepare(`INSERT INTO state VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v`);
+const putSrc = db.prepare(`INSERT OR REPLACE INTO src VALUES (?, ?, ?, ?, ?, ?)`);
+if (!existsSync(join(ARCHIVE, "games.sqlite"))) throw new Error(`${ARCHIVE}에 games.sqlite가 없습니다. SSD 마운트를 확인하세요.`);
+db.prepare(`ATTACH DATABASE ? AS arc`).run(`file:${join(ARCHIVE, "games.sqlite")}?mode=ro`);const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 const getRoute = db.prepare(`SELECT author, title, nick, trait, tac FROM routes WHERE route = ?`);
 const putRoute = db.prepare(`INSERT INTO routes (route, author, version, checked, title, nick, trait, tac) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(route) DO UPDATE SET author = excluded.author, version = excluded.version, checked = excluded.checked,
@@ -133,12 +125,10 @@ const getDak = db.prepare(`SELECT title, nick, trait, tac, body FROM dak_routes 
 const putDak = db.prepare(`INSERT OR REPLACE INTO dak_routes (route, t, title, nick, trait, tac, body) VALUES (?, ?, ?, ?, ?, ?, ?)`);
 const markDak = db.prepare(`UPDATE dak_routes SET t = ?, body = ? WHERE route = ?`);
 const rankRoute = db.prepare(`UPDATE routes SET author_rank = ? WHERE route = ?`);
-const putAccount = db.prepare(`INSERT INTO accounts (player, newest, checked, mmr) VALUES (?,?,?,?) ON CONFLICT(player) DO UPDATE SET newest = max(coalesce(newest, 0), excluded.newest), checked = excluded.checked, mmr = excluded.mmr`);
 
-const stats = { sent: 0, ok: 0, limited: 0, failed: 0, skipped: 0, renames: 0, lat: [] };
-const RATE = join(DIR, "rate.json");
-const measured = existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : null;
-const pace = new Pace(opt("rps", measured?.rps ?? 2));
+const stats = { sent: 0, ok: 0, limited: 0, failed: 0, lat: [] };
+// 경기는 보관기가 받아서 이 수집기는 메타, 순위표, 새 루트만 요청함
+const pace = new Pace(opt("rps", 10));
 let abort = null;
 
 async function get(path) {
@@ -207,25 +197,34 @@ async function season() {
 /** 매시 순위 스냅숏의 place위 RP. [시각 ms, RP] 오름차순 */
 function cutSeries(seasonId, place = 1000) {
   const out = [];
-  for (const line of readFileSync(join(BOT, "data/rank_snapshots.jsonl"), "utf8").split("\n")) {
+  if (!existsSync(SNAPSHOTS)) return out;
+  for (const line of readFileSync(SNAPSHOTS, "utf8").split("\n")) {
     if (!line) continue;
     const s = JSON.parse(line);
-    if (s.s !== seasonId || !Array.isArray(s.rp) || s.rp.length < 1000) continue;
-    out.push([s.t * 1000, [...s.rp].sort((a, b) => b - a)[place - 1]]);
+    if (s.s !== seasonId || !Array.isArray(s.rp)) continue;
+    // 순위표 인원이 place보다 적으면 그 순위가 없어 8,300 이상이면 모두 상위권으로 셈
+    out.push([s.t * 1000, s.rp.length < place ? RANKED_GATE : [...s.rp].sort((a, b) => b - a)[place - 1]]);
   }
   return out.sort((a, b) => a[0] - b[0]);
 }
 
+// 경기 시작 전 이만큼 안의 마지막 기록, 없으면 시작 뒤 이만큼 안의 첫 기록을 컷으로 씀
+const CUT_NEAR = 6 * 3600_000;
+
+/** 시각 t의 컷. 앞뒤 CUT_NEAR 안에 기록이 없으면 null */
 function cutAt(series, t) {
   let lo = 0;
-  let hi = series.length - 1;
-  if (hi < 0 || series[0][0] > t) return null;
+  let hi = series.length;
   while (lo < hi) {
-    const mid = (lo + hi + 1) >> 1;
-    if (series[mid][0] <= t) lo = mid;
-    else hi = mid - 1;
+    const mid = (lo + hi) >> 1;
+    if (series[mid][0] <= t) lo = mid + 1;
+    else hi = mid;
   }
-  return series[lo][1];
+  const before = series[lo - 1];
+  if (before && t - before[0] <= CUT_NEAR) return before[1];
+  const after = series[lo];
+  if (after && after[0] - t <= CUT_NEAR) return after[1];
+  return null;
 }
 
 async function names() {
@@ -278,31 +277,21 @@ async function names() {
   };
 }
 
-/** 지금 1000명과 since 뒤 1000위 안에 든 적 있는 계정. 닉네임은 uid를 찾는 데만 쓰고 저장하지 않음 */
+/** 정각 회차가 받은 순위표. 오버레이 1위, 루트 작성자 배지, RP 손익 표본에 씀 */
 let topRanks = [];
-async function accounts(s, since) {
-  const top = (await get(`/v1/rank/top/${s.id}/3/10`))?.topRanks ?? [];
-  topRanks = top;
-  let book = {};
-  try {
-    const b = JSON.parse(readFileSync(join(BOT, "data/rank_history.json"), "utf8"));
-    if (b.players?.season === s.id) book = b.players.list ?? {};
-  } catch {}
-  const mmr = new Map(top.map((x) => [x.nickname, x.mmr == null ? null : Number(x.mmr)]));
-  const names = new Set(mmr.keys());
-  for (const [name, v] of Object.entries(book)) if (v[3] && v[3] * 1000 >= since) names.add(name);
-  return [...names].map((name) => ({ name, uid: book[name]?.[6] ?? null, mmr: mmr.get(name) ?? null }));
+
+/** 경기 시작 때 RP가 그 시각 1,000위 컷과 8,300 가운데 큰 값 이상이면 1. 컷을 모르면 null */
+function in1000Of(y, cut) {
+  return cut == null || y.mmrBefore == null ? null : y.mmrBefore >= Math.max(cut, RANKED_GATE) ? 1 : 0;
 }
 
 /** 경기 기록 한 사람분을 행으로 넣고 넣은 행 수를 돌려줌 */
-function insertGame(s, y, cuts, player) {
-  if (y.matchingMode !== 3 || y.seasonId !== s.id) return 0;
-  const who = y.nickname ? playerId(s.id, y.nickname) : player;
-  if (!who) return 0;
+function insertGame(s, y, cut) {
+  if (y.matchingMode !== 3 || y.seasonId !== s.id || !y.nickname) return 0;
+  const who = playerId(s.id, y.nickname);
   const t = kst(y.startDtm);
   const patch = `${s.number}.${y.versionMajor}${y.versionMinor ? `.${y.versionMinor}` : ""}`;
-  const cut = cutAt(cuts, t);
-  const in1000 = cut == null || y.mmrBefore == null ? null : y.mmrBefore >= Math.max(cut, RANKED_GATE) ? 1 : 0;
+  const in1000 = in1000Of(y, cut);
   const r = insertRow.run(
     y.gameId, who, s.id, t, patch, y.characterNum, y.bestWeapon, y.traitFirstCore ?? null, y.gameRank,
     y.mmrGainInGame ?? null, y.mmrLossEntryCost ?? null, y.mmrGain ?? null, y.mmrBefore ?? null,
@@ -312,25 +301,9 @@ function insertGame(s, y, cuts, player) {
   return Number(r.changes);
 }
 
-/** 닉네임을 playerId로 바꿈. 11-09 원본 확인에서 닉네임을 담은 필드는 nickname과 처치자 killDetail 세 개뿐 */
-function scrub(season, list) {
-  const ids = new Map(list.filter((y) => y.nickname).map((y) => [y.nickname, playerId(season, y.nickname)]));
-  return list.map(({ nickname, ...rest }) => {
-    // 금지구역 처치는 killDetail에 지역 이름이 들어 있어 그대로 둠. 기록이 빠진 참가자에게 처치된 경우도 바꿈
-    for (const [k, d] of [["killer", "killDetail"], ["killer2", "killDetail2"], ["killer3", "killDetail3"]]) {
-      if (rest[k] === "player" && typeof rest[d] === "string" && rest[d]) rest[d] = ids.get(rest[d]) ?? playerId(season, rest[d]);
-    }
-    return { player: nickname ? ids.get(nickname) : null, ...rest };
-  });
-}
-
 function pack(value) {
   const json = Buffer.from(JSON.stringify(value));
   return brotliCompressSync(json, { params: { [zlib.BROTLI_PARAM_QUALITY]: 9, [zlib.BROTLI_PARAM_SIZE_HINT]: json.length } });
-}
-
-function saveRaw(s, game, list) {
-  putRaw.run(game, s.id, list[0] ? kst(list[0].startDtm) : 0, list.length, pack(scrub(s.id, list)));
 }
 
 /** 루트 응답의 traitCodes 첫 값이 핵심 특성 */
@@ -438,363 +411,105 @@ async function fetchDak(ids) {
   log(`dak.gg에 루트 ${queue.length}개의 정보를 요청해 ${saved}개를 저장했습니다`);
 }
 
-/** rows에 있고 raw에 없는 경기를 받아 원본을 남김. 상위 1,000명이 참가한 경기는 빠진 참가자 행도 넣고, 있던 행은 루트와 전술 스킬을 채움 */
-async function fillGames(s, cuts) {
-  // TIER_FILL_MAX는 사본 DB로 시험할 때 받을 경기 수를 줄이는 값
-  const since = Math.max(s.start, Date.now() - KEEP_DAYS * 86_400_000);
-  const queue = openGames.all(s.id, since).slice(0, Number(process.env.TIER_FILL_MAX) || undefined);
-  const total = queue.length;
-  let added = 0;
-  let saved = 0;
-  const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
-    while (!abort) {
-      const x = queue.shift();
-      if (!x) return;
-      const g = await get(`/v1/games/${x.game}`);
-      if (g === undefined) continue;
-      const list = g?.userGames ?? [];
-      if (x.top) for (const y of list) added += insertGame(s, y, cuts, null);
-      for (const y of list) if (y.nickname) fill(y, x.game, playerId(s.id, y.nickname));
-      saveRaw(s, x.game, list);
-      saved++;
-    }
-  });
-  await Promise.all(workers);
-  if (!abort) {
-    for (const r of shortGames.all(s.id, since, s.id)) for (const y of JSON.parse(brotliDecompressSync(r.body))) added += insertGame(s, y, cuts, y.player);
-  }
-  log(`경기 ${total}개 가운데 ${saved}개의 원본을 저장했고, 상위 1,000명 경기에서 빠진 참가자 ${added}행을 추가했습니다`);
-  return { games: total, saved, added };
-}
-
-/** API 없이 raw만 읽어 route, tac, 경기 지표가 빈 행을 채움 */
-function rebuild() {
-  let n = 0;
-  db.exec("BEGIN");
-  for (const r of db.prepare(`SELECT game, body FROM raw.games`).iterate()) {
-    for (const y of JSON.parse(brotliDecompressSync(r.body))) if (y.player) n += fill(y, r.game, y.player);
-  }
-  let r = 0;
-  for (const x of db.prepare(`SELECT route, body FROM raw.routes`).iterate()) {
-    const w = JSON.parse(brotliDecompressSync(x.body)).route;
-    if (!w) continue;
-    keepRoute(x.route, w);
-    r++;
-  }
-  db.exec("COMMIT");
-  log(`raw에서 루트, 전술 스킬, 경기 지표 ${n}행과 루트 정보 ${r}개를 채웠습니다`);
-}
-
-async function collectAccount(s, acc, since, cuts, stop, measure) {
-  const player = playerId(s.id, acc.name);
-  const prev = getAccount.get(player);
-  // 랭크 경기를 하면 RP가 바뀌므로 지난번에 끝까지 받은 뒤 RP가 같은 계정은 건너뜀. 순 변화가 0인 판을 놓치지 않게 하루에 한 번은 받음
-  // 종료 뒤에는 수집하지 않아 늦게 반영된 판을 되찾을 수 없으므로 시즌 마지막 하루는 건너뛰지 않음
-  if (!BACKFILL && !measure && s.end - Date.now() > 86_400_000 && acc.mmr != null && prev?.mmr === acc.mmr && prev.checked > Date.now() - 86_400_000) {
-    stats.skipped++;
-    return 0;
-  }
-  let uid = acc.uid;
-  if (!uid) uid = (await get(`/v1/user/nickname?query=${encodeURIComponent(acc.name)}`))?.user?.userId;
-  if (!uid) return 0;
-  const newest = prev?.newest ?? 0;
-  let path = `/v1/user/games/uid/${uid}`;
-  let added = 0;
-  let top = newest;
-  let complete = false;
-  // 마지막 랭크 경기 뒤 RP. rank/top RP와 같을 때만 저장해, 목록에 아직 안 올라온 판이 있으면 다음 회차에 다시 받음
-  let after;
-  let last = null;
-  for (let page = 0; !abort && !stop(); page++) {
-    if (page === MAX_PAGES) {
-      complete = true;
-      break;
-    }
-    const g = await get(path);
-    if (g === undefined) break;
-    const list = g?.userGames ?? [];
-    if (page === 0) after = Number(list.find((y) => y.matchingMode === 3 && y.seasonId === s.id)?.mmrAfter);
-    let done = !g?.next || !list.length;
-    const seen = [];
-    for (const y of list) {
-      const t = kst(y.startDtm);
-      seen.push({ nickname: y.nickname, t });
-      if (t < since || (!BACKFILL && t <= newest)) {
-        // 멈춘 판도 변경 감지에는 넣어야 지난 회차와 이번 회차 사이에 바뀐 이름을 놓치지 않음
-        done = true;
-        break;
-      }
-      top = Math.max(top, t);
-      added += insertGame(s, y, cuts, player);
-    }
-    const r = renameSteps(seen, last);
-    last = r.last;
-    for (const x of r.steps) stats.renames += Number(putRename.run(x.old, x.new, x.oldLast, x.newFirst, Date.now()).changes);
-    if (done) {
-      complete = true;
-      break;
-    }
-    path = `/v1/user/games/uid/${uid}?next=${g.next}`;
-  }
-  // 중간에 끊긴 계정은 다음 실행에서 처음부터 다시 받음. checked와 mmr도 끝까지 받았을 때만 바꿈
-  const ok = complete && acc.mmr != null && after === acc.mmr;
-  putAccount.run(player, complete ? top : newest, complete ? Date.now() : (prev?.checked ?? 0), ok ? acc.mmr : complete ? null : (prev?.mmr ?? null));
-  return added;
-}
-
-/** 경기 번호 id부터 위로 열 개 안에서 처음 조회되는 경기의 시작 시각. 없으면 null */
-async function gameAt(id) {
-  for (let k = 0; k < 10 && !abort; k++) {
-    const y = (await get(`/v1/games/${id + k}`))?.userGames?.[0];
-    if (y) return { id: id + k, t: kst(y.startDtm) };
-  }
-  return null;
-}
-
-/** lo와 hi 사이에서 시작 시각이 t 이하인 마지막 경기 번호 */
-async function idBefore(t, lo, hi) {
-  while (hi - lo > 20 && !abort) {
+/** 보관기에서 시작 시각이 t 이상인 첫 경기 번호. 번호와 시작 시각이 대체로 함께 늘어서 이분 탐색으로 찾음 */
+function gameIdAt(t) {
+  const first = db.prepare(`SELECT game, t FROM arc.games WHERE game >= ? ORDER BY game LIMIT 1`);
+  let lo = db.prepare(`SELECT min(game) AS g FROM arc.games`).get().g;
+  let hi = db.prepare(`SELECT max(game) AS g FROM arc.games`).get().g;
+  if (lo == null) return null;
+  while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2);
-    const g = await gameAt(mid);
-    if (g && g.t <= t) lo = g.id;
+    const g = first.get(mid);
+    if (g.t < t) lo = g.game + 1;
     else hi = mid;
   }
   return lo;
 }
 
+// RP 손익과 막판 집계(derive.mjs)가 읽는 필드
+const DERIVE_KEYS = [
+  "matchingMode", "versionMajor", "versionMinor", "matchSize", "serverName", "gameRank", "characterNum", "bestWeapon",
+  "duration", "mmrBefore", "mmrGain", "mmrLossEntryCost", "teamKill", "startDtm",
+];
+const ARC_MISS_MAX = 3;
+// 번호가 시작 시각 순서와 조금 어긋나도 시즌 첫 경기를 놓치지 않게 앞으로 넉넉히 잡는 번호 수
+const START_MARGIN = 20_000;
+const INGEST_BATCH = 500;
+
 /**
- * 프리 시즌의 모든 경기를 경기 번호 순서대로 빠짐없이 조회해 13.0 신규 기능 필드만 preseason.sqlite에 모음.
- * 프리 시즌 순위표가 없어 계정 대신 경기 번호로 찾음. 닉네임과 uid는 저장하지 않고, 티어 행과 경기 원본도 만들지 않음
+ * 보관기에 새로 들어온 이 시즌 랭크 경기를 한 번씩 읽음. 상위 1,000명이 참가한 경기는 참가자 전원,
+ * 순위표에 오른 닉네임만 참가한 경기는 그 사람 행만 넣음. RP 손익 표본은 순위표에 오른 닉네임이 참가한 경기(510-2)
  */
-async function collectPre(s) {
-  const r = await scanPre(s);
-  // 기준 번호조차 못 받은 회차는 API 장애로 보고 다시 받기도 건너뜀
-  return { ...r, refilled: abort || r.down ? 0 : await refillPre(s) };
-}
-
-/** 단계 기록, 가젯 횟수, 최종 장비, 크레딧을 저장하기 전에 받은 경기를 회차마다 PRE_REFILL개씩 다시 받아 채움 */
-async function refillPre(s) {
-  const old = pre.prepare(`SELECT DISTINCT game FROM rows WHERE season = ? AND (quest IS NULL OR equip IS NULL) ORDER BY game LIMIT ?`).all(s.id, PRE_REFILL).map((r) => r.game);
-  const gone = pre.prepare(`UPDATE rows SET quest = coalesce(quest, '[]'), equip = coalesce(equip, '[]'), robot = coalesce(robot, 0) WHERE season = ? AND game = ?`);
-  let j = 0, refilled = 0;
-  await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
-    while (!abort && j < old.length) {
-      const id = old[j++];
-      const body = await get(`/v1/games/${id}`);
-      const list = body?.userGames ?? [];
-      if (list.length) {
-        if (putPre(s, id, list)) refilled++;
-      } else if (body === null || body?.code === 200) {
-        // 더는 조회되지 않는 경기는 빈 기록으로 두어 다음 회차가 다시 고르지 않게 함
-        gone.run(s.id, id);
-      }
-    }
-  }));
-  return refilled;
-}
-
-async function scanPre(s) {
-  // 같은 키를 쓰는 몽실봇 몫을 남기려고 한도 50보다 낮춤
-  pace.set(Math.min(pace.rps, PRE_RPS));
-  // 끝난 지 한 시간이 안 된 번호에는 아직 진행 중인 경기가 섞여 있어 다음 회차로 미룸
-  const until = Math.min(Date.now() - 60 * 60_000, s.end);
-  const state = pre.prepare(`SELECT hi, ids, found FROM scan WHERE season = ?`).get(s.id) ?? { hi: 0, ids: 0, found: 0 };
-  // 위쪽 기준은 지난 시즌 상위권의 가장 최근 경기 번호
-  let seed = 0;
-  for (const x of ((await get(`/v1/rank/top/${s.prev}/3/10`))?.topRanks ?? []).slice(0, 3)) {
-    const uid = (await get(`/v1/user/nickname?query=${encodeURIComponent(x.nickname)}`))?.user?.userId;
-    for (const y of (uid && (await get(`/v1/user/games/uid/${uid}`))?.userGames) || []) seed = Math.max(seed, y.gameId);
-  }
-  const empty = { games: 0, ids: 0 };
-  if (!seed) return { ...empty, down: true };
-  // 처음 회차는 시즌 시작 직전 번호를 찾음. 하루 약 4만 번호가 쓰여 50만 번호 아래에서 시작함
-  const lo = state.hi || (await idBefore(s.start, seed - 500_000, seed));
-  // 상위권이 한동안 게임을 하지 않았으면 기준 번호가 오래돼 있어 until을 넘는 번호가 나올 때까지 위로 넓힘
-  let top = seed;
-  for (let step = 2000; !abort; step *= 2) {
-    const g = await gameAt(top + step);
-    if (!g || g.t > until) {
-      top += step;
-      break;
-    }
-    top = g.id;
-  }
-  // deadline이 있으면 그 3분 전까지 지금 속도로 받을 수 있는 만큼만 맡음
-  const room = s.deadline ? Math.floor(((pace.rps * (s.deadline - Date.now() - 3 * 60_000)) / 1000) * 0.8) : Infinity;
-  const hi = Math.min(await idBefore(until, lo, top), lo + PRE_MAX_IDS, lo + Math.max(0, room));
-  if (hi <= lo || abort) return empty;
-  let next = lo + 1;
-  let games = 0;
-  // 받지 못했거나 저장하지 못한 번호. 회차 끝에 한 번 더 시도함
-  const misses = new Set();
-  const take = (id, body) => {
-    if (body === undefined) return false;
-    const list = body?.userGames ?? [];
-    // 일반 경기는 seasonId가 0이라 시작 시각으로 프리 시즌 경기를 가림
-    if (!list.length || kst(list[0].startDtm) < s.start) return true;
-    if (!putPre(s, id, list)) return false;
-    games++;
-    return true;
-  };
-  const workers = Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
-    while (!abort && next <= hi && !(s.deadline && Date.now() > s.deadline)) {
-      const id = next++;
-      if (!take(id, await get(`/v1/games/${id}`))) misses.add(id);
-    }
-  });
-  await Promise.all(workers);
-  // 누락이 많으면 장애로 보고 재시도 없이 다음 회차에 맡김
-  if (misses.size <= PRE_RETRY_MAX) {
-    const retry = [...misses];
-    let k = 0;
-    await Promise.all(Array.from({ length: Math.max(4, Math.ceil(pace.rps)) }, async () => {
-      while (!abort && k < retry.length && !(s.deadline && Date.now() > s.deadline)) {
-        const id = retry[k++];
-        if (take(id, await get(`/v1/games/${id}`))) misses.delete(id);
-      }
-    }));
-  }
-  // 범위를 막는 가장 낮은 번호만 실패 횟수를 셈. PRE_MISS_MAX회 연속 실패하면 그 번호만 건너뜀
-  let stuck = Infinity;
-  if (!abort) {
-    const low = [...misses].sort((x, y) => x - y);
-    const n = low.length ? (pre.prepare(`SELECT n FROM miss WHERE season = ? AND id = ?`).get(s.id, low[0])?.n ?? 0) + 1 : 0;
-    pre.exec("BEGIN");
-    pre.prepare(`DELETE FROM miss WHERE season = ?`).run(s.id);
-    if (low.length) pre.prepare(`INSERT INTO miss VALUES (?, ?, ?)`).run(s.id, low[0], n);
-    pre.exec("COMMIT");
-    if (n >= PRE_MISS_MAX) log(`경기 번호 ${low[0]}의 자료를 ${n}회 연속 받지 못해 건너뜁니다.`);
-    stuck = (n >= PRE_MISS_MAX ? low[1] : low[0]) ?? Infinity;
-  }
-  // 마감으로 멈췄으면 아직 꺼내지 않은 번호부터 다음에 받음
-  const done = Math.min(hi, next - 1, stuck - 1);
-  if (!abort && done > lo) {
-    const found = pre.prepare(`SELECT COUNT(DISTINCT game) AS n FROM rows WHERE season = ?`).get(s.id).n;
-    pre.prepare(`INSERT INTO scan VALUES (?, ?, ?, ?) ON CONFLICT(season) DO UPDATE SET hi = excluded.hi, ids = excluded.ids, found = excluded.found`)
-      .run(s.id, done, state.ids + done - lo, found);
-  }
-  return { games, ids: hi - lo };
-}
-
-const PRE_RPS = 40;
-const PRE_REFILL = 10_000;
-const PRE_TAIL = 6 * 3600_000;
-const PRE_MISS_MAX = 3;
-const PRE_RETRY_MAX = 200;
-// 한 회차가 너무 길어지지 않게 조회할 번호 수의 상한. 넘으면 다음 회차가 이어서 조회함
-const PRE_MAX_IDS = 40_000;
-let pre = null;
-let putPreRow = null;
-function openPre() {
-  pre = new DatabaseSync(join(DIR, "preseason.sqlite"));
-  pre.exec(`
-    PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS scan (season INTEGER PRIMARY KEY, hi INTEGER NOT NULL, ids INTEGER NOT NULL, found INTEGER NOT NULL);
-    CREATE TABLE IF NOT EXISTS rows (
-      game INTEGER NOT NULL, slot INTEGER NOT NULL, season INTEGER NOT NULL, t INTEGER NOT NULL, mode INTEGER NOT NULL, server TEXT,
-      team INTEGER, rank INTEGER, char INTEGER, weapon INTEGER, bot INTEGER, weather INTEGER,
-      exp TEXT, exp_reward INTEGER, exp_credit INTEGER, gadgets TEXT, drops TEXT, lumi INTEGER,
-      PRIMARY KEY (game, slot)
-    );
-    CREATE INDEX IF NOT EXISTS rows_season ON rows (season, mode);
-    CREATE TABLE IF NOT EXISTS miss (season INTEGER NOT NULL, id INTEGER NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (season, id));
-  `);
-  // 실험 과제 단계 기록, 최종 장비, 안내 로봇 크레딧은 나중에 더한 열이라 예전 행은 NULL
-  for (const [col, type] of [["quest", "TEXT"], ["equip", "TEXT"], ["robot", "INTEGER"]])
-    if (!pre.prepare(`SELECT 1 FROM pragma_table_info('rows') WHERE name = ?`).get(col)) pre.exec(`ALTER TABLE rows ADD COLUMN ${col} ${type}`);
-  putPreRow = pre.prepare(`INSERT OR REPLACE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
-}
-
-function putPre(s, game, list) {
-  pre.exec("BEGIN");
+function ingest(s) {
+  const cuts = cutSeries(s.id);
+  const tracked = new Set(topRanks.map((x) => x.nickname).filter(Boolean));
   try {
-    list.forEach((y, i) => putPreOne(s, game, i, y));
-    pre.exec("COMMIT");
-    return true;
-  } catch (e) {
-    pre.exec("ROLLBACK");
-    log(`프리 시즌 경기 ${game}을 저장하지 못했습니다: ${e.message}`);
-    return false;
+    const st = JSON.parse(readFileSync(CUT_STATE, "utf8"));
+    if (st.players?.season === s.id) for (const name of Object.keys(st.players.list ?? {})) tracked.add(name);
+  } catch {}
+  const key = `ingest:${s.id}`;
+  let lo = getState(key);
+  if (lo == null) {
+    const first = gameIdAt(s.start);
+    if (first == null) return { games: 0, rows: 0, top: 0, unknown: 0 };
+    lo = Math.max(0, first - START_MARGIN);
   }
+  // 보관기가 다음 회차에 다시 받을 번호가 있으면 그 번호부터 다시 훑음
+  const pending = getState(`pending:${s.id}`);
+  const from = pending != null ? Math.min(lo, pending - 1) : lo;
+  const list = db.prepare(`SELECT game, t, body FROM arc.games WHERE game > ? AND season = ? AND mode = 3 AND game NOT IN (SELECT game FROM src) ORDER BY game`);
+  let games = 0, rows = 0, top = 0, unknown = 0, hi = lo;
+  let batch = 0;
+  db.exec("BEGIN");
+  try {
+    for (const g of list.iterate(from, s.id)) {
+      hi = Math.max(hi, g.game);
+      const ys = JSON.parse(brotliDecompressSync(g.body)).userGames ?? [];
+      const cut = cutAt(cuts, g.t);
+      const flags = ys.map((y) => in1000Of(y, cut));
+      const isTop = cut == null ? null : flags.some((f) => f === 1) ? 1 : 0;
+      const mine = ys.filter((y) => tracked.has(y.nickname));
+      if (isTop === 1) for (const y of ys) rows += insertGame(s, y, cut);
+      else for (const y of mine) rows += insertGame(s, y, cut);
+      const sample = mine.length ? 1 : 0;
+      const body = sample ? pack(ys.map((y) => Object.fromEntries(DERIVE_KEYS.map((k) => [k, y[k]])))) : null;
+      putSrc.run(g.game, s.id, g.t, isTop, sample, body);
+      games++;
+      if (isTop === 1) top++;
+      if (isTop == null) unknown++;
+      if (++batch >= INGEST_BATCH) {
+        db.exec("COMMIT");
+        db.exec("BEGIN");
+        batch = 0;
+      }
+    }
+    setState.run(key, hi);
+    setState.run(`pending:${s.id}`, db.prepare(`SELECT min(id) AS id FROM arc.miss WHERE n < ?`).get(ARC_MISS_MAX).id);
+    db.exec("COMMIT");
+  } catch (e) {
+    db.exec("ROLLBACK");
+    throw e;
+  }
+  if (unknown) log(`앞뒤 6시간 안에 컷 기록이 없어 상위권을 판정하지 못한 경기 ${unknown}개를 티어표에서 뺐습니다.`);
+  return { games, rows, top, unknown };
 }
 
-function putPreOne(s, game, i, y) {
-  putPreRow.run(...preRow(s.id, game, i, y));
-}
+// 프리 시즌 특집 집계가 읽는 보관기 rows 열. 닉네임 열은 읽지 않음
+const PRE_COLS = "game, slot, season, t, mode, server, team, rank, char, weapon, bot, weather, exp, exp_reward, exp_credit, gadgets, drops, lumi, quest, equip, robot";
 
-/** 프리 시즌 특집 집계. 저장한 행만 읽고 공식 API에는 요청하지 않음 */
+/** 프리 시즌 특집 집계. 보관기 행만 읽고 공식 API에는 요청하지 않음. 비교 기준은 직전 정규 시즌 마지막 이틀 */
 function publishPre(s, nm) {
   try {
-    const scan = pre.prepare(`SELECT ids, found FROM scan WHERE season = ?`).get(s.id);
-    const base = baseReady(DIR, s.prev) ? pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.prev) : [];
-    const out = derivePre(pre.prepare(`SELECT * FROM rows WHERE season = ? ORDER BY game, slot`).iterate(s.id), s, nm, scan, base);
+    const from = gameIdAt(s.start);
+    if (from == null) return;
+    const rowsOf = (season, a, b) => db.prepare(`SELECT ${PRE_COLS} FROM arc.rows WHERE game >= ? AND game < ? AND season = ? ORDER BY game, slot`).iterate(a, b, season);
+    const baseFrom = s.prev ? gameIdAt(s.start - 2 * 86_400_000) : null;
+    const base = baseFrom == null ? [] : rowsOf(s.prev, baseFrom, from);
+    const out = derivePre(rowsOf(s.id, from, Number.MAX_SAFE_INTEGER), s, nm, null, base);
     if (out && writePre(join(OUT, ".."), out)) log(`프리 시즌 특집 집계 ${out.games}경기, 티어 ${out.tier?.combos.length ?? 0}개 조합`);
   } catch (e) {
     log(`프리 시즌 특집 집계 실패: ${e.message}`);
   }
-}
-
-/** 일꾼 여럿이 계정 목록을 나눠 받음. measure면 단계마다 속도를 올리고 첫 429에서 멈춤 */
-async function collect(s, since, { measure }) {
-  const cuts = cutSeries(s.id);
-  const list = await accounts(s, since);
-  log(`계정 ${list.length}명, 기간 시작 ${new Date(since).toISOString()}`);
-  const queue = [...list];
-  let added = 0;
-  const result = { steps: [], limit: null, rps: pace.rps };
-  let measuring = measure;
-  const stopWorkers = () => false;
-  const workers = Array.from({ length: measure ? STEPS.at(-1) : Math.max(4, Math.ceil(pace.rps)) }, async () => {
-    while (!abort) {
-      const acc = queue.shift();
-      if (!acc) {
-        if (!measuring) return;
-        const again = list[Math.floor(Math.random() * list.length)];
-        if (again.uid) await get(`/v1/user/games/uid/${again.uid}`);
-        else await sleep(200);
-        continue;
-      }
-      const n = await collectAccount(s, acc, since, cuts, stopWorkers, measure);
-      added += n;
-    }
-  });
-  if (measure) {
-    for (const rps of STEPS) {
-      if (abort) break;
-      pace.set(rps);
-      const before = { ...stats, lat: stats.lat.length };
-      const t0 = Date.now();
-      await sleep(STEP_MS);
-      const step = {
-        rps,
-        sent: stats.sent - before.sent,
-        limited: stats.limited - before.limited,
-        failed: stats.failed - before.failed,
-        achieved: Math.round(((stats.sent - before.sent) / (Date.now() - t0)) * 10000) / 10,
-        p50: median(stats.lat.slice(before.lat)),
-      };
-      result.steps.push(step);
-      log("한도 측정", JSON.stringify(step));
-      if (step.limited) break;
-      result.limit = rps;
-    }
-    measuring = false;
-    const safe = result.limit ? Math.floor(result.limit * 0.7) : 2;
-    pace.set(safe);
-    result.rps = safe;
-    log(`측정 끝, 429 응답이 없던 최고 단계 ${result.limit ?? "없음"}, 수집 속도 초당 ${safe}회`);
-    writeFileSync(RATE, JSON.stringify({ at: Date.now(), limit: result.limit, rps: safe, steps: result.steps }));
-  }
-  await Promise.all(workers);
-  const lobbies = measure || abort ? null : await fillGames(s, cuts);
-  if (!measure && !abort) await fetchRoutes(s);
-  return { added: added + (lobbies?.added ?? 0), accounts: list.length, lobbies, ...result };
-}
-
-function median(a) {
-  if (!a.length) return null;
-  const s = [...a].sort((x, y) => x - y);
-  return s[Math.floor(s.length / 2)];
 }
 
 function patchKey(p) {
@@ -808,12 +523,11 @@ function cmpPatch(a, b) {
   return 0;
 }
 
-// 상위 1,000명이 한 명이라도 참가한 경기는 참가자 전원을 씀. 픽률 분모가 팀 수라 참가자를 다 채운 경기만 씀
+// 상위 1,000명이 한 명이라도 참가한 경기는 ingest가 참가자 전원을 넣어서 픽률 분모인 팀 수가 맞음
 const selectRows = db.prepare(`SELECT game, player, char, weapon, rank, gain_in AS gain, mmr_before AS mmr, t, patch, in1000, route, tac, trait, gain AS net,
   kills, assists, deaths, damage, monsters FROM rows
   WHERE season = ? AND server = ? AND gain_in IS NOT NULL AND mmr_before IS NOT NULL AND t >= ?
-  AND game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1)
-  AND game IN (SELECT game FROM raw.games WHERE n > 0) ORDER BY t`);
+  AND game IN (SELECT game FROM rows WHERE season = ? AND in1000 = 1) ORDER BY t`);
 
 /** 상위 1,000명 행을 루트, 특성, 전술 스킬별로 나눔. [코드, 플레이어 수, 판 수, 평균 RP 획득] */
 function split(rows, key) {
@@ -1091,7 +805,6 @@ async function publish(s, nm) {
     band: { name: "in1000", server: "아시아1", floor: RANKED_GATE, cut: cuts.at(-1)?.[1] ?? null },
     rule: { ...RULE, publishRows: PUBLISH_ROWS },
     pickBasis: "team",
-    rate: existsSync(RATE) ? JSON.parse(readFileSync(RATE, "utf8")) : undefined,
     views,
     routes: info,
     items,
@@ -1100,7 +813,7 @@ async function publish(s, nm) {
   writeTier(data);
   // RP 손익, 초반과 막판 집계는 저장된 원본에서만 만듦. 실패해도 티어 발행은 끝난 상태로 둠
   try {
-    const out = derive(db.prepare(`SELECT t, body FROM raw.games WHERE season = ?`).iterate(s.id), data);
+    const out = derive(db.prepare(`SELECT t, body FROM src WHERE season = ? AND sample = 1`).iterate(s.id), data);
     if (writeDerived(join(OUT, ".."), out)) log(`RP 손익, 초반과 막판 집계 ${out.rp.games}경기`);
   } catch (e) {
     log(`RP 손익, 초반과 막판 집계 실패: ${e.message}`);
@@ -1119,30 +832,34 @@ async function publish(s, nm) {
   log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, ${KEEP_DAYS}일 지난 행 ${removed}개 삭제` : ""}`);
 }
 
-async function once(measure) {
+/** 정각 회차가 쓴 순위표. 없거나 두 시간보다 오래됐으면 한 번 받음 */
+async function loadTop(s) {
+  try {
+    const t = JSON.parse(readFileSync(TOP_FILE, "utf8"));
+    if (t.season === s.id && Date.now() - t.at < 2 * 3600_000 && Array.isArray(t.topRanks)) return t.topRanks;
+  } catch {}
+  return (await get(`/v1/rank/top/${s.id}/3/10`))?.topRanks ?? [];
+}
+
+// 프리 시즌이 끝난 뒤에도 보관기가 마지막 경기를 받을 때까지 특집 집계를 이어 씀
+const PRE_TAIL = 6 * 3600_000;
+
+async function once() {
   abort = null;
   const startedAt = Date.now();
-  const unwatch = watchBot(startedAt, measure ? 10_000 : 30_000);
+  const unwatch = watchBot(startedAt, 30_000);
   try {
     const s = await season();
     if (!s) throw new Error("현재 시즌을 찾지 못했습니다.");
     const nm = await names();
-    let run = null;
     if (s.regular && Date.now() < s.end && !PUBLISH_ONLY) {
-      const since = Math.max(s.start, Date.now() - opt("days", 11) * 86_400_000);
-      run = await collect(s, since, { measure });
-      log(`새 행 ${run.added}, 요청 ${stats.sent}, RP가 그대로라 건너뛴 계정 ${stats.skipped}, 닉네임 변경 ${stats.renames}, 429 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
-      writeFileSync(join(DIR, "status.json"), JSON.stringify({ at: Date.now(), abort, ...run, stats: { ...stats, lat: undefined } }));
+      topRanks = await loadTop(s);
+      const r = ingest(s);
+      log(`보관기에서 랭크 경기 ${r.games}개를 읽어 행 ${r.rows}개를 저장했습니다. 상위 1,000명이 참가한 경기는 ${r.top}개입니다. ${Math.round((Date.now() - startedAt) / 1000)}초가 걸렸습니다.`);
+      if (!abort) await fetchRoutes(s);
+      writeFileSync(join(DIR, "status.json"), JSON.stringify({ at: Date.now(), abort, ingest: r, stats: { ...stats, lat: undefined } }));
     }
-    // 프리 시즌이 끝난 뒤 두 회차 동안은 끝 시각까지 남은 번호를 마저 조회함
     const ps = !s.regular ? s : s.pre && Date.now() < s.pre.end + PRE_TAIL ? s.pre : null;
-    if (ps && !pre) openPre();
-    if (ps?.prev && Date.now() < ps.end + PRE_TAIL && !PUBLISH_ONLY && !abort) {
-      const rps = pace.rps;
-      const pr = await collectPre(ps);
-      pace.set(rps);
-      log(`경기 번호 ${pr.ids}개를 조회해 프리 시즌 경기 ${pr.games}개를 저장했습니다.${pr.refilled ? ` 예전 경기 ${pr.refilled}개를 다시 받았습니다.` : ""} 요청 ${stats.sent}, 429 응답 ${stats.limited}, 실패 ${stats.failed}, ${Math.round((Date.now() - startedAt) / 1000)}초`);
-    }
     if (ps && !abort) publishPre(ps, nm);
     if (!abort) await publish(s, nm);
   } finally {
@@ -1151,53 +868,4 @@ async function once(measure) {
   return !abort;
 }
 
-if (flag("rebuild")) {
-  rebuild();
-  process.exit(0);
-}
-
-// 프리 시즌 화면의 비교 기준으로 직전 정규 시즌 마지막 이틀의 경기를 한 번 모음. 정규 회차 20분 전에는 새 묶음을 시작하지 않음
-if (flag("pre-base")) {
-  const s = await season();
-  if (!s || s.regular) throw new Error("프리 시즌이 아니라 실행하지 않습니다.");
-  openPre();
-  const base = { id: s.prev, prev: s.prev, start: s.start - 2 * 86_400_000, end: s.start };
-  const unwatch = watchBot(Date.now(), 30_000);
-  const slot = 3 * 3600_000;
-  const offset = (2 * 60 + 25) * 60_000 - 9 * 3600_000;
-  try {
-    for (;;) {
-      const next = Math.ceil((Date.now() - offset) / slot) * slot + offset;
-      if (next - Date.now() < 20 * 60_000) {
-        log("다음 정규 회차가 가까워 멈춥니다. 회차가 끝난 뒤 다시 실행하면 이어서 받습니다.");
-        break;
-      }
-      const failed = stats.failed;
-      const r = await scanPre({ ...base, deadline: next - 10 * 60_000 });
-      log(`직전 시즌과 비교할 경기 번호 ${r.ids}개를 조회해 경기 ${r.games}개를 저장했습니다. 요청 ${stats.sent}, 429 응답 ${stats.limited}, 실패 ${stats.failed}`);
-      if (abort || r.down) break;
-      if (!r.ids) {
-        // 끝 번호를 찾는 요청이 실패해도 조회할 번호가 0개로 나오므로, 실패가 없던 묶음만 끝으로 보고 비교 표를 싣도록 표시를 남김
-        if (stats.failed === failed) {
-          writeFileSync(join(DIR, BASE_DONE), String(base.id));
-          log("직전 시즌과 비교할 경기를 끝까지 받았습니다.");
-        } else log("끝 번호를 확인하는 요청이 실패해 멈춥니다. 다시 실행하면 이어서 확인합니다.");
-        break;
-      }
-    }
-  } finally {
-    unwatch();
-  }
-  if (!abort) publishPre(s, await names());
-  process.exit(abort ? 3 : 0);
-}
-
-const every = opt("every", 0);
-let first = true;
-for (;;) {
-  const ok = await once(first && flag("measure"));
-  first = false;
-  if (!ok || flag("once") || !every) break;
-  await sleep(every * 60_000);
-}
-if (abort) process.exitCode = 3;
+if (!(await once())) process.exitCode = 3;

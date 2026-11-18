@@ -1,7 +1,8 @@
 // 공식 API의 모든 경기를 경기 번호 순서대로 따라가며 응답 원본(닉네임 포함), 행, 닉네임 표를 보관함. 경기 자료는 약 90일 뒤 조회되지 않음
 // 닉네임은 공개 화면에 내보내지 않음(사용자 결정 380-2). labs 화면은 이 DB를 읽지 않음
-// 사용: node scripts/er/tier/archive.mjs --from <첫 경기 번호> [--rps 40] [--once]. 받은 위치는 DB에 남아 다시 실행하면 이어 받음
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+// 사용: node scripts/er/tier/archive.mjs --from <첫 경기 번호> [--rps 45] [--once] [--until <밀리초 시각>]. 받은 위치는 DB에 남아 다시 실행하면 이어 받음
+// 정각 회차(hourly.mjs)가 --once --until로 한 번씩 띄움
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -10,7 +11,6 @@ import { Pace, botLast429 } from "./pace.mjs";
 import { preRow } from "./preseason.mjs";
 
 const DIR = process.env.ARCHIVE_DIR || "/Volumes/SSD/ertier/archive";
-const LIVE = process.env.TIER_DIR || "/Volumes/SSD/ertier/live";
 const BOT = process.env.BOT_DIR || join(homedir(), "docker/mongsil-bot");
 const API = process.env.TIER_API || "https://open-api.bser.io";
 const args = process.argv.slice(2);
@@ -19,14 +19,14 @@ const opt = (name, def) => {
   return i >= 0 ? Number(args[i + 1]) : def;
 };
 const ONCE = args.includes("--once");
+// 이 시각이 지나면 받던 묶음까지만 저장하고 끝냄. 나머지는 다음 회차가 이어 받음
+const UNTIL = opt("until", Infinity);
+const late = () => Date.now() >= UNTIL;
 // 같은 키를 쓰는 몽실봇, 스크림봇, 스텔라봇 몫을 남기려고 한도 50보다 낮춤
-const MAX_RPS = 40;
+const MAX_RPS = 45;
 const MIN_RPS = 20;
 const STEP_DOWN = 5;
 // 3시간 수집 회차(2시부터 3시간마다 25분)와 겹치지 않게 회차 20분 전부터 회차가 끝날 때까지 쉼
-const ROUND_MS = 3 * 3600_000;
-const ROUND_OFFSET = (2 * 60 + 25) * 60_000 - 9 * 3600_000;
-const QUIET_MS = Number(process.env.ARCHIVE_QUIET_MS ?? 20 * 60_000);
 const CHUNK = 2000;
 const MISS_MAX = 3;
 // 시작한 지 한 시간이 안 된 번호에는 아직 진행 중인 경기가 섞여 있어 다음 차례로 미룸
@@ -41,6 +41,8 @@ const clock = (t) => new Date(t).toLocaleString("sv-SE", { timeZone: "Asia/Seoul
 const KEY = readFileSync(join(BOT, ".env"), "utf8").match(/^API_KEY=["']?([^"'\r\n]+)/m)?.[1];
 if (!KEY) throw new Error("API_KEY를 찾지 못했습니다.");
 
+// SSD가 마운트되기 전에 뜨면 내장 디스크에 빈 DB를 만들지 않고 실패로 끝내 다음 회차가 다시 띄우게 함
+if (!existsSync(join(DIR, "games.sqlite")) && !Number.isFinite(opt("from", NaN))) throw new Error(`${DIR}에 games.sqlite가 없습니다. SSD 마운트를 확인하세요.`);
 mkdirSync(DIR, { recursive: true });
 const db = new DatabaseSync(join(DIR, "games.sqlite"));
 db.exec(`
@@ -218,36 +220,6 @@ async function fetchIds(ids) {
   return missed;
 }
 
-const nextRound = (now) => Math.ceil((now - ROUND_OFFSET) / ROUND_MS) * ROUND_MS + ROUND_OFFSET;
-
-/** collect.log 마지막 줄이 start 뒤에 끝난 기록이면 회차가 끝난 것 */
-function roundDone(start) {
-  try {
-    const last = readFileSync(join(LIVE, "collect.log"), "utf8").trimEnd().split("\n").at(-1) ?? "";
-    const t = Date.parse(`${last.slice(0, 19).replace(" ", "T")}+09:00`);
-    return t >= start - 60_000 && /exit -?\d+$|건너뜀$/.test(last);
-  } catch {
-    return false;
-  }
-}
-
-/** 회차가 가깝거나 진행 중이면 회차가 끝날 때까지 기다리고 true. 회차 시작 뒤 한 시간이 지나도 끝난 기록이 없으면 이어 감 */
-async function waitRound() {
-  const now = Date.now();
-  let round = nextRound(now);
-  // 이미 시작한 회차가 아직 끝나지 않았으면 그 회차를 기다림
-  if (round - ROUND_MS <= now && now < round - ROUND_MS + 3600_000 && !roundDone(round - ROUND_MS)) round -= ROUND_MS;
-  else if (round - now > QUIET_MS) return false;
-  log(`${clock(round)} 3시간 수집 회차 때문에 쉽니다.`);
-  if (round > now) await sleep(round - now + 60_000);
-  while (Date.now() < round + 3600_000 && !roundDone(round)) await sleep(30_000);
-  log("회차가 끝나 경기를 이어 받습니다.");
-  return true;
-}
-
-/** 다음 회차의 쉬는 시간에 걸리지 않을 만큼만 잠 */
-const nap = (ms) => sleep(Math.max(0, Math.min(ms, nextRound(Date.now()) - QUIET_MS - Date.now())));
-
 let lastReport = 0;
 let lastSeason = null;
 function report(cursor, hi, force = false) {
@@ -271,7 +243,7 @@ async function retryMisses() {
   if (!ids.length) return;
   let fixed = 0;
   for (let i = 0; i < ids.length; i += CHUNK) {
-    if (await waitRound()) return;
+    if (late()) return;
     const part = ids.slice(i, i + CHUNK);
     const still = new Set(await fetchIds(part));
     // 절반 넘게 또 받지 못했으면 장애로 보고 실패 횟수를 올리지 않음. 몇 개뿐이면 그 번호만의 문제로 봄
@@ -292,11 +264,14 @@ let cursor = getState("cursor") ?? opt("from", NaN) - 1;
 if (!Number.isFinite(cursor)) throw new Error("처음 실행할 때는 --from 뒤에 첫 경기 번호를 적어 주세요.");
 log(`경기 보관을 시작합니다. 번호 ${cursor + 1}부터 초당 ${pace.rps}회로 받습니다.`);
 for (;;) {
-  await waitRound();
   await loadSeasons();
   // 시즌 목록 없이 저장하면 일반 경기가 시즌 0으로 남음
   if (!seasons.length) {
-    await nap(60_000);
+    if (ONCE || late()) {
+      process.exitCode = 1;
+      break;
+    }
+    await sleep(60_000);
     continue;
   }
   const from = cursor;
@@ -304,7 +279,7 @@ for (;;) {
   const hi = await lastBefore(cursor, Date.now() - LAG_MS);
   report(cursor, hi, true);
   while (cursor < hi) {
-    if (await waitRound()) break;
+    if (late()) break;
     const end = Math.min(cursor + CHUNK, hi);
     const missed = await fetchIds(Array.from({ length: end - cursor }, (_, i) => cursor + 1 + i));
     // 절반 넘게 받지 못했으면 API 장애로 보고 커서를 올리지 않고 나중에 다시 받음
@@ -324,13 +299,17 @@ for (;;) {
     report(cursor, hi);
   }
   if (down) {
-    await nap(5 * 60_000);
+    if (ONCE || late()) {
+      process.exitCode = 1;
+      break;
+    }
+    await sleep(5 * 60_000);
     continue;
   }
   await retryMisses();
   report(cursor, hi, true);
   if (ONCE) break;
   // 최근 번호까지 따라잡았으면 새 경기가 쌓일 때까지 쉼
-  if (cursor - from < CHUNK) await nap(IDLE_MS);
+  if (cursor - from < CHUNK) await sleep(IDLE_MS);
 }
 db.close();
