@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { here } from "./here";
 import UserMenu from "./UserMenu";
 
-export type AccountUser = { name: string; avatar: string | null };
+export type AccountUser = { name: string; avatar: string | null; links?: { href: string; label: string }[] };
 
 const loginHref = (path: string, search?: string) => `/auth/login?next=${encodeURIComponent(here(path, search))}`;
 
@@ -18,14 +18,14 @@ export default function Account({ user }: { user?: AccountUser | null }) {
     let live = true;
     fetch("/api/me")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { user?: AccountUser | null } | null) => live && setFetched(d?.user ? { name: d.user.name, avatar: d.user.avatar } : null))
+      .then((d: { user?: AccountUser | null } | null) => live && setFetched(d?.user ? { name: d.user.name, avatar: d.user.avatar, links: d.user.links } : null))
       .catch(() => live && setFetched(null));
     return () => {
       live = false;
     };
   }, [user]);
   const me = user !== undefined ? user : fetched;
-  if (me) return <UserMenu name={me.name} avatar={me.avatar} />;
+  if (me) return <UserMenu name={me.name} avatar={me.avatar} links={me.links} />;
   return (
     <a
       className="btn sm site-login"

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { avatarUrl } from "@/er/server/auth";
+import { accountUser } from "@/er/server/auth";
 import { l10nGate, l10nIndex, versionLabel, type L10nVersion } from "@/next/l10n";
 import Live from "@/next/Live";
 
@@ -27,7 +27,7 @@ export default async function L10nPage() {
   const me = await l10nGate();
   const { versions, checked } = await l10nIndex();
   return (
-    <Live user={{ name: me.name, avatar: avatarUrl(me) }}>
+    <Live user={accountUser(me)}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">l10n</h1>
         {checked && <p className="num text-[13px] text-ink-3">{time.format(new Date(checked))} 확인</p>}

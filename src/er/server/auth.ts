@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { DAY, db, now } from "./db";
+import type { AccountUser } from "@/components/Account";
 
 export type User = { id: string; name: string; avatar: string | null };
 
@@ -114,4 +115,12 @@ export async function sameOrigin(): Promise<boolean> {
   const origin = h.get("origin");
   if (!origin) return h.get("sec-fetch-site") === "same-origin";
   return origin === BASE_URL;
+}
+
+// 소유자 전용 메뉴는 서버에서 정해 넘김. 다른 계정의 HTML과 클라이언트 번들에 주소가 남지 않음
+export function accountUser(user: User | null): AccountUser | null {
+  if (!user) return null;
+  const owner = process.env.KEL_OWNER_ID;
+  const links = owner && user.id === owner ? [{ href: "/er/l10n", label: "l10n" }] : undefined;
+  return { name: user.name, avatar: avatarUrl(user), ...(links && { links }) };
 }

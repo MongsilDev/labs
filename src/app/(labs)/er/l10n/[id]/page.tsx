@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { avatarUrl } from "@/er/server/auth";
+import { accountUser } from "@/er/server/auth";
 import { l10nDiff, l10nGate, unescape, versionLabel } from "@/next/l10n";
 import Live from "@/next/Live";
 import { wordDiff } from "@/next/l10n-words";
@@ -69,7 +69,7 @@ export default async function L10nDiffPage({ params }: { params: Promise<{ id: s
   const added = Object.entries(d.added);
   const removed = Object.entries(d.removed);
   return (
-    <Live user={{ name: me.name, avatar: avatarUrl(me) }}>
+    <Live user={accountUser(me)}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="num text-[26px] leading-tight font-black tracking-[-0.5px]">{versionLabel(d.id)}</h1>
         <p className="num text-[13px] text-ink-3">{versionLabel(d.from)} 판과 비교</p>

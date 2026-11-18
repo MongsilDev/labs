@@ -1,4 +1,4 @@
-import { avatarUrl, currentUser } from "@/er/server/auth";
+import { accountUser, currentUser } from "@/er/server/auth";
 import Live from "@/next/Live";
 import Filters from "@/next/Filters";
 import { breakEven, getRp, MIN_N } from "@/next/rp";
@@ -17,7 +17,7 @@ const tint = (v: number) => `color-mix(in srgb, var(${v >= 0 ? "--up" : "--down"
 export default async function RpPage({ searchParams }: { searchParams: Promise<{ rp?: string }> }) {
   const q = await searchParams;
   const me = await currentUser();
-  const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
+  const user = accountUser(me);
   const data = await getRp();
   if (!data) return <Live user={user}><h1 className="text-[26px] font-black">RP 손익</h1><p className="mt-3 text-ink-3" role="status">지금은 RP 손익 표를 가져올 수 없습니다.<br />잠시 뒤 다시 열어주세요.</p></Live>;
   const rp = Number(q.rp);

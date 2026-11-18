@@ -1,4 +1,4 @@
-import { avatarUrl, currentUser } from "@/er/server/auth";
+import { accountUser, currentUser } from "@/er/server/auth";
 import { getCut } from "@/er/server/cut";
 import { kelData } from "@/er/server/kel";
 import { scoreStages } from "@/er/server/kel-stats";
@@ -19,7 +19,7 @@ export async function hubData() {
     view,
     combos,
     final: kel ? scoreStages(kel).at(-1) : undefined,
-    user: user ? { name: user.name, avatar: avatarUrl(user) } : null,
+    user: accountUser(user),
     mine: user ? myTournaments(user).slice(0, 3) : [],
   };
 }

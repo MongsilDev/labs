@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import Avatar from "@/er/components/Avatar";
 import { here } from "./here";
 
-export default function UserMenu({ name, avatar }: { name: string; avatar: string | null }) {
+export default function UserMenu({ name, avatar, links }: { name: string; avatar: string | null; links?: { href: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -29,6 +29,11 @@ export default function UserMenu({ name, avatar }: { name: string; avatar: strin
       {open && (
         <div className="site-pop" role="menu">
           <Link role="menuitem" href="/er/score">내 대회</Link>
+          {links?.map((l) => (
+            <Link key={l.href} role="menuitem" href={l.href}>
+              {l.label}
+            </Link>
+          ))}
           <form method="post" action="/auth/logout" onSubmit={(e) => (e.currentTarget.next.value = here(location.pathname, location.search))}>
             <input type="hidden" name="next" />
             <button role="menuitem" type="submit">로그아웃</button>

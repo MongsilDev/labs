@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { avatarUrl, currentUser } from "@/er/server/auth";
+import { accountUser, currentUser } from "@/er/server/auth";
 import Live from "@/next/Live";
 import Filters from "@/next/Filters";
 import LateMap from "@/next/LateMap";
@@ -21,7 +21,7 @@ const SORTS = {
 export default async function LatePage({ searchParams }: { searchParams: Promise<{ s?: string }> }) {
   const q = await searchParams;
   const me = await currentUser();
-  const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
+  const user = accountUser(me);
   const data = await getLate();
   if (!data) return <Live user={user}><h1 className="text-[26px] font-black">초반과 막판</h1><p className="mt-3 text-ink-3" role="status">지금은 초반과 막판 표를 가져올 수 없습니다.<br />잠시 뒤 다시 열어주세요.</p></Live>;
   const s = q.s === "early" ? "early" : "fin";

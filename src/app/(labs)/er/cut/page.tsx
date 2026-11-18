@@ -4,7 +4,7 @@ import DecayCalendar from "@/er/components/cut/DecayCalendar";
 import RpCheck from "@/er/components/cut/RpCheck";
 import { daysLeft, int, TIERS, tens } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
-import { avatarUrl, currentUser } from "@/er/server/auth";
+import { accountUser, currentUser } from "@/er/server/auth";
 import { getCut } from "@/er/server/cut";
 import Live from "@/next/Live";
 
@@ -22,7 +22,7 @@ function rpParam(v: string | string[] | undefined): number | undefined {
 
 export default async function CutPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [me, data, query] = await Promise.all([currentUser(), getCut(), searchParams]);
-  const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
+  const user = accountUser(me);
   if (!data)
     return (
       <Live user={user}>

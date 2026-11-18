@@ -4,7 +4,7 @@ import Filters from "@/next/Filters";
 import MetaMap from "@/next/MetaMap";
 import { spots, type Spot } from "@/next/meta";
 import { pickView, signed } from "@/er/lib/tier";
-import { avatarUrl, currentUser } from "@/er/server/auth";
+import { accountUser, currentUser } from "@/er/server/auth";
 import { getTier } from "@/er/server/tier";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +54,7 @@ function Rows({ title, rows, empty }: { title: string; rows: Spot[]; empty: stri
 export default async function MetaPage({ searchParams }: { searchParams: Promise<{ v?: string }> }) {
   const { v } = await searchParams;
   const me = await currentUser();
-  const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
+  const user = accountUser(me);
   const data = await getTier();
   const view = data ? pickView(data, v) : null;
   if (!data || !view) return <Live user={user}><p className="text-ink-3">집계가 아직 없습니다.</p></Live>;

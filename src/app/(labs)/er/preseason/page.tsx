@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { avatarUrl, currentUser } from "@/er/server/auth";
+import { accountUser, currentUser } from "@/er/server/auth";
 import Filters from "@/next/Filters";
 import Live from "@/next/Live";
 import SortTable from "./SortTable";
@@ -128,7 +128,7 @@ function How({ children }: { children: React.ReactNode }) {
 
 export default async function PreseasonPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
   const me = await currentUser();
-  const user = me ? { name: me.name, avatar: avatarUrl(me) } : null;
+  const user = accountUser(me);
   const data = await getPreseason();
   if (!data) return <Live user={user}><h1 className="text-[26px] font-black">실험실</h1><p className="mt-3 text-ink-3" role="status">아직 집계한 프리 시즌 경기가 없습니다.</p></Live>;
   const cobalt = (await searchParams).mode === "cobalt" ? data.cobalt : null;

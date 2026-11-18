@@ -5,7 +5,7 @@ import CreateForm from "@/er/components/CreateForm";
 import OpenCode from "@/er/components/OpenCode";
 import { computeGroup } from "@/er/lib/engine";
 import { exampleView } from "@/er/lib/example";
-import { avatarUrl, currentUser } from "@/er/server/auth";
+import { accountUser, currentUser } from "@/er/server/auth";
 import { myTournaments } from "@/er/server/tournament";
 import Live from "@/next/Live";
 
@@ -29,7 +29,7 @@ export default async function ScorePage({ searchParams }: { searchParams: Promis
   const res = computeGroup({ mode: ex.mode, rules: ex.rules, plannedRounds: ex.plannedRounds, rounds: g.rounds, penalties: g.penalties, weather: g.weather, aliases: g.aliases, overrides: g.overrides });
   const rounds = Array.from({ length: res.played }, (_, i) => i + 1);
   return (
-    <Live user={me ? { name: me.name, avatar: avatarUrl(me) } : null}>
+    <Live user={accountUser(me)}>
       <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px]">대회 점수</h1>
       {q.login === "failed" && (
         <p className="mt-4 border border-down px-4 py-3" role="alert">
