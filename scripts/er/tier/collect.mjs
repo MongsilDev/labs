@@ -110,7 +110,8 @@ db.exec(`
 const getState = (k) => db.prepare(`SELECT v FROM state WHERE k = ?`).get(k)?.v ?? null;
 const setState = db.prepare(`INSERT INTO state VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v`);
 const putSrc = db.prepare(`INSERT OR REPLACE INTO src VALUES (?, ?, ?, ?, ?, ?)`);
-db.prepare(`ATTACH DATABASE ? AS arc`).run(`file:${join(ARCHIVE, "games.sqlite")}?mode=ro`);const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+db.prepare(`ATTACH DATABASE ? AS arc`).run(`file:${join(ARCHIVE, "games.sqlite")}?mode=ro`);
+const insertRow = db.prepare(`INSERT OR IGNORE INTO rows VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 const getRoute = db.prepare(`SELECT author, title, nick, trait, tac FROM routes WHERE route = ?`);
 const putRoute = db.prepare(`INSERT INTO routes (route, author, version, checked, title, nick, trait, tac) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(route) DO UPDATE SET author = excluded.author, version = excluded.version, checked = excluded.checked,

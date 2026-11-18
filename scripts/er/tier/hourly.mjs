@@ -22,7 +22,10 @@ const CUT_STATE = process.env.CUT_STATE || join(LABS, "rank_history.json");
 const CUT_SNAPSHOTS = process.env.CUT_SNAPSHOTS || join(LABS, "rank_snapshots.jsonl");
 const CUT_TOP = process.env.CUT_TOP || join(LABS, "top.json");
 const CUT_DIR = process.env.CUT_DIR || join(HOME, "docker/_data/labs/er-cut");
+// 0이면 보관기 단계를 건너뛰고 ARCHIVE_DIR의 DB를 읽기만 함. 운영 보관기와 나란히 도는 시험 회차가 같은 경기를 두 번 받지 않게 한다
 const ARCHIVE_RPS = process.env.HOURLY_ARCHIVE_RPS;
+// 이 회차와 집계기의 초당 요청 상한. 상주 보관기와 같이 돌 때 합이 초당 45회를 넘지 않게 낮춘다
+const RPS = Number(process.env.HOURLY_RPS) || 20;
 // 회차마다 경기 목록으로 휴면을 확인하는 계정 수 상한. 몽실봇이 1분마다 확인하던 수와 같음
 const CHECK_MAX = 50;
 const PAGES = 15;
@@ -35,7 +38,7 @@ const kst = (s) => Date.parse(s.replace(" ", "T").replace(/([+-]\d{2})(\d{2})$/,
 const KEY = readFileSync(join(BOT, ".env"), "utf8").match(/^API_KEY=["']?([^"'\r\n]+)/m)?.[1];
 if (!KEY) throw new Error("API_KEY를 찾지 못했습니다.");
 
-const pace = new Pace(20);
+const pace = new Pace(RPS);
 const stats = { sent: 0, limited: 0, failed: 0 };
 /** 본문. 404는 null, 다섯 번 실패는 undefined */
 async function get(path) {
@@ -192,7 +195,8 @@ await step("cut", async () => {
   return { season: season.id, top: top?.length ?? null, cut: Boolean(cut) };
 });
 
-await step("archive", () => run("archive", "archive.mjs", ["--once", "--until", String(deadline), ...(ARCHIVE_RPS ? ["--rps", ARCHIVE_RPS] : [])]));
+if (ARCHIVE_RPS === "0") status.steps.push({ name: "archive", ms: 0, ok: true, out: { skipped: true } });
+else await step("archive", () => run("archive", "archive.mjs", ["--once", "--until", String(deadline), ...(ARCHIVE_RPS ? ["--rps", ARCHIVE_RPS] : [])]));
 
 if (season?.left?.length)
   await step("dormant", async () => {
@@ -205,7 +209,7 @@ if (season?.left?.length)
     return { checked: todo.length };
   });
 
-await step("collect", () => run("collect", "collect.mjs", []));
+await step("collect", () => run("collect", "collect.mjs", process.env.HOURLY_RPS ? ["--rps", String(RPS)] : []));
 
 status.ms = Date.now() - started;
 status.api = stats;
