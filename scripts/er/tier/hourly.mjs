@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { CHECKED, LAST_GAME, NO_RECENT, UID, UNREADABLE, loadState, needsCheck, playerBook, rankedSeason, record, saveState, snapshot } from "./etercut.mjs";
 import { Pace } from "./pace.mjs";
+import { loadRace, raceBoard, scanArchive } from "./race.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const HOME = homedir();
@@ -22,6 +23,7 @@ const CUT_STATE = process.env.CUT_STATE || join(LABS, "rank_history.json");
 const CUT_SNAPSHOTS = process.env.CUT_SNAPSHOTS || join(LABS, "rank_snapshots.jsonl");
 const CUT_TOP = process.env.CUT_TOP || join(LABS, "top.json");
 const CUT_DIR = process.env.CUT_DIR || join(HOME, "docker/_data/labs/er-cut");
+const RACE_STATE = process.env.RACE_STATE || join(LABS, "race_state.json");
 // 0이면 보관기 단계를 건너뛰고 ARCHIVE_DIR의 DB를 읽기만 함. 운영 보관기와 나란히 도는 시험 회차가 같은 경기를 두 번 받지 않게 한다
 const ARCHIVE_RPS = process.env.HOURLY_ARCHIVE_RPS;
 // 이 회차와 집계기의 초당 요청 상한. 상주 보관기와 같이 돌 때 합이 초당 45회를 넘지 않게 낮춘다
@@ -197,6 +199,19 @@ await step("cut", async () => {
 
 if (ARCHIVE_RPS === "0") status.steps.push({ name: "archive", ms: 0, ok: true, out: { skipped: true } });
 else await step("archive", () => run("archive", "archive.mjs", ["--once", "--until", String(deadline), ...(ARCHIVE_RPS ? ["--rps", ARCHIVE_RPS] : [])]));
+
+// 보관기 단계 뒤에 돌아 방금 받은 경기까지 반영함
+if (season && top)
+  await step("race", async () => {
+    const state = loadRace(RACE_STATE, season.id);
+    const now = Date.now() / 1000;
+    // 300위가 8,300을 넘은 뒤에는 보관기를 더 읽지 않음
+    const read = raceBoard(state, { seasonId: season.id, top, now }).open ? scanArchive(state, join(ARCHIVE, "games.sqlite")) : null;
+    if (read != null) writeAtomic(RACE_STATE, JSON.stringify(state));
+    const out = raceBoard(state, { seasonId: season.id, top, now });
+    writeAtomic(join(CUT_DIR, "race.json"), JSON.stringify(out));
+    return { read, open: out.open, count: out.count, dated: out.list.filter((r) => r.at).length };
+  });
 
 if (season?.left?.length)
   await step("dormant", async () => {

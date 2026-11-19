@@ -95,3 +95,12 @@ export function graceKey(data: CutData, rp: number): GraceKey {
 export function quitRp(rp: number, ticks: number, step: number, floor: number): number {
   return Math.max(rp - ticks * step, Math.min(rp, floor));
 }
+
+/** 정각 회차의 race.json. 시즌 초 순위표 300위가 8,300을 넘기 전까지 이터니티 칸 대신 보여 주는 8,300 도달 순서(장부 528) */
+export type RaceData = {
+  updatedAt: number;
+  season: number;
+  open: boolean;
+  count: number;
+  list: { nickname: string; rp: number; at: number | null }[];
+};

@@ -6,6 +6,7 @@ import { daysLeft, int, TIERS, tens } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
 import { accountUser, currentUser } from "@/er/server/auth";
 import { getCut } from "@/er/server/cut";
+import { getRace } from "@/er/server/race";
 import Live from "@/next/Live";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
         </p>
       </Live>
     );
+  const race = await getRace(data.season.id);
   const left = data.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
   return (
     <Live user={user}>
@@ -48,6 +50,34 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
         {TIERS.map(({ key, name, color }, i) => {
           const t = data.tiers[key];
           const end = t.forecast?.[t.forecast.length - 1];
+          // 시즌 초 300위가 8,300을 넘기 전에는 컷이 늘 8,300이라 그 자리에 8,300 도달 순서를 보여 줌(장부 528)
+          if (key === "eternity" && race)
+            return (
+              <div key={key} className="py-4 lg:pr-6">
+                <dt className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-3">
+                  <span className="h-3 w-1" style={{ background: color }} aria-hidden="true" />
+                  {name} {int(8300)} 달성
+                </dt>
+                <dd className="m-0 mt-1 text-[26px] leading-none font-bold tracking-[-1px] num sm:text-[34px]">
+                  {int(race.count)}
+                  <span className="ml-0.5 text-[13px] font-bold text-ink-3 sm:text-[16px]">명</span>
+                </dd>
+                {race.list.length > 0 && (
+                  <dd className="m-0 mt-3">
+                    <ol className="grid gap-1.5 text-[13px] num">
+                      {race.list.slice(0, 5).map((r, k) => (
+                        <li key={r.nickname} className="grid grid-cols-[1rem_minmax(0,1fr)_auto_3.25rem] items-baseline gap-x-3">
+                          <span className="text-ink-3">{k + 1}</span>
+                          <span className="truncate font-semibold">{r.nickname}</span>
+                          <span className="text-[12px] text-ink-3">{r.at ? timeKo(r.at * 1000) : "-"}</span>
+                          <span className="text-right">{int(r.rp)}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </dd>
+                )}
+              </div>
+            );
           return (
             <div key={key} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 py-4 sm:grid-cols-3 sm:gap-4 ${i ? "border-t border-rule lg:border-t-0 lg:border-l lg:pl-6" : "lg:pr-6"}`}>
               <div className="max-sm:row-span-2">
