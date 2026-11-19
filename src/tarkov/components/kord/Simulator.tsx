@@ -143,11 +143,16 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
   // 뺀 칩이 사라져도 키보드 초점이 이웃 칩이나 같은 특성 카드에 남게 함
   const drop = (el: HTMLElement, id: string, kbd: boolean) => {
     const li = el.closest("li");
-    const near = (li?.nextElementSibling ?? li?.previousElementSibling)?.querySelector("button");
-    toggle(id);
+    const next = li?.nextElementSibling?.querySelector("button");
+    const prev = li?.previousElementSibling?.querySelector("button");
     const card = document.querySelector<HTMLElement>(`.kb-card[data-id="${id}"]`);
-    // 포인터로 눌렀을 때 카드 위치로 화면이 튀지 않게 함
-    requestAnimationFrame(() => (near?.offsetParent ? near.focus() : card?.focus({ preventScroll: !kbd })));
+    toggle(id);
+    requestAnimationFrame(() => {
+      const near = [next, prev, document.querySelector<HTMLElement>(".kb-more")].find((b) => b?.offsetParent);
+      // 포인터로 눌렀을 때 카드 위치로 화면이 튀지 않게 함
+      if (near) near.focus();
+      else card?.focus({ preventScroll: !kbd });
+    });
   };
   const fitKey = `${picked.map((p) => p.id).join()}|${resized}`;
   const fit = !open && measured?.key === fitKey ? measured.n : null;
@@ -156,11 +161,23 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
     const items = [...chipsRef.current.children] as HTMLElement[];
     setMeasured({ key: fitKey, n: items.filter((li) => li.offsetTop === items[0].offsetTop).length });
   }, [fit, open, fitKey]);
+  // 칩 자리 폭은 창 폭뿐 아니라 옆 버튼 문구에 따라서도 바뀜
+  const hasChips = picked.length > 0;
   useEffect(() => {
+    const box = chipsRef.current?.parentElement;
+    if (!box) return;
     const reset = () => setResized((n) => n + 1);
-    addEventListener("resize", reset);
-    return () => removeEventListener("resize", reset);
-  }, []);
+    // 잴 때 칩이 여러 줄로 늘어나 높이가 바뀌므로 폭이 바뀔 때만 다시 잼
+    let w = box.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (box.clientWidth === w) return;
+      w = box.clientWidth;
+      reset();
+    });
+    ro.observe(box);
+    document.fonts?.ready.then(reset);
+    return () => ro.disconnect();
+  }, [hasChips]);
 
   const list = (perks: Perk[]) => (
     <ul className="kb-list">
