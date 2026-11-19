@@ -198,6 +198,7 @@ async function season() {
   };
 }
 
+const SHORT_MAX = 20;
 /** 매시 순위 스냅숏의 place위 RP. [시각 ms, RP] 오름차순 */
 function cutSeries(seasonId, place = 1000) {
   const out = [];
@@ -208,8 +209,9 @@ function cutSeries(seasonId, place = 1000) {
     if (s.s !== seasonId || !Array.isArray(s.rp)) continue;
     const rp = [...s.rp].sort((a, b) => b - a);
     // 순위표 인원이 place보다 적고 마지막 RP가 8,300 아래면 8,300 이상은 모두 상위권
-    // 마지막 RP가 8,300 이상이면 다시 만든 아시아1 순위표가 몇 명 모자란 경우라 마지막 RP를 컷으로 씀. 건너뛰면 그 사이 경기가 집계에서 영영 빠짐
-    out.push([s.t * 1000, rp.length >= place ? rp[place - 1] : rp.length && rp.at(-1) >= RANKED_GATE ? rp.at(-1) : RANKED_GATE]);
+    // 다시 만든 아시아1 순위표가 SHORT_MAX명 안으로 모자라면 마지막 RP를 컷으로 씀. 더 모자라면 예전처럼 8,300으로 넓게 잡아 경기를 버리지 않음
+    const near = rp.length && place - rp.length <= SHORT_MAX && rp.at(-1) >= RANKED_GATE;
+    out.push([s.t * 1000, rp.length >= place ? rp[place - 1] : near ? rp.at(-1) : RANKED_GATE]);
   }
   return out.sort((a, b) => a[0] - b[0]);
 }
