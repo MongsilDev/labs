@@ -1027,7 +1027,7 @@
     "name": "Peacekeeper's Insurance",
     "en": "Peacekeeper's Insurance",
     "effects": [
-     "피스키퍼가 유로를 받고 장비 보험을 들어 줍니다"
+     "피스키퍼에게 유로로 장비 보험을 들 수 있습니다"
     ],
     "points": -4,
     "icon": false
