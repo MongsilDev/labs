@@ -16,7 +16,6 @@ export default function DecayCalendar({ data }: { data: CutData }) {
   const dates: string[] = [];
   // 오늘 15시 차감이 아직 남았으면 응답에 오늘 날짜가 들어 있음
   for (let t = dayStart(today) + (counts.has(today) ? 0 : DAY); t <= until; t += DAY) dates.push(new Date(t + 9 * 3_600_000).toISOString().slice(0, 10));
-  const grace = data.rule.grace;
   const peak = Math.max(1, ...[...counts.values()].flatMap((c) => Object.values(c)));
   const any = [...counts.values()].some((c) => Object.values(c).some((n) => n > 0));
 
@@ -66,21 +65,6 @@ export default function DecayCalendar({ data }: { data: CutData }) {
         </ol>
       </div>
       )}
-      <p className="mt-4 text-[13px] text-fg-3">
-        {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정은 유예 기간이 지난 뒤 매일 15시에 RP가 {data.rule.step}점씩 깎입니다.
-        <br />
-        게임 기록은 매일 05시에 확인하므로, 05시 뒤에 한 게임은 그날 15시 차감을 막지 못합니다.
-        <br />
-        {data.updatedAt < data.rule.graceFrom
-          ? `유예는 최대 ${grace.default}일이고, 10월 29일 12.7 패치부터 이터니티 최대 ${grace.eternity}일, 데미갓 최대 ${grace.demigod}일로 줄어듭니다.`
-          : `유예는 이터니티 최대 ${grace.eternity}일, 데미갓 최대 ${grace.demigod}일, 그 밖의 티어 최대 ${grace.default}일입니다.`}
-        {any && (
-          <>
-            <br />
-            막대는 휴면 계정이 지금 휴면 반영 컷 아래로 내려가는 날과 인원을 표시합니다.
-          </>
-        )}
-      </p>
     </div>
   );
 }

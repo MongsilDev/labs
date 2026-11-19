@@ -39,6 +39,12 @@ export function RaceLive({ initial, children }: { initial: RaceData; children: R
 
 const useRace = () => useContext(Ctx);
 
+/** 이터런이 열린 동안 페이지 기준 시각. 1분마다 바뀜 */
+export function RaceTime() {
+  const race = useRace();
+  return race ? hm(race.updatedAt) : null;
+}
+
 export function RaceCount() {
   const race = useRace();
   return race ? int(race.count) : null;
@@ -70,29 +76,21 @@ export function RaceMini({ rows = 5 }: { rows?: number }) {
   );
 }
 
-/** 도달한 계정은 도달 순서로, 못 닿은 계정은 RP순으로. 막대는 표의 최저 RP 조금 아래부터 8,300까지 */
+/** 도달한 계정은 도달 순서로, 못 닿은 계정은 RP순으로. 기준 시각은 페이지 제목 줄에 */
 export function RaceTable() {
   const race = useRace();
   if (!race?.list.length) return null;
   const { list } = race;
   const color = TIERS[0].color;
-  const floor = Math.min(GATE, ...list.map((r) => r.rp)) - 150;
-  const width = (rp: number) => `${Math.max(4, Math.min(100, ((rp - floor) / (GATE - floor)) * 100))}%`;
   return (
-    <section className="sec mt-4" aria-labelledby="race-h">
-      <div className="flex items-baseline gap-3">
-        <h2 className="sec-h" id="race-h">이터런</h2>
-        <p className="text-[12px] text-ink-3 num">{hm(race.updatedAt)} 기준</p>
-      </div>
+    <section className="sec min-w-0" aria-labelledby="race-h">
+      <h2 className="sec-h" id="race-h">이터런</h2>
       <table className="mt-3 w-full table-fixed text-[13px] num">
         <thead className="text-left text-[12px] text-ink-3">
           <tr className="border-b border-rule">
             <th className="w-8 py-2 font-semibold">#</th>
-            <th className="py-2 font-semibold sm:w-[20%]">닉네임</th>
+            <th className="py-2 font-semibold">닉네임</th>
             <th className="w-16 py-2 text-right font-semibold">RP</th>
-            <th className="hidden py-2 pl-6 sm:table-cell">
-              <span className="sr-only">진행</span>
-            </th>
             <th className="w-[84px] py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-36 sm:pl-4">{int(GATE)}까지</th>
             <th className="w-14 py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-20 sm:pl-4">최근 판</th>
           </tr>
@@ -105,11 +103,6 @@ export function RaceTable() {
                 <td className="py-2 text-ink-3">{k + 1}</td>
                 <td className="truncate py-2 font-semibold">{r.nickname}</td>
                 <td className="py-2 text-right">{int(r.rp)}</td>
-                <td className="hidden py-2 pl-6 sm:table-cell">
-                  <span className="block h-1.5 bg-rule" aria-hidden="true">
-                    <span className="block h-full" style={{ width: width(r.rp), background: done ? color : "var(--color-ink-3)" }} />
-                  </span>
-                </td>
                 <td className="py-2 pl-2 text-right whitespace-nowrap sm:pl-4">
                   {done ? (
                     <span style={{ color }}>
