@@ -206,17 +206,37 @@ button.kb-card:hover:not([aria-disabled="true"]) {
     padding: 8px 12px;
     gap: 6px 14px;
   }
+  /* 위에 붙는 막대가 화면을 덜 가리게 포인트는 한 줄, 버튼은 작게 다음 줄 */
   .kb-sum {
-    gap: 16px;
+    gap: 14px;
+  }
+  .kb-sum div {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+  .kb-sum dt {
+    font-size: 11px;
   }
   .kb-sum dd {
-    font-size: 18px;
+    font-size: 16px;
   }
   .kb-acts {
     margin-left: 0;
-    width: 100%;
   }
-  .kb-acts .btn {
-    flex: 1;
+  /* 보이는 높이는 32px로 줄이고 누르는 범위는 44px로 넓힘 */
+  .kord .kb-acts .btn {
+    position: relative;
+    height: 32px;
+    min-height: 0;
+  }
+  .kord .kb-acts .btn::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 44px;
+    transform: translateY(-50%);
   }
 }
