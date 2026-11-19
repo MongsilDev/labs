@@ -44,21 +44,21 @@ export default function DecayCalendar({ data }: { data: CutData }) {
             const t = dayStart(d);
             const patch = d === PATCH.day;
             return (
-              <li key={d} className="grid min-w-5 flex-1 grid-cols-[minmax(0,1fr)] justify-items-center gap-1 text-center sm:min-w-10">
-                <div className="flex h-[112px] w-full items-end justify-center gap-[3px]">
+              <li key={d} className="grid min-w-[18px] flex-1 grid-cols-[minmax(0,1fr)] justify-items-center gap-1 text-center sm:min-w-10">
+                <div className="flex h-[112px] w-full items-end justify-center gap-px sm:gap-[3px]">
                   {TIERS.map(({ key, name, color }) => {
                     const n = c[key] ?? 0;
                     return (
-                      <div key={key} className="grid w-[46%] justify-items-center gap-0.5 sm:w-[clamp(16px,28%,24px)]" data-tip={`${name} ${n}명`}>
+                      <div key={key} className="grid w-2 justify-items-center gap-0.5 sm:w-[clamp(16px,28%,24px)]" data-tip={`${name} ${n}명`}>
                         {n > 0 && <span className="text-[10px] font-bold tracking-[-0.5px] whitespace-nowrap tabular-nums text-fg-2 sm:text-[11px] sm:tracking-normal">{n}</span>}
-                        <span className="block w-[88%] rounded-t-[2px]" style={{ height: n ? Math.max(4, (n / peak) * 88) : 2, background: n ? color : "var(--line)" }} />
+                        <span className="block w-full rounded-t-[2px] sm:w-[88%]" style={{ height: n ? Math.max(4, (n / peak) * 88) : 2, background: n ? color : "var(--line)" }} />
                       </div>
                     );
                   })}
                 </div>
                 <span className={`text-[11px] whitespace-nowrap tabular-nums sm:text-[12px] ${patch ? "font-bold text-fg" : "text-fg-3"}`}>
                   <span className="max-sm:hidden">{md(t)}</span>
-                  <span className="sm:hidden">{Number(d.slice(8))}</span>
+                  <span className="sm:hidden">{d.endsWith("-01") ? md(t) : Number(d.slice(8))}</span>
                 </span>
                 <span className="text-[11px] text-fg-3">{WEEK[new Date(t + 9 * 3_600_000).getUTCDay()]}</span>
                 <span className="relative h-4 w-full">
