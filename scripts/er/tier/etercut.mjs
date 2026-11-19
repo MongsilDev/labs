@@ -339,7 +339,7 @@ export function boardCuts(top, fresh) {
   if (!top?.length) return [null, null];
   const ordered = byRp(top);
   // 다시 만든 아시아1 순위표는 1,000명이 안 돼도 마지막 RP가 문턱 위일 수 있어, 그때 그 순위 값은 알 수 없음
-  const at = (i) => ordered[i] ?? (Math.trunc(ordered.at(-1).mmr) < RANKED_GATE ? GATE_USER : null);
+  const at = (i) => ordered[i] ?? (Math.trunc(ordered.at(-1)?.mmr ?? 0) < RANKED_GATE ? GATE_USER : null);
   return [at(299), at(999)];
 }
 

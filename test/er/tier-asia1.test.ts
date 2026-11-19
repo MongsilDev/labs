@@ -35,6 +35,7 @@ describe("isActive", () => {
     const top = (base: number) => Array.from({ length: 998 }, (_, k) => row(`p${k}`, k + 1, base - k));
     expect(boardCuts(top(7000), false)[1]).toEqual({ mmr: 8300 });
     expect(boardCuts(top(10000), false)[1]).toBeNull();
+    expect(boardCuts([row("x", 1, 0)], false)).toEqual([{ mmr: 8300 }, { mmr: 8300 }]);
   });
 });
 
