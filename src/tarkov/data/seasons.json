@@ -469,7 +469,7 @@
   "name": "Untar Control",
   "start": 1796634039000,
   "end": 0,
-  "preview": "https://x.com/i/status/2123359357429789044",
+  "preview": "https://x.com/tarkov/status/2123389502370791886",
   "common": [
    {
     "id": "69c41a19cd28c936320a7523",
@@ -484,7 +484,7 @@
     "name": "UNTAR Control",
     "en": "UNTAR Control",
     "effects": [
-     "UN 병력이 타르코프 전역에 나타나 새 규칙을 어긴 스캐브와 PMC를 공격합니다",
+     "UN 병력이 타르코프 전역에 나타나 모든 스캐브를 공격하고, 규칙을 어긴 PMC도 공격합니다",
      "UN 병력이 각 지역의 여러 구역을 통제합니다"
     ],
     "icon": false
@@ -598,7 +598,7 @@
     "name": "보호비",
     "en": "Street Tax",
     "effects": [
-     "매 주마다 한 번씩 일부 스캐브가 많은 보호비를 상납합니다"
+     "매 주마다 한 번씩 일부 스캐브가 보호비를 상납합니다"
     ],
     "points": -2
    },
