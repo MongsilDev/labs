@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { CHECKED, LAST_GAME, NO_RECENT, UID, UNREADABLE, loadState, needsCheck, playerBook, rankedSeason, record, saveState, snapshot } from "./etercut.mjs";
 import { Pace } from "./pace.mjs";
-import { loadRace, raceBoard, scanArchive } from "./race.mjs";
+import { loadRace, raceBoard, recordHist, scanArchive } from "./race.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const HOME = homedir();
@@ -206,7 +206,9 @@ if (season && top)
     const state = loadRace(RACE_STATE, season.id);
     const now = Date.now() / 1000;
     // 300위가 8,300을 넘은 뒤에는 보관기를 더 읽지 않음
-    const read = raceBoard(state, { seasonId: season.id, top, now }).open ? scanArchive(state, join(ARCHIVE, "games.sqlite")) : null;
+    const open = raceBoard(state, { seasonId: season.id, top, now }).open;
+    const read = open ? scanArchive(state, join(ARCHIVE, "games.sqlite")) : null;
+    if (open) recordHist(state, top, now);
     if (read != null) writeAtomic(RACE_STATE, JSON.stringify(state));
     const out = raceBoard(state, { seasonId: season.id, top, now });
     writeAtomic(join(CUT_DIR, "race.json"), JSON.stringify(out));

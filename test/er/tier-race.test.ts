@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import zlib from "node:zlib";
 import { afterAll, describe, expect, it } from "vitest";
-import { loadRace, raceBoard, scanArchive, scanGame } from "../../scripts/er/tier/race.mjs";
+import { loadRace, raceBoard, recordHist, scanArchive, scanGame } from "../../scripts/er/tier/race.mjs";
 
 const user = (nickname: string, before: number, after: number, o: Record<string, unknown> = {}) => ({
   nickname,
@@ -73,19 +73,39 @@ describe("scanArchive", () => {
 });
 
 describe("raceBoard", () => {
-  const s = { ...loadRace("/nonexistent", 43), reached: { b: END, a: END + 60_000 } };
-  it("순위표에서 8,300 이상인 계정을 도달 순서로, 시각을 못 찾은 계정은 뒤로", () => {
+  const s = { ...loadRace("/nonexistent", 43), reached: { b: END, a: END + 60_000, e: END + 120_000 } };
+  it("도달한 계정을 도달 순서로, 그 뒤에 못 닿은 계정을 RP순으로", () => {
     const top = [
       { nickname: "a", mmr: 8500, rank: 1 },
       { nickname: "c", mmr: 8320, rank: 3 },
       { nickname: "b", mmr: 8310, rank: 2 },
-      { nickname: "d", mmr: 8100, rank: 4 },
+      { nickname: "e", mmr: 8250, rank: 4 },
+      { nickname: "d", mmr: 8100, rank: 5 },
+      { nickname: "f", mmr: 8200, rank: 6 },
     ];
     const r = raceBoard(s, { seasonId: 43, top, now: 1_000.4 });
-    expect(r).toMatchObject({ updatedAt: 1000, season: 43, open: true, count: 3 });
-    expect(r.list.map((x: { nickname: string }) => x.nickname)).toEqual(["b", "a", "c"]);
-    expect(r.list[0]).toEqual({ nickname: "b", rp: 8310, at: END / 1000 });
-    expect(r.list[2].at).toBeNull();
+    expect(r).toMatchObject({ updatedAt: 1000, season: 43, open: true, count: 4 });
+    expect(r.list.map((x: { nickname: string }) => x.nickname)).toEqual(["b", "a", "e", "c", "f", "d"]);
+    expect(r.list[0]).toEqual({ nickname: "b", rp: 8310, at: END / 1000, gain: null });
+    expect(r.list[3].at).toBeNull();
+  });
+  it("못 닿은 계정까지 10명만", () => {
+    const top = Array.from({ length: 30 }, (_, i) => ({ nickname: `p${i}`, mmr: 7000 - i, rank: i + 1 }));
+    const r = raceBoard(s, { seasonId: 43, top, now: 0 });
+    expect(r).toMatchObject({ count: 0 });
+    expect(r.list.map((x: { nickname: string }) => x.nickname)).toEqual(Array.from({ length: 10 }, (_, i) => `p${i}`));
+  });
+  it("24시간 변화는 20~28시간 전 기록 가운데 24시간에 가장 가까운 것과 비교", () => {
+    const h = { ...loadRace("/nonexistent", 43) };
+    const H = 3600;
+    recordHist(h, [{ nickname: "x", mmr: 7000 }], 0);
+    recordHist(h, [{ nickname: "x", mmr: 7100 }, { nickname: "y", mmr: 6000 }], 3 * H);
+    recordHist(h, [{ nickname: "x", mmr: 7200 }], 3 * H + 60);
+    expect(h.hist).toHaveLength(2);
+    const r = raceBoard(h, { seasonId: 43, top: [{ nickname: "x", mmr: 7500 }, { nickname: "y", mmr: 6100 }, { nickname: "z", mmr: 6000 }], now: 27 * H });
+    expect(r.list.map((x: { gain: number | null }) => x.gain)).toEqual([400, 100, null]);
+    recordHist(h, [], 40 * H);
+    expect(h.hist.map((x: [number]) => x[0])).toEqual([40 * H]);
   });
   it("300위가 8,300을 넘으면 닫고 목록을 비운다", () => {
     const top = Array.from({ length: 300 }, (_, i) => ({ nickname: `p${i}`, mmr: 9000 - i, rank: i + 1 }));

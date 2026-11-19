@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import CutChart from "@/er/components/cut/CutChart";
 import DecayCalendar from "@/er/components/cut/DecayCalendar";
 import RpCheck from "@/er/components/cut/RpCheck";
-import { daysLeft, int, TIERS, tens } from "@/er/lib/cut";
+import { daysLeft, int, type RaceData, TIERS, tens } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
 import { accountUser, currentUser } from "@/er/server/auth";
 import { getCut } from "@/er/server/cut";
@@ -19,6 +19,61 @@ export const metadata: Metadata = {
 function rpParam(v: string | string[] | undefined): number | undefined {
   const s = Array.isArray(v) ? v[0] : v;
   return s && /^\d{1,5}$/.test(s) && Number(s) <= 20000 ? Number(s) : undefined;
+}
+
+const GATE = 8300;
+
+/** 도달한 계정은 도달 순서로, 못 닿은 계정은 RP순으로. 막대는 표의 최저 RP 조금 아래부터 8,300까지 */
+function RaceTable({ list, color }: { list: RaceData["list"]; color: string }) {
+  const floor = Math.min(...list.map((r) => r.rp)) - 150;
+  const width = (rp: number) => `${Math.max(4, Math.min(100, ((rp - floor) / (GATE - floor)) * 100))}%`;
+  return (
+    <section className="sec mt-4" aria-labelledby="race-h">
+      <h2 className="sec-h" id="race-h">이터니티 선착순</h2>
+      <table className="mt-3 w-full table-fixed text-[13px] num">
+        <thead className="text-left text-[12px] text-ink-3">
+          <tr className="border-b border-rule">
+            <th className="w-8 py-2 font-semibold">#</th>
+            <th className="py-2 font-semibold sm:w-[20%]">닉네임</th>
+            <th className="w-16 py-2 text-right font-semibold">RP</th>
+            <th className="hidden py-2 pl-6 sm:table-cell">
+              <span className="sr-only">진행</span>
+            </th>
+            <th className="w-24 py-2 pl-4 text-right font-semibold whitespace-nowrap sm:w-36">{int(GATE)}까지</th>
+            <th className="hidden w-20 py-2 pl-4 text-right font-semibold sm:table-cell">24시간</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((r, k) => {
+            const done = r.at != null || r.rp >= GATE;
+            return (
+              <tr key={r.nickname} className="border-b border-rule">
+                <td className="py-2 text-ink-3">{k + 1}</td>
+                <td className="truncate py-2 font-semibold">{r.nickname}</td>
+                <td className="py-2 text-right">{int(r.rp)}</td>
+                <td className="hidden py-2 pl-6 sm:table-cell">
+                  <span className="block h-1.5 bg-rule" aria-hidden="true">
+                    <span className="block h-full" style={{ width: width(r.rp), background: done ? color : "var(--color-ink-3)" }} />
+                  </span>
+                </td>
+                <td className="py-2 pl-4 text-right whitespace-nowrap">
+                  {done ? (
+                    <span style={{ color }}>
+                      {r.at ? timeKo(r.at * 1000).replace(/^\d+월 /, "") : ""}
+                      <span className={r.at ? "max-sm:hidden" : undefined}>{r.at ? " " : ""}달성</span>
+                    </span>
+                  ) : (
+                    int(GATE - r.rp)
+                  )}
+                </td>
+                <td className="hidden py-2 pl-4 text-right text-ink-3 sm:table-cell">{r.gain == null ? "-" : r.gain > 0 ? `+${int(r.gain)}` : int(r.gain)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </section>
+  );
 }
 
 export default async function CutPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -50,7 +105,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
         {TIERS.map(({ key, name, color }, i) => {
           const t = data.tiers[key];
           const end = t.forecast?.[t.forecast.length - 1];
-          // 시즌 초 300위가 8,300을 넘기 전에는 컷이 늘 8,300이라 그 자리에 8,300 도달 순서를 보여 줌(장부 528)
+          // 시즌 초 300위가 8,300을 넘기 전에는 컷이 늘 8,300이라 그 자리에 도달 인원을, 아래에 선착순 표를 보여 줌(장부 528)
           if (key === "eternity" && race)
             return (
               <div key={key} className="py-4 lg:pr-6">
@@ -62,20 +117,6 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
                   {int(race.count)}
                   <span className="ml-0.5 text-[13px] font-bold text-ink-3 sm:text-[16px]">명</span>
                 </dd>
-                {race.list.length > 0 && (
-                  <dd className="m-0 mt-3">
-                    <ol className="grid gap-1.5 text-[13px] num">
-                      {race.list.slice(0, 5).map((r, k) => (
-                        <li key={r.nickname} className="grid grid-cols-[1rem_minmax(0,1fr)_auto_3.25rem] items-baseline gap-x-3">
-                          <span className="text-ink-3">{k + 1}</span>
-                          <span className="truncate font-semibold">{r.nickname}</span>
-                          <span className="text-[12px] text-ink-3">{r.at ? timeKo(r.at * 1000) : "-"}</span>
-                          <span className="text-right">{int(r.rp)}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </dd>
-                )}
               </div>
             );
           return (
@@ -108,6 +149,8 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
           );
         })}
       </dl>
+
+      {race && race.list.length > 0 && <RaceTable list={race.list} color={TIERS[0].color} />}
 
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-x-10 gap-y-10 lg:grid-flow-row-dense lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
         {/* 새 시즌 첫날처럼 기록이 이틀이 안 되면 선이 없어 칸을 뺌 */}

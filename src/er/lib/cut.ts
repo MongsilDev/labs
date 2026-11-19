@@ -102,5 +102,5 @@ export type RaceData = {
   season: number;
   open: boolean;
   count: number;
-  list: { nickname: string; rp: number; at: number | null }[];
+  list: { nickname: string; rp: number; at: number | null; gain?: number | null }[];
 };

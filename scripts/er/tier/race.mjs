@@ -9,15 +9,18 @@ import { RANKED_GATE, byRp } from "./etercut.mjs";
 const SERVER = "Asia";
 const RANKED = 3;
 const MISS_MAX = 3;
+const LIST = 10;
+const HIST_KEEP = 28 * 3600;
+const DAY = 24 * 3600;
 
 const kstMs = (s) => Date.parse(String(s).replace(/([+-]\d{2})(\d{2})$/, "$1:$2"));
 
 export function loadRace(path, seasonId) {
   try {
     const s = JSON.parse(readFileSync(path, "utf8"));
-    if (s?.season === seasonId && Number.isFinite(s.cursor)) return { pending: [], reached: {}, ...s };
+    if (s?.season === seasonId && Number.isFinite(s.cursor)) return { pending: [], reached: {}, hist: [], ...s };
   } catch {}
-  return { season: seasonId, cursor: null, base: null, pending: [], reached: {} };
+  return { season: seasonId, cursor: null, base: null, pending: [], reached: {}, hist: [] };
 }
 
 /** 경기 원본 하나에서 RANKED_GATE를 넘은 아시아1 랭크 참가자를 reached에 남김. 더 이른 시각만 덮어씀 */
@@ -74,17 +77,36 @@ export function scanArchive(state, dbPath) {
   }
 }
 
+/** 24시간 변화용으로 순위표 상위 100명 RP를 한 시간에 한 번 남김 */
+export function recordHist(state, top, now) {
+  const hist = (state.hist ?? []).filter((h) => now - h[0] < HIST_KEEP);
+  if (!hist.length || Math.floor(hist.at(-1)[0] / 3600) !== Math.floor(now / 3600))
+    hist.push([now, Object.fromEntries(byRp((top ?? []).filter((r) => r.mmr && r.nickname)).slice(0, 100).map((r) => [r.nickname, Math.trunc(r.mmr)]))]);
+  state.hist = hist;
+}
+
+/** 24시간 전에 가장 가까운 20~28시간 전 기록 */
+function dayAgo(state, now) {
+  const old = (state.hist ?? []).filter((h) => 20 * 3600 <= now - h[0] && now - h[0] <= HIST_KEEP);
+  return old.length ? old.reduce((a, b) => (Math.abs(now - b[0] - DAY) < Math.abs(now - a[0] - DAY) ? b : a))[1] : {};
+}
+
 /**
- * 공개용 race.json. open은 순위표 300위가 RANKED_GATE를 넘기 전(528-2), list는 지금 순위표에서 RANKED_GATE 이상인 계정을 도달 순서로
- * 도달 경기를 보관기에서 찾지 못한 계정은 at null로 맨 뒤
+ * 공개용 race.json. open은 순위표 300위가 RANKED_GATE를 넘기 전(528-2)
+ * list는 도달한 계정을 도달 순서로, 그 뒤에 아직 못 닿은 계정을 RP순으로 LIST명까지. 도달은 보관기에서 넘은 경기를 찾았거나 지금 RANKED_GATE 이상
+ * count는 지금 순위표에 있는 도달 계정 수. gain은 24시간 RP 변화이고 기록이 없으면 null
  */
 export function raceBoard(state, { seasonId, top, now }) {
   const ranked = byRp((top ?? []).filter((r) => r.mmr));
   const r300 = ranked[299];
   const open = !(r300 && Math.trunc(r300.mmr) > RANKED_GATE);
-  const list = ranked
-    .filter((r) => Math.trunc(r.mmr) >= RANKED_GATE)
-    .map((r) => ({ nickname: r.nickname, rp: Math.trunc(r.mmr), at: state.reached[r.nickname] != null ? Math.round(state.reached[r.nickname] / 1000) : null }))
-    .sort((a, b) => (a.at ?? Infinity) - (b.at ?? Infinity) || b.rp - a.rp);
-  return { updatedAt: Math.round(now), season: seasonId, open, count: list.length, list: open ? list : [] };
+  const before = dayAgo(state, now);
+  const rows = ranked.map((r) => {
+    const rp = Math.trunc(r.mmr);
+    const at = state.reached[r.nickname] != null ? Math.round(state.reached[r.nickname] / 1000) : null;
+    return { nickname: r.nickname, rp, at, gain: before[r.nickname] != null ? rp - before[r.nickname] : null, done: at != null || rp >= RANKED_GATE };
+  });
+  const done = rows.filter((r) => r.done).sort((a, b) => (a.at ?? Infinity) - (b.at ?? Infinity) || b.rp - a.rp);
+  const list = [...done, ...rows.filter((r) => !r.done)].slice(0, LIST).map(({ nickname, rp, at, gain }) => ({ nickname, rp, at, gain }));
+  return { updatedAt: Math.round(now), season: seasonId, open, count: done.length, list: open ? list : [] };
 }
