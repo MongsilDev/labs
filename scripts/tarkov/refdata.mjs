@@ -110,6 +110,8 @@ const perks = {
 };
 const SEASONS = "src/tarkov/data/seasons.json";
 const seasons = [...(existsSync(SEASONS) ? JSON.parse(readFileSync(SEASONS, "utf8")) : []).filter((s) => s.id !== perks.id && s.slug !== perks.slug), perks].sort((a, b) => a.start - b.start);
+// 공식 데이터 전에 손으로 넣은 시즌은 시작일이 미정이라 직전 시즌 종료 시각을 시작으로 맞춤
+for (const [i, s] of seasons.entries()) if (s.preview && i > 0) s.start = seasons[i - 1].end;
 writeFileSync(SEASONS, JSON.stringify(seasons, null, 1) + "\n");
 
 const dir = "public/kord/perks";

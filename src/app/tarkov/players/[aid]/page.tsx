@@ -19,7 +19,7 @@ import { ago, date, dateTime, dec, div, hours, int, pct } from "@/tarkov/lib/for
 import { arenaModeLabel, memberChips, sideLabel } from "@/tarkov/lib/labels";
 import { MODES, pickMode, tarkovDevUrl } from "@/tarkov/lib/modes";
 import { encodeBuild } from "@/tarkov/lib/build";
-import { LATEST, seasonAt, seasonOfPerks, seasonPath, seasonTitle, type Perk } from "@/tarkov/lib/kord";
+import { seasonAt, seasonOfPerks, seasonPath, seasonTitle, type Perk } from "@/tarkov/lib/kord";
 import { ARENA_PASSES, LEAGUE, leagueLabel } from "@/tarkov/lib/season";
 import { ARENA_NAMED, achievementInfo, type ArenaSummary, type EftSummary, type Gear as Worn, type Progress, type Summary } from "@/tarkov/lib/summary";
 import { badgeRates, verdict } from "@/tarkov/server/baseline";
@@ -516,10 +516,10 @@ function ProgressCard({ label, p, note }: { label: string; p: Progress; note: st
   );
 }
 
-// 고른 특성과 마지막 활동 시각이 든 시즌이 그 계정 기록의 시즌. 둘 다 없으면 현재 시즌
+// 계정 기록의 시즌은 고른 특성과 마지막 활동 시각으로 정함. 시각이 없으면 지금 기록이 쌓이는 시즌
 const accountSeason = (s: EftSummary) => {
-  const at = s.lastActive ? s.lastActive * 1000 : null;
-  return (s.perks?.length ? seasonOfPerks(s.perks, at) : undefined) ?? (at == null ? LATEST : seasonAt(at));
+  const at = s.lastActive ? s.lastActive * 1000 : Date.now();
+  return (s.perks?.length ? seasonOfPerks(s.perks, at) : undefined) ?? seasonAt(at);
 };
 
 function SeasonProgress({ s }: { s: EftSummary }) {
