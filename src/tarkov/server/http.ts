@@ -14,12 +14,8 @@ export async function sameOrigin(): Promise<boolean> {
   const h = await headers();
   const origin = h.get("origin");
   if (!origin) return h.get("sec-fetch-site") === "same-origin";
-  const host = h.get("x-forwarded-host") || h.get("host");
-  try {
-    return new URL(origin).host === host;
-  } catch {
-    return false;
-  }
+  // CloudFront를 거치면 Host가 원본 이름이 되므로 공개 주소와 비교
+  return origin === BASE_URL;
 }
 
 export function handle(fn: () => Response | Promise<Response>): Promise<Response> {

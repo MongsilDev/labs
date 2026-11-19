@@ -1,13 +1,14 @@
 import "server-only";
 import { headers } from "next/headers";
-import { limitKey } from "@/ip";
+import { limitKey, viewerIp } from "@/ip";
 
 type Bucket = { count: number; reset: number };
 // ER과 Tarkov가 같은 기록을 쓰므로 키 접두어가 겹치지 않게 함
 const g = globalThis as unknown as { __limits?: Map<string, Bucket> };
 const buckets = (g.__limits ??= new Map());
 
-export const ipOf = (h: Headers) => limitKey(h.get("cf-connecting-ip") || h.get("x-forwarded-for")?.split(",")[0].trim() || "local");
+export const ipOf = (h: Headers) =>
+  limitKey(viewerIp(h, process.env.CF_ORIGIN_SECRET) || h.get("cf-connecting-ip") || h.get("x-forwarded-for")?.split(",")[0].trim() || "local");
 
 export async function clientIp(): Promise<string> {
   return ipOf(await headers());
