@@ -8,7 +8,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { CHECKED, LAST_GAME, NO_RECENT, UID, UNREADABLE, loadState, needsCheck, playerBook, rankedSeason, record, saveState, snapshot } from "./etercut.mjs";
-import { usableAsia } from "./asia1.mjs";
+import { officialShort, usableAsia } from "./asia1.mjs";
 import { Pace } from "./pace.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -185,7 +185,8 @@ await step("cut", async () => {
   try {
     asia = usableAsia(JSON.parse(readFileSync(ASIA_FILE, "utf8")), season.id, Date.now());
   } catch {}
-  if (asia) top = asia.topRanks;
+  if (asia && officialShort(top, asia)) top = asia.topRanks;
+  else asia = null;
   const state = loadState(CUT_STATE);
   record(state, { seasonId: season.id, top, fresh: season.fresh, end: season.end, now, snapshots: CUT_SNAPSHOTS });
   if (season.end && top) {

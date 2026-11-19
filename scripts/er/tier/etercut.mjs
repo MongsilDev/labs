@@ -338,7 +338,9 @@ export function boardCuts(top, fresh) {
   if (Array.isArray(top) && !top.length && fresh) return [GATE_USER, GATE_USER];
   if (!top?.length) return [null, null];
   const ordered = byRp(top);
-  return [ordered[299] ?? GATE_USER, ordered[999] ?? GATE_USER];
+  // 다시 만든 아시아1 순위표는 1,000명이 안 돼도 마지막 RP가 문턱 위일 수 있어, 그때 그 순위 값은 알 수 없음
+  const at = (i) => ordered[i] ?? (Math.trunc(ordered.at(-1).mmr) < RANKED_GATE ? GATE_USER : null);
+  return [at(299), at(999)];
 }
 
 /** 순위표를 받은 직후 몽실봇 fetch_ranking_data와 fetch_rating_info가 남기던 기록을 모두 남김 */

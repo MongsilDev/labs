@@ -206,8 +206,10 @@ function cutSeries(seasonId, place = 1000) {
     if (!line) continue;
     const s = JSON.parse(line);
     if (s.s !== seasonId || !Array.isArray(s.rp)) continue;
-    // 순위표 인원이 place보다 적으면 그 순위가 없어 8,300 이상이면 모두 상위권으로 셈
-    out.push([s.t * 1000, s.rp.length < place ? RANKED_GATE : [...s.rp].sort((a, b) => b - a)[place - 1]]);
+    const rp = [...s.rp].sort((a, b) => b - a);
+    // 순위표 인원이 place보다 적고 마지막 RP가 8,300 아래면 8,300 이상은 모두 상위권. 마지막 RP가 8,300 이상이면 그 순위 값을 몰라 건너뜀
+    if (rp.length < place && rp.length && rp.at(-1) >= RANKED_GATE) continue;
+    out.push([s.t * 1000, rp.length < place ? RANKED_GATE : rp[place - 1]]);
   }
   return out.sort((a, b) => a[0] - b[0]);
 }

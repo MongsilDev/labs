@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildAsia, FRESH_MS, isActive, lookupQueue, pruneIds, RECHECK_MS, RETRY_MS, usableAsia } from "../../scripts/er/tier/asia1.mjs";
+import { buildAsia, FRESH_MS, isActive, lookupQueue, officialShort, pruneIds, RECHECK_MS, RETRY_MS, usableAsia } from "../../scripts/er/tier/asia1.mjs";
+import { boardCuts } from "../../scripts/er/tier/etercut.mjs";
 
 const row = (nickname: string, rank: number, mmr: number) => ({ nickname, rank, mmr });
 
@@ -22,6 +23,18 @@ describe("isActive", () => {
     expect(isActive(990, 998)).toBe(false);
     expect(isActive(500, 480)).toBe(false);
     expect(isActive(20, 200)).toBe(false);
+    expect(isActive(23, 998, 51)).toBe(false);
+  });
+  it("정각 회차는 직접 받은 공식 순위표가 모자랄 때만 바꾼다", () => {
+    const asia = { count: 998, topRanks: [] };
+    expect(officialShort(null, asia)).toBe(true);
+    expect(officialShort(new Array(23), asia)).toBe(true);
+    expect(officialShort(new Array(1001), asia)).toBe(false);
+  });
+  it("1,000명이 안 되는 순위표의 1,000위는 마지막 RP가 문턱 아래일 때만 문턱으로 본다", () => {
+    const top = (base: number) => Array.from({ length: 998 }, (_, k) => row(`p${k}`, k + 1, base - k));
+    expect(boardCuts(top(7000), false)[1]).toEqual({ mmr: 8300 });
+    expect(boardCuts(top(10000), false)[1]).toBeNull();
   });
 });
 

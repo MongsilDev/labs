@@ -5,6 +5,8 @@
 export const ASIA1 = 10;
 // 공식 순위표가 이만큼 차거나 재구성 인원 이상이면 정상으로 보고 공식 순위표로 돌아감
 export const FULL = 990;
+// 서버를 모르는 계정이 이보다 많으면 다른 서버 계정이 섞였을 수 있어 쓰지 않음
+export const UNKNOWN_MAX = 50;
 // race-live가 한도 응답으로 10분 쉬는 동안에도 쓰도록 15분까지 유효
 export const FRESH_MS = 15 * 60_000;
 // 서버는 거의 바뀌지 않아 하루에 한 번만 다시 확인하고, 닉네임으로 못 찾은 계정은 한 시간 뒤 다시 찾음
@@ -12,8 +14,13 @@ export const RECHECK_MS = 24 * 3600_000;
 export const RETRY_MS = 3600_000;
 
 /** 공식 순위표를 쓸 수 없는 상태인지. official은 공식 아시아1 인원, 받지 못했으면 null */
-export function isActive(official, count) {
-  return count >= 300 && (official == null || official < Math.min(FULL, count));
+export function isActive(official, count, unknown = 0) {
+  return count >= 300 && unknown <= UNKNOWN_MAX && (official == null || official < Math.min(FULL, count));
+}
+
+/** 정각 회차가 직접 받은 공식 순위표가 정상이 아닐 때만 재구성 순위로 바꿈 */
+export function officialShort(top, asia) {
+  return (top?.length ?? 0) < Math.min(FULL, asia.count ?? asia.topRanks.length);
 }
 
 /**

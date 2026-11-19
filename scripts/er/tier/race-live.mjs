@@ -93,6 +93,7 @@ async function serverOf(name, e) {
   const u = r.body?.code === 200 ? r.body.userRank : null;
   // 저장한 uid가 무효가 되면 다음 회차에 닉네임으로 다시 찾음
   if (!u) return { s: null, u: null };
+  // 시즌 43 전수 조회에서 서버 코드가 0인 계정 3명은 아시아1 순위표에 없어 다른 서버로 셈
   return { s: u.rewardServerCode || u.serverCode || 0, u: uid };
 }
 
@@ -124,6 +125,10 @@ try {
   // 한도 응답을 받았으면 공식 순위표 인원을 모르므로 asia1.json을 그대로 둠. 15분이 지나면 소비자가 공식 순위표로 돌아감
   if (limited) process.exit(0);
   let official = null;
+  let prev = null;
+  try {
+    prev = JSON.parse(readFileSync(ASIA_FILE, "utf8"));
+  } catch {}
   try {
     const r = await get(`/v1/rank/top/${seasonId}/3/10`);
     official = Array.isArray(r.body?.topRanks) ? r.body.topRanks.length : r.body?.code === 404 ? 0 : null;
@@ -131,7 +136,8 @@ try {
     if (e instanceof Limited) process.exit(0);
   }
   const asia = buildAsia(top, ids);
-  const active = isActive(official, asia.topRanks.length);
+  // 공식 순위표 요청이 실패한 회차는 직전 판정을 이어 감. 한 번 실패로 정상인 공식 순위표를 덮지 않게 함
+  const active = official == null && prev?.season === seasonId ? Boolean(prev.active) && isActive(null, asia.topRanks.length, asia.unknown) : isActive(official, asia.topRanks.length, asia.unknown);
   writeAtomic(ASIA_FILE, JSON.stringify({ at: Date.now(), season: seasonId, active, official, count: asia.topRanks.length, unknown: asia.unknown, looked, topRanks: asia.topRanks }));
 } catch (e) {
   log(`아시아1 순위를 다시 만들지 못했습니다. ${e.message}`);
