@@ -40,6 +40,8 @@ export function scanGame(state, body) {
 export function scanArchive(state, dbPath) {
   if (!existsSync(dbPath)) return null;
   const db = new DatabaseSync(dbPath, { readOnly: true });
+  // 상주 보관기가 함께 돌 때 miss에서 지워진 번호를 놓치지 않게 모든 조회를 한 시점에서 봄. 보관기 DB는 WAL이라 쓰기를 막지 않음
+  db.exec("BEGIN");
   try {
     const top = db.prepare(`SELECT v FROM state WHERE k = 'cursor'`).get()?.v;
     if (top == null) return 0;
@@ -48,8 +50,13 @@ export function scanArchive(state, dbPath) {
     let n = 0;
     const read = (row) => {
       if (!row) return;
-      scanGame(state, JSON.parse(zlib.brotliDecompressSync(row.body).toString()));
-      n++;
+      try {
+        scanGame(state, JSON.parse(zlib.brotliDecompressSync(row.body).toString()));
+        n++;
+      } catch (e) {
+        // 깨진 원본 하나 때문에 커서가 멈추지 않게 건너뜀
+        console.error(`선착순: 경기 원본을 읽지 못했습니다. ${e.message}`);
+      }
     };
     const one = db.prepare(`SELECT body FROM games WHERE game = ? AND season = ? AND mode = ?`);
     for (const id of state.pending) read(one.get(id, state.season, RANKED));
@@ -59,6 +66,7 @@ export function scanArchive(state, dbPath) {
     state.cursor = Math.max(state.cursor, top);
     return n;
   } finally {
+    db.exec("COMMIT");
     db.close();
   }
 }
