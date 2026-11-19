@@ -76,6 +76,8 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
   const leaving = useRef(false);
   const [copied, setCopied] = useState("");
   const [undo, setUndo] = useState<Set<string> | null>(null);
+  // 휴대폰 폭에서 한 줄 요약을 눌러 펼친 상태
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!undo) return;
@@ -131,6 +133,8 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
   const spent = chosen.filter((p) => p.points! < 0).reduce((a, p) => a + p.points!, 0);
   const earned = chosen.filter((p) => p.points! > 0).reduce((a, p) => a + p.points!, 0);
   const left = earned + spent;
+  const picked = [...positive, ...negative].filter((p) => sel.has(p.id));
+  const short = "부정 특성을 더 골라야 합니다";
 
   const list = (perks: Perk[]) => (
     <ul className="kb-list">
@@ -142,65 +146,90 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
 
   return (
     <div className="kord">
-      <div className="kb-bar">
-        <div role="status" aria-live="polite">
-          <dl className="kb-sum">
-            <div>
-              <dt>얻은 포인트</dt>
-              <dd className="num">{earned}</dd>
-            </div>
-            <div>
-              <dt>쓴 포인트</dt>
-              <dd className="num">{-spent}</dd>
-            </div>
-            <div className={left < 0 ? "kb-left bad" : "kb-left"}>
-              <dt>남은 포인트</dt>
-              <dd className="num">{left}</dd>
-            </div>
-          </dl>
-        </div>
-        {left < 0 && <span className="kb-warn">포인트가 {-left} 부족합니다</span>}
-        <div className="kb-acts">
-          <button
-            type="button"
-            className="btn sm"
-            disabled={!sel.size}
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(location.href);
-                setCopied("주소를 복사했습니다");
-              } catch {
-                setCopied("주소를 복사하지 못했습니다");
-              }
-              setTimeout(() => setCopied(""), 2000);
-            }}
-          >
-            {copied || "빌드 주소 복사"}
-          </button>
-          {undo ? (
-            <button
-              type="button"
-              className="btn sm"
-              onClick={() => {
-                setSel(undo);
-                setUndo(null);
-              }}
-            >
-              되돌리기
-            </button>
-          ) : (
+      <div className={open ? "kb-bar open" : "kb-bar"}>
+        <span className="kb-live" role="status" aria-live="polite">
+          남은 포인트 {left}
+        </span>
+        <button type="button" className="kb-pill" aria-expanded={open} aria-controls="kb-panel" onClick={() => setOpen((o) => !o)}>
+          <span>
+            남은 포인트 <b className={left < 0 ? "num bad" : "num"}>{left}</b>
+          </span>
+          {left < 0 ? <span className="kb-pill-sub bad">{short}</span> : sel.size > 0 && <span className="kb-pill-sub">{sel.size}개 고름</span>}
+        </button>
+        <div id="kb-panel" className="kb-panel">
+          <div className={left < 0 ? "kb-left bad" : "kb-left"}>
+            <span>남은 포인트</span>
+            <b className="num">{left}</b>
+          </div>
+          <div className="kb-meter">
+            <span className="kb-track" aria-hidden="true">
+              <i className="pos" style={{ flexGrow: -spent }} />
+              <i className="neg" style={{ flexGrow: earned }} />
+            </span>
+            <span className="kb-legend">
+              <span className="pos">
+                쓴 포인트 <b className="num">{-spent}</b>
+              </span>
+              <span className="neg">
+                얻은 포인트 <b className="num">{earned}</b>
+              </span>
+            </span>
+          </div>
+          {left < 0 && <span className="kb-warn">{short}</span>}
+          {picked.length > 0 && (
+            <ul className="kb-chips" aria-label="고른 특성">
+              {picked.map((p) => (
+                <li key={p.id}>
+                  <button type="button" className={`kb-chip ${p.points! < 0 ? "pos" : "neg"}`} aria-label={`${p.name} 빼기`} onClick={() => toggle(p.id)}>
+                    {p.name}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="kb-acts">
             <button
               type="button"
               className="btn sm"
               disabled={!sel.size}
-              onClick={() => {
-                setUndo(sel);
-                setSel(new Set());
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(location.href);
+                  setCopied("주소를 복사했습니다");
+                } catch {
+                  setCopied("주소를 복사하지 못했습니다");
+                }
+                setTimeout(() => setCopied(""), 2000);
               }}
             >
-              초기화
+              {copied || "빌드 주소 복사"}
             </button>
-          )}
+            {undo ? (
+              <button
+                type="button"
+                className="btn sm"
+                onClick={() => {
+                  setSel(undo);
+                  setUndo(null);
+                }}
+              >
+                되돌리기
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn sm"
+                disabled={!sel.size}
+                onClick={() => {
+                  setUndo(sel);
+                  setSel(new Set());
+                }}
+              >
+                초기화
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

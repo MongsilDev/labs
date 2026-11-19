@@ -202,7 +202,7 @@ describe("화면 점검", () => {
 
   it("시뮬레이터는 포인트를 계산하고 빌드를 주소로 되살린다", async () => {
     const { page } = await open(SCREENS.find((s) => s.name === "시즌 특성")!, 390, "dark");
-    const left = page.locator(".kb-left dd");
+    const left = page.locator(".kb-left b");
     await page.getByText("시즌 시작 전에 바뀔 수 있습니다").waitFor();
     await expect(page.getByRole("button", { name: /^자물쇠 달인/ }).locator(".kb-icon:not(.none)").count()).resolves.toBe(1);
     await page.getByRole("button", { name: /플리마켓 금지령/ }).click();
@@ -210,7 +210,9 @@ describe("화면 점검", () => {
     await page.getByRole("button", { name: /카파 프로토콜/ }).click();
     await page.getByRole("button", { name: /금고 털이범/ }).click();
     await expect(left.textContent()).resolves.toBe("-4");
-    await page.getByText("포인트가 4 부족합니다").waitFor();
+    await expect(page.locator(".kb-pill").textContent()).resolves.toContain("부정 특성을 더 골라야 합니다");
+    await page.locator(".kb-pill").click();
+    await page.getByRole("button", { name: "카파 프로토콜 빼기" }).waitFor();
     await page.getByRole("button", { name: /^혈우병/ }).click();
     const blocked = page.getByRole("button", { name: /혈전성향증/ });
     await expect(blocked.getAttribute("aria-disabled")).resolves.toBe("true");
@@ -220,14 +222,14 @@ describe("화면 점검", () => {
     expect(new URL(url).searchParams.get("s")).toBe("untar-control");
     await page.getByRole("button", { name: "초기화", exact: true }).click();
     await expect(left.textContent()).resolves.toBe("0");
-    const kappa = () => page.getByRole("button", { name: /카파 프로토콜/ }).getAttribute("aria-pressed");
+    const kappa = () => page.locator(".kb-cols").getByRole("button", { name: /카파 프로토콜/ }).getAttribute("aria-pressed");
     await expect(kappa()).resolves.toBe("false");
     await page.getByRole("button", { name: "되돌리기" }).click();
     await expect(kappa()).resolves.toBe("true");
     await page.getByRole("button", { name: "초기화", exact: true }).click();
     await page.goto(url, { waitUntil: "networkidle" });
     await expect(kappa()).resolves.toBe("true");
-    await expect(page.locator(".kb-left dd").textContent()).resolves.toBe("-2");
+    await expect(page.locator(".kb-left b").textContent()).resolves.toBe("-2");
     await page.context().close();
   });
 
@@ -255,7 +257,7 @@ describe("화면 점검", () => {
     const n = await page.locator(".perks li").count();
     await page.getByRole("link", { name: "시뮬레이터에서 열기" }).click();
     await page.waitForURL(/\/tarkov\/kord-breach\?s=kord-breach&b=/);
-    await page.locator(".kb-left dd").waitFor();
+    await page.locator(".kb-left b").waitFor();
     await expect(page.locator('.kb-card[aria-pressed="true"]').count()).resolves.toBe(n);
     await page.context().close();
   });

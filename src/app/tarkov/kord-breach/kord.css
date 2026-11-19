@@ -17,43 +17,120 @@ html:has(.kord) {
   position: sticky;
   top: 0;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 20px;
   padding: 10px 16px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 2px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
-.kb-sum {
-  display: flex;
-  gap: 22px;
+.kb-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
-.kb-sum div {
+/* 한 줄 요약은 휴대폰 폭에서만 보임 */
+.kb-pill {
+  display: none;
+}
+.kb-panel {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+}
+.kb-left {
   display: grid;
 }
-.kb-sum dt {
+.kb-left span {
   font-size: 12px;
   color: var(--text-3);
   font-weight: 600;
 }
-.kb-sum dd {
-  font-size: 20px;
+.kb-left b {
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1.3;
-}
-.kb-left dd {
+  line-height: 1.2;
   color: var(--accent);
 }
-.kb-left.bad dd,
+.kb-left.bad b,
 .kb-warn {
   color: var(--minus);
 }
 .kb-warn {
   font-size: 13px;
   font-weight: 700;
+}
+.kb-meter {
+  display: grid;
+  gap: 6px;
+  width: 210px;
+}
+.kb-track {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.kb-track .pos {
+  background: var(--pos);
+}
+.kb-track .neg {
+  background: var(--neg);
+}
+.kb-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.kb-legend .pos,
+.kb-chip.pos span {
+  color: var(--pos);
+}
+.kb-legend .neg,
+.kb-chip.neg span {
+  color: var(--neg);
+}
+.kb-chips {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--pos);
+  border-radius: 2px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.kb-chip.neg {
+  border-left-color: var(--neg);
+}
+.kb-chip span {
+  font-size: 15px;
+  line-height: 1;
+}
+.kb-chip:hover {
+  background: var(--hover);
 }
 .kb-acts {
   margin-left: auto;
@@ -203,23 +280,72 @@ button.kb-card:hover:not([aria-disabled="true"]) {
 }
 @media (max-width: 560px) {
   .kb-bar {
-    padding: 8px 12px;
-    gap: 6px 14px;
+    padding: 0 12px;
   }
-  /* 위에 붙는 막대가 화면을 덜 가리게 포인트는 한 줄, 버튼은 작게 다음 줄 */
-  .kb-sum {
-    gap: 14px;
-  }
-  .kb-sum div {
+  /* 위에 고정된 막대는 한 줄만 차지하고, 누르면 요약을 펼침 */
+  .kb-pill {
     display: flex;
-    align-items: baseline;
-    gap: 5px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
   }
-  .kb-sum dt {
-    font-size: 11px;
-  }
-  .kb-sum dd {
+  .kb-pill b {
     font-size: 16px;
+    color: var(--accent);
+  }
+  .kb-pill b.bad,
+  .kb-pill-sub.bad {
+    color: var(--minus);
+  }
+  .kb-pill-sub {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--text-3);
+  }
+  .kb-pill::after {
+    content: "";
+    flex: none;
+    width: 7px;
+    height: 7px;
+    margin: -3px 4px 0 auto;
+    border-right: 2px solid var(--text-3);
+    border-bottom: 2px solid var(--text-3);
+    transform: rotate(45deg);
+  }
+  .kb-bar.open .kb-pill::after {
+    margin-top: 4px;
+    transform: rotate(-135deg);
+  }
+  .kb-panel {
+    display: none;
+  }
+  .kb-bar.open .kb-panel {
+    display: grid;
+    gap: 12px;
+    max-height: calc(100dvh - 60px);
+    overflow-y: auto;
+    padding: 2px 0 12px;
+  }
+  /* 남은 포인트와 부족 문구는 한 줄 요약에 이미 보임 */
+  .kb-left,
+  .kb-warn {
+    display: none;
+  }
+  .kb-meter {
+    width: auto;
   }
   .kb-acts {
     margin-left: 0;
