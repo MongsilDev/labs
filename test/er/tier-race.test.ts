@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -66,6 +66,12 @@ describe("scanArchive", () => {
     expect(scanArchive(s, file)).toBe(2);
     expect(s).toMatchObject({ cursor: 14, pending: [] });
     expect(Object.keys(s.reached).sort()).toEqual(["a", "b", "c"]);
+  });
+  it("커서가 없는 기록에서도 24시간 기록은 이어 받는다", () => {
+    const f = join(dir, "state.json");
+    writeFileSync(f, JSON.stringify({ season: 43, cursor: null, hist: [[1, { a: 1 }]] }));
+    expect(loadRace(f, 43)).toMatchObject({ cursor: null, hist: [[1, { a: 1 }]] });
+    expect(loadRace(f, 44).hist).toEqual([]);
   });
   it("보관기가 없으면 null", () => {
     expect(scanArchive(loadRace("/nonexistent", 43), join(dir, "none.sqlite"))).toBeNull();

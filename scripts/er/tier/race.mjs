@@ -19,6 +19,8 @@ export function loadRace(path, seasonId) {
   try {
     const s = JSON.parse(readFileSync(path, "utf8"));
     if (s?.season === seasonId && Number.isFinite(s.cursor)) return { pending: [], reached: {}, hist: [], ...s };
+    // 보관기가 없어 커서를 못 정한 회차에도 24시간 기록은 이어 감
+    if (s?.season === seasonId && Array.isArray(s.hist)) return { season: seasonId, cursor: null, base: null, pending: [], reached: {}, hist: s.hist };
   } catch {}
   return { season: seasonId, cursor: null, base: null, pending: [], reached: {}, hist: [] };
 }

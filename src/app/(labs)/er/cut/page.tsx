@@ -25,7 +25,7 @@ const GATE = 8300;
 
 /** 도달한 계정은 도달 순서로, 못 닿은 계정은 RP순으로. 막대는 표의 최저 RP 조금 아래부터 8,300까지 */
 function RaceTable({ list, color }: { list: RaceData["list"]; color: string }) {
-  const floor = Math.min(...list.map((r) => r.rp)) - 150;
+  const floor = Math.min(GATE, ...list.map((r) => r.rp)) - 150;
   const width = (rp: number) => `${Math.max(4, Math.min(100, ((rp - floor) / (GATE - floor)) * 100))}%`;
   return (
     <section className="sec mt-4" aria-labelledby="race-h">

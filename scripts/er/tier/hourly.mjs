@@ -209,7 +209,7 @@ if (season && top)
     const open = raceBoard(state, { seasonId: season.id, top, now }).open;
     const read = open ? scanArchive(state, join(ARCHIVE, "games.sqlite")) : null;
     if (open) recordHist(state, top, now);
-    if (read != null) writeAtomic(RACE_STATE, JSON.stringify(state));
+    if (open) writeAtomic(RACE_STATE, JSON.stringify(state));
     const out = raceBoard(state, { seasonId: season.id, top, now });
     writeAtomic(join(CUT_DIR, "race.json"), JSON.stringify(out));
     return { read, open: out.open, count: out.count, dated: out.list.filter((r) => r.at).length };
