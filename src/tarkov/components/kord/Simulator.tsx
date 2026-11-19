@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { decodeBuild, encodeBuild, type Perk, type Season } from "@/tarkov/lib/build";
 import type { Preset } from "@/tarkov/lib/kord";
 
@@ -70,6 +70,8 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
     };
   }, [season]);
   const [sel, setSel] = useState<Set<string>>(new Set());
+  // 다른 시즌 화면으로 넘기는 동안 주소를 고치면 이동이 취소될 수 있음
+  const leaving = useRef(false);
   const [copied, setCopied] = useState("");
   const [undo, setUndo] = useState<Set<string> | null>(null);
 
@@ -83,6 +85,7 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
     const q = new URLSearchParams(location.search);
     const other = q.get("s");
     if (other && other !== season.slug && paths[other]) {
+      leaving.current = true;
       location.replace(`${paths[other]}${location.search}`);
       return;
     }
@@ -94,6 +97,7 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
   }, [season, paths]);
 
   useEffect(() => {
+    if (leaving.current) return;
     const url = new URL(location.href);
     if (sel.size) {
       url.searchParams.set("s", season.slug);

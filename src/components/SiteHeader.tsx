@@ -39,7 +39,8 @@ const TK: Sect = {
   name: "타르코프",
   items: [
     { href: "/tarkov/players", label: "계정 조회", also: ["/tarkov/criteria"] },
-    { href: "/tarkov/season", label: "시즌 특성", also: ["/tarkov/kord-breach"] },
+    // 지난 시즌 화면은 /tarkov/<시즌>이라 계정 조회에 걸리지 않은 나머지 /tarkov 주소를 시즌 특성으로 봄
+    { href: "/tarkov/season", label: "시즌 특성", also: ["/tarkov"] },
   ],
 };
 
