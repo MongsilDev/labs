@@ -481,51 +481,46 @@
    },
    {
     "id": "untar-untar-control",
-    "name": "UNTAR Control",
+    "name": "UNTAR 통제",
     "en": "UNTAR Control",
     "effects": [
      "UN 병력이 타르코프 전역에 나타나 모든 스캐브를 공격하고, 규칙을 어긴 PMC도 공격합니다",
      "UN 병력이 각 지역의 여러 구역을 통제합니다"
-    ],
-    "icon": false
+    ]
    },
    {
     "id": "untar-tough-times",
-    "name": "Tough Times",
+    "name": "고난의 시기",
     "en": "Tough Times",
     "effects": [
      "탈출구 이용이 제한됩니다",
      "시즌 초반에는 스캐브 쿨타임이 크게 늘어납니다"
-    ],
-    "icon": false
+    ]
    },
    {
     "id": "untar-peace-market",
-    "name": "Peace Market",
+    "name": "평화 시장",
     "en": "Peace Market",
     "effects": [
      "새 글로벌 임무를 완료하면 모든 플레이어가 플리마켓을 이용할 수 있습니다",
      "아이템 등록 제한이 최소화됩니다"
-    ],
-    "icon": false
+    ]
    },
    {
     "id": "untar-supply-shortage",
-    "name": "Supply Shortage",
+    "name": "보급 대란",
     "en": "Supply Shortage",
     "effects": [
      "타르코프 전역에서 식품, 의약품, 대형 배낭, 폭발물 품귀 현상이 일어납니다"
-    ],
-    "icon": false
+    ]
    },
    {
     "id": "untar-smart-pmcs",
-    "name": "Smart PMCs",
+    "name": "똑똑한 PMC",
     "en": "Smart PMCs",
     "effects": [
      "스킬 경험치 획득량이 25% 증가됩니다"
-    ],
-    "icon": false
+    ]
    }
   ],
   "personal": [
@@ -909,239 +904,216 @@
    },
    {
     "id": "untar-lockpicker",
-    "name": "Lockpicker",
+    "name": "자물쇠 달인",
     "en": "Lockpicker",
     "effects": [
      "멀티툴로 문과 컨테이너의 자물쇠를 딸 수 있습니다"
     ],
-    "points": -1,
-    "icon": false
+    "points": -1
    },
    {
     "id": "untar-introvert",
-    "name": "Introvert",
+    "name": "내향인",
     "en": "Introvert",
     "effects": [
      "혼자 플레이할 때 스킬 경험치 획득량이 30% 증가됩니다"
     ],
-    "points": -1,
-    "icon": false
+    "points": -1
    },
    {
     "id": "untar-tap-rack-roll",
-    "name": "Tap, Rack, Roll",
+    "name": "탭, 랙, 롤",
     "en": "Tap, Rack, Roll",
     "effects": [
      "문제 해결 스킬 레벨을 40레벨로 시작합니다",
      "총기 고장을 해결할 때 점검하지 않아도 됩니다"
     ],
-    "points": -1,
-    "icon": false
+    "points": -1
    },
    {
     "id": "untar-enhanced-secure-container",
-    "name": "Enhanced Secure Container",
+    "name": "강화된 보안 컨테이너",
     "en": "Enhanced Secure Container",
     "effects": [
      "보안 컨테이너 엡실론 X를 가지고 시작합니다",
      "사망해도 이 컨테이너 안 아이템의 '레이드에서 발견한 아이템' 상태가 유지됩니다"
     ],
-    "points": -2,
-    "icon": false
+    "points": -2
    },
    {
     "id": "untar-fast-crafting",
-    "name": "Fast Crafting",
+    "name": "빠른 제작",
     "en": "Fast Crafting",
     "effects": [
      "제작 스킬 레벨을 40레벨로 시작합니다",
      "제작 스킬의 숙련 속도가 100% 증가합니다"
     ],
-    "points": -2,
-    "icon": false
+    "points": -2
    },
    {
     "id": "untar-ref-s-builders",
-    "name": "Ref's Builders",
+    "name": "레프의 일꾼들",
     "en": "Ref's Builders",
     "effects": [
      "GP 코인과 Lega Medal로 은신처 구역을 건설할 수 있습니다"
     ],
-    "points": -2,
-    "icon": false
+    "points": -2
    },
    {
     "id": "untar-kleptomaniac",
-    "name": "Kleptomaniac",
+    "name": "도벽",
     "en": "Kleptomaniac",
     "effects": [
      "검색 스킬 레벨을 40레벨로 시작합니다",
      "검색 스킬의 숙련 속도가 100% 증가합니다"
     ],
-    "points": -2,
-    "icon": false
+    "points": -2
    },
    {
     "id": "untar-friend-s-extract",
-    "name": "Friend's Extract",
+    "name": "친구의 탈출구",
     "en": "Friend's Extract",
     "effects": [
      "모든 PMC 레이드에서 스캐브 탈출구를 하나 더 이용할 수 있습니다 (스캐브 탈출구가 있는 지역만)"
     ],
-    "points": -2,
-    "icon": false
+    "points": -2
    },
    {
     "id": "untar-heavyweight",
-    "name": "Heavyweight",
+    "name": "헤비급",
     "en": "Heavyweight",
     "effects": [
      "이동 속도가 5% 감소합니다",
      "최대 소지 무게가 30kg 늘어납니다 (과적 기준 5kg 증가)"
     ],
-    "points": -2,
-    "icon": false
+    "points": -2
    },
    {
     "id": "untar-cold-blooded",
-    "name": "Cold-Blooded",
+    "name": "냉혈한",
     "en": "Cold-Blooded",
     "effects": [
      "레이드 중 체온이 낮아져 열화상 조준경에 잘 보이지 않습니다"
     ],
-    "points": -4,
-    "icon": false
+    "points": -4
    },
    {
     "id": "untar-advanced-hideout",
-    "name": "Advanced Hideout",
+    "name": "고급 은신처",
     "en": "Advanced Hideout",
     "effects": [
      "비트코인 채굴 시설, 헬스장, 스캐브 케이스 등 은신처 구역이 지어진 상태로 시작합니다"
     ],
-    "points": -4,
-    "icon": false
+    "points": -4
    },
    {
     "id": "untar-peacekeeper-s-insurance",
-    "name": "Peacekeeper's Insurance",
+    "name": "피스키퍼의 보험",
     "en": "Peacekeeper's Insurance",
     "effects": [
      "피스키퍼에게 유로로 장비 보험을 들 수 있습니다"
     ],
-    "points": -4,
-    "icon": false
+    "points": -4
    },
    {
     "id": "untar-extrovert",
-    "name": "Extrovert",
+    "name": "외향인",
     "en": "Extrovert",
     "effects": [
      "혼자 플레이할 때 스킬 경험치 획득량이 30% 감소됩니다"
     ],
-    "points": 3,
-    "icon": false
+    "points": 3
    },
    {
     "id": "untar-schizo",
-    "name": "Schizo",
+    "name": "환청",
     "en": "Schizo",
     "effects": [
      "캐릭터가 가끔 환청을 듣습니다"
     ],
-    "points": 2,
-    "icon": false
+    "points": 2
    },
    {
     "id": "untar-loose-tongue",
-    "name": "Loose Tongue",
+    "name": "수다쟁이",
     "en": "Loose Tongue",
     "effects": [
      "캐릭터가 행동을 할 때마다 가끔 대사를 말합니다"
     ],
-    "points": 2,
-    "icon": false
+    "points": 2
    },
    {
     "id": "untar-three-fingered",
-    "name": "Three-Fingered",
+    "name": "세 손가락",
     "en": "Three-Fingered",
     "effects": [
      "재장전할 때 15% 확률로 탄창을 떨어뜨립니다"
     ],
-    "points": 2,
-    "icon": false
+    "points": 2
    },
    {
     "id": "untar-zero-to-hero",
-    "name": "Zero to Hero",
+    "name": "맨땅에 헤딩",
     "en": "Zero to Hero",
     "effects": [
      "보너스 아이템 없이 완전히 빈 캐릭터로 시작합니다"
     ],
-    "points": 2,
-    "icon": false
+    "points": 2
    },
    {
     "id": "untar-shaky-aim",
-    "name": "Shaky Aim",
+    "name": "수전증",
     "en": "Shaky Aim",
     "effects": [
      "3초 넘게 조준하면 손떨림, 통증, 시야 좁아짐이 생깁니다"
     ],
-    "points": 3,
-    "icon": false
+    "points": 3
    },
    {
     "id": "untar-deadline",
-    "name": "Deadline",
+    "name": "데드라인",
     "en": "Deadline",
     "effects": [
      "30일 안에 엔딩 중 하나에 도달해야 합니다",
      "기한을 넘기면 시즌 캐릭터가 초기화됩니다"
     ],
-    "points": 4,
-    "icon": false
+    "points": 4
    },
    {
     "id": "untar-coagulopathy",
-    "name": "Coagulopathy",
+    "name": "응고병증",
     "en": "Coagulopathy",
     "effects": [
      "모든 출혈이 즉시 심한 출혈로 바뀝니다"
     ],
-    "points": 3,
-    "icon": false
+    "points": 3
    },
    {
     "id": "untar-no-repairs",
-    "name": "No Repairs",
+    "name": "수리 불가능",
     "en": "No Repairs",
     "effects": [
      "상인에게 아이템을 수리할 수 없습니다"
     ],
-    "points": 2,
-    "icon": false
+    "points": 2
    },
    {
     "id": "untar-no-love-from-fence",
-    "name": "No Love From Fence",
+    "name": "펜스의 미움",
     "en": "No Love From Fence",
     "effects": [
      "펜스 평판 -7.0으로 시작합니다"
     ],
-    "points": 2,
-    "icon": false
+    "points": 2
    },
    {
     "id": "untar-no-scav-runs",
-    "name": "No Scav Runs",
+    "name": "스캐브 금지령",
     "en": "No Scav Runs",
     "effects": [
      "스캐브로 플레이할 수 없습니다"
     ],
-    "points": 3,
-    "icon": false
+    "points": 3
    }
   ]
  }

@@ -204,7 +204,7 @@ describe("화면 점검", () => {
     const { page } = await open(SCREENS.find((s) => s.name === "시즌 특성")!, 390, "dark");
     const left = page.locator(".kb-left dd");
     await page.getByText("시즌 시작 전에 바뀔 수 있습니다").waitFor();
-    await expect(page.getByRole("button", { name: /^Lockpicker/ }).locator(".kb-icon.none").count()).resolves.toBe(1);
+    await expect(page.getByRole("button", { name: /^자물쇠 달인/ }).locator(".kb-icon:not(.none)").count()).resolves.toBe(1);
     await page.getByRole("button", { name: /플리마켓 금지령/ }).click();
     await expect(left.textContent()).resolves.toBe("8");
     await page.getByRole("button", { name: /카파 프로토콜/ }).click();
