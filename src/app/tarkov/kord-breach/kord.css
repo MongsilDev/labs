@@ -97,8 +97,15 @@ html:has(.kord) {
 .kb-chip.neg span {
   color: var(--neg);
 }
-.kb-chips {
+.kb-picked {
   flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.kb-chips {
+  flex: 0 1 auto;
   min-width: 0;
   display: flex;
   flex-wrap: wrap;
@@ -129,7 +136,21 @@ html:has(.kord) {
   font-size: 15px;
   line-height: 1;
 }
-.kb-chip:hover {
+.kb-more {
+  flex: none;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.kb-chip:hover,
+.kb-more:hover {
   background: var(--hover);
 }
 .kb-acts {
@@ -335,13 +356,15 @@ button.kb-card:hover:not([aria-disabled="true"]) {
   .kb-bar.open .kb-panel {
     display: grid;
     gap: 12px;
-    max-height: calc(100dvh - 60px);
+    /* 펼쳐도 막대 전체가 화면 높이의 절반을 넘지 않게 함 */
+    max-height: calc(50dvh - 43px);
     overflow-y: auto;
     padding: 2px 0 12px;
   }
   /* 남은 포인트와 부족 문구는 한 줄 요약에 이미 보임 */
   .kb-left,
-  .kb-warn {
+  .kb-warn,
+  .kb-more {
     display: none;
   }
   .kb-meter {

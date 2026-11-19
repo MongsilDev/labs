@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { decodeBuild, encodeBuild, type Perk, type Season } from "@/tarkov/lib/build";
 import type { Preset } from "@/tarkov/lib/kord";
 
@@ -79,6 +79,10 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
   const [undo, setUndo] = useState<Set<string> | null>(null);
   // 휴대폰 폭에서 한 줄 요약을 눌러 펼친 상태
   const [open, setOpen] = useState(false);
+  // 넓은 화면에서 막대 한 줄에 들어가는 칩 수. 고른 특성이나 창 폭이 바뀌면 다시 잼
+  const [measured, setMeasured] = useState<{ key: string; n: number } | null>(null);
+  const [resized, setResized] = useState(0);
+  const chipsRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     if (!undo) return;
@@ -143,8 +147,20 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
     toggle(id);
     const card = document.querySelector<HTMLElement>(`.kb-card[data-id="${id}"]`);
     // 포인터로 눌렀을 때 카드 위치로 화면이 튀지 않게 함
-    requestAnimationFrame(() => (near ? near.focus() : card?.focus({ preventScroll: !kbd })));
+    requestAnimationFrame(() => (near?.offsetParent ? near.focus() : card?.focus({ preventScroll: !kbd })));
   };
+  const fitKey = `${picked.map((p) => p.id).join()}|${resized}`;
+  const fit = !open && measured?.key === fitKey ? measured.n : null;
+  useLayoutEffect(() => {
+    if (fit !== null || open || !chipsRef.current) return;
+    const items = [...chipsRef.current.children] as HTMLElement[];
+    setMeasured({ key: fitKey, n: items.filter((li) => li.offsetTop === items[0].offsetTop).length });
+  }, [fit, open, fitKey]);
+  useEffect(() => {
+    const reset = () => setResized((n) => n + 1);
+    addEventListener("resize", reset);
+    return () => removeEventListener("resize", reset);
+  }, []);
 
   const list = (perks: Perk[]) => (
     <ul className="kb-list">
@@ -187,16 +203,23 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
           </div>
           {left < 0 && <span className="kb-warn">{short}</span>}
           {picked.length > 0 && (
-            <ul className="kb-chips" aria-label="고른 특성">
-              {picked.map((p) => (
-                <li key={p.id}>
-                  <button type="button" className={`kb-chip ${p.points! < 0 ? "pos" : "neg"}`} aria-label={`${p.name} 빼기`} onClick={(e) => drop(e.currentTarget, p.id, e.detail === 0)}>
-                    {p.name}
-                    <span aria-hidden="true">×</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="kb-picked">
+              <ul ref={chipsRef} className="kb-chips" aria-label="고른 특성">
+                {picked.map((p, i) => (
+                  <li key={p.id} hidden={!open && fit !== null && i >= fit}>
+                    <button type="button" className={`kb-chip ${p.points! < 0 ? "pos" : "neg"}`} aria-label={`${p.name} 빼기`} onClick={(e) => drop(e.currentTarget, p.id, e.detail === 0)}>
+                      {p.name}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {(open || fit === null || fit < picked.length) && (
+                <button type="button" className="kb-more" aria-expanded={open} aria-controls="kb-panel" onClick={() => setOpen((o) => !o)}>
+                  {open ? "접기" : `+${picked.length - (fit ?? 0)}`}
+                </button>
+              )}
+            </div>
           )}
           <div className="kb-acts">
             <button
@@ -258,7 +281,7 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
                   setUndo(sel.size ? sel : null);
                   setSel(new Set(p.ids));
                   // 휴대폰 폭에서는 되돌리기가 접힌 요약 안에 있음
-                  if (sel.size) setOpen(true);
+                  if (sel.size && matchMedia("(max-width: 560px)").matches) setOpen(true);
                 }}
               >
                 {p.name}
