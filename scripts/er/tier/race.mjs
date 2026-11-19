@@ -41,8 +41,8 @@ export function scanArchive(state, dbPath) {
   if (!existsSync(dbPath)) return null;
   const db = new DatabaseSync(dbPath, { readOnly: true });
   // 상주 보관기가 함께 돌 때 miss에서 지워진 번호를 놓치지 않게 모든 조회를 한 시점에서 봄. 보관기 DB는 WAL이라 쓰기를 막지 않음
-  db.exec("BEGIN");
   try {
+    db.exec("BEGIN");
     const top = db.prepare(`SELECT v FROM state WHERE k = 'cursor'`).get()?.v;
     if (top == null) return 0;
     // 시즌 첫 회차에만 games를 한 번 훑어 시작 번호를 정함. 그 아래 번호는 다른 시즌이라 다시 보지 않음
@@ -66,8 +66,11 @@ export function scanArchive(state, dbPath) {
     state.cursor = Math.max(state.cursor, top);
     return n;
   } finally {
-    db.exec("COMMIT");
-    db.close();
+    try {
+      if (db.isTransaction) db.exec("COMMIT");
+    } finally {
+      db.close();
+    }
   }
 }
 
