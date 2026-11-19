@@ -137,11 +137,13 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
   const picked = [...positive, ...negative].filter((p) => sel.has(p.id));
   const short = "부정 특성을 더 골라야 합니다";
   // 뺀 칩이 사라져도 키보드 초점이 이웃 칩이나 같은 특성 카드에 남게 함
-  const drop = (el: HTMLElement, id: string) => {
+  const drop = (el: HTMLElement, id: string, kbd: boolean) => {
     const li = el.closest("li");
     const near = (li?.nextElementSibling ?? li?.previousElementSibling)?.querySelector("button");
     toggle(id);
-    requestAnimationFrame(() => (near ?? document.querySelector<HTMLElement>(`.kb-card[data-id="${id}"]`))?.focus());
+    // 포인터로 누를 때는 카드로 옮기면 화면이 카드 위치로 스크롤됨
+    const card = kbd ? document.querySelector<HTMLElement>(`.kb-card[data-id="${id}"]`) : null;
+    requestAnimationFrame(() => (near ?? card)?.focus());
   };
 
   const list = (perks: Perk[]) => (
@@ -188,7 +190,7 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
             <ul className="kb-chips" aria-label="고른 특성">
               {picked.map((p) => (
                 <li key={p.id}>
-                  <button type="button" className={`kb-chip ${p.points! < 0 ? "pos" : "neg"}`} aria-label={`${p.name} 빼기`} onClick={(e) => drop(e.currentTarget, p.id)}>
+                  <button type="button" className={`kb-chip ${p.points! < 0 ? "pos" : "neg"}`} aria-label={`${p.name} 빼기`} onClick={(e) => drop(e.currentTarget, p.id, e.detail === 0)}>
                     {p.name}
                     <span aria-hidden="true">×</span>
                   </button>
