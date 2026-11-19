@@ -130,10 +130,11 @@ describe("raceBoard", () => {
   });
   it("수집이 3분 넘게 끊겼다 이어지면 그 사이 변화와 도달 시각은 남기지 않는다", () => {
     const h = { ...loadRace("/nonexistent", 43) };
-    trackLive(h, [{ nickname: "x", mmr: 8200 }], 100);
-    trackLive(h, [{ nickname: "x", mmr: 8400 }], 100 + 3600);
+    trackLive(h, [{ nickname: "x", mmr: 8200 }, { nickname: "y", mmr: 7000 }], 0);
+    trackLive(h, [{ nickname: "x", mmr: 8200 }, { nickname: "y", mmr: 7030 }], 100);
+    trackLive(h, [{ nickname: "x", mmr: 8400 }, { nickname: "y", mmr: 7030 }], 100 + 3600);
     expect(h.reached).toEqual({});
-    expect(h.last).toEqual({ x: [8400, null, null] });
+    expect(h.last).toEqual({ x: [8400, null, null], y: [7030, 30, 100] });
   });
   it("빈 순위표는 열려 있고 0명", () => {
     expect(raceBoard(s, { seasonId: 43, top: [], now: 0 })).toMatchObject({ open: true, count: 0, list: [] });
