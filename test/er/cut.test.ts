@@ -1,11 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { between, type CutData, type CutTier, chance, chanceLabel, daysLeft, floorHead, graceKey, quitRp } from "../../src/er/lib/cut";
+import { between, boardRank, type CutData, type CutTier, chance, chanceLabel, daysLeft, floorHead, graceKey, quitRp } from "../../src/er/lib/cut";
 import { ticks } from "../../src/er/lib/ticks";
 import { getCut } from "../../src/er/server/cut";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("이터컷 계산", () => {
+  it("같은 RP 계정이 순위표에 둘 이상이면 공동 순위로 센다", () => {
+    const rps = [6400, 6305, 6304, 6304, 6303];
+    expect(boardRank(rps, 6304)).toEqual({ rank: 3, tied: true });
+    expect(boardRank(rps, 6305)).toEqual({ rank: 2, tied: false });
+    expect(boardRank(rps, 6350)).toEqual({ rank: 2, tied: false });
+    expect(boardRank(rps, 6303)).toEqual({ rank: 5, tied: false });
+    expect(boardRank(rps, 6000)).toBeNull();
+  });
+
   it("정원 자리 RP가 하한 미만이면 그 RP를, 하한에 닿으면 컷 표시로 넘긴다", () => {
     const rps = [8400, 8350, 8299];
     expect(floorHead(rps, 3)).toEqual({ rank: 3, rp: 8299 });

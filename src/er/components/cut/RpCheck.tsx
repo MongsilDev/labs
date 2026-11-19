@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { between, chance, chanceLabel, type CutData, daysLeft, graceKey, int, quitRp, round10, TIERS } from "@/er/lib/cut";
+import { between, boardRank, chance, chanceLabel, type CutData, daysLeft, graceKey, int, quitRp, round10, TIERS } from "@/er/lib/cut";
 
 function Row({ label, value, note }: { label: string; value: React.ReactNode; note?: React.ReactNode }) {
   return (
@@ -23,7 +23,7 @@ export default function RpCheck({ data, initial, floor = false }: { data: CutDat
   const typed = text !== "";
   const rp = typed ? Number(text) : example;
   const valid = Number.isFinite(rp) && rp >= 0 && rp <= 20000 && (typed || rp > 0);
-  const rank = data.rps.filter((v) => v > rp).length + 1;
+  const place = boardRank(data.rps, rp);
   const left = data.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
   const key = valid ? graceKey(data, rp) : "default";
   const grace = data.updatedAt < data.rule.graceFrom ? data.rule.grace.default : data.rule.grace[key];
@@ -68,8 +68,8 @@ export default function RpCheck({ data, initial, floor = false }: { data: CutDat
                     value={gap > 0 ? `${int(gap)} RP 부족` : `${int(-gap)} RP 여유`}
                     note={
                       floor
-                        ? rank <= data.rps.length
-                          ? `지금 아시아1 ${int(rank)}위`
+                        ? place
+                          ? `지금 아시아1 ${place.tied ? "공동 " : ""}${int(place.rank)}위`
                           : "지금 아시아1 순위표 밖"
                         : near != null
                           ? `순위표 기준 내 RP와 컷 사이 ${int(near)}명`
