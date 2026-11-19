@@ -94,7 +94,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
                   {race
                     ? now != null && (data.rps.length >= t.place ? `지금 ${int(t.place)}위 ${int(now)}` : `지금 ${int(t.place)}위 ${int(now)} 미만`)
                     : day && <Delta at={day[0]} v={day[1]} />}
-                  {!race && t.board != null && t.cut != null && t.board !== t.cut && <span className="ml-3">순위표 {int(t.board)}</span>}
+                  {!race && t.board != null && t.cut != null && int(t.board) !== int(t.cut) && <span className="ml-3">순위표 {int(t.board)}</span>}
                 </dd>
               </div>
               {race ? (

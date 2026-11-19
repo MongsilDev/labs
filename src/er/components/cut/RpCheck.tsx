@@ -20,9 +20,9 @@ export default function RpCheck({ data, initial, floor = false }: { data: CutDat
   const [text, setText] = useState(initial != null ? String(initial) : "");
   // 비어 있는 동안 이터니티 300위 RP로 계산한 결과를 흐리게 보여 무엇이 나오는지 알 수 있게 함
   const example = data.rps[data.tiers.eternity.place - 1] ?? data.tiers.eternity.cut ?? 0;
-  const typed = text !== "" && Number.isFinite(Number(text)) && Number(text) <= 20000;
+  const typed = text !== "";
   const rp = typed ? Number(text) : example;
-  const valid = rp > 0;
+  const valid = Number.isFinite(rp) && rp >= 0 && rp <= 20000 && (typed || rp > 0);
   const rank = data.rps.filter((v) => v > rp).length + 1;
   const left = data.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
   const key = valid ? graceKey(data, rp) : "default";
