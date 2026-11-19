@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { CHECKED, LAST_GAME, NO_RECENT, UID, UNREADABLE, loadState, needsCheck, playerBook, rankedSeason, record, saveState, snapshot } from "./etercut.mjs";
+import { officialShort, usableAsia } from "./asia1.mjs";
 import { Pace } from "./pace.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -22,6 +23,7 @@ const CUT_STATE = process.env.CUT_STATE || join(LABS, "rank_history.json");
 const CUT_SNAPSHOTS = process.env.CUT_SNAPSHOTS || join(LABS, "rank_snapshots.jsonl");
 const CUT_TOP = process.env.CUT_TOP || join(LABS, "top.json");
 const CUT_DIR = process.env.CUT_DIR || join(HOME, "docker/_data/labs/er-cut");
+const ASIA_FILE = process.env.ASIA_FILE || join(LABS, "asia1.json");
 // 0이면 보관기 단계를 건너뛰고 ARCHIVE_DIR의 DB를 읽기만 함. 운영 보관기와 나란히 도는 시험 회차가 같은 경기를 두 번 받지 않게 한다
 const ARCHIVE_RPS = process.env.HOURLY_ARCHIVE_RPS;
 // 이 회차와 집계기의 초당 요청 상한. 상주 보관기와 같이 돌 때 합이 초당 45회를 넘지 않게 낮춘다
@@ -178,6 +180,13 @@ await step("cut", async () => {
   if (!season) throw new Error("랭크 시즌을 찾지 못했습니다.");
   const res = await get(`/v1/rank/top/${season.id}/3/10`);
   top = res === undefined ? null : (res?.topRanks ?? []);
+  // 공식 아시아1 순위표가 비정상인 동안은 race-live가 통합 순위표로 다시 만든 순위를 씀. 아래 컷, 휴면 후보, top.json이 모두 따라감
+  let asia = null;
+  try {
+    asia = usableAsia(JSON.parse(readFileSync(ASIA_FILE, "utf8")), season.id, Date.now());
+  } catch {}
+  if (asia && officialShort(top, asia)) top = asia.topRanks;
+  else asia = null;
   const state = loadState(CUT_STATE);
   record(state, { seasonId: season.id, top, fresh: season.fresh, end: season.end, now, snapshots: CUT_SNAPSHOTS });
   if (season.end && top) {
@@ -191,8 +200,8 @@ await step("cut", async () => {
   const cut = snapshot(state, { seasonId: season.id, seasonName: season.name, top, fresh: season.fresh, end: season.end, now });
   saveState(CUT_STATE, state);
   if (top) writeAtomic(CUT_TOP, JSON.stringify({ at: started, season: season.id, topRanks: top }));
-  if (cut) writeAtomic(join(CUT_DIR, "cut.json"), JSON.stringify(cut));
-  return { season: season.id, top: top?.length ?? null, cut: Boolean(cut) };
+  if (cut) writeAtomic(join(CUT_DIR, "cut.json"), JSON.stringify(asia ? { ...cut, source: "global" } : cut));
+  return { season: season.id, top: top?.length ?? null, cut: Boolean(cut), ...(asia && { source: "global", official: asia.official }) };
 });
 
 if (ARCHIVE_RPS === "0") status.steps.push({ name: "archive", ms: 0, ok: true, out: { skipped: true } });

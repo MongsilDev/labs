@@ -227,6 +227,8 @@ export function activeCut(state, seasonId, topRanks, place, end, now) {
     const value = kept[place - 1];
     return [value, dropped(value), false];
   }
+  // 순위표는 위에서부터 빠짐없이 있으므로 마지막 RP가 문턱 아래면 place번째도 그 아래여서 컷은 문턱으로 정해짐
+  if (last < RANKED_GATE) return [RANKED_GATE, dropped(RANKED_GATE), false];
   const window = ranked.slice(-100);
   const perRank = (Math.trunc(window[0].mmr) - last) / (window.length - 1);
   const activeShare = scores.slice(-100).filter(([v]) => v >= last).length / 100;
@@ -336,7 +338,10 @@ export function boardCuts(top, fresh) {
   if (Array.isArray(top) && !top.length && fresh) return [GATE_USER, GATE_USER];
   if (!top?.length) return [null, null];
   const ordered = byRp(top);
-  return [ordered[299] ?? GATE_USER, ordered[999] ?? GATE_USER];
+  if (!ordered.length) return [null, null];
+  // 다시 만든 아시아1 순위표는 1,000명이 안 돼도 마지막 RP가 문턱 위일 수 있어, 그때 그 순위 값은 알 수 없음
+  const at = (i) => ordered[i] ?? (Math.trunc(ordered.at(-1).mmr) < RANKED_GATE ? GATE_USER : null);
+  return [at(299), at(999)];
 }
 
 /** 순위표를 받은 직후 몽실봇 fetch_ranking_data와 fetch_rating_info가 남기던 기록을 모두 남김 */

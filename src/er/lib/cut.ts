@@ -20,6 +20,8 @@ export type CutData = {
   quitTicks: Record<GraceKey, number> | null;
   // graceFrom(12.7 점검) 전에는 모두 grace.default
   rule: { grace: Record<GraceKey, number>; graceFrom: number; step: number; floor: number; dormantDays: number };
+  // 공식 아시아1 순위표가 비정상인 동안 통합 순위표의 아시아1 계정으로 계산했으면 "global"
+  source?: "global";
 };
 
 export type GraceKey = "eternity" | "demigod" | "default";

@@ -6,6 +6,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
+import { usableAsia } from "./asia1.mjs";
 import { dakStopped } from "./dakstop.mjs";
 import { derive, writeDerived } from "./derive.mjs";
 import { Pace, botLast429 } from "./pace.mjs";
@@ -22,6 +23,7 @@ const ARCHIVE = process.env.ARCHIVE_DIR || "/Volumes/SSD/ertier/archive";
 const SNAPSHOTS = process.env.CUT_SNAPSHOTS || join(BOT, "data/labs/rank_snapshots.jsonl");
 const CUT_STATE = process.env.CUT_STATE || join(BOT, "data/labs/rank_history.json");
 const TOP_FILE = process.env.CUT_TOP || join(BOT, "data/labs/top.json");
+const ASIA_FILE = process.env.ASIA_FILE || join(BOT, "data/labs/asia1.json");
 // TIER_API는 사본 DB 시험에서 가짜 서버를 쓰려고 바꾸는 값
 const API = process.env.TIER_API || "https://open-api.bser.io";
 const SERVER = "Asia";
@@ -196,6 +198,7 @@ async function season() {
   };
 }
 
+const SHORT_MAX = 20;
 /** 매시 순위 스냅숏의 place위 RP. [시각 ms, RP] 오름차순 */
 function cutSeries(seasonId, place = 1000) {
   const out = [];
@@ -204,8 +207,11 @@ function cutSeries(seasonId, place = 1000) {
     if (!line) continue;
     const s = JSON.parse(line);
     if (s.s !== seasonId || !Array.isArray(s.rp)) continue;
-    // 순위표 인원이 place보다 적으면 그 순위가 없어 8,300 이상이면 모두 상위권으로 셈
-    out.push([s.t * 1000, s.rp.length < place ? RANKED_GATE : [...s.rp].sort((a, b) => b - a)[place - 1]]);
+    const rp = [...s.rp].sort((a, b) => b - a);
+    // 순위표 인원이 place보다 적고 마지막 RP가 8,300 아래면 8,300 이상은 모두 상위권
+    // 다시 만든 아시아1 순위표가 SHORT_MAX명 안으로 모자라면 마지막 RP를 컷으로 씀. 더 모자라면 예전처럼 8,300으로 넓게 잡아 경기를 버리지 않음
+    const near = rp.length && place - rp.length <= SHORT_MAX && rp.at(-1) >= RANKED_GATE;
+    out.push([s.t * 1000, rp.length >= place ? rp[place - 1] : near ? rp.at(-1) : RANKED_GATE]);
   }
   return out.sort((a, b) => a[0] - b[0]);
 }
@@ -839,11 +845,15 @@ async function publish(s, nm) {
   log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, ${KEEP_DAYS}일 지난 행 ${removed}개 삭제` : ""}`);
 }
 
-/** 정각 회차가 쓴 순위표. 없거나 두 시간보다 오래됐으면 한 번 받음 */
+/** 정각 회차가 쓴 순위표. 없거나 두 시간보다 오래됐으면 재구성한 아시아1 순위나 공식 순위표를 씀 */
 async function loadTop(s) {
   try {
     const t = JSON.parse(readFileSync(TOP_FILE, "utf8"));
     if (t.season === s.id && Date.now() - t.at < 2 * 3600_000 && Array.isArray(t.topRanks)) return t.topRanks;
+  } catch {}
+  try {
+    const asia = usableAsia(JSON.parse(readFileSync(ASIA_FILE, "utf8")), s.id, Date.now());
+    if (asia) return asia.topRanks;
   } catch {}
   return (await get(`/v1/rank/top/${s.id}/3/10`))?.topRanks ?? [];
 }
