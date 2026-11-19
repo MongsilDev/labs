@@ -29,7 +29,7 @@ function RaceTable({ list, color }: { list: RaceData["list"]; color: string }) {
   const width = (rp: number) => `${Math.max(4, Math.min(100, ((rp - floor) / (GATE - floor)) * 100))}%`;
   return (
     <section className="sec mt-4" aria-labelledby="race-h">
-      <h2 className="sec-h" id="race-h">이터니티 선착순</h2>
+      <h2 className="sec-h" id="race-h">이터런</h2>
       <table className="mt-3 w-full table-fixed text-[13px] num">
         <thead className="text-left text-[12px] text-ink-3">
           <tr className="border-b border-rule">

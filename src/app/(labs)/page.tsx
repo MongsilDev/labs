@@ -2,7 +2,7 @@ import Link from "next/link";
 import CutMini from "@/er/components/cut/CutMini";
 import Live from "@/next/Live";
 import HubScore from "@/next/HubScore";
-import { CutNums, KelBig, LabMini, OverlayOpen, TarkovGroup, TierBig } from "@/next/Hub5Parts";
+import { CutNums, KelBig, LabMini, OverlayOpen, RaceMini, TarkovGroup, TierBig } from "@/next/Hub5Parts";
 import { KelHead, TierHead, TierMissing } from "@/next/HubParts";
 import { hubData } from "@/next/hub";
 import { getPreseason } from "@/next/preseason";
@@ -41,7 +41,7 @@ export default async function Hub() {
             {h.cut ? (
               <>
                 <CutNums cut={h.cut} race={h.race} />
-                <CutMini data={h.cut} />
+                <CutMini data={h.cut} empty={h.race?.list.length ? <RaceMini list={h.race.list.slice(0, 5)} /> : null} />
               </>
             ) : (
               <p className="py-3 text-ink-3">이터컷을 불러오지 못했습니다.</p>

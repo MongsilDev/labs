@@ -43,6 +43,11 @@
 .hub5-cut figure { margin-top: 20px; }
 /* 차트 아래 끝을 옆 기둥 KEL 표의 끝에 맞춤. CutMini가 h-16으로 고정한 값을 덮어씀 */
 .hub5-cut figure .h-16 { height: 100px; }
+.race-mini { display: block; margin-top: 8px; }
+.race-mini:hover { text-decoration: none; }
+.race-mini:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.race-mini td { white-space: nowrap; }
+.race-mini small { margin-left: 4px; font-size: 13px; font-weight: 600; color: var(--ink-3); }
 .tb-team { font-size: var(--tb-name, 22px); font-weight: 700; line-height: 1; }
 .tb-logo { width: var(--tb-face, 56px) !important; height: var(--tb-face, 56px) !important; }
 
