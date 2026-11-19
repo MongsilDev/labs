@@ -141,9 +141,9 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
     const li = el.closest("li");
     const near = (li?.nextElementSibling ?? li?.previousElementSibling)?.querySelector("button");
     toggle(id);
-    // 포인터로 누를 때는 카드로 옮기면 화면이 카드 위치로 스크롤됨
-    const card = kbd ? document.querySelector<HTMLElement>(`.kb-card[data-id="${id}"]`) : null;
-    requestAnimationFrame(() => (near ?? card)?.focus());
+    const card = document.querySelector<HTMLElement>(`.kb-card[data-id="${id}"]`);
+    // 포인터로 눌렀을 때 카드 위치로 화면이 튀지 않게 함
+    requestAnimationFrame(() => (near ? near.focus() : card?.focus({ preventScroll: !kbd })));
   };
 
   const list = (perks: Perk[]) => (
