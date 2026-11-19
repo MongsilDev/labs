@@ -69,8 +69,8 @@ describe("scanArchive", () => {
   });
   it("커서가 없는 기록에서도 24시간 기록은 이어 받는다", () => {
     const f = join(dir, "state.json");
-    writeFileSync(f, JSON.stringify({ season: 43, cursor: null, hist: [[1, { a: 1 }]] }));
-    expect(loadRace(f, 43)).toMatchObject({ cursor: null, hist: [[1, { a: 1 }]] });
+    writeFileSync(f, JSON.stringify({ season: 43, cursor: null, hist: [[1, { a: 1 }]], reached: { a: 5 }, last: { a: [8310, 20, 9] } }));
+    expect(loadRace(f, 43)).toMatchObject({ cursor: null, hist: [[1, { a: 1 }]], reached: { a: 5 }, last: { a: [8310, 20, 9] } });
     expect(loadRace(f, 44).hist).toEqual([]);
   });
   it("보관기가 없으면 null", () => {
