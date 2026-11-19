@@ -2,7 +2,8 @@ import Link from "next/link";
 import CutMini from "@/er/components/cut/CutMini";
 import Live from "@/next/Live";
 import HubScore from "@/next/HubScore";
-import { CutNums, KelBig, LabMini, OverlayOpen, RaceMini, TarkovGroup, TierBig } from "@/next/Hub5Parts";
+import { RaceLive, RaceMini } from "@/er/components/cut/RaceLive";
+import { CutNums, KelBig, LabMini, OverlayOpen, TarkovGroup, TierBig } from "@/next/Hub5Parts";
 import { KelHead, TierHead, TierMissing } from "@/next/HubParts";
 import { hubData } from "@/next/hub";
 import { getPreseason } from "@/next/preseason";
@@ -39,10 +40,17 @@ export default async function Hub() {
               <Link className="more" href="/er/cut">내 RP 진단</Link>
             </h2>
             {h.cut ? (
-              <>
-                <CutNums cut={h.cut} race={h.race} />
-                <CutMini data={h.cut} empty={h.race?.list.length ? <RaceMini list={h.race.list.slice(0, 5)} /> : null} />
-              </>
+              h.race ? (
+                <RaceLive initial={h.race}>
+                  <CutNums cut={h.cut} race={h.race} />
+                  <CutMini data={h.cut} empty={<RaceMini />} />
+                </RaceLive>
+              ) : (
+                <>
+                  <CutNums cut={h.cut} />
+                  <CutMini data={h.cut} />
+                </>
+              )
             ) : (
               <p className="py-3 text-ink-3">이터컷을 불러오지 못했습니다.</p>
             )}

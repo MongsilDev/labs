@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { RaceCount } from "@/er/components/cut/RaceLive";
 import { Logo } from "@/er/components/kel/Team";
 import { int as rp, type RaceData, TIERS, tens } from "@/er/lib/cut";
 import { fmt1 } from "@/er/lib/format";
@@ -64,7 +65,7 @@ export function CutNums({ cut, race, forecast = true }: { cut: NonNullable<Hub["
                 {name} {rp(8300)} 달성
               </dt>
               <dd className="num">
-                {rp(race.count)}
+                <RaceCount />
                 <small className="ml-1">명</small>
               </dd>
             </div>
@@ -84,45 +85,6 @@ export function CutNums({ cut, race, forecast = true }: { cut: NonNullable<Hub["
         );
       })}
     </dl>
-  );
-}
-
-/** 컷 그래프를 그릴 기록이 없는 시즌 초에 그 자리에 두는 8,300 도달 상위 목록. 옆 기둥 표와 같은 줄 높이 */
-export function RaceMini({ list }: { list: RaceData["list"] }) {
-  return (
-    <Link href="/er/cut" className="race-mini">
-      <table className="tbl tierbig">
-        <thead className="sr-only">
-          <tr>
-            <th className="l w-8">#</th>
-            <th className="l">닉네임</th>
-            <th>RP</th>
-            <th>{rp(8300)}까지</th>
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((r, i) => (
-            <tr key={r.nickname}>
-              <td className="l text-ink-3">{i + 1}</td>
-              <td className="l w-full max-w-0 truncate">
-                <b className="tb-team">{r.nickname}</b>
-              </td>
-              <td className="text-ink-2">{rp(r.rp)}</td>
-              <td className="tb-score">
-                {r.at != null || r.rp >= 8300 ? (
-                  <span style={{ color: TIERS[0].color }}>달성</span>
-                ) : (
-                  <>
-                    {rp(8300 - r.rp)}
-                    <small>남음</small>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Link>
   );
 }
 

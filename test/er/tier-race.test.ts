@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import zlib from "node:zlib";
 import { afterAll, describe, expect, it } from "vitest";
-import { loadRace, raceBoard, recordHist, scanArchive, scanGame } from "../../scripts/er/tier/race.mjs";
+import { loadRace, raceBoard, recordHist, scanArchive, scanGame, trackLive } from "../../scripts/er/tier/race.mjs";
 
 const user = (nickname: string, before: number, after: number, o: Record<string, unknown> = {}) => ({
   nickname,
@@ -24,10 +24,10 @@ describe("scanGame", () => {
     scanGame(s, { userGames: [user("a", 8250, 8310), user("b", 8200, 8290), user("c", 8300, 8350)] });
     expect(s.reached).toEqual({ a: END });
   });
-  it("다른 서버, 일반 게임은 세지 않는다", () => {
+  it("일반 게임은 세지 않고, 대회 기준인 통합 순위라 다른 서버는 센다", () => {
     const s = loadRace("/nonexistent", 43);
     scanGame(s, { userGames: [user("a", 8250, 8310, { serverName: "Asia2" }), user("b", 8250, 8310, { matchingMode: 2 })] });
-    expect(s.reached).toEqual({});
+    expect(Object.keys(s.reached)).toEqual(["a"]);
   });
   it("떨어졌다가 다시 넘어도 처음 시각을 유지한다", () => {
     const s = loadRace("/nonexistent", 43);
@@ -92,7 +92,7 @@ describe("raceBoard", () => {
     const r = raceBoard(s, { seasonId: 43, top, now: 1_000.4 });
     expect(r).toMatchObject({ updatedAt: 1000, season: 43, open: true, count: 4 });
     expect(r.list.map((x: { nickname: string }) => x.nickname)).toEqual(["b", "a", "e", "c", "f", "d"]);
-    expect(r.list[0]).toEqual({ nickname: "b", rp: 8310, at: END / 1000, gain: null });
+    expect(r.list[0]).toEqual({ nickname: "b", rp: 8310, at: END / 1000, gain: null, diff: null, diffAt: null });
     expect(r.list[3].at).toBeNull();
   });
   it("못 닿은 계정까지 10명만", () => {
@@ -118,6 +118,15 @@ describe("raceBoard", () => {
     expect(raceBoard(s, { seasonId: 43, top, now: 0 })).toMatchObject({ open: false, count: 300, list: [] });
     top[299].mmr = 8300;
     expect(raceBoard(s, { seasonId: 43, top, now: 0 }).open).toBe(true);
+  });
+  it("1분마다 받은 순위표로 마지막 한 판의 변화와 도달 시각을 남긴다", () => {
+    const h = { ...loadRace("/nonexistent", 43) };
+    trackLive(h, [{ nickname: "x", mmr: 8280 }, { nickname: "y", mmr: 7000 }], 100);
+    trackLive(h, [{ nickname: "x", mmr: 8312 }, { nickname: "y", mmr: 7000 }], 160);
+    trackLive(h, [{ nickname: "x", mmr: 8312 }, { nickname: "y", mmr: 6980 }], 220);
+    expect(h.reached).toEqual({ x: 160_000 });
+    const r = raceBoard(h, { seasonId: 43, top: [{ nickname: "x", mmr: 8312 }, { nickname: "y", mmr: 6980 }, { nickname: "z", mmr: 6000 }], now: 220 });
+    expect(r.list.map((x: { diff: number | null; diffAt: number | null }) => [x.diff, x.diffAt])).toEqual([[32, 160], [-20, 220], [null, null]]);
   });
   it("빈 순위표는 열려 있고 0명", () => {
     expect(raceBoard(s, { seasonId: 43, top: [], now: 0 })).toMatchObject({ open: true, count: 0, list: [] });

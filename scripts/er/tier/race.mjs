@@ -3,13 +3,14 @@ import { existsSync, readFileSync } from "node:fs";
 import zlib from "node:zlib";
 import { RANKED_GATE, byRp } from "./etercut.mjs";
 
-// 시즌 초 이터컷 자리에 보여 줄 이터니티 선착순(장부 528). 아시아1 계정이 RANKED_GATE에 처음 닿은 경기 종료 시각을 보관기 원본에서 찾음
+// 시즌 초 이터컷 자리에 보여 줄 이터런(장부 528, 552). 계정이 RANKED_GATE에 처음 닿은 시각을 1분마다 받는 통합 순위표와 보관기 원본에서 찾음
+// 대회 규칙이 Global 통합 순위라 서버를 가리지 않음. 시즌 43 아시아1 순위표는 상위권이 빠져 있어 쓰지 않음
 // 기록 파일에는 보관기 닉네임이 들어 있어 몽실봇 자료 폴더에 두고, 공개 race.json에는 그 시각 순위표에 오른 닉네임만 씀(528-3)
 
-const SERVER = "Asia";
 const RANKED = 3;
 const MISS_MAX = 3;
 const LIST = 10;
+const LIVE_KEEP = 300;
 const HIST_KEEP = 28 * 3600;
 const DAY = 24 * 3600;
 
@@ -25,11 +26,28 @@ export function loadRace(path, seasonId) {
   return { season: seasonId, cursor: null, base: null, pending: [], reached: {}, hist: [] };
 }
 
-/** 경기 원본 하나에서 RANKED_GATE를 넘은 아시아1 랭크 참가자를 reached에 남김. 더 이른 시각만 덮어씀 */
+/**
+ * 1분마다 받은 순위표로 계정마다 마지막 RP, 직전 값 대비 변화, 바뀐 시각을 남김. 판마다 RP가 바뀌므로 변화는 마지막 한 판 몫
+ * 직전 회차에 RANKED_GATE 아래였다가 넘은 계정은 이번 시각을 도달 시각으로 남기고, 보관기가 더 이른 경기 종료 시각을 찾으면 scanGame이 덮어씀
+ */
+export function trackLive(state, top, now) {
+  const last = state.last ?? {};
+  const next = {};
+  // 목록과 도달 판정에 쓰는 상위권만 남겨 1분마다 쓰는 기록 파일을 작게 둠
+  for (const r of byRp((top ?? []).filter((x) => x.nickname && x.mmr)).slice(0, LIVE_KEEP)) {
+    const rp = Math.trunc(r.mmr);
+    const old = last[r.nickname];
+    next[r.nickname] = !old || old[0] === rp ? (old ?? [rp, null, null]) : [rp, rp - old[0], Math.round(now)];
+    if (old && old[0] < RANKED_GATE && rp >= RANKED_GATE && state.reached[r.nickname] == null) state.reached[r.nickname] = Math.round(now * 1000);
+  }
+  state.last = next;
+}
+
+/** 경기 원본 하나에서 RANKED_GATE를 넘은 랭크 참가자를 reached에 남김. 더 이른 시각만 덮어씀 */
 export function scanGame(state, body) {
   const users = body?.userGames ?? [];
   for (const u of users) {
-    if (u.serverName !== SERVER || u.matchingMode !== RANKED || !u.nickname) continue;
+    if (u.matchingMode !== RANKED || !u.nickname) continue;
     if (!(u.mmrBefore < RANKED_GATE && u.mmrAfter >= RANKED_GATE)) continue;
     const at = kstMs(u.startDtm) + (u.duration ?? 0) * 1000;
     if (!Number.isFinite(at)) continue;
@@ -96,7 +114,7 @@ function dayAgo(state, now) {
 /**
  * 공개용 race.json. open은 순위표 300위가 RANKED_GATE를 넘기 전(528-2)
  * list는 도달한 계정을 도달 순서로, 그 뒤에 아직 못 닿은 계정을 RP순으로 LIST명까지. 도달은 보관기에서 넘은 경기를 찾았거나 지금 RANKED_GATE 이상
- * count는 지금 순위표에 있는 도달 계정 수. gain은 24시간 RP 변화이고 기록이 없으면 null
+ * count는 지금 순위표에 있는 도달 계정 수. gain은 24시간 RP 변화이고 기록이 없으면 null. diff와 diffAt은 마지막으로 바뀐 판의 RP 변화와 그 시각
  */
 export function raceBoard(state, { seasonId, top, now }) {
   const ranked = byRp((top ?? []).filter((r) => r.mmr));
@@ -106,9 +124,10 @@ export function raceBoard(state, { seasonId, top, now }) {
   const rows = ranked.map((r) => {
     const rp = Math.trunc(r.mmr);
     const at = state.reached[r.nickname] != null ? Math.round(state.reached[r.nickname] / 1000) : null;
-    return { nickname: r.nickname, rp, at, gain: before[r.nickname] != null ? rp - before[r.nickname] : null, done: at != null || rp >= RANKED_GATE };
+    const live = state.last?.[r.nickname];
+    return { nickname: r.nickname, rp, at, gain: before[r.nickname] != null ? rp - before[r.nickname] : null, diff: live?.[1] ?? null, diffAt: live?.[2] ?? null, done: at != null || rp >= RANKED_GATE };
   });
   const done = rows.filter((r) => r.done).sort((a, b) => (a.at ?? Infinity) - (b.at ?? Infinity) || b.rp - a.rp);
-  const list = [...done, ...rows.filter((r) => !r.done)].slice(0, LIST).map(({ nickname, rp, at, gain }) => ({ nickname, rp, at, gain }));
+  const list = [...done, ...rows.filter((r) => !r.done)].slice(0, LIST).map(({ nickname, rp, at, gain, diff, diffAt }) => ({ nickname, rp, at, gain, diff, diffAt }));
   return { updatedAt: Math.round(now), season: seasonId, open, count: done.length, list: open ? list : [] };
 }
