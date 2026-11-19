@@ -71,6 +71,7 @@ if (!Array.isArray(body?.topRanks)) {
 const top = body.topRanks;
 // 아시아1 재구성은 직전 회차까지 확인한 서버로 먼저 쓰고, 새 계정의 서버 확인은 남은 시간에 함
 let ids = {};
+let limited = false;
 try {
   const saved = JSON.parse(readFileSync(ASIA_IDS, "utf8"));
   if (saved.season === seasonId) ids = saved.ids;
@@ -82,17 +83,21 @@ try {
     prev = JSON.parse(readFileSync(ASIA_FILE, "utf8"));
   } catch {}
   const r = await get(`/v1/rank/top/${seasonId}/3/10`, LOOKUP_TIMEOUT).catch((e) => {
-    if (e instanceof Limited) process.exit(0);
+    if (e instanceof Limited) limited = true;
     return null;
   });
+  // 한도 응답이면 공식 인원을 모르므로 asia1.json을 그대로 두고, 이터런만 쓴 뒤 서버 확인을 건너뜀
+  if (limited) throw new Limited();
   official = Array.isArray(r?.body?.topRanks) ? r.body.topRanks.length : r?.body?.code === 404 ? 0 : null;
   const asia = buildAsia(top, ids);
   // 공식 순위표 요청이 실패한 회차는 직전 판정을 이어 감. 한 번 실패로 정상인 공식 순위표를 덮지 않게 함
   const active = official == null && prev?.season === seasonId ? Boolean(prev.active) && isActive(null, asia.topRanks.length, asia.unknown) : isActive(official, asia.topRanks.length, asia.unknown);
   writeAtomic(ASIA_FILE, JSON.stringify({ at: Date.now(), season: seasonId, active, official, count: asia.topRanks.length, unknown: asia.unknown, topRanks: asia.topRanks }));
 } catch (e) {
-  log(`아시아1 순위를 다시 만들지 못했습니다. ${e.message}`);
-  process.exitCode = 1;
+  if (!(e instanceof Limited)) {
+    log(`아시아1 순위를 다시 만들지 못했습니다. ${e.message}`);
+    process.exitCode = 1;
+  }
 }
 
 const now = Date.now() / 1000;
@@ -125,6 +130,7 @@ async function serverOf(name, e) {
   return { s: u.rewardServerCode || u.serverCode || 0, u: uid };
 }
 
+if (limited) process.exit(0);
 const t = Date.now();
 try {
   for (const name of lookupQueue(top, ids, t, LOOKUP_MAX)) {
