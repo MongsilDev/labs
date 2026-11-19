@@ -151,6 +151,10 @@ button.kb-card:hover:not([aria-disabled="true"]) {
 .kb-card.neg .kb-icon {
   background: var(--neg);
 }
+.kb-icon.none {
+  border-radius: 50%;
+  opacity: 0.2;
+}
 .kb-body {
   min-width: 0;
   flex: 1;

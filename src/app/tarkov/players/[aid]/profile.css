@@ -357,6 +357,10 @@
   -webkit-mask-position: center;
   mask-position: center;
 }
+.perk-icon.none {
+  border-radius: 50%;
+  opacity: 0.2;
+}
 .list li {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;

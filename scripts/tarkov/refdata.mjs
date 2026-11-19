@@ -97,7 +97,7 @@ const perk = (p) => ({
   effects: (seasonKo[`${p.id} description`] ?? seasonEn[`${p.id} description`] ?? "").split("\n").map((x) => x.trim()).filter(Boolean),
   ...(p.points == null ? {} : { points: p.points, exclusive: p.exclusiveToPerks }),
 });
-// 지난 시즌 특성도 계정 화면과 옛 빌드 주소에 쓰므로 id가 같은 시즌만 바꾸고 나머지는 남김
+// 지난 시즌 특성도 계정 화면과 옛 빌드 주소에 쓰므로 id나 slug가 같은 시즌만 바꾸고 나머지는 남김. slug로도 찾는 건 공식 데이터 전에 손으로 넣은 시즌을 덮기 위해서
 const name = seasonEn[season.name] ?? season.name;
 const perks = {
   id: season.id,
@@ -109,7 +109,7 @@ const perks = {
   personal: season.perks.personal.map(perk),
 };
 const SEASONS = "src/tarkov/data/seasons.json";
-const seasons = [...(existsSync(SEASONS) ? JSON.parse(readFileSync(SEASONS, "utf8")) : []).filter((s) => s.id !== perks.id), perks].sort((a, b) => a.start - b.start);
+const seasons = [...(existsSync(SEASONS) ? JSON.parse(readFileSync(SEASONS, "utf8")) : []).filter((s) => s.id !== perks.id && s.slug !== perks.slug), perks].sort((a, b) => a.start - b.start);
 writeFileSync(SEASONS, JSON.stringify(seasons, null, 1) + "\n");
 
 const dir = "public/kord/perks";

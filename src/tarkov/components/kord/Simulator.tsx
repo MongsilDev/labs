@@ -21,8 +21,10 @@ function exclusive(perks: Map<string, Perk>) {
 
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
-function Icon({ id }: { id: string }) {
-  const url = `url(/kord/perks/${id}.png)`;
+function Icon({ p }: { p: Perk }) {
+  // 공식 데이터가 나오기 전 특성은 아이콘이 없어 같은 크기의 빈 자리만 둠
+  if (p.icon === false) return <span className="kb-icon none" aria-hidden="true" />;
+  const url = `url(/kord/perks/${p.id}.png)`;
   return <span className="kb-icon" style={{ WebkitMaskImage: url, maskImage: url }} aria-hidden="true" />;
 }
 
@@ -40,7 +42,7 @@ function Card({ p, on, blockedBy, onToggle }: { p: Perk; on: boolean; blockedBy:
           if (!blocked) onToggle();
         }}
       >
-        <Icon id={p.id} />
+        <Icon p={p} />
         <span className="kb-body">
           <span className="kb-top">
             <b className="kb-name">{p.name}</b>
@@ -247,7 +249,7 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
         <ul className="kb-list grid3">
           {season.common.map((p) => (
             <li key={p.id} className="kb-card">
-              <Icon id={p.id} />
+              <Icon p={p} />
               <span className="kb-body">
                 <b className="kb-name">{p.name}</b>
                 {p.effects.map((e) => (

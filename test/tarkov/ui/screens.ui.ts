@@ -203,28 +203,31 @@ describe("화면 점검", () => {
   it("시뮬레이터는 포인트를 계산하고 빌드를 주소로 되살린다", async () => {
     const { page } = await open(SCREENS.find((s) => s.name === "시즌 특성")!, 390, "dark");
     const left = page.locator(".kb-left dd");
+    await page.getByText("시즌 시작 전에 바뀔 수 있습니다").waitFor();
+    await expect(page.getByRole("button", { name: /^Lockpicker/ }).locator(".kb-icon.none").count()).resolves.toBe(1);
     await page.getByRole("button", { name: /플리마켓 금지령/ }).click();
-    await expect(left.textContent()).resolves.toBe("10");
+    await expect(left.textContent()).resolves.toBe("8");
     await page.getByRole("button", { name: /카파 프로토콜/ }).click();
-    await expect(left.textContent()).resolves.toBe("-2");
-    await page.getByText("포인트가 2 부족합니다").waitFor();
+    await page.getByRole("button", { name: /금고 털이범/ }).click();
+    await expect(left.textContent()).resolves.toBe("-4");
+    await page.getByText("포인트가 4 부족합니다").waitFor();
     await page.getByRole("button", { name: /^혈우병/ }).click();
     const blocked = page.getByRole("button", { name: /혈전성향증/ });
     await expect(blocked.getAttribute("aria-disabled")).resolves.toBe("true");
     await blocked.click({ force: true });
     await expect(blocked.getAttribute("aria-pressed")).resolves.toBe("false");
     const url = page.url();
-    expect(new URL(url).searchParams.get("s")).toBe("kord-breach");
-    await page.getByRole("button", { name: "초기화" }).click();
+    expect(new URL(url).searchParams.get("s")).toBe("untar-control");
+    await page.getByRole("button", { name: "초기화", exact: true }).click();
     await expect(left.textContent()).resolves.toBe("0");
     const kappa = () => page.getByRole("button", { name: /카파 프로토콜/ }).getAttribute("aria-pressed");
     await expect(kappa()).resolves.toBe("false");
     await page.getByRole("button", { name: "되돌리기" }).click();
     await expect(kappa()).resolves.toBe("true");
-    await page.getByRole("button", { name: "초기화" }).click();
+    await page.getByRole("button", { name: "초기화", exact: true }).click();
     await page.goto(url, { waitUntil: "networkidle" });
     await expect(kappa()).resolves.toBe("true");
-    await expect(page.locator(".kb-left dd").textContent()).resolves.toBe("0");
+    await expect(page.locator(".kb-left dd").textContent()).resolves.toBe("-2");
     await page.context().close();
   });
 
@@ -245,12 +248,13 @@ describe("화면 점검", () => {
   it("시즌 프로필은 고른 특성을 보여주고 시뮬레이터로 연다", async () => {
     const { page } = await open(SCREENS.find((s) => s.name === "프로필 PvP")!, 1440, "dark");
     await page.goto(`${base}/tarkov/players/1001?mode=season`, { waitUntil: "networkidle" });
+    await page.getByRole("heading", { name: "KORD BREACH 시즌 진행" }).waitFor();
     await page.getByRole("heading", { name: /고른 시즌 특성/ }).waitFor();
     await page.getByRole("heading", { name: "스캐브 레이드" }).waitFor();
     await page.getByRole("heading", { name: /^스킬/ }).waitFor();
     const n = await page.locator(".perks li").count();
     await page.getByRole("link", { name: "시뮬레이터에서 열기" }).click();
-    await page.waitForURL(/\/tarkov\/season\?s=kord-breach&b=/);
+    await page.waitForURL(/\/tarkov\/kord-breach\?s=kord-breach&b=/);
     await page.locator(".kb-left dd").waitFor();
     await expect(page.locator('.kb-card[aria-pressed="true"]').count()).resolves.toBe(n);
     await page.context().close();

@@ -19,7 +19,7 @@ import { ago, date, dateTime, dec, div, hours, int, pct } from "@/tarkov/lib/for
 import { arenaModeLabel, memberChips, sideLabel } from "@/tarkov/lib/labels";
 import { MODES, pickMode, tarkovDevUrl } from "@/tarkov/lib/modes";
 import { encodeBuild } from "@/tarkov/lib/build";
-import { seasonAt, seasonOfPerks, seasonPath, seasonTitle, type Perk } from "@/tarkov/lib/kord";
+import { LATEST, seasonAt, seasonOfPerks, seasonPath, seasonTitle, type Perk } from "@/tarkov/lib/kord";
 import { ARENA_PASSES, LEAGUE, leagueLabel } from "@/tarkov/lib/season";
 import { ARENA_NAMED, achievementInfo, type ArenaSummary, type EftSummary, type Gear as Worn, type Progress, type Summary } from "@/tarkov/lib/summary";
 import { badgeRates, verdict } from "@/tarkov/server/baseline";
@@ -516,10 +516,10 @@ function ProgressCard({ label, p, note }: { label: string; p: Progress; note: st
   );
 }
 
-// 고른 특성으로 시즌을 정하고, 특성이 없으면 마지막 활동 시각으로 정함
+// 고른 특성과 마지막 활동 시각이 든 시즌이 그 계정 기록의 시즌. 둘 다 없으면 현재 시즌
 const accountSeason = (s: EftSummary) => {
   const at = s.lastActive ? s.lastActive * 1000 : null;
-  return (s.perks?.length ? seasonOfPerks(s.perks, at) : undefined) ?? seasonAt(at ?? Date.now());
+  return (s.perks?.length ? seasonOfPerks(s.perks, at) : undefined) ?? (at == null ? LATEST : seasonAt(at));
 };
 
 function SeasonProgress({ s }: { s: EftSummary }) {
@@ -599,7 +599,11 @@ function SeasonPerks({ s }: { s: EftSummary }) {
       <ul className="perks">
         {picked.map((p) => (
           <li key={p.id} className={p.points! < 0 ? "pos" : "neg"} title={p.effects.join("\n")}>
-            <span className="perk-icon" style={{ WebkitMaskImage: `url(/kord/perks/${p.id}.png)`, maskImage: `url(/kord/perks/${p.id}.png)` }} aria-hidden="true" />
+            {p.icon === false ? (
+              <span className="perk-icon none" aria-hidden="true" />
+            ) : (
+              <span className="perk-icon" style={{ WebkitMaskImage: `url(/kord/perks/${p.id}.png)`, maskImage: `url(/kord/perks/${p.id}.png)` }} aria-hidden="true" />
+            )}
             <span>{p.name}</span>
             <b className="num">{p.points! > 0 ? `+${p.points}` : p.points}</b>
           </li>

@@ -462,5 +462,687 @@
     "exclusive": []
    }
   ]
+ },
+ {
+  "id": "untar-control",
+  "slug": "untar-control",
+  "name": "Untar Control",
+  "start": 1796634039000,
+  "end": 0,
+  "preview": "https://x.com/i/status/2123359357429789044",
+  "common": [
+   {
+    "id": "69c41a19cd28c936320a7523",
+    "name": "보험 불가능",
+    "en": "No Insurance",
+    "effects": [
+     "레이드 시작 전에 보험을 할 수 없습니다"
+    ]
+   },
+   {
+    "id": "untar-untar-control",
+    "name": "UNTAR Control",
+    "en": "UNTAR Control",
+    "effects": [
+     "UN 병력이 타르코프 전역에 나타나 새 규칙을 어긴 스캐브와 PMC를 공격합니다",
+     "UN 병력이 각 지역의 여러 구역을 통제합니다"
+    ],
+    "icon": false
+   },
+   {
+    "id": "untar-tough-times",
+    "name": "Tough Times",
+    "en": "Tough Times",
+    "effects": [
+     "탈출구 이용이 제한됩니다",
+     "시즌 초반에는 스캐브 쿨타임이 크게 늘어납니다"
+    ],
+    "icon": false
+   },
+   {
+    "id": "untar-peace-market",
+    "name": "Peace Market",
+    "en": "Peace Market",
+    "effects": [
+     "새 글로벌 임무를 완료하면 모든 플레이어가 플리마켓을 이용할 수 있습니다",
+     "아이템 등록 제한이 최소화됩니다"
+    ],
+    "icon": false
+   },
+   {
+    "id": "untar-supply-shortage",
+    "name": "Supply Shortage",
+    "en": "Supply Shortage",
+    "effects": [
+     "타르코프 전역에서 식품, 의약품, 대형 배낭, 폭발물 품귀 현상이 일어납니다"
+    ],
+    "icon": false
+   },
+   {
+    "id": "untar-smart-pmcs",
+    "name": "Smart PMCs",
+    "en": "Smart PMCs",
+    "effects": [
+     "스킬 경험치 획득량이 25% 증가됩니다"
+    ],
+    "icon": false
+   }
+  ],
+  "personal": [
+   {
+    "id": "69c3e8d8af28f094100fe130",
+    "name": "마라토너",
+    "en": "Marathon Runner",
+    "effects": [
+     "팔, 다리 스테미나 감소 속도가 25% 감소됩니다"
+    ],
+    "points": -5,
+    "exclusive": [
+     "69c3ce913ffdba4e68086bdb",
+     "69c41111cd28c936320a7520"
+    ]
+   },
+   {
+    "id": "69c405332f253132020be099",
+    "name": "금고 털이범",
+    "en": "Safecracker",
+    "effects": [
+     "물리 열쇠와 키카드 사용 시 50% 확률로 내구도가 소모되지 않습니다"
+    ],
+    "points": -4
+   },
+   {
+    "id": "69c405a9d7a7b2ca660e0c56",
+    "name": "수색대",
+    "en": "Bushborne",
+    "effects": [
+     "수풀 이동 시 소음 발생 및 이동 속도 둔화 효과가 75% 감소합니다"
+    ],
+    "points": -4
+   },
+   {
+    "id": "69c406731d8aec4a2b0551bd",
+    "name": "주스 타임",
+    "en": "Juice Time",
+    "effects": [
+     "주스 음료 섭취 시 240초 동안 진통제 효과를 얻습니다"
+    ],
+    "points": -1
+   },
+   {
+    "id": "69c40ae21d8aec4a2b0551c2",
+    "name": "뱃사람의 향수",
+    "en": "Sailor's Nostalgia",
+    "effects": [
+     "생선 통조림 섭취 시 600초간 체력 회복 (+1) 효과를 얻습니다"
+    ],
+    "points": -2
+   },
+   {
+    "id": "69c40c0f5e9ce5a8970f6be9",
+    "name": "젊음",
+    "en": "Youth",
+    "effects": [
+     "에너지 소모 속도가 20% 감소됩니다",
+     "팔, 다리 스테미나가 25 증가됩니다"
+    ],
+    "points": -6,
+    "exclusive": [
+     "69c3ce913ffdba4e68086bdb",
+     "69c3d35feaf97663fb0bb367",
+     "69c412519b5263783d0fe520"
+    ]
+   },
+   {
+    "id": "69c40cb782362c4aff041510",
+    "name": "보호비",
+    "en": "Street Tax",
+    "effects": [
+     "매 주마다 한 번씩 일부 스캐브가 많은 보호비를 상납합니다"
+    ],
+    "points": -2
+   },
+   {
+    "id": "69c40e131f8903ce7a06984c",
+    "name": "타르코프의 명사수",
+    "en": "The Tarkov Shooter",
+    "effects": [
+     "볼트 액션 소총 스킬의 레벨을 51 레벨로 시작합니다"
+    ],
+    "points": -2,
+    "exclusive": [
+     "69ce64064e0a1c7ca20781d3"
+    ]
+   },
+   {
+    "id": "69c40f9f9b5263783d0fe51d",
+    "name": "식단 조절",
+    "en": "Diet",
+    "effects": [
+     "모든 음식 아이템을 사용할 시 50% 덜 소모합니다"
+    ],
+    "points": -1
+   },
+   {
+    "id": "69c410831f8903ce7a06984f",
+    "name": "헤라클레스",
+    "en": "Hercules",
+    "effects": [
+     "근력 및 지구력 스킬 레벨을 20레벨로 시작합니다"
+    ],
+    "points": -6,
+    "exclusive": [
+     "69ce64064e0a1c7ca20781d3"
+    ]
+   },
+   {
+    "id": "69c41111cd28c936320a7520",
+    "name": "스프린터",
+    "en": "Sprinter",
+    "effects": [
+     "달리기 속도가 15% 증가됩니다"
+    ],
+    "points": -4,
+    "exclusive": [
+     "69c3e8d8af28f094100fe130",
+     "69ce62886e199f4bbe0ab19b"
+    ]
+   },
+   {
+    "id": "69c4116a383fc5c9ad03f3d1",
+    "name": "혈전성향증",
+    "en": "Thrombophilia",
+    "effects": [
+     "출혈 상태이상의 발생 확률이 100% 감소됩니다"
+    ],
+    "points": -6,
+    "exclusive": [
+     "69c3cd003ffdba4e68086bd7"
+    ]
+   },
+   {
+    "id": "6a578102e7737aa469066518",
+    "name": "신동",
+    "en": "Prodigy",
+    "effects": [
+     "스킬 경험치 획득량이 20% 증가됩니다"
+    ],
+    "points": -4,
+    "exclusive": [
+     "69ce64064e0a1c7ca20781d3",
+     "69c3d21749d7d7c520026425"
+    ]
+   },
+   {
+    "id": "69c411d8883efd5e3b09ccab",
+    "name": "저갈증",
+    "en": "Hypodipsia",
+    "effects": [
+     "수분 소모 속도가 50% 감소됩니다"
+    ],
+    "points": -2,
+    "exclusive": [
+     "69c3d2acfe3c5632e4045fe8"
+    ]
+   },
+   {
+    "id": "69c412519b5263783d0fe520",
+    "name": "다식증",
+    "en": "Polyphagia",
+    "effects": [
+     "에너지 소모 속도가 45% 감소됩니다"
+    ],
+    "points": -2,
+    "exclusive": [
+     "69c3d35feaf97663fb0bb367",
+     "69c40c0f5e9ce5a8970f6be9"
+    ]
+   },
+   {
+    "id": "69c41632d7a7b2ca660e0c59",
+    "name": "통뼈",
+    "en": "Sturdy Bones",
+    "effects": [
+     "골절 발생 확률이 50% 감소됩니다",
+     "낙하로 인해 받는 피해량이 30% 감소됩니다"
+    ],
+    "points": -2,
+    "exclusive": [
+     "69c3cddcfb79911cf20022d6"
+    ]
+   },
+   {
+    "id": "69ce64064e0a1c7ca20781d3",
+    "name": "평범함",
+    "en": "Average",
+    "effects": [
+     "모든 캐릭터 스킬 레벨을 30레벨로 시작하지만 더 이상 올릴 수 없습니다"
+    ],
+    "points": -8,
+    "exclusive": [
+     "69c40e131f8903ce7a06984c",
+     "69c410831f8903ce7a06984f",
+     "69c3d21749d7d7c520026425",
+     "6a578102e7737aa469066518"
+    ]
+   },
+   {
+    "id": "69ce64fe6e199f4bbe0ab1a1",
+    "name": "카파 프로토콜",
+    "en": "Kappa Protocol",
+    "effects": [
+     "보안 컨테이너 카파를 즉시 획득합니다"
+    ],
+    "points": -8
+   },
+   {
+    "id": "6a5789f713792e2c7c0d2a5b",
+    "name": "럭키",
+    "en": "Lucky",
+    "effects": [
+     "용기 있는 자에게 행운이 따른다!"
+    ],
+    "points": -1,
+    "exclusive": [
+     "6a578ac032cea863f505beed"
+    ]
+   },
+   {
+    "id": "69c3cd003ffdba4e68086bd7",
+    "name": "혈우병",
+    "en": "Hemophilia",
+    "effects": [
+     "출혈 상태이상의 발생 확률이 70% 증가됩니다"
+    ],
+    "points": 2,
+    "exclusive": [
+     "69c4116a383fc5c9ad03f3d1"
+    ]
+   },
+   {
+    "id": "69c3cddcfb79911cf20022d6",
+    "name": "골다공증",
+    "en": "Osteoporosis",
+    "effects": [
+     "골절 발생 확률이 50% 증가됩니다",
+     "낙하로 인해 받는 피해량이 50% 증가됩니다"
+    ],
+    "points": 2,
+    "exclusive": [
+     "69c41632d7a7b2ca660e0c59"
+    ]
+   },
+   {
+    "id": "69c3d036042c81ad9209eeae",
+    "name": "아고, 아파라!",
+    "en": "Well That Hurt!",
+    "effects": [
+     "모든 치료킷 사용 시 소모율이 33% 증가됩니다"
+    ],
+    "points": 1
+   },
+   {
+    "id": "69c3d21749d7d7c520026425",
+    "name": "폐급",
+    "en": "Incompetent",
+    "effects": [
+     "모든 캐릭터 스킬 레벨 상승 속도가 100% 감소됩니다"
+    ],
+    "points": 8,
+    "exclusive": [
+     "69ce64064e0a1c7ca20781d3",
+     "6a578102e7737aa469066518"
+    ]
+   },
+   {
+    "id": "69c3d2acfe3c5632e4045fe8",
+    "name": "다갈증",
+    "en": "Polydipsia",
+    "effects": [
+     "수분 소모 속도가 25% 증가됩니다"
+    ],
+    "points": 1,
+    "exclusive": [
+     "69c411d8883efd5e3b09ccab"
+    ]
+   },
+   {
+    "id": "69c3d35feaf97663fb0bb367",
+    "name": "만성 피로 증후군",
+    "en": "Chronic Fatigue Syndrome",
+    "effects": [
+     "에너지 소모 속도가 20% 증가됩니다"
+    ],
+    "points": 1,
+    "exclusive": [
+     "69c412519b5263783d0fe520",
+     "69c40c0f5e9ce5a8970f6be9"
+    ]
+   },
+   {
+    "id": "69c3d43030f896ebef0ed357",
+    "name": "진상 손님",
+    "en": "Personality Vacuum",
+    "effects": [
+     "카리스마 스킬 레벨을 올릴 수 없습니다",
+     "모든 상인의 판매가와 서비스 가격이 50% 증가됩니다"
+    ],
+    "points": 6,
+    "exclusive": [
+     "69ce62886e199f4bbe0ab19b"
+    ]
+   },
+   {
+    "id": "69c3d4e949d7d7c52002642a",
+    "name": "지킬 박사",
+    "en": "Dr. Jekyll",
+    "effects": [
+     "개방성 상처 상태이상이 발생 시, 레이드 종료 전까지 상태이상이 사라지지 않습니다"
+    ],
+    "points": 2
+   },
+   {
+    "id": "69c3d6a9af28f094100fe128",
+    "name": "알레르기 체질",
+    "en": "Allergic",
+    "effects": [
+     "식품 또는 의약품 카테고리의 아이템 중 무작위로 4개의 아이템에 알레르기 반응이 생깁니다"
+    ],
+    "points": 2
+   },
+   {
+    "id": "69c3da8fc0e4deb02605f3c9",
+    "name": "플리마켓 금지령",
+    "en": "No Flea Market",
+    "effects": [
+     "플리마켓에서 다른 유저들과 거래할 수 없습니다"
+    ],
+    "points": 8
+   },
+   {
+    "id": "69ce62886e199f4bbe0ab19b",
+    "name": "다리 사이의 다리",
+    "en": "Third Leg",
+    "effects": [
+     "이동 속도가 2% 감소합니다",
+     "테라피스트의 아이템 판매가가 5% 인하됩니다"
+    ],
+    "points": 1,
+    "exclusive": [
+     "69c41111cd28c936320a7520",
+     "69c3d43030f896ebef0ed357"
+    ]
+   },
+   {
+    "id": "6a578ac032cea863f505beed",
+    "name": "언럭키",
+    "en": "Unlucky",
+    "effects": [
+     "불운으로 인해 때때로 치명적인 결과를 맞이할 수 있습니다"
+    ],
+    "points": 1,
+    "exclusive": [
+     "6a5789f713792e2c7c0d2a5b"
+    ]
+   },
+   {
+    "id": "69c3ce913ffdba4e68086bdb",
+    "name": "기력 고갈",
+    "en": "Exhaustion",
+    "effects": [
+     "팔, 다리 스테미나가 20 줄어듭니다"
+    ],
+    "points": 5,
+    "exclusive": [
+     "69c3e8d8af28f094100fe130",
+     "69c40c0f5e9ce5a8970f6be9"
+    ]
+   },
+   {
+    "id": "69c3da13eaf97663fb0bb36d",
+    "name": "고장난 보안 컨테이너",
+    "en": "Broken Secure Container",
+    "effects": [
+     "보안 컨테이너에 현금, 열쇠, 인식표, 자극제, 특수 장비, 특정 컨테이너 및 배틀패스 문서만 넣을 수 있습니다"
+    ],
+    "points": 6
+   },
+   {
+    "id": "untar-lockpicker",
+    "name": "Lockpicker",
+    "en": "Lockpicker",
+    "effects": [
+     "멀티툴로 문과 컨테이너의 자물쇠를 딸 수 있습니다"
+    ],
+    "points": -1,
+    "icon": false
+   },
+   {
+    "id": "untar-introvert",
+    "name": "Introvert",
+    "en": "Introvert",
+    "effects": [
+     "혼자 플레이할 때 스킬 경험치 획득량이 30% 증가됩니다"
+    ],
+    "points": -1,
+    "icon": false
+   },
+   {
+    "id": "untar-tap-rack-roll",
+    "name": "Tap, Rack, Roll",
+    "en": "Tap, Rack, Roll",
+    "effects": [
+     "문제 해결 스킬 레벨을 40레벨로 시작합니다",
+     "총기 고장을 해결할 때 점검하지 않아도 됩니다"
+    ],
+    "points": -1,
+    "icon": false
+   },
+   {
+    "id": "untar-enhanced-secure-container",
+    "name": "Enhanced Secure Container",
+    "en": "Enhanced Secure Container",
+    "effects": [
+     "보안 컨테이너 엡실론 X를 가지고 시작합니다",
+     "사망해도 이 컨테이너 안 아이템의 '레이드에서 발견한 아이템' 상태가 유지됩니다"
+    ],
+    "points": -2,
+    "icon": false
+   },
+   {
+    "id": "untar-fast-crafting",
+    "name": "Fast Crafting",
+    "en": "Fast Crafting",
+    "effects": [
+     "제작 스킬 레벨을 40레벨로 시작합니다",
+     "제작 스킬의 숙련 속도가 100% 증가합니다"
+    ],
+    "points": -2,
+    "icon": false
+   },
+   {
+    "id": "untar-ref-s-builders",
+    "name": "Ref's Builders",
+    "en": "Ref's Builders",
+    "effects": [
+     "GP 코인과 Lega Medal로 은신처 구역을 건설할 수 있습니다"
+    ],
+    "points": -2,
+    "icon": false
+   },
+   {
+    "id": "untar-kleptomaniac",
+    "name": "Kleptomaniac",
+    "en": "Kleptomaniac",
+    "effects": [
+     "검색 스킬 레벨을 40레벨로 시작합니다",
+     "검색 스킬의 숙련 속도가 100% 증가합니다"
+    ],
+    "points": -2,
+    "icon": false
+   },
+   {
+    "id": "untar-friend-s-extract",
+    "name": "Friend's Extract",
+    "en": "Friend's Extract",
+    "effects": [
+     "모든 PMC 레이드에서 스캐브 탈출구를 하나 더 이용할 수 있습니다 (스캐브 탈출구가 있는 지역만)"
+    ],
+    "points": -2,
+    "icon": false
+   },
+   {
+    "id": "untar-heavyweight",
+    "name": "Heavyweight",
+    "en": "Heavyweight",
+    "effects": [
+     "이동 속도가 5% 감소합니다",
+     "최대 소지 무게가 30kg 늘어납니다 (과적 기준 5kg 증가)"
+    ],
+    "points": -2,
+    "icon": false
+   },
+   {
+    "id": "untar-cold-blooded",
+    "name": "Cold-Blooded",
+    "en": "Cold-Blooded",
+    "effects": [
+     "레이드 중 체온이 낮아져 열화상 조준경에 잘 보이지 않습니다"
+    ],
+    "points": -4,
+    "icon": false
+   },
+   {
+    "id": "untar-advanced-hideout",
+    "name": "Advanced Hideout",
+    "en": "Advanced Hideout",
+    "effects": [
+     "비트코인 채굴 시설, 헬스장, 스캐브 케이스 등 은신처 구역이 지어진 상태로 시작합니다"
+    ],
+    "points": -4,
+    "icon": false
+   },
+   {
+    "id": "untar-peacekeeper-s-insurance",
+    "name": "Peacekeeper's Insurance",
+    "en": "Peacekeeper's Insurance",
+    "effects": [
+     "피스키퍼가 유로를 받고 장비 보험을 들어 줍니다"
+    ],
+    "points": -4,
+    "icon": false
+   },
+   {
+    "id": "untar-extrovert",
+    "name": "Extrovert",
+    "en": "Extrovert",
+    "effects": [
+     "혼자 플레이할 때 스킬 경험치 획득량이 30% 감소됩니다"
+    ],
+    "points": 3,
+    "icon": false
+   },
+   {
+    "id": "untar-schizo",
+    "name": "Schizo",
+    "en": "Schizo",
+    "effects": [
+     "캐릭터가 가끔 환청을 듣습니다"
+    ],
+    "points": 2,
+    "icon": false
+   },
+   {
+    "id": "untar-loose-tongue",
+    "name": "Loose Tongue",
+    "en": "Loose Tongue",
+    "effects": [
+     "캐릭터가 행동을 할 때마다 가끔 대사를 말합니다"
+    ],
+    "points": 2,
+    "icon": false
+   },
+   {
+    "id": "untar-three-fingered",
+    "name": "Three-Fingered",
+    "en": "Three-Fingered",
+    "effects": [
+     "재장전할 때 15% 확률로 탄창을 떨어뜨립니다"
+    ],
+    "points": 2,
+    "icon": false
+   },
+   {
+    "id": "untar-zero-to-hero",
+    "name": "Zero to Hero",
+    "en": "Zero to Hero",
+    "effects": [
+     "보너스 아이템 없이 완전히 빈 캐릭터로 시작합니다"
+    ],
+    "points": 2,
+    "icon": false
+   },
+   {
+    "id": "untar-shaky-aim",
+    "name": "Shaky Aim",
+    "en": "Shaky Aim",
+    "effects": [
+     "3초 넘게 조준하면 손떨림, 통증, 시야 좁아짐이 생깁니다"
+    ],
+    "points": 3,
+    "icon": false
+   },
+   {
+    "id": "untar-deadline",
+    "name": "Deadline",
+    "en": "Deadline",
+    "effects": [
+     "30일 안에 엔딩 중 하나에 도달해야 합니다",
+     "기한을 넘기면 시즌 캐릭터가 초기화됩니다"
+    ],
+    "points": 4,
+    "icon": false
+   },
+   {
+    "id": "untar-coagulopathy",
+    "name": "Coagulopathy",
+    "en": "Coagulopathy",
+    "effects": [
+     "모든 출혈이 즉시 심한 출혈로 바뀝니다"
+    ],
+    "points": 3,
+    "icon": false
+   },
+   {
+    "id": "untar-no-repairs",
+    "name": "No Repairs",
+    "en": "No Repairs",
+    "effects": [
+     "상인에게 아이템을 수리할 수 없습니다"
+    ],
+    "points": 2,
+    "icon": false
+   },
+   {
+    "id": "untar-no-love-from-fence",
+    "name": "No Love From Fence",
+    "en": "No Love From Fence",
+    "effects": [
+     "펜스 평판 -7.0으로 시작합니다"
+    ],
+    "points": 2,
+    "icon": false
+   },
+   {
+    "id": "untar-no-scav-runs",
+    "name": "No Scav Runs",
+    "en": "No Scav Runs",
+    "effects": [
+     "스캐브로 플레이할 수 없습니다"
+    ],
+    "points": 3,
+    "icon": false
+   }
+  ]
  }
 ]

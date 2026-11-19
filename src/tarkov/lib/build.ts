@@ -1,5 +1,5 @@
-export type Perk = { id: string; name: string; en: string; effects: string[]; points?: number; exclusive?: string[] };
-export type Season = { id: string; slug: string; name: string; start: number; end: number; common: Perk[]; personal: Perk[] };
+export type Perk = { id: string; name: string; en: string; effects: string[]; points?: number; exclusive?: string[]; icon?: false };
+export type Season = { id: string; slug: string; name: string; start: number; end: number; common: Perk[]; personal: Perk[]; preview?: string };
 
 // 주소에는 시즌의 개인 특성 id를 정렬한 순서로 선택 여부를 비트로 묶어 36진수로 넣음. 53개를 넘을 수 있어 BigInt로 계산
 const ZERO = BigInt(0);
