@@ -128,6 +128,13 @@ describe("raceBoard", () => {
     const r = raceBoard(h, { seasonId: 43, top: [{ nickname: "x", mmr: 8312 }, { nickname: "y", mmr: 6980 }, { nickname: "z", mmr: 6000 }], now: 220 });
     expect(r.list.map((x: { diff: number | null; diffAt: number | null }) => [x.diff, x.diffAt])).toEqual([[32, 160], [-20, 220], [null, null]]);
   });
+  it("수집이 3분 넘게 끊겼다 이어지면 그 사이 변화와 도달 시각은 남기지 않는다", () => {
+    const h = { ...loadRace("/nonexistent", 43) };
+    trackLive(h, [{ nickname: "x", mmr: 8200 }], 100);
+    trackLive(h, [{ nickname: "x", mmr: 8400 }], 100 + 3600);
+    expect(h.reached).toEqual({});
+    expect(h.last).toEqual({ x: [8400, null, null] });
+  });
   it("빈 순위표는 열려 있고 0명", () => {
     expect(raceBoard(s, { seasonId: 43, top: [], now: 0 })).toMatchObject({ open: true, count: 0, list: [] });
   });

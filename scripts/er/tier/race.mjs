@@ -11,6 +11,7 @@ const RANKED = 3;
 const MISS_MAX = 3;
 const LIST = 10;
 const LIVE_KEEP = 300;
+const LIVE_GAP = 180;
 const HIST_KEEP = 28 * 3600;
 const DAY = 24 * 3600;
 
@@ -29,9 +30,11 @@ export function loadRace(path, seasonId) {
 /**
  * 1분마다 받은 순위표로 계정마다 마지막 RP, 직전 값 대비 변화, 바뀐 시각을 남김. 판마다 RP가 바뀌므로 변화는 마지막 한 판 몫
  * 직전 회차에 RANKED_GATE 아래였다가 넘은 계정은 이번 시각을 도달 시각으로 남기고, 보관기가 더 이른 경기 종료 시각을 찾으면 scanGame이 덮어씀
+ * 직전 회차가 LIVE_GAP보다 오래됐으면 그 사이 여러 판이 섞여 있어 변화와 도달 시각을 남기지 않고 기준값만 새로 잡음
  */
 export function trackLive(state, top, now) {
-  const last = state.last ?? {};
+  const fresh = state.lastAt != null && now - state.lastAt <= LIVE_GAP;
+  const last = fresh ? (state.last ?? {}) : {};
   const next = {};
   // 목록과 도달 판정에 쓰는 상위권만 남겨 1분마다 쓰는 기록 파일을 작게 둠
   for (const r of byRp((top ?? []).filter((x) => x.nickname && x.mmr)).slice(0, LIVE_KEEP)) {
@@ -41,6 +44,7 @@ export function trackLive(state, top, now) {
     if (old && old[0] < RANKED_GATE && rp >= RANKED_GATE && state.reached[r.nickname] == null) state.reached[r.nickname] = Math.round(now * 1000);
   }
   state.last = next;
+  state.lastAt = now;
 }
 
 /** 경기 원본 하나에서 RANKED_GATE를 넘은 랭크 참가자를 reached에 남김. 더 이른 시각만 덮어씀 */
