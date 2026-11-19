@@ -7,6 +7,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Browser, chromium, type Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import seasons from "../../../src/tarkov/data/seasons.json";
+import { encodeBuild, type Season } from "../../../src/tarkov/lib/build";
 
 const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 const STANDALONE = join(ROOT, ".next/standalone");
@@ -230,6 +232,26 @@ describe("화면 점검", () => {
     await page.goto(url, { waitUntil: "networkidle" });
     await expect(kappa()).resolves.toBe("true");
     await expect(page.locator(".kb-left b").textContent()).resolves.toBe("-2");
+    await page.context().close();
+  });
+
+  it("추정 상충은 카드를 막고, 규칙 전에 공유된 빌드 주소는 둘 다 고른 채 열어 뺄 수 있게 한다", async () => {
+    const { page } = await open(SCREENS.find((s) => s.name === "시즌 특성")!, 1440, "dark");
+    await page.getByText("시즌 1 규칙으로 추정했습니다").waitFor();
+    const card = (name: string) => page.locator(".kb-cols").getByRole("button", { name: new RegExp(`^${name}`) });
+    await card("평범함").click();
+    await expect(card("내향인").getAttribute("aria-disabled")).resolves.toBe("true");
+    await expect(card("헤라클레스").getAttribute("aria-disabled")).resolves.toBe("true");
+    const untar = (seasons as Season[]).find((s) => s.slug === "untar-control")!;
+    const id = (en: string) => untar.personal.find((p) => p.en === en)!.id;
+    await page.goto(`${base}/tarkov/season?s=untar-control&b=${encodeBuild(untar, [id("Average"), id("Introvert")])}`, { waitUntil: "networkidle" });
+    await expect(page.locator('.kb-card[aria-pressed="true"]').count()).resolves.toBe(2);
+    await expect(page.locator(".kb-warn").textContent()).resolves.toBe("함께 고를 수 없는 특성 중 하나를 빼야 합니다");
+    await expect(card("내향인").locator(".kb-why.bad").textContent()).resolves.toBe("함께 고를 수 없음: 평범함");
+    await card("내향인").click();
+    await expect(card("내향인").getAttribute("aria-pressed")).resolves.toBe("false");
+    await expect(card("내향인").getAttribute("aria-disabled")).resolves.toBe("true");
+    await expect(page.locator(".kb-warn").textContent()).resolves.toBe("부정 특성을 더 골라야 합니다");
     await page.context().close();
   });
 

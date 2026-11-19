@@ -84,7 +84,9 @@ describe("시즌", () => {
     for (const s of SEASONS) {
       const ids = new Set(s.personal.map((p) => p.id));
       expect(ids.size).toBe(s.personal.length);
-      for (const p of s.personal) for (const x of p.exclusive ?? []) expect(ids.has(x)).toBe(true);
+      for (const p of s.personal) for (const x of [...(p.exclusive ?? []), ...(p.guess ?? [])]) expect(ids.has(x)).toBe(true);
+      // 추정 상충은 공식 데이터가 없는 시즌에만 둠
+      if (!s.preview) expect(s.personal.some((p) => p.guess)).toBe(false);
       for (const p of [...s.common, ...s.personal]) expect(p.icon === false || existsSync(`public/kord/perks/${p.id}.png`)).toBe(true);
     }
     expect(UNTAR.personal.filter((p) => p.points! < 0)).toHaveLength(31);

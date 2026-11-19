@@ -1,4 +1,5 @@
-export type Perk = { id: string; name: string; en: string; effects: string[]; points?: number; exclusive?: string[]; icon?: false };
+// guess는 공식 상충이 나오기 전 시즌 1 규칙으로 추정한 상충. refdata가 공식 데이터로 시즌을 통째로 바꾸면 사라짐
+export type Perk = { id: string; name: string; en: string; effects: string[]; points?: number; exclusive?: string[]; guess?: string[]; icon?: false };
 export type Season = { id: string; slug: string; name: string; start: number; end: number; common: Perk[]; personal: Perk[]; preview?: string };
 
 // 주소에는 시즌의 개인 특성 id를 정렬한 순서로 선택 여부를 비트로 묶어 36진수로 넣음. 53개를 넘을 수 있어 BigInt로 계산

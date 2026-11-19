@@ -25,6 +25,12 @@ export default function SeasonPage({ season }: { season: Season }) {
             공식 공개 이미지
           </a>
           에 나온 수치이며, 시즌 시작 전에 바뀔 수 있습니다.
+          {season.personal.some((p) => p.guess?.length) && (
+            <>
+              <br />
+              함께 고를 수 없는 특성 일부는 시즌 1 규칙으로 추정했습니다.
+            </>
+          )}
         </p>
       )}
       <Simulator season={season} presets={presets(season, achievements)} paths={paths} />

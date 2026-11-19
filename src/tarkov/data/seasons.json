@@ -719,6 +719,13 @@
      "69c410831f8903ce7a06984f",
      "69c3d21749d7d7c520026425",
      "6a578102e7737aa469066518"
+    ],
+    "guess": [
+     "untar-introvert",
+     "untar-extrovert",
+     "untar-fast-crafting",
+     "untar-kleptomaniac",
+     "untar-tap-rack-roll"
     ]
    },
    {
@@ -918,7 +925,10 @@
     "effects": [
      "혼자 플레이할 때 스킬 경험치 획득량이 30% 증가됩니다"
     ],
-    "points": -1
+    "points": -1,
+    "guess": [
+     "untar-extrovert"
+    ]
    },
    {
     "id": "untar-tap-rack-roll",
@@ -986,7 +996,10 @@
      "이동 속도가 5% 감소합니다",
      "최대 소지 무게가 30kg 늘어납니다 (과적 기준 5kg 증가)"
     ],
-    "points": -2
+    "points": -2,
+    "guess": [
+     "69c41111cd28c936320a7520"
+    ]
    },
    {
     "id": "untar-cold-blooded",

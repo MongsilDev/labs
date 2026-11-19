@@ -8,7 +8,7 @@ import type { Preset } from "@/tarkov/lib/kord";
 function exclusive(perks: Map<string, Perk>) {
   const m = new Map<string, Set<string>>();
   for (const p of perks.values()) {
-    for (const x of p.exclusive ?? []) {
+    for (const x of [...(p.exclusive ?? []), ...(p.guess ?? [])]) {
       if (!perks.has(x)) continue;
       if (!m.has(p.id)) m.set(p.id, new Set());
       if (!m.has(x)) m.set(x, new Set());
@@ -28,9 +28,10 @@ function Icon({ p }: { p: Perk }) {
   return <span className="kb-icon" style={{ WebkitMaskImage: url, maskImage: url }} aria-hidden="true" />;
 }
 
+// 고른 카드의 blockedBy는 규칙이 생기기 전 빌드 주소로 함께 골라진 특성. 뺄 수 있게 막지 않음
 function Card({ p, on, blockedBy, onToggle }: { p: Perk; on: boolean; blockedBy: Perk[]; onToggle: () => void }) {
   const kind = p.points! < 0 ? "pos" : "neg";
-  const blocked = blockedBy.length > 0;
+  const blocked = !on && blockedBy.length > 0;
   return (
     <li>
       <button
@@ -54,7 +55,7 @@ function Card({ p, on, blockedBy, onToggle }: { p: Perk; on: boolean; blockedBy:
               {e}
             </span>
           ))}
-          {blocked && <span className="kb-why">함께 고를 수 없음: {blockedBy.map((b) => b.name).join(", ")}</span>}
+          {blockedBy.length > 0 && <span className={on ? "kb-why bad" : "kb-why"}>함께 고를 수 없음: {blockedBy.map((b) => b.name).join(", ")}</span>}
         </span>
       </button>
     </li>
@@ -130,16 +131,17 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
 
   const blockers = useMemo(() => {
     const m = new Map<string, Perk[]>();
-    for (const id of sel) for (const x of excl.get(id) ?? []) if (!sel.has(x)) m.set(x, [...(m.get(x) ?? []), byId.get(id)!]);
+    for (const id of sel) for (const x of excl.get(id) ?? []) m.set(x, [...(m.get(x) ?? []), byId.get(id)!]);
     return m;
   }, [sel, excl, byId]);
+  const clash = [...sel].some((id) => blockers.has(id));
 
   const chosen = [...sel].map((id) => byId.get(id)!);
   const spent = chosen.filter((p) => p.points! < 0).reduce((a, p) => a + p.points!, 0);
   const earned = chosen.filter((p) => p.points! > 0).reduce((a, p) => a + p.points!, 0);
   const left = earned + spent;
   const picked = [...positive, ...negative].filter((p) => sel.has(p.id));
-  const short = "부정 특성을 더 골라야 합니다";
+  const warn = clash ? "함께 고를 수 없는 특성 중 하나를 빼야 합니다" : left < 0 ? "부정 특성을 더 골라야 합니다" : "";
   // 뺀 칩이 사라져도 키보드 초점이 이웃 칩이나 같은 특성 카드에 남게 함
   const drop = (el: HTMLElement, id: string, kbd: boolean) => {
     const li = el.closest("li");
@@ -197,7 +199,7 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
           <span>
             남은 포인트 <b className={left < 0 ? "num bad" : "num"}>{left}</b>
           </span>
-          {left < 0 ? <span className="kb-pill-sub bad">{short}</span> : sel.size > 0 && <span className="kb-pill-sub">{sel.size}개 고름</span>}
+          {warn ? <span className="kb-pill-sub bad">{warn}</span> : sel.size > 0 && <span className="kb-pill-sub">{sel.size}개 고름</span>}
         </button>
         <div id="kb-panel" className="kb-panel">
           <div className={left < 0 ? "kb-left bad" : "kb-left"}>
@@ -218,7 +220,7 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
               </span>
             </span>
           </div>
-          {left < 0 && <span className="kb-warn">{short}</span>}
+          {warn && <span className="kb-warn">{warn}</span>}
           {picked.length > 0 && (
             <div className="kb-picked">
               <ul ref={chipsRef} className="kb-chips" aria-label="고른 특성">

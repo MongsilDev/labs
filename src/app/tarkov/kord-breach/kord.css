@@ -290,6 +290,9 @@ button.kb-card:hover:not([aria-disabled="true"]) {
   color: var(--text-3);
   margin-top: 2px;
 }
+.kb-why.bad {
+  color: var(--minus);
+}
 
 @media (max-width: 900px) {
   .kb-cols {
