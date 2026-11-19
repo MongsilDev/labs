@@ -147,7 +147,9 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
             </li>
             <li>순위표는 1,000위까지만 있으므로, 데미갓 컷은 휴면 계정이 내려간 자리를 채울 1,000위 밖 계정을 추정해 구합니다.</li>
             <li>
-              컷은 몽실봇이 매시 기록하는 아시아1 상위 1,000명 순위표로 계산합니다.
+              {data.source === "global"
+                ? "공식 아시아1 순위표가 비어 있어, 컷은 통합 순위표에서 아시아1 계정만 골라 매긴 순위로 계산합니다."
+                : "컷은 몽실봇이 매시 기록하는 아시아1 상위 1,000명 순위표로 계산합니다."}
               <br />
               디스코드 <a className="underline" href="https://bot.mongsil.dev">몽실봇</a>의 /이터컷 명령도 같은 값을 보여 줍니다.
             </li>

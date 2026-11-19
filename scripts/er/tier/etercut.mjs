@@ -227,6 +227,8 @@ export function activeCut(state, seasonId, topRanks, place, end, now) {
     const value = kept[place - 1];
     return [value, dropped(value), false];
   }
+  // 순위표는 위에서부터 빠짐없이 있으므로 마지막 RP가 문턱 아래면 place번째도 그 아래여서 컷은 문턱으로 정해짐
+  if (last < RANKED_GATE) return [RANKED_GATE, dropped(RANKED_GATE), false];
   const window = ranked.slice(-100);
   const perRank = (Math.trunc(window[0].mmr) - last) / (window.length - 1);
   const activeShare = scores.slice(-100).filter(([v]) => v >= last).length / 100;

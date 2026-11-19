@@ -40,27 +40,36 @@ describe("forecast 막판 급등", () => {
 
 describe("순위 순서", () => {
   const rows = () => {
-    const top = Array.from({ length: 1000 }, (_, k) => ({ nickname: `p${k + 1}`, rank: k + 1, mmr: 9000 - (k + 1) }));
-    top.push({ nickname: "late", rank: 1001, mmr: 8914 });
+    const top = Array.from({ length: 1000 }, (_, k) => ({ nickname: `p${k + 1}`, rank: k + 1, mmr: 10000 - (k + 1) }));
+    top.push({ nickname: "late", rank: 1001, mmr: 9914 });
     return top;
   };
   it("휴면 컷은 1001위에 늦게 붙은 계정을 무시한다", () => {
     const now = at(18, 12);
     const list: Record<string, unknown[]> = {};
     for (const r of rows()) {
-      const dormant = r.mmr < 8500 && r.mmr % 2;
+      const dormant = r.mmr < 9500 && r.mmr % 2;
       list[r.nickname] = dormant ? [r.mmr, 0, 0, 0, now - 60 * 86400, now, null] : [r.mmr, now, 0, now, null, null, null];
     }
     const state = { ranks: [], cuts: [], players: { season: 41, at: now, since: 1, v: 2, list } };
     const [value, , estimated] = E.activeCut(state, 41, rows(), 1000, now + 30 * 86400, now)!;
     expect(estimated).toBe(true);
-    expect(value).toBeLessThanOrEqual(8000);
+    expect(value).toBeLessThanOrEqual(9000);
+  });
+  it("순위표가 place까지 차지 않아도 마지막 RP가 문턱 아래면 컷은 문턱으로 정해진다", () => {
+    const now = at(18, 12);
+    const top = Array.from({ length: 998 }, (_, k) => ({ nickname: `p${k + 1}`, rank: k + 1, mmr: 7000 - k }));
+    const list = Object.fromEntries(top.map((r) => [r.nickname, [r.mmr, now, 0, now, null, null, null]]));
+    const state = { ranks: [], cuts: [], players: { season: 41, at: now, since: 1, v: 2, list } };
+    expect(E.activeCut(state, 41, top, 1000, now + 30 * 86400, now)).toEqual([8300, 0, false]);
+    top.forEach((r) => (r.mmr += 3000));
+    expect(E.activeCut(state, 41, top, 1000, now + 30 * 86400, now)![2]).toBe(true);
   });
   it("순위표 컷은 RP 순서로 읽는다", () => {
     const top = rows();
     [top[999], top[1000]] = [{ ...top[1000], rank: 1000 }, { ...top[999], rank: 1001 }];
     const [r300, r1000] = E.boardCuts(top, false) as { mmr: number; rank: number }[];
-    expect([r300.mmr, r1000.mmr, r1000.rank]).toEqual([8701, 8001, 999]);
+    expect([r300.mmr, r1000.mmr, r1000.rank]).toEqual([9701, 9001, 999]);
   });
 });
 

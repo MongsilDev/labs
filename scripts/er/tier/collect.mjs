@@ -6,6 +6,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { brotliCompressSync, brotliDecompressSync, constants as zlib } from "node:zlib";
+import { usableAsia } from "./asia1.mjs";
 import { dakStopped } from "./dakstop.mjs";
 import { derive, writeDerived } from "./derive.mjs";
 import { Pace, botLast429 } from "./pace.mjs";
@@ -22,6 +23,7 @@ const ARCHIVE = process.env.ARCHIVE_DIR || "/Volumes/SSD/ertier/archive";
 const SNAPSHOTS = process.env.CUT_SNAPSHOTS || join(BOT, "data/labs/rank_snapshots.jsonl");
 const CUT_STATE = process.env.CUT_STATE || join(BOT, "data/labs/rank_history.json");
 const TOP_FILE = process.env.CUT_TOP || join(BOT, "data/labs/top.json");
+const ASIA_FILE = process.env.ASIA_FILE || join(BOT, "data/labs/asia1.json");
 // TIER_API는 사본 DB 시험에서 가짜 서버를 쓰려고 바꾸는 값
 const API = process.env.TIER_API || "https://open-api.bser.io";
 const SERVER = "Asia";
@@ -839,11 +841,15 @@ async function publish(s, nm) {
   log(`집계 ${state}, ${views.map((v) => `${v.label} ${v.rows}행`).join(", ")}${removed ? `, ${KEEP_DAYS}일 지난 행 ${removed}개 삭제` : ""}`);
 }
 
-/** 정각 회차가 쓴 순위표. 없거나 두 시간보다 오래됐으면 한 번 받음 */
+/** 정각 회차가 쓴 순위표. 없거나 두 시간보다 오래됐으면 재구성한 아시아1 순위나 공식 순위표를 씀 */
 async function loadTop(s) {
   try {
     const t = JSON.parse(readFileSync(TOP_FILE, "utf8"));
     if (t.season === s.id && Date.now() - t.at < 2 * 3600_000 && Array.isArray(t.topRanks)) return t.topRanks;
+  } catch {}
+  try {
+    const asia = usableAsia(JSON.parse(readFileSync(ASIA_FILE, "utf8")), s.id, Date.now());
+    if (asia) return asia.topRanks;
   } catch {}
   return (await get(`/v1/rank/top/${s.id}/3/10`))?.topRanks ?? [];
 }
