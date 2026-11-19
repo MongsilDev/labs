@@ -14,8 +14,9 @@ describe("이터컷 계산", () => {
     expect(floorHead(rps, 1)).toBeNull();
   });
 
-  it("순위표가 정원보다 짧으면 마지막 순위를 보이고, 비었으면 컷 표시로 둔다", () => {
-    expect(floorHead([9000, 8500], 1000)).toEqual({ rank: 2, rp: 8500 });
+  it("순위표가 정원보다 짧으면 마지막 순위를 보이되, 그 RP가 하한 이상이거나 순위표가 비었으면 컷 표시로 둔다", () => {
+    expect(floorHead([9000, 8200], 1000)).toEqual({ rank: 2, rp: 8200 });
+    expect(floorHead([9000, 8500], 1000)).toBeNull();
     expect(floorHead([], 300)).toBeNull();
   });
 

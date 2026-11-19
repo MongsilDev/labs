@@ -76,7 +76,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
         {TIERS.map(({ key, name, color }, i) => {
           const t = data.tiers[key];
           const end = t.forecast?.[t.forecast.length - 1];
-          const head = floorHead(data.rps, t.place);
+          const head = t.cut == null || t.cut <= GATE ? floorHead(data.rps, t.place) : null;
           const day = dayDelta(t, data.updatedAt);
           return (
             <div key={key} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 py-4 ${i ? "border-t border-rule lg:border-t-0 lg:border-l lg:pl-6" : "lg:pr-6"}`}>

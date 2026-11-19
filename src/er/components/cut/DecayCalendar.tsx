@@ -38,13 +38,13 @@ export default function DecayCalendar({ data }: { data: CutData }) {
       </dl>
       {any && (
       <div className="scroll-fade overflow-x-auto pb-1" tabIndex={0}>
-        <ol className="flex w-full items-end gap-0.5 sm:min-w-max sm:gap-1" aria-label="날짜별 휴면 강등으로 컷 아래로 내려가는 인원">
+        <ol className="flex w-full min-w-max items-end gap-0.5 sm:gap-1" aria-label="날짜별 휴면 강등으로 컷 아래로 내려가는 인원">
           {dates.map((d) => {
             const c = counts.get(d) ?? {};
             const t = dayStart(d);
             const patch = d === PATCH.day;
             return (
-              <li key={d} className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] justify-items-center gap-1 text-center sm:min-w-10">
+              <li key={d} className="grid min-w-5 flex-1 grid-cols-[minmax(0,1fr)] justify-items-center gap-1 text-center sm:min-w-10">
                 <div className="flex h-[112px] w-full items-end justify-center gap-[3px]">
                   {TIERS.map(({ key, name, color }) => {
                     const n = c[key] ?? 0;
@@ -61,7 +61,9 @@ export default function DecayCalendar({ data }: { data: CutData }) {
                   <span className="sm:hidden">{Number(d.slice(8))}</span>
                 </span>
                 <span className="text-[11px] text-fg-3">{WEEK[new Date(t + 9 * 3_600_000).getUTCDay()]}</span>
-                <span className="h-4 text-[11px] font-bold whitespace-nowrap text-fg">{patch ? PATCH.label : ""}</span>
+                <span className="relative h-4 w-full">
+                  {patch && <span className="absolute left-1/2 -translate-x-1/2 text-[11px] font-bold whitespace-nowrap text-fg">{PATCH.label}</span>}
+                </span>
               </li>
             );
           })}

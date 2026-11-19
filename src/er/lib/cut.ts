@@ -104,13 +104,13 @@ export const GATE = 8300;
 
 /**
  * 시즌 초 맨 위에 컷 대신 보일 실제 순위 RP. place위 RP가 하한 이상이 되면 null을 돌려줘 컷 표시로 넘어감
- * 순위표가 place명보다 짧으면 마지막 순위와 그 RP를 돌려줌
+ * 순위표가 place명보다 짧으면 마지막 순위와 그 RP를 돌려주되, 그 RP도 하한 이상이면 null
  */
 export function floorHead(rps: number[], place: number, gate = GATE): { rank: number; rp: number } | null {
   if (!rps.length) return null;
   const rank = Math.min(place, rps.length);
   const rp = rps[rank - 1];
-  return rank === place && rp >= gate ? null : { rank, rp };
+  return rp >= gate ? null : { rank, rp };
 }
 
 export type RaceData = {
