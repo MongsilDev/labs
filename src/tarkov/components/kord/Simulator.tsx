@@ -36,6 +36,7 @@ function Card({ p, on, blockedBy, onToggle }: { p: Perk; on: boolean; blockedBy:
       <button
         type="button"
         className={`kb-card ${kind}`}
+        data-id={p.id}
         aria-pressed={on}
         aria-disabled={blocked || undefined}
         onClick={() => {
@@ -135,6 +136,13 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
   const left = earned + spent;
   const picked = [...positive, ...negative].filter((p) => sel.has(p.id));
   const short = "부정 특성을 더 골라야 합니다";
+  // 뺀 칩이 사라져도 키보드 초점이 이웃 칩이나 같은 특성 카드에 남게 함
+  const drop = (el: HTMLElement, id: string) => {
+    const li = el.closest("li");
+    const near = (li?.nextElementSibling ?? li?.previousElementSibling)?.querySelector("button");
+    toggle(id);
+    requestAnimationFrame(() => (near ?? document.querySelector<HTMLElement>(`.kb-card[data-id="${id}"]`))?.focus());
+  };
 
   const list = (perks: Perk[]) => (
     <ul className="kb-list">
@@ -180,7 +188,7 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
             <ul className="kb-chips" aria-label="고른 특성">
               {picked.map((p) => (
                 <li key={p.id}>
-                  <button type="button" className={`kb-chip ${p.points! < 0 ? "pos" : "neg"}`} aria-label={`${p.name} 빼기`} onClick={() => toggle(p.id)}>
+                  <button type="button" className={`kb-chip ${p.points! < 0 ? "pos" : "neg"}`} aria-label={`${p.name} 빼기`} onClick={(e) => drop(e.currentTarget, p.id)}>
                     {p.name}
                     <span aria-hidden="true">×</span>
                   </button>
@@ -247,6 +255,8 @@ export default function Simulator({ season, presets, paths }: { season: Season; 
                 onClick={() => {
                   setUndo(sel.size ? sel : null);
                   setSel(new Set(p.ids));
+                  // 휴대폰 폭에서는 되돌리기가 접힌 요약 안에 있음
+                  if (sel.size) setOpen(true);
                 }}
               >
                 {p.name}
