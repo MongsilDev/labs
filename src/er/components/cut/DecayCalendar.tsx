@@ -49,7 +49,7 @@ export default function DecayCalendar({ data }: { data: CutData }) {
                   {TIERS.map(({ key, name, color }) => {
                     const n = c[key] ?? 0;
                     return (
-                      <div key={key} className="grid w-2 justify-items-center gap-0.5 sm:w-[clamp(16px,28%,24px)]" data-tip={`${name} ${n}명`}>
+                      <div key={key} className="grid w-[clamp(8px,40%,24px)] justify-items-center gap-0.5 sm:w-[clamp(16px,28%,24px)]" data-tip={`${name} ${n}명`}>
                         {n > 0 && <span className="text-[10px] font-bold tracking-[-0.5px] whitespace-nowrap tabular-nums text-fg-2 sm:text-[11px] sm:tracking-normal">{n}</span>}
                         <span className="block w-full rounded-t-[2px] sm:w-[88%]" style={{ height: n ? Math.max(4, (n / peak) * 88) : 2, background: n ? color : "var(--line)" }} />
                       </div>
