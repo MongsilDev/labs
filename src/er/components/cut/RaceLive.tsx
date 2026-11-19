@@ -51,13 +51,14 @@ export function RaceMini({ rows = 5 }: { rows?: number }) {
   return (
     <Link href="/er/cut" className="race-mini">
       <table className="tbl tierbig">
-        <thead className="sr-only"><tr><th className="l w-8">#</th><th className="l">닉네임</th><th>RP</th><th>{int(GATE)}까지</th></tr></thead>
+        <thead className="sr-only"><tr><th className="l w-8">#</th><th className="l">닉네임</th><th>RP</th><th>최근 판</th><th>{int(GATE)}까지</th></tr></thead>
         <tbody>
           {race.list.slice(0, rows).map((r, i) => (
             <tr key={r.nickname}>
               <td className="l text-ink-3">{i + 1}</td>
               <td className="l w-full max-w-0 truncate"><b className="tb-team">{r.nickname}</b></td>
               <td className="text-ink-2">{int(r.rp)}</td>
+              <td className="text-ink-3">{signed(r.diff)}</td>
               <td className="tb-score">
                 {r.at != null || r.rp >= GATE ? <span style={{ color: TIERS[0].color }}>달성</span> : <>{int(GATE - r.rp)}<small>남음</small></>}
               </td>
@@ -92,8 +93,8 @@ export function RaceTable() {
             <th className="hidden py-2 pl-6 sm:table-cell">
               <span className="sr-only">진행</span>
             </th>
-            <th className="w-24 py-2 pl-4 text-right font-semibold whitespace-nowrap sm:w-36">{int(GATE)}까지</th>
-            <th className="hidden w-20 py-2 pl-4 text-right font-semibold sm:table-cell">최근 판</th>
+            <th className="w-[84px] py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-36 sm:pl-4">{int(GATE)}까지</th>
+            <th className="w-14 py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-20 sm:pl-4">최근 판</th>
           </tr>
         </thead>
         <tbody>
@@ -109,7 +110,7 @@ export function RaceTable() {
                     <span className="block h-full" style={{ width: width(r.rp), background: done ? color : "var(--color-ink-3)" }} />
                   </span>
                 </td>
-                <td className="py-2 pl-4 text-right whitespace-nowrap">
+                <td className="py-2 pl-2 text-right whitespace-nowrap sm:pl-4">
                   {done ? (
                     <span style={{ color }}>
                       {r.at ? timeKo(r.at * 1000).replace(/^\d+월 /, "") : ""}
@@ -119,7 +120,7 @@ export function RaceTable() {
                     int(GATE - r.rp)
                   )}
                 </td>
-                <td className="hidden py-2 pl-4 text-right text-ink-3 sm:table-cell">{signed(r.diff)}</td>
+                <td className="py-2 pl-2 text-right text-ink-3 sm:pl-4">{signed(r.diff)}</td>
               </tr>
             );
           })}
