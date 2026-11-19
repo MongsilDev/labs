@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { LABS_ACCENT } from "@/components/SiteMark";
 import { glyphs, keepGlyphs } from "@/glyphs";
-import { type CutData, daysLeft, int, tens } from "@/er/lib/cut";
+import { type CutData, daysLeft, int, type RaceData, tens } from "@/er/lib/cut";
 import { groupResult } from "@/er/lib/engine";
 import { fmt1 } from "@/er/lib/format";
 import type { TournamentView } from "@/er/lib/view";
@@ -127,7 +127,7 @@ const TIER_OG = [
   { key: "demigod", name: "데미갓", color: "#be8a35" },
 ] as const;
 
-export async function cutImage(data: CutData) {
+export async function cutImage(data: CutData, race?: RaceData | null) {
   const left = data.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
   return new ImageResponse(
     (
@@ -146,6 +146,20 @@ export async function cutImage(data: CutData) {
           {TIER_OG.map(({ key, name, color }) => {
             const tier = data.tiers[key];
             const end = tier.forecast?.[tier.forecast.length - 1];
+            // 화면과 같이 시즌 초에는 이터니티 컷 대신 8,300 도달 인원(장부 551)
+            if (key === "eternity" && race)
+              return (
+                <div key={key} style={{ display: "flex", flexDirection: "column", flex: 1, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 14, padding: "26px 30px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 26, fontWeight: 700, color: C.text2 }}>
+                    <div style={{ width: 14, height: 14, borderRadius: 7, background: color }} />
+                    {name} {int(8300)} 달성
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 14 }}>
+                    <span style={{ fontSize: 76, fontWeight: 800, lineHeight: 1 }}>{int(race.count)}</span>
+                    <span style={{ fontSize: 26, fontWeight: 700, color: C.text3 }}>명</span>
+                  </div>
+                </div>
+              );
             return (
               <div key={key} style={{ display: "flex", flexDirection: "column", flex: 1, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 14, padding: "26px 30px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 26, fontWeight: 700, color: C.text2 }}>

@@ -40,7 +40,7 @@ export default async function Hub() {
             </h2>
             {h.cut ? (
               <>
-                <CutNums cut={h.cut} />
+                <CutNums cut={h.cut} race={h.race} />
                 <CutMini data={h.cut} />
               </>
             ) : (

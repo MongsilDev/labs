@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/er/components/kel/Team";
-import { int as rp, TIERS, tens } from "@/er/lib/cut";
+import { int as rp, type RaceData, TIERS, tens } from "@/er/lib/cut";
 import { fmt1 } from "@/er/lib/format";
 import { TEAM } from "@/er/lib/kel";
 import { comboPath, signed, type TierCombo } from "@/er/lib/tier";
@@ -49,12 +49,26 @@ export function LabMini({ lab }: { lab: PreData }) {
 }
 
 /** 컷 숫자 두 개. 글자 크기와 배치는 감싼 쪽이 --cut-size와 .cutnums 규칙으로 정함 */
-export function CutNums({ cut, forecast = true }: { cut: NonNullable<Hub["cut"]>; forecast?: boolean }) {
+export function CutNums({ cut, race, forecast = true }: { cut: NonNullable<Hub["cut"]>; race?: RaceData | null; forecast?: boolean }) {
   return (
     <dl className="cutnums">
       {TIERS.map(({ key, name, color }) => {
         const t = cut.tiers[key];
         const end = t.forecast?.[t.forecast.length - 1];
+        // /er/cut 카드와 같이 시즌 초에는 늘 8,300인 이터니티 컷 대신 도달 인원(장부 551)
+        if (key === "eternity" && race)
+          return (
+            <div key={key}>
+              <dt className="num">
+                <span style={{ background: color }} aria-hidden="true" />
+                {name} {rp(8300)} 달성
+              </dt>
+              <dd className="num">
+                {rp(race.count)}
+                <small className="ml-1">명</small>
+              </dd>
+            </div>
+          );
         return (
           <div key={key}>
             <dt className="num">

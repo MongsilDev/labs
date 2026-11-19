@@ -18,6 +18,8 @@ export default function CutMini({ data }: { data: CutData }) {
   const ts = lines.flatMap((l) => [...l.past.map(([t]) => t), ...l.fut.map((f) => f.t)]);
   const vs = lines.flatMap((l) => [...l.past.map(([, v]) => v), ...l.fut.flatMap((f) => [f.lo, f.hi])]);
   const [t0, t1] = [Math.min(...ts), Math.max(...ts)];
+  // 새 시즌 첫날처럼 지금 값 하나뿐이면 가로축이 없어 그리지 않음
+  if (t1 === t0) return null;
   const span = Math.max(...vs) - Math.min(...vs) || 1;
   const [v0, v1] = [Math.min(...vs) - span * 0.06, Math.max(...vs) + span * 0.06];
   const x = (t: number) => ((t - t0) / Math.max(t1 - t0, 1)) * W;
