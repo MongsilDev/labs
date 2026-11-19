@@ -3,7 +3,7 @@ import CutChart from "@/er/components/cut/CutChart";
 import DecayCalendar from "@/er/components/cut/DecayCalendar";
 import { RaceCount, RaceLive, RaceTable, RaceTime } from "@/er/components/cut/RaceLive";
 import RpCheck from "@/er/components/cut/RpCheck";
-import { type CutTier, DAY, daysLeft, int, md, TIERS, tens } from "@/er/lib/cut";
+import { type CutTier, DAY, daysLeft, floorHead, GATE, int, md, TIERS, tens } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
 import { accountUser, currentUser } from "@/er/server/auth";
 import { getCut } from "@/er/server/cut";
@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   description: "아시아1 이터니티와 데미갓 컷을 휴면 강등까지 반영해 계산하고 시즌 종료 컷을 예상합니다.",
 };
 
-const GATE = 8300;
 const LATE_DAYS = 14;
 
 /** 24시간 전에 가장 가까운 오전 9시 기록의 시각과, 지금 휴면 반영 컷과의 차이. 그 기록이 12시간보다 가까우면 null */
@@ -77,24 +76,29 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
         {TIERS.map(({ key, name, color }, i) => {
           const t = data.tiers[key];
           const end = t.forecast?.[t.forecast.length - 1];
-          const now = data.rps[Math.min(t.place, data.rps.length) - 1];
+          const head = floorHead(data.rps, t.place);
           const day = dayDelta(t, data.updatedAt);
           return (
             <div key={key} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 py-4 ${i ? "border-t border-rule lg:border-t-0 lg:border-l lg:pl-6" : "lg:pr-6"}`}>
               <div>
                 <dt className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-3">
                   <span className="h-3 w-1" style={{ background: color }} aria-hidden="true" />
-                  {name} {int(t.place)}위 컷
+                  {name} {head ? `${int(head.rank)}위 RP` : `${int(t.place)}위 컷`}
                 </dt>
                 <dd className="m-0 mt-1 text-[30px] leading-none font-bold tracking-[-1px] whitespace-nowrap num sm:text-[40px]">
-                  {t.estimated && <span className="mr-0.5 text-[14px] font-bold text-ink-3 sm:text-[17px]">약</span>}
-                  {t.cut != null ? int(t.cut) : "-"}
+                  {head ? int(head.rp) : t.cut != null ? int(t.cut) : "-"}
                 </dd>
-                <dd className="m-0 mt-2 text-[12px] text-ink-3 num">
-                  {race
-                    ? now != null && (data.rps.length >= t.place ? `지금 ${int(t.place)}위 ${int(now)}` : `지금 ${int(t.place)}위 ${int(now)} 미만`)
-                    : day && <Delta at={day[0]} v={day[1]} />}
-                  {!race && t.board != null && t.cut != null && int(t.board) !== int(t.cut) && <span className="ml-3">순위표 {int(t.board)}</span>}
+                <dd className="m-0 mt-2 flex flex-wrap gap-x-3 text-[12px] whitespace-nowrap text-ink-3 num">
+                  {head ? (
+                    <>
+                      {head.rank < t.place && <span>{int(t.place)}위는 순위표 밖</span>}
+                      <span>RP 하한 {int(GATE)}</span>
+                    </>
+                  ) : (
+                    day && <Delta at={day[0]} v={day[1]} />
+                  )}
+                  {!head && t.board != null && t.cut != null && int(t.board) !== int(t.cut) && <span>순위표 {int(t.board)}</span>}
+                  {!head && t.estimated && <span>추정치</span>}
                 </dd>
               </div>
               {race ? (

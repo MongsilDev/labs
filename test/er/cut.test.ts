@@ -1,11 +1,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { between, type CutData, type CutTier, chance, chanceLabel, daysLeft, graceKey, quitRp } from "../../src/er/lib/cut";
+import { between, type CutData, type CutTier, chance, chanceLabel, daysLeft, floorHead, graceKey, quitRp } from "../../src/er/lib/cut";
 import { ticks } from "../../src/er/lib/ticks";
 import { getCut } from "../../src/er/server/cut";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("이터컷 계산", () => {
+  it("정원 자리 RP가 하한 미만이면 그 RP를, 하한에 닿으면 컷 표시로 넘긴다", () => {
+    const rps = [8400, 8350, 8299];
+    expect(floorHead(rps, 3)).toEqual({ rank: 3, rp: 8299 });
+    expect(floorHead([8400, 8350, 8300], 3)).toBeNull();
+    expect(floorHead([8400, 8350, 8301, 7000], 3)).toBeNull();
+    expect(floorHead(rps, 1)).toBeNull();
+  });
+
+  it("순위표가 정원보다 짧으면 마지막 순위를 보이고, 비었으면 컷 표시로 둔다", () => {
+    expect(floorHead([9000, 8500], 1000)).toEqual({ rank: 2, rp: 8500 });
+    expect(floorHead([], 300)).toBeNull();
+  });
+
   it("사이 인원은 양 끝을 빼고 세고, 순위표 밖이면 모른다", () => {
     const rps = [9300, 9200, 9100, 9100, 9000, 8900];
     expect(between(rps, 9000, 9200)).toBe(2);

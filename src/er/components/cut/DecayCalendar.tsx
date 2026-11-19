@@ -38,25 +38,28 @@ export default function DecayCalendar({ data }: { data: CutData }) {
       </dl>
       {any && (
       <div className="scroll-fade overflow-x-auto pb-1" tabIndex={0}>
-        <ol className="flex w-full min-w-max items-end gap-1" aria-label="날짜별 휴면 강등으로 컷 아래로 내려가는 인원">
+        <ol className="flex w-full items-end gap-0.5 sm:min-w-max sm:gap-1" aria-label="날짜별 휴면 강등으로 컷 아래로 내려가는 인원">
           {dates.map((d) => {
             const c = counts.get(d) ?? {};
             const t = dayStart(d);
             const patch = d === PATCH.day;
             return (
-              <li key={d} className="grid min-w-10 flex-1 justify-items-center gap-1 text-center">
+              <li key={d} className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] justify-items-center gap-1 text-center sm:min-w-10">
                 <div className="flex h-[112px] w-full items-end justify-center gap-[3px]">
                   {TIERS.map(({ key, name, color }) => {
                     const n = c[key] ?? 0;
                     return (
-                      <div key={key} className="grid w-[clamp(16px,28%,24px)] justify-items-center gap-0.5" data-tip={`${name} ${n}명`}>
-                        {n > 0 && <span className="text-[11px] font-bold whitespace-nowrap tabular-nums text-fg-2">{n}</span>}
+                      <div key={key} className="grid w-[46%] justify-items-center gap-0.5 sm:w-[clamp(16px,28%,24px)]" data-tip={`${name} ${n}명`}>
+                        {n > 0 && <span className="text-[10px] font-bold tracking-[-0.5px] whitespace-nowrap tabular-nums text-fg-2 sm:text-[11px] sm:tracking-normal">{n}</span>}
                         <span className="block w-[88%] rounded-t-[2px]" style={{ height: n ? Math.max(4, (n / peak) * 88) : 2, background: n ? color : "var(--line)" }} />
                       </div>
                     );
                   })}
                 </div>
-                <span className={`text-[12px] tabular-nums ${patch ? "font-bold text-fg" : "text-fg-3"}`}>{md(t)}</span>
+                <span className={`text-[11px] whitespace-nowrap tabular-nums sm:text-[12px] ${patch ? "font-bold text-fg" : "text-fg-3"}`}>
+                  <span className="max-sm:hidden">{md(t)}</span>
+                  <span className="sm:hidden">{Number(d.slice(8))}</span>
+                </span>
                 <span className="text-[11px] text-fg-3">{WEEK[new Date(t + 9 * 3_600_000).getUTCDay()]}</span>
                 <span className="h-4 text-[11px] font-bold whitespace-nowrap text-fg">{patch ? PATCH.label : ""}</span>
               </li>

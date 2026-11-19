@@ -99,6 +99,20 @@ export function quitRp(rp: number, ticks: number, step: number, floor: number): 
 }
 
 /** 정각 회차의 race.json. 시즌 초 순위표 300위가 8,300을 넘기 전까지 이터니티 칸 대신 보여 주는 8,300 도달 순서(장부 528) */
+/** 이터니티와 데미갓의 RP 하한. 정원 안에 이 RP를 넘은 계정이 다 차기 전에는 컷이 하한에 머묾 */
+export const GATE = 8300;
+
+/**
+ * 시즌 초 맨 위에 컷 대신 보일 실제 순위 RP. place위 RP가 하한 이상이 되면 null을 돌려줘 컷 표시로 넘어감
+ * 순위표가 place명보다 짧으면 마지막 순위와 그 RP를 돌려줌
+ */
+export function floorHead(rps: number[], place: number, gate = GATE): { rank: number; rp: number } | null {
+  if (!rps.length) return null;
+  const rank = Math.min(place, rps.length);
+  const rp = rps[rank - 1];
+  return rank === place && rp >= gate ? null : { rank, rp };
+}
+
 export type RaceData = {
   updatedAt: number;
   season: number;
