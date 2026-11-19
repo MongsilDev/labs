@@ -51,7 +51,7 @@
 .tb-team { font-size: var(--tb-name, 22px); font-weight: 700; line-height: 1; }
 .tb-logo { width: var(--tb-face, 56px) !important; height: var(--tb-face, 56px) !important; }
 
-/* 타르코프 묶음: 이름, 계정 조회, KORD BREACH가 한 줄 */
+/* 타르코프 묶음: 이름, 계정 조회, 시즌 특성이 한 줄 */
 .hub-tk { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; border-top: 1px solid var(--rule-2); }
 .hub-tk > * { display: flex; align-items: center; gap: 12px; min-height: 72px; margin: 0; padding: 0 28px; font-weight: 600; }
 .hub-tk > :first-child { padding-left: 0; }

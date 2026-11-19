@@ -22,7 +22,7 @@ export default function Terms() {
         <p>
           Labs는 개인이 운영하는 무료 게임 도구 모음입니다.
           <br />
-          이터널 리턴 KEL 기록, 점수 계산, 이터컷 예측과 Escape from Tarkov 계정 조회, KORD BREACH 특성 시뮬레이터가 있습니다.
+          이터널 리턴 KEL 기록, 점수 계산, 이터컷 예측과 Escape from Tarkov 계정 조회, 시즌 특성 시뮬레이터가 있습니다.
           <br />
           님블뉴런이나 Battlestate Games가 운영하거나 보증하는 서비스가 아닙니다.
           <br />

@@ -39,7 +39,7 @@ const TK: Sect = {
   name: "타르코프",
   items: [
     { href: "/tarkov/players", label: "계정 조회", also: ["/tarkov/criteria"] },
-    { href: "/tarkov/kord-breach", label: "KORD BREACH" },
+    { href: "/tarkov/season", label: "시즌 특성", also: ["/tarkov/kord-breach"] },
   ],
 };
 

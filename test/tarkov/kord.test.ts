@@ -1,49 +1,74 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { PERSONAL, decodeBuild, encodeBuild } from "@/tarkov/lib/kord";
+import { describe, expect, it } from "vitest";
+import { decodeBuild, encodeBuild, type Season } from "@/tarkov/lib/build";
+import { LATEST, SEASONS, presets, seasonAt, seasonBySlug, seasonOfPerks, seasonPath } from "@/tarkov/lib/kord";
 
-const sorted = PERSONAL.map((p) => p.id).sort();
+const KORD = seasonBySlug("kord-breach")!;
+const sorted = KORD.personal.map((p) => p.id).sort();
+
+const fake = (n: number, slug = "fake"): Season => ({
+  id: slug,
+  slug,
+  name: slug,
+  start: 0,
+  end: 0,
+  common: [],
+  personal: Array.from({ length: n }, (_, i) => ({ id: `p${String(i).padStart(2, "0")}`, name: "", en: "", effects: [] })),
+});
 
 describe("빌드 코드", () => {
-  it("현재 특성 목록으로 왕복 복원", () => {
-    expect(encodeBuild([sorted[0]])).toBe("1");
-    expect(decodeBuild("1")).toEqual([sorted[0]]);
-    expect(decodeBuild(encodeBuild(sorted))).toEqual(sorted);
-    expect(decodeBuild(encodeBuild([sorted[1], sorted.at(-1)!]))).toEqual([sorted[1], sorted.at(-1)]);
+  it("시즌 특성 목록으로 왕복 복원", () => {
+    expect(encodeBuild(KORD, [sorted[0]])).toBe("1");
+    expect(decodeBuild(KORD, "1")).toEqual([sorted[0]]);
+    expect(decodeBuild(KORD, encodeBuild(KORD, sorted))).toEqual(sorted);
+    expect(decodeBuild(KORD, encodeBuild(KORD, [sorted[1], sorted.at(-1)!]))).toEqual([sorted[1], sorted.at(-1)]);
   });
-  it("형식이 틀린 코드는 빈 선택", () => {
-    expect(decodeBuild("")).toEqual([]);
-    expect(decodeBuild("A1")).toEqual([]);
-    expect(decodeBuild("-1")).toEqual([]);
+
+  it("시즌 1 옛 주소의 코드는 예전과 같은 특성으로 풀림", () => {
+    // 53비트 숫자로 만들던 예전 코드와 같은 값
+    const old = (ids: string[]) => sorted.reduce((n, id, i) => (ids.includes(id) ? n + 2 ** i : n), 0).toString(36);
+    for (const ids of [[sorted[0]], [sorted[3], sorted[20], sorted.at(-1)!], sorted]) {
+      expect(encodeBuild(KORD, ids)).toBe(old(ids));
+      expect(decodeBuild(KORD, old(ids))).toEqual(ids);
+    }
+  });
+
+  it("형식이 틀리거나 특성 수를 넘는 코드는 빈 선택", () => {
+    expect(decodeBuild(KORD, "")).toEqual([]);
+    expect(decodeBuild(KORD, "A1")).toEqual([]);
+    expect(decodeBuild(KORD, "-1")).toEqual([]);
+    expect(decodeBuild(KORD, (BigInt(2) ** BigInt(sorted.length)).toString(36))).toEqual([]);
+    expect(decodeBuild(KORD, "z".repeat(100))).toEqual([]);
+  });
+
+  it("53개를 넘는 시즌도 왕복 복원", () => {
+    const s = fake(64);
+    const ids = s.personal.map((p) => p.id);
+    for (const sel of [[ids[52]], [ids[53]], [ids[63]], [ids[0], ids[53], ids[63]], ids]) {
+      expect(decodeBuild(s, encodeBuild(s, sel))).toEqual(sel);
+    }
   });
 });
 
-describe("빌드 코드 53개 한도", () => {
-  afterEach(() => {
-    vi.doUnmock("@/tarkov/data/season.json");
-    vi.resetModules();
+describe("시즌", () => {
+  it("가장 최근 시즌만 /tarkov/season", () => {
+    expect(LATEST).toBe(SEASONS.at(-1));
+    expect(seasonPath(LATEST)).toBe("/tarkov/season");
+    for (const s of SEASONS.slice(0, -1)) expect(seasonPath(s)).toBe(`/tarkov/${s.slug}`);
   });
 
-  const load = async () => {
-    const personal = Array.from({ length: 53 }, (_, i) => ({ id: `p${String(i).padStart(2, "0")}`, name: "", en: "", effects: [] }));
-    vi.resetModules();
-    vi.doMock("@/tarkov/data/season.json", () => ({ default: { name: "", common: [], personal } }));
-    const kord = await import("@/tarkov/lib/kord");
-    return { ...kord, ids: personal.map((p) => p.id) };
-  };
-
-  it("50번째 이후 비트도 왕복 복원", async () => {
-    const { encodeBuild, decodeBuild, ids } = await load();
-    for (const sel of [[ids[50]], [ids[51]], [ids[52]], [ids[0], ids[50], ids[51], ids[52]], ids]) {
-      expect(decodeBuild(encodeBuild(sel))).toEqual(sel);
-    }
-    expect(encodeBuild(ids)).toBe((2 ** 53 - 1).toString(36));
-    expect(encodeBuild(ids)).toHaveLength(11);
+  it("시작 전 시각은 첫 시즌, 시작 뒤는 그 시즌", () => {
+    expect(seasonAt(0)).toBe(SEASONS[0]);
+    expect(seasonAt(KORD.start)).toBe(KORD);
   });
 
-  it("정밀도를 넘는 코드는 빈 선택", async () => {
-    const { decodeBuild } = await load();
-    expect(decodeBuild((2 ** 53).toString(36))).toEqual([]);
-    expect(decodeBuild("zzzzzzzzzzz")).toEqual([]);
-    expect(decodeBuild("100000000000")).toEqual([]);
+  it("고른 특성으로 시즌을 찾고, 없는 특성이 섞이면 못 찾음", () => {
+    expect(seasonOfPerks([sorted[0], sorted[1]], null)).toBe(KORD);
+    expect(seasonOfPerks([sorted[0], "없는 id"], null)).toBeUndefined();
+  });
+
+  it("업적 프리셋은 그 시즌에만", () => {
+    const names = { "6a5df6b0c901d2199d017048": { name: "업적" } };
+    expect(presets(KORD, names)).toHaveLength(1);
+    expect(presets(fake(3), names)).toEqual([]);
   });
 });

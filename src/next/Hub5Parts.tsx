@@ -179,8 +179,8 @@ export function TarkovGroup({ className = "" }: { className?: string }) {
         </h3>
         <HubSearch />
       </div>
-      <Link href="/tarkov/kord-breach">
-        <b>KORD BREACH 특성 시뮬레이터</b>
+      <Link href="/tarkov/season">
+        <b>시즌 특성 시뮬레이터</b>
         <Chev />
       </Link>
     </section>

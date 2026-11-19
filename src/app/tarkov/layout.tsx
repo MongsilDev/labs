@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.BASE_URL || "https://labs.mongsil.dev"),
   title: { default: "Escape from Tarkov - Labs", template: "%s - Labs" },
-  description: "Escape from Tarkov 계정 전적 조회와 KORD BREACH 특성 시뮬레이터가 있는 도구 모음입니다.",
+  description: "Escape from Tarkov 계정 전적 조회와 시즌 특성 시뮬레이터가 있는 도구 모음입니다.",
   openGraph: { siteName: "Labs", type: "website", locale: "ko_KR" },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },

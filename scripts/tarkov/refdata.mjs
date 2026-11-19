@@ -1,7 +1,7 @@
 // json.tarkov.dev에서 레벨 표, 아이템 이름, 스킬, 숙련, 레벨 배지, 업적, 시즌 특성을 받아 src/tarkov/data에, 아이콘은 public/kord/perks와 public/img에 저장
 // 아이콘 축소에 macOS sips를 씀
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 
 const UA = { "user-agent": "agent-local" };
 const get = async (path) => {
@@ -97,15 +97,22 @@ const perk = (p) => ({
   effects: (seasonKo[`${p.id} description`] ?? seasonEn[`${p.id} description`] ?? "").split("\n").map((x) => x.trim()).filter(Boolean),
   ...(p.points == null ? {} : { points: p.points, exclusive: p.exclusiveToPerks }),
 });
+// 지난 시즌 특성도 계정 화면과 옛 빌드 주소에 쓰므로 id가 같은 시즌만 바꾸고 나머지는 남김
+const name = seasonEn[season.name] ?? season.name;
 const perks = {
-  name: seasonEn[season.name] ?? season.name,
+  id: season.id,
+  slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+  name,
+  start: season.start,
+  end: season.end,
   common: season.perks.common.map(perk),
   personal: season.perks.personal.map(perk),
 };
-writeFileSync("src/tarkov/data/season.json", JSON.stringify(perks, null, 1) + "\n");
+const SEASONS = "src/tarkov/data/seasons.json";
+const seasons = [...(existsSync(SEASONS) ? JSON.parse(readFileSync(SEASONS, "utf8")) : []).filter((s) => s.id !== perks.id), perks].sort((a, b) => a.start - b.start);
+writeFileSync(SEASONS, JSON.stringify(seasons, null, 1) + "\n");
 
 const dir = "public/kord/perks";
-rmSync(dir, { recursive: true, force: true });
 mkdirSync(dir, { recursive: true });
 for (const p of [...season.perks.common, ...season.perks.personal]) {
   const r = await fetch(p.imageLink, { headers: UA });

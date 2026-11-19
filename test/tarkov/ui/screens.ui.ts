@@ -109,6 +109,7 @@ const SCREENS: Screen[] = [
   { name: "기록 없는 모드", path: "/tarkov/players/1001?mode=arena" },
   { name: "숨긴 계정", path: "/tarkov/players/1004" },
   { name: "판정 기준", path: "/tarkov/criteria" },
+  { name: "시즌 특성", path: "/tarkov/season" },
   { name: "KORD BREACH", path: "/tarkov/kord-breach" },
   { name: "없는 페이지", path: "/tarkov/players/abc", status: 404 },
 ];
@@ -200,7 +201,7 @@ describe("화면 점검", () => {
   });
 
   it("시뮬레이터는 포인트를 계산하고 빌드를 주소로 되살린다", async () => {
-    const { page } = await open(SCREENS.find((s) => s.name === "KORD BREACH")!, 390, "dark");
+    const { page } = await open(SCREENS.find((s) => s.name === "시즌 특성")!, 390, "dark");
     const left = page.locator(".kb-left dd");
     await page.getByRole("button", { name: /플리마켓 금지령/ }).click();
     await expect(left.textContent()).resolves.toBe("10");
@@ -213,6 +214,7 @@ describe("화면 점검", () => {
     await blocked.click({ force: true });
     await expect(blocked.getAttribute("aria-pressed")).resolves.toBe("false");
     const url = page.url();
+    expect(new URL(url).searchParams.get("s")).toBe("kord-breach");
     await page.getByRole("button", { name: "초기화" }).click();
     await expect(left.textContent()).resolves.toBe("0");
     const kappa = () => page.getByRole("button", { name: /카파 프로토콜/ }).getAttribute("aria-pressed");
@@ -223,6 +225,13 @@ describe("화면 점검", () => {
     await page.goto(url, { waitUntil: "networkidle" });
     await expect(kappa()).resolves.toBe("true");
     await expect(page.locator(".kb-left dd").textContent()).resolves.toBe("0");
+    await page.context().close();
+  });
+
+  it("시즌 표시가 없는 옛 시뮬레이터 주소도 같은 특성으로 열린다", async () => {
+    const { page } = await open(SCREENS.find((s) => s.name === "KORD BREACH")!, 1440, "dark");
+    await page.goto(`${base}/tarkov/kord-breach?b=3`, { waitUntil: "networkidle" });
+    await expect(page.locator('.kb-card[aria-pressed="true"]').count()).resolves.toBe(2);
     await page.context().close();
   });
 
@@ -241,7 +250,7 @@ describe("화면 점검", () => {
     await page.getByRole("heading", { name: /^스킬/ }).waitFor();
     const n = await page.locator(".perks li").count();
     await page.getByRole("link", { name: "시뮬레이터에서 열기" }).click();
-    await page.waitForURL(/\/kord-breach\?b=/);
+    await page.waitForURL(/\/tarkov\/season\?s=kord-breach&b=/);
     await page.locator(".kb-left dd").waitFor();
     await expect(page.locator('.kb-card[aria-pressed="true"]').count()).resolves.toBe(n);
     await page.context().close();

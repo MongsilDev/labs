@@ -1,6 +1,7 @@
 import "server-only";
 import { captureException } from "@sentry/node";
 import { BADGE_RATES_SEED, combine, judge, MIN_N, shareOf, TARGET_PEERS, WIDTHS, type BadgeRates, type RateMode, type Sample, type Verdict, type VerdictPart } from "@/tarkov/lib/criteria";
+import { seasonAt } from "@/tarkov/lib/kord";
 import { MODES, type Mode } from "@/tarkov/lib/modes";
 import { modeSample, toSample } from "@/tarkov/lib/sample";
 import { parse, type Summary } from "@/tarkov/lib/summary";
@@ -12,6 +13,9 @@ import { fetchProfile, Upstream } from "./upstream";
 export const WINDOW = 30 * 24 * 60 * 60 * 1000;
 const PEER_LIMIT = 2000;
 const ARENA_PREFIX = "arena/";
+
+// 시즌 모드는 규칙이 시즌마다 달라 지금 시즌이 시작한 뒤 갱신된 계정만 비교군에 씀
+const since = (key: string, now = Date.now()) => (key === "season" ? seasonAt(now).start : 0);
 
 function save(key: string, aid: number, updated: number, s: Sample) {
   db()
@@ -86,11 +90,12 @@ export async function crawl(): Promise<number> {
 export function peers(key: string, aid: number, s: Sample): { rows: Sample[]; width: number } {
   const q = db().prepare(
     `SELECT hours, n, kills, deaths, survived, streak, headshots, max_game_kills AS maxGameKills FROM baseline
-     WHERE mode = ? AND aid != ? AND n > 0 AND hours BETWEEN ? AND ? AND n BETWEEN ? AND ? LIMIT ?`,
+     WHERE mode = ? AND aid != ? AND n > 0 AND updated >= ? AND hours BETWEEN ? AND ? AND n BETWEEN ? AND ? LIMIT ?`,
   );
+  const from = since(key);
   let last: Sample[] = [];
   for (const w of WIDTHS) {
-    last = q.all(key, aid, s.hours * (1 - w), s.hours * (1 + w), Math.floor(s.n * (1 - w)), Math.ceil(s.n * (1 + w)), PEER_LIMIT) as Sample[];
+    last = q.all(key, aid, from, s.hours * (1 - w), s.hours * (1 + w), Math.floor(s.n * (1 - w)), Math.ceil(s.n * (1 + w)), PEER_LIMIT) as Sample[];
     if (last.length >= TARGET_PEERS) return { rows: last, width: w };
   }
   return { rows: last, width: WIDTHS[WIDTHS.length - 1] };
@@ -115,7 +120,7 @@ export function verdict(mode: Mode, aid: number, sum: Summary | null): Verdict {
 }
 
 export function baselineCounts(): Record<string, number> {
-  const rows = db().prepare(`SELECT mode, COUNT(*) AS c FROM baseline WHERE n > 0 AND mode NOT LIKE '${ARENA_PREFIX}%' GROUP BY mode`).all() as { mode: string; c: number }[];
+  const rows = db().prepare(`SELECT mode, COUNT(*) AS c FROM baseline WHERE n > 0 AND mode NOT LIKE '${ARENA_PREFIX}%' AND (mode != 'season' OR updated >= ?) GROUP BY mode`).all(since("season")) as { mode: string; c: number }[];
   return Object.fromEntries(rows.map((r) => [r.mode, r.c]));
 }
 
@@ -145,7 +150,7 @@ export async function refreshRates(): Promise<void> {
   try {
     const modes = {} as Record<RateMode, BadgeRates["modes"][RateMode]>;
     for (const key of ["pvp", "season", "pve"] as const) {
-      const rows = db().prepare(`SELECT ${COLS} FROM baseline WHERE mode = ? AND n > 0`).all(key) as Row[];
+      const rows = db().prepare(`SELECT ${COLS} FROM baseline WHERE mode = ? AND n > 0 AND updated >= ?`).all(key, since(key)) as Row[];
       const states: Verdict["state"][] = [];
       for (let i = 0; i < rows.length; i++) {
         if (i % 5 === 0) await pause();

@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { COMMON, PERK as BY_ID, PERSONAL, decodeBuild as decode, encodeBuild as encode, type Perk, type Preset } from "@/tarkov/lib/kord";
-
-const POSITIVE = PERSONAL.filter((p) => (p.points ?? 0) < 0).sort((a, b) => b.points! - a.points!);
-const NEGATIVE = PERSONAL.filter((p) => (p.points ?? 0) > 0).sort((a, b) => a.points! - b.points!);
+import { decodeBuild, encodeBuild, type Perk, type Season } from "@/tarkov/lib/build";
+import type { Preset } from "@/tarkov/lib/kord";
 
 // 데이터에 한쪽만 적힌 배타 관계도 양쪽으로 맞춤
-const EXCLUSIVE = (() => {
+function exclusive(perks: Map<string, Perk>) {
   const m = new Map<string, Set<string>>();
-  for (const p of PERSONAL) {
+  for (const p of perks.values()) {
     for (const x of p.exclusive ?? []) {
-      if (!BY_ID.has(x)) continue;
+      if (!perks.has(x)) continue;
       if (!m.has(p.id)) m.set(p.id, new Set());
       if (!m.has(x)) m.set(x, new Set());
       m.get(p.id)!.add(x);
@@ -19,7 +17,7 @@ const EXCLUSIVE = (() => {
     }
   }
   return m;
-})();
+}
 
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
@@ -28,7 +26,7 @@ function Icon({ id }: { id: string }) {
   return <span className="kb-icon" style={{ WebkitMaskImage: url, maskImage: url }} aria-hidden="true" />;
 }
 
-function Card({ p, on, blockedBy, onToggle }: { p: Perk; on: boolean; blockedBy: string[]; onToggle: () => void }) {
+function Card({ p, on, blockedBy, onToggle }: { p: Perk; on: boolean; blockedBy: Perk[]; onToggle: () => void }) {
   const kind = p.points! < 0 ? "pos" : "neg";
   const blocked = blockedBy.length > 0;
   return (
@@ -53,14 +51,24 @@ function Card({ p, on, blockedBy, onToggle }: { p: Perk; on: boolean; blockedBy:
               {e}
             </span>
           ))}
-          {blocked && <span className="kb-why">함께 고를 수 없음: {blockedBy.map((id) => BY_ID.get(id)!.name).join(", ")}</span>}
+          {blocked && <span className="kb-why">함께 고를 수 없음: {blockedBy.map((b) => b.name).join(", ")}</span>}
         </span>
       </button>
     </li>
   );
 }
 
-export default function Simulator({ presets }: { presets: Preset[] }) {
+// paths는 다른 시즌 주소. 주소의 s가 이 화면과 다른 시즌이면 그 시즌 화면으로 넘김
+export default function Simulator({ season, presets, paths }: { season: Season; presets: Preset[]; paths: Record<string, string> }) {
+  const { byId, positive, negative, excl } = useMemo(() => {
+    const byId = new Map(season.personal.map((p) => [p.id, p]));
+    return {
+      byId,
+      positive: season.personal.filter((p) => (p.points ?? 0) < 0).sort((a, b) => b.points! - a.points!),
+      negative: season.personal.filter((p) => (p.points ?? 0) > 0).sort((a, b) => a.points! - b.points!),
+      excl: exclusive(byId),
+    };
+  }, [season]);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [copied, setCopied] = useState("");
   const [undo, setUndo] = useState<Set<string> | null>(null);
@@ -72,19 +80,30 @@ export default function Simulator({ presets }: { presets: Preset[] }) {
   }, [undo]);
 
   useEffect(() => {
-    const raw = new URLSearchParams(location.search).get("b");
+    const q = new URLSearchParams(location.search);
+    const other = q.get("s");
+    if (other && other !== season.slug && paths[other]) {
+      location.replace(`${paths[other]}${location.search}`);
+      return;
+    }
+    const raw = q.get("b");
     if (!raw) return;
-    const ids = decode(raw);
+    const ids = decodeBuild(season, raw);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 주소의 빌드는 브라우저에서만 읽을 수 있음
     if (ids.length) setSel(new Set(ids));
-  }, []);
+  }, [season, paths]);
 
   useEffect(() => {
     const url = new URL(location.href);
-    if (sel.size) url.searchParams.set("b", encode(sel));
-    else url.searchParams.delete("b");
+    if (sel.size) {
+      url.searchParams.set("s", season.slug);
+      url.searchParams.set("b", encodeBuild(season, sel));
+    } else {
+      url.searchParams.delete("s");
+      url.searchParams.delete("b");
+    }
     history.replaceState(null, "", url);
-  }, [sel]);
+  }, [sel, season]);
 
   const toggle = (id: string) => {
     setUndo(null);
@@ -97,12 +116,12 @@ export default function Simulator({ presets }: { presets: Preset[] }) {
   };
 
   const blockers = useMemo(() => {
-    const m = new Map<string, string[]>();
-    for (const id of sel) for (const x of EXCLUSIVE.get(id) ?? []) if (!sel.has(x)) m.set(x, [...(m.get(x) ?? []), id]);
+    const m = new Map<string, Perk[]>();
+    for (const id of sel) for (const x of excl.get(id) ?? []) if (!sel.has(x)) m.set(x, [...(m.get(x) ?? []), byId.get(id)!]);
     return m;
-  }, [sel]);
+  }, [sel, excl, byId]);
 
-  const chosen = [...sel].map((id) => BY_ID.get(id)!);
+  const chosen = [...sel].map((id) => byId.get(id)!);
   const spent = chosen.filter((p) => p.points! < 0).reduce((a, p) => a + p.points!, 0);
   const earned = chosen.filter((p) => p.points! > 0).reduce((a, p) => a + p.points!, 0);
   const left = earned + spent;
@@ -207,13 +226,13 @@ export default function Simulator({ presets }: { presets: Preset[] }) {
           <h2 id="kb-pos" className="kb-h">
             긍정 특성 <span className="muted">포인트를 씀</span>
           </h2>
-          {list(POSITIVE)}
+          {list(positive)}
         </section>
         <section aria-labelledby="kb-neg">
           <h2 id="kb-neg" className="kb-h">
             부정 특성 <span className="muted">포인트를 얻음</span>
           </h2>
-          {list(NEGATIVE)}
+          {list(negative)}
         </section>
       </div>
 
@@ -222,7 +241,7 @@ export default function Simulator({ presets }: { presets: Preset[] }) {
           시즌 공통 특성 <span className="muted">모든 계정에 적용</span>
         </h2>
         <ul className="kb-list grid3">
-          {COMMON.map((p) => (
+          {season.common.map((p) => (
             <li key={p.id} className="kb-card">
               <Icon id={p.id} />
               <span className="kb-body">
