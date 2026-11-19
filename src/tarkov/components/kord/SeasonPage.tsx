@@ -24,7 +24,7 @@ export default function SeasonPage({ season }: { season: Season }) {
           <a className="underline underline-offset-2" href={season.preview} target="_blank" rel="noreferrer">
             공식 공개 이미지
           </a>
-          의 수치로, 시즌 시작 전에 바뀔 수 있습니다.
+          에 나온 수치이며, 시즌 시작 전에 바뀔 수 있습니다.
         </p>
       )}
       <Simulator season={season} presets={presets(season, achievements)} paths={paths} />
