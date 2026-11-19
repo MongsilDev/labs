@@ -136,7 +136,9 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
             <li>
               휴면 반영 컷은 {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정의 RP에서 시즌 종료까지 깎일 RP를 빼고 다시 정렬한 순위표에서 이터니티 {int(data.tiers.eternity.place)}위와 데미갓 {int(data.tiers.demigod.place)}위의 RP입니다.
               <br />
-              RP가 깎이는 규칙은 오래 쉬었다 돌아온 계정 341명의 RP 변화에 맞춰 정했고, 이 중 287명의 실제 변화와 일치합니다.
+              RP가 깎이는 규칙은 오래 쉬었다 돌아온 계정 341명의 RP 변화에 맞춰 정했습니다.
+              <br />
+              이 규칙은 341명 가운데 287명의 실제 변화와 일치합니다.
             </li>
             <li>
               종료 예상은 매일 오전 9시 컷이 오르는 추세에, 지난 두 시즌 마지막 14일 동안 컷이 급등한 폭을 더한 값입니다.
