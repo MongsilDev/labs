@@ -82,7 +82,7 @@ export function CutNums({ cut, race, forecast = true }: { cut: NonNullable<Hub["
               {!head && t.estimated ? <small>약</small> : null}
               {head ? rp(head.rp) : t.cut != null ? rp(t.cut) : "-"}
             </dd>
-            {head ? <p className="num">RP 하한 {rp(GATE)}</p> : forecast && end && <p className="num">종료 예상 {tens(end[1])}</p>}
+            {!head && forecast && end && <p className="num">종료 예상 {tens(end[1])}</p>}
           </div>
         );
       })}

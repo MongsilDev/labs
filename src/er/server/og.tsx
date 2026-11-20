@@ -172,9 +172,7 @@ export async function cutImage(data: CutData, race?: RaceData | null) {
                   <span style={{ fontSize: 76, fontWeight: 800, lineHeight: 1 }}>{head ? int(head.rp) : tier.cut != null ? int(tier.cut) : "-"}</span>
                   <span style={{ fontSize: 26, fontWeight: 700, color: C.text3 }}>RP</span>
                 </div>
-                {head ? (
-                  <div style={{ display: "flex", marginTop: 22, paddingTop: 16, borderTop: `1px solid ${C.line}`, fontSize: 24, color: C.text3 }}>RP 하한 {int(GATE)}</div>
-                ) : end && (
+                {!head && end && (
                   <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 22, paddingTop: 16, borderTop: `1px solid ${C.line}`, fontSize: 24, color: C.text3 }}>
                     종료 예상
                     <span style={{ fontSize: 34, fontWeight: 800, color }}>{tens(end[1])}</span>
