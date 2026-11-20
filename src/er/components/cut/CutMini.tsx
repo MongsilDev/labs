@@ -1,12 +1,11 @@
-import type { ReactNode } from "react";
 import { type CutData, md, TIERS } from "@/er/lib/cut";
 
 const PAST_DAYS = 21;
 const W = 600;
 const H = 64;
 
-/** 첫 화면용 컷 추이. 지난 3주 휴면 반영 컷과 종료까지 예상. 그릴 선이 없으면 empty를 대신 보임 */
-export default function CutMini({ data, empty = null }: { data: CutData; empty?: ReactNode }) {
+/** 첫 화면용 컷 추이. 지난 3주 휴면 반영 컷과 종료까지 예상. 그릴 선이 없으면 그리지 않음 */
+export default function CutMini({ data }: { data: CutData }) {
   const now = data.updatedAt * 1000;
   const lines = TIERS.flatMap(({ key, color }) => {
     const tier = data.tiers[key];
@@ -15,12 +14,12 @@ export default function CutMini({ data, empty = null }: { data: CutData; empty?:
     const fut = (tier.forecast ?? []).map(([t, mid, lo, hi]) => ({ t: t * 1000, mid, lo, hi }));
     return [{ key, color, cut: tier.cut, past: [...past, [now, tier.cut] as [number, number]], fut }];
   });
-  if (!lines.length) return empty;
+  if (!lines.length) return null;
   const ts = lines.flatMap((l) => [...l.past.map(([t]) => t), ...l.fut.map((f) => f.t)]);
   const vs = lines.flatMap((l) => [...l.past.map(([, v]) => v), ...l.fut.flatMap((f) => [f.lo, f.hi])]);
   const [t0, t1] = [Math.min(...ts), Math.max(...ts)];
   // 새 시즌 첫날처럼 지금 값 하나뿐이면 가로축이 없어 그리지 않음
-  if (t1 === t0) return empty;
+  if (t1 === t0) return null;
   const span = Math.max(...vs) - Math.min(...vs) || 1;
   const [v0, v1] = [Math.min(...vs) - span * 0.06, Math.max(...vs) + span * 0.06];
   const x = (t: number) => ((t - t0) / Math.max(t1 - t0, 1)) * W;

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { LABS_ACCENT } from "@/components/SiteMark";
 import { glyphs, keepGlyphs } from "@/glyphs";
-import { type CutData, daysLeft, int, type RaceData, tens } from "@/er/lib/cut";
+import { type CutData, daysLeft, floorHead, GATE, int, type RaceData, tens } from "@/er/lib/cut";
 import { groupResult } from "@/er/lib/engine";
 import { fmt1 } from "@/er/lib/format";
 import type { TournamentView } from "@/er/lib/view";
@@ -146,6 +146,7 @@ export async function cutImage(data: CutData, race?: RaceData | null) {
           {TIER_OG.map(({ key, name, color }) => {
             const tier = data.tiers[key];
             const end = tier.forecast?.[tier.forecast.length - 1];
+            const head = tier.cut == null || tier.cut <= GATE ? floorHead(data.rps, tier.place) : null;
             // 화면과 같이 시즌 초에는 이터니티 컷 대신 8,300 도달 인원(장부 551)
             if (key === "eternity" && race)
               return (
@@ -164,14 +165,16 @@ export async function cutImage(data: CutData, race?: RaceData | null) {
               <div key={key} style={{ display: "flex", flexDirection: "column", flex: 1, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 14, padding: "26px 30px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 26, fontWeight: 700, color: C.text2 }}>
                   <div style={{ width: 14, height: 14, borderRadius: 7, background: color }} />
-                  {name} {int(tier.place)}위
+                  {name} {head ? `${int(head.rank)}위 RP` : `${int(tier.place)}위`}
                 </div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 14 }}>
-                  {tier.estimated && <span style={{ fontSize: 32, fontWeight: 700, color: C.text3 }}>약</span>}
-                  <span style={{ fontSize: 76, fontWeight: 800, lineHeight: 1 }}>{tier.cut != null ? int(tier.cut) : "-"}</span>
+                  {!head && tier.estimated && <span style={{ fontSize: 32, fontWeight: 700, color: C.text3 }}>약</span>}
+                  <span style={{ fontSize: 76, fontWeight: 800, lineHeight: 1 }}>{head ? int(head.rp) : tier.cut != null ? int(tier.cut) : "-"}</span>
                   <span style={{ fontSize: 26, fontWeight: 700, color: C.text3 }}>RP</span>
                 </div>
-                {end && (
+                {head ? (
+                  <div style={{ display: "flex", marginTop: 22, paddingTop: 16, borderTop: `1px solid ${C.line}`, fontSize: 24, color: C.text3 }}>RP 하한 {int(GATE)}</div>
+                ) : end && (
                   <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 22, paddingTop: 16, borderTop: `1px solid ${C.line}`, fontSize: 24, color: C.text3 }}>
                     종료 예상
                     <span style={{ fontSize: 34, fontWeight: 800, color }}>{tens(end[1])}</span>

@@ -37,7 +37,7 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
           <>
             {data.state === "offseason" && (
               <p className="pt-3 text-[14px] text-fg-2" role="status">
-                {data.next ? `${data.next} 상위 1,000명 기록이 아직 없어 ` : "시즌이 끝나 "}
+                {data.next ? `${data.next}에는 RP 8,300 이상인 계정의 경기가 아직 없어 ` : "시즌이 끝나 "}
                 {data.season.name}의 마지막 표를 보여 줍니다.
               </p>
             )}

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { RaceCount } from "@/er/components/cut/RaceLive";
 import { Logo } from "@/er/components/kel/Team";
-import { int as rp, type RaceData, TIERS, tens } from "@/er/lib/cut";
+import { floorHead, GATE, int as rp, type RaceData, TIERS, tens } from "@/er/lib/cut";
 import { fmt1 } from "@/er/lib/format";
 import { TEAM } from "@/er/lib/kel";
 import { comboPath, signed, type TierCombo } from "@/er/lib/tier";
@@ -56,6 +56,8 @@ export function CutNums({ cut, race, forecast = true }: { cut: NonNullable<Hub["
       {TIERS.map(({ key, name, color }) => {
         const t = cut.tiers[key];
         const end = t.forecast?.[t.forecast.length - 1];
+        // /er/cut과 같이 컷이 하한에 머무는 동안은 실제 순위 RP
+        const head = t.cut == null || t.cut <= GATE ? floorHead(cut.rps, t.place) : null;
         // /er/cut 카드와 같이 시즌 초에는 늘 8,300인 이터니티 컷 대신 도달 인원(장부 551)
         if (key === "eternity" && race)
           return (
@@ -74,13 +76,13 @@ export function CutNums({ cut, race, forecast = true }: { cut: NonNullable<Hub["
           <div key={key}>
             <dt className="num">
               <span style={{ background: color }} aria-hidden="true" />
-              {name} {n(t.place)}위
+              {name} {head ? `${n(head.rank)}위 RP` : `${n(t.place)}위`}
             </dt>
             <dd className="num">
-              {t.estimated ? <small>약</small> : null}
-              {t.cut != null ? rp(t.cut) : "-"}
+              {!head && t.estimated ? <small>약</small> : null}
+              {head ? rp(head.rp) : t.cut != null ? rp(t.cut) : "-"}
             </dd>
-            {forecast && end && <p className="num">종료 예상 {tens(end[1])}</p>}
+            {head ? <p className="num">RP 하한 {rp(GATE)}</p> : forecast && end && <p className="num">종료 예상 {tens(end[1])}</p>}
           </div>
         );
       })}

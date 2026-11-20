@@ -43,7 +43,7 @@ export default async function Hub() {
               h.race ? (
                 <RaceLive initial={h.race}>
                   <CutNums cut={h.cut} race={h.race} />
-                  <CutMini data={h.cut} empty={<RaceMini />} />
+                  <RaceMini />
                 </RaceLive>
               ) : (
                 <>
