@@ -19,7 +19,7 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
   const fallback = data ? pickView(data) : null;
   const view = views.find((x) => x.id === v) ?? fallback;
   const cur = data?.views.find((x) => x.id === `patch-${data.patch}`);
-  const early = data?.state === "collecting" && cur && !cur.ready ? { label: cur.label, patch: cur.patch, rows: cur.rows } : undefined;
+  const early = data?.state === "collecting" && cur && !cur.ready ? { label: cur.label, patch: cur.patch } : undefined;
   return (
     <>
       <Header user={user} crumb="실험체 티어" crumbHref="/er/tier" />
@@ -41,7 +41,6 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
               initialRole={one("r") ?? null}
               initialSort={one("s")}
               initialDir={one("d")}
-              initialQuery={one("q") ?? ""}
               fallback={fallback.id}
               updatedAt={data.updatedAt}
               seasonEnd={data.season.end}
@@ -50,7 +49,6 @@ export default async function TierPage({ searchParams }: { searchParams: Promise
               thin={data.rule.thin}
               few={data.rule.few}
               cap={data.rule.cap}
-              publishRows={data.rule.publishRows}
               early={early}
               notice={
                 data.state === "offseason" ?

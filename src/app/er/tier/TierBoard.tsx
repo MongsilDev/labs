@@ -65,7 +65,6 @@ type Props = {
   initialRole: string | null;
   initialSort?: string;
   initialDir?: string;
-  initialQuery: string;
   fallback: string;
   updatedAt: number;
   seasonEnd: number;
@@ -74,8 +73,7 @@ type Props = {
   thin: number;
   few?: number;
   cap?: number;
-  publishRows: number;
-  early?: { label: string; patch: string; rows: number };
+  early?: { label: string; patch: string };
   notice?: ReactNode;
   weights?: { gain: number; place: number; top3: number };
 };
@@ -213,7 +211,6 @@ export default function TierBoard(p: Props) {
   const [id, setId] = useState(p.initial);
   const [role, setRole] = useState<string | null>(p.initialRole);
   const [[sort, dir], setOrder] = useState<[SortKey, Dir]>(() => parseSort(p.initialSort, p.initialDir));
-  const [q, setQ] = useState(p.initialQuery);
   const view = p.views.find((v) => v.id === id) ?? p.views[0];
   const thin = (c: TierCombo) => c.n < p.thin || (p.few != null && c.ep != null && c.ep < p.few);
   const href = (c: TierCombo) => comboPath(c, view.id === p.fallback ? null : view.id);
@@ -225,28 +222,26 @@ export default function TierBoard(p: Props) {
     const now = new URL(window.location.href);
     const was = saved && new URL(saved.url, window.location.origin);
     const same = !!was && now.pathname === was.pathname && (now.searchParams.get("v") ?? "") === (was.searchParams.get("v") ?? "");
-    const src = same && now.search !== was.search && !["r", "s", "d", "q"].some((k) => now.searchParams.has(k)) ? was : now;
+    const src = same && now.search !== was.search && !["r", "s", "d"].some((k) => now.searchParams.has(k)) ? was : now;
     const v = src.searchParams.get("v");
     /* eslint-disable react-hooks/set-state-in-effect -- 주소와 탭 저장소는 수화 뒤에만 읽을 수 있음 */
     setId(p.views.some((x) => x.id === v) ? v! : p.fallback);
     setRole(src.searchParams.get("r"));
     setOrder(parseSort(src.searchParams.get("s"), src.searchParams.get("d")));
-    setQ(src.searchParams.get("q") ?? "");
     /* eslint-enable react-hooks/set-state-in-effect */
     if (src !== now) window.history.replaceState(null, "", src.pathname + src.search);
     if (same) requestAnimationFrame(() => window.scrollTo(0, saved.y));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 마운트 때 한 번만 맞춤
   }, []);
 
-  // 기간, 역할군, 정렬, 검색어를 주소에 남겨 뒤로 가기와 공유에서 같은 목록을 보여 줌
-  const keep = (next: { v?: string; r?: string | null; s?: SortKey; d?: Dir | null; q?: string }) => {
+  // 기간, 역할군, 정렬을 주소에 남겨 뒤로 가기와 공유에서 같은 목록을 보여 줌
+  const keep = (next: { v?: string; r?: string | null; s?: SortKey; d?: Dir | null }) => {
     const url = new URL(window.location.href);
     const put = (k: string, val: string | null | undefined, empty: string | null) => (val == null || val === empty ? url.searchParams.delete(k) : url.searchParams.set(k, val));
     if ("v" in next) put("v", next.v, p.fallback);
     if ("r" in next) put("r", next.r, null);
     if ("s" in next) put("s", next.s, "score");
     if ("d" in next) put("d", next.d, null);
-    if ("q" in next) put("q", next.q, "");
     window.history.replaceState(null, "", url);
   };
   // 같은 열을 다시 누르면 방향만 바꿈. 주소에는 그 열의 기본 방향과 다를 때만 남김
@@ -264,11 +259,7 @@ export default function TierBoard(p: Props) {
   };
 
   const roles = [...ROLES, ...new Set(view.combos.flatMap((c) => c.roles ?? []))].filter((r, i, a) => a.indexOf(r) === i && view.combos.some((c) => c.roles?.includes(r)));
-  // 「석궁 나딘」과 「나딘 석궁」 모두 찾음
-  const query = q.replace(/\s+/g, "");
-  const shown = view.combos.filter(
-    (c) => (role == null || c.roles?.includes(role)) && (!query || `${c.weaponName}${c.name}`.replace(/\s+/g, "").includes(query) || `${c.name}${c.weaponName}`.replace(/\s+/g, "").includes(query)),
-  );
+  const shown = view.combos.filter((c) => role == null || c.roles?.includes(role));
   const by = COLS.find((c) => c.key === sort)!;
   const ordered = sortCombos(shown, by.val, dir, sort === "score");
   const w = p.weights;
@@ -278,12 +269,6 @@ export default function TierBoard(p: Props) {
   return (
     <>
       <div className="tier-head">
-        <span className="tier-emblems" aria-hidden>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/img/er/rank/Immortal.v1.png" alt="" width={75} height={96} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/img/er/rank/Titan.v1.png" alt="" width={75} height={96} />
-        </span>
         <div className="min-w-0">
           <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px]">실험체 티어</h1>
           <p className="text-[14px] text-fg-2 tabular-nums">
@@ -315,8 +300,6 @@ export default function TierBoard(p: Props) {
         {p.early && view.patch === p.early.patch && !view.patches && !view.season && (
           <p className="text-[14px] text-fg-2" role="status">
             {p.early.label}는 기록이 적어 등급이 크게 바뀔 수 있습니다.
-            <br />
-            실험체 기록 {int(p.publishRows)}개 중 {int(p.early.rows)}개를 모았습니다.
           </p>
         )}
         <div className="tier-ctl">
@@ -356,12 +339,6 @@ export default function TierBoard(p: Props) {
               </button>
             ))}
           </div>
-          <input className="field sm tier-search" type="search" placeholder="실험체 검색" aria-label="실험체 검색" value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              keep({ q: e.target.value });
-            }}
-          />
         </div>
         <details className="tier-how">
           <summary>계산 방법</summary>
@@ -404,7 +381,7 @@ export default function TierBoard(p: Props) {
         <p className="panel px-5 py-4" role="status">
           조건에 맞는 실험체가 없습니다.
           <br />
-          역할군이나 검색어를 바꿔 주세요.
+          역할군을 바꿔 주세요.
         </p>
       )}
       {shown.length > 0 && (

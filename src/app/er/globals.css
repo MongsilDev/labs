@@ -1357,14 +1357,6 @@
     gap: 14px;
     padding-top: 12px;
   }
-  .tier-emblems {
-    display: flex;
-    flex: none;
-  }
-  .tier-emblems img {
-    width: 44px;
-    height: 56px;
-  }
   .tier-ctl {
     display: flex;
     flex-wrap: wrap;
@@ -1373,9 +1365,6 @@
   }
   .tier-role {
     flex: 1 1 520px;
-  }
-  .tier-search {
-    flex: 0 1 220px;
   }
   /* 좁은 화면은 역할군을 한 줄에 두고 옆으로 밀어 봄. 오른쪽 끝을 흐려 버튼이 더 있음을 보이고, 끝까지 밀면 마지막 버튼은 흐린 자리 밖에 옴 */
   @media (width < 760px) {
@@ -1676,17 +1665,6 @@
       border-radius: 2px;
     }
   }
-  @media (max-width: 600px) {
-    .tier-emblems img {
-      width: 34px;
-      height: 44px;
-    }
-    .tier-search {
-      flex: 1 1 0;
-      min-width: 0;
-    }
-  }
-
   /* 시안 화면(next.css)은 같은 클래스로 모서리를 2px로 바꿈 */
   .er-char {
     border-radius: 9999px;
@@ -1874,7 +1852,6 @@
     .tier-period, .tier-role { display: none !important; }
     .tier-sel { display: block; flex: 1 1 0; min-width: 0; height: 44px; }
     .tier-ctl { gap: 8px; }
-    .tier-search { flex: 1 1 100%; height: 44px; }
     .tier-table { font-size: 13px; }
     .tier-table th, .tier-table td { padding-left: 4px; padding-right: 4px; }
     .tier-table .tier-no, .tier-table thead th:last-child, .tier-table td:last-child, .tier-pk small { display: none; }
