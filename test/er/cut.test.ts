@@ -35,6 +35,9 @@ describe("이터컷 계산", () => {
     expect(chance(9480, 9380, 9200, 9480)).toBeCloseTo(0.9, 2);
     expect(chanceLabel(0.5)).toBe("중간");
     expect(chanceLabel(0.95)).toBe("높음");
+    expect(chanceLabel(0.05)).toBe("낮음");
+    expect(chanceLabel(0.7)).toBe("조금 높음");
+    expect(chanceLabel(0.3)).toBe("조금 낮음");
   });
 
   it("쉬면 깎인 RP는 메테오라이트 4 아래로 내려가지 않는다", () => {

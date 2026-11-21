@@ -73,8 +73,8 @@ export function chanceLabel(p: number): string {
   if (p >= 0.8) return "높음";
   if (p >= 0.55) return "조금 높음";
   if (p >= 0.45) return "중간";
-  if (p >= 0.2) return "낮음";
-  return "매우 낮음";
+  if (p >= 0.2) return "조금 낮음";
+  return "낮음";
 }
 
 /** 순위표에서 rp가 들어갈 순위로 정한 유예 티어 */

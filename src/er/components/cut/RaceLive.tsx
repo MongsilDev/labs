@@ -88,11 +88,11 @@ export function RaceTable() {
       <table className="mt-3 w-full table-fixed text-[13px] num">
         <thead className="text-left text-[12px] text-ink-3">
           <tr className="border-b border-rule">
-            <th className="w-8 py-2 font-semibold">#</th>
+            <th className="w-6 py-2 font-semibold sm:w-8">#</th>
             <th className="py-2 font-semibold">닉네임</th>
-            <th className="w-16 py-2 text-right font-semibold">RP</th>
-            <th className="w-[84px] py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-36 sm:pl-4">{int(GATE)}까지</th>
-            <th className="w-16 py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-20 sm:pl-4">최근 경기</th>
+            <th className="w-12 py-2 text-right font-semibold sm:w-16">RP</th>
+            <th className="w-[110px] py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-36 sm:pl-4">{int(GATE)}까지</th>
+            <th className="w-[58px] py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-20 sm:pl-4">최근 경기</th>
           </tr>
         </thead>
         <tbody>
@@ -106,8 +106,7 @@ export function RaceTable() {
                 <td className="py-2 pl-2 text-right whitespace-nowrap sm:pl-4">
                   {done ? (
                     <span style={{ color }}>
-                      {r.at ? timeKo(r.at * 1000).replace(/^\d+월 /, "") : ""}
-                      <span className={r.at ? "max-sm:hidden" : undefined}>{r.at ? " " : ""}달성</span>
+                      {r.at ? `${timeKo(r.at * 1000).replace(/^\d+월 /, "")} 달성` : "달성"}
                     </span>
                   ) : (
                     int(GATE - r.rp)
