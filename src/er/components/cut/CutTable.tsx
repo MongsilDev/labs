@@ -166,7 +166,7 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
         <tbody aria-live="polite">
           <Row label="지금 컷까지">
             {(same ? tiers.slice(0, 1) : tiers).map(({ key, t, floor }) => {
-              if (t.cut == null) return <td key={key} className={CELL}>-</td>;
+              if (t.cut == null) return <td key={key} className={CELL} colSpan={same ? 2 : 1}>-</td>;
               const near = between(data.rps, rp, t.cut);
               return (
                 <td key={key} colSpan={same ? 2 : 1} className={CELL}>
