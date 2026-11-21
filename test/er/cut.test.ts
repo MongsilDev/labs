@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { between, boardRank, type CutData, type CutTier, chance, chanceLabel, daysLeft, floorHead, graceKey, quitRp } from "../../src/er/lib/cut";
+import { boardRank, type CutData, type CutTier, chance, chanceLabel, daysLeft, floorHead, graceKey, quitRp } from "../../src/er/lib/cut";
 import { ticks } from "../../src/er/lib/ticks";
 import { getCut } from "../../src/er/server/cut";
 
@@ -27,13 +27,6 @@ describe("이터컷 계산", () => {
     expect(floorHead([9000, 8200], 1000)).toEqual({ rank: 2, rp: 8200 });
     expect(floorHead([9000, 8500], 1000)).toBeNull();
     expect(floorHead([], 300)).toBeNull();
-  });
-
-  it("사이 인원은 양 끝을 빼고 세고, 순위표 밖이면 모른다", () => {
-    const rps = [9300, 9200, 9100, 9100, 9000, 8900];
-    expect(between(rps, 9000, 9200)).toBe(2);
-    expect(between(rps, 9250, 9050)).toBe(3);
-    expect(between(rps, 8800, 9000)).toBeNull();
   });
 
   it("가능성은 가운데 값에서 반반, 낮은 값과 높은 값에서 10%와 90%", () => {

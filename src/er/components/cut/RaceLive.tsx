@@ -9,7 +9,6 @@ const GATE = 8300;
 const EVERY = 60_000;
 const Ctx = createContext<RaceData | null>(null);
 
-const hm = (s: number) => new Intl.DateTimeFormat("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Seoul" }).format(s * 1000);
 const signed = (v: number | null | undefined) => (v == null ? "-" : v > 0 ? `+${int(v)}` : int(v));
 
 /** 수집기가 1분마다 쓰는 race.json을 새로고침 없이 다시 받음. 엣지가 HTML을 5분 캐시해서 첫 값이 낡았을 수 있어 열자마자 한 번 받음 */
@@ -42,7 +41,7 @@ const useRace = () => useContext(Ctx);
 /** 이터런이 열린 동안 페이지 기준 시각. 1분마다 바뀜 */
 export function RaceTime() {
   const race = useRace();
-  return race ? hm(race.updatedAt) : null;
+  return race ? timeKo(race.updatedAt * 1000) : null;
 }
 
 /** max는 그 등급의 정원. 달성 인원이 정원을 넘어도 정원까지만 적음 */
@@ -58,7 +57,7 @@ export function RaceMini({ rows = 5 }: { rows?: number }) {
   return (
     <Link href="/er/cut" className="race-mini">
       <table className="tbl tierbig">
-        <thead className="sr-only"><tr><th className="l w-8">#</th><th className="l">닉네임</th><th>RP</th><th>최근 판</th><th>{int(GATE)}까지</th></tr></thead>
+        <thead className="sr-only"><tr><th className="l w-8">#</th><th className="l">닉네임</th><th>RP</th><th>최근 경기</th><th>{int(GATE)}까지</th></tr></thead>
         <tbody>
           {race.list.slice(0, rows).map((r, i) => (
             <tr key={r.nickname}>
@@ -93,7 +92,7 @@ export function RaceTable() {
             <th className="py-2 font-semibold">닉네임</th>
             <th className="w-16 py-2 text-right font-semibold">RP</th>
             <th className="w-[84px] py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-36 sm:pl-4">{int(GATE)}까지</th>
-            <th className="w-14 py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-20 sm:pl-4">최근 판</th>
+            <th className="w-16 py-2 pl-2 text-right font-semibold whitespace-nowrap sm:w-20 sm:pl-4">최근 경기</th>
           </tr>
         </thead>
         <tbody>

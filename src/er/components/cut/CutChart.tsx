@@ -38,6 +38,8 @@ export default function CutChart({ data }: { data: CutData }) {
   // 시즌이 끝나면 예상이 없어 마지막 점이 오늘
   const ahead = t1 > now;
   const ended = data.season.end != null && now >= data.season.end * 1000;
+  // 종료 뒤에도 수집이 이어져 마지막 점이 종료일보다 뒤일 수 있음
+  const endDay = data.season.end != null && md(t1) === md(data.season.end * 1000);
 
   const values = points.flatMap((p) => Object.values(p.v).flatMap((v) => [v.a, v.b, v.lo, v.hi].filter((x): x is number => x != null)));
   // 값이 모두 같거나 거의 같아도 눈금이 여럿 나오게 범위를 100 RP 이상으로 잡음
@@ -109,7 +111,7 @@ export default function CutChart({ data }: { data: CutData }) {
           </text>
         )}
         <text x={x(t1)} y={h - 8} textAnchor="end" fontSize="12" fontWeight="700" fill="var(--text)">
-          {ahead ? `${md(t1)} 종료` : ended ? md(t1) : "오늘"}
+          {ahead || endDay ? `${md(t1)} 종료` : ended ? md(t1) : "오늘"}
         </text>
 
         {TIERS.map(({ key, color }) => {

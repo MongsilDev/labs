@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, type ReactNode, useContext, useState } from "react";
-import { between, boardRank, chance, chanceLabel, type CutData, type CutTier, DAY, daysLeft, floorHead, GATE, graceKey, int, md, quitRp, round10, tens, TIERS } from "@/er/lib/cut";
+import { boardRank, chance, chanceLabel, type CutData, type CutTier, DAY, daysLeft, floorHead, GATE, graceKey, int, quitRp, round10, tens, TIERS } from "@/er/lib/cut";
 import { RaceCount } from "./RaceLive";
 
 const Ctx = createContext<[string, (v: string) => void]>(["", () => {}]);
@@ -28,6 +28,13 @@ function dayDelta(t: CutTier, at: number): [number, number] | null {
 }
 
 const gapText = (v: number) => (v > 0 ? `${int(v)} RP 부족` : `${int(-v)} RP 여유`);
+
+const kstDay = (s: number) => Math.floor((s * 1000 + 9 * 3_600_000) / DAY);
+/** 기준 시각에서 본 그 기록의 날. 날짜 표기를 제목 줄과 따로 두지 않으려고 상대 표현으로 적음 */
+function dayName(s: number, at: number): string {
+  const n = kstDay(at) - kstDay(s);
+  return n <= 0 ? "오늘" : n === 1 ? "어제" : `${n}일 전`;
+}
 
 function Row({ label, sub, children }: { label: ReactNode; sub?: ReactNode; children: ReactNode }) {
   return (
@@ -61,7 +68,7 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
   const seats = tiers.some((x) => x.floor);
   const ends = tiers.some((x) => x.end);
   // 시즌이 끝난 뒤에는 순위가 굳어 지금 컷이 곧 종료 컷
-  const cutName = data.season.end != null && data.updatedAt >= data.season.end ? "종료 컷" : "지금 컷";
+  const ended = data.season.end != null && data.updatedAt >= data.season.end;
   const reached = data.rps.filter((v) => v >= GATE).length;
   const left = data.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
 
@@ -93,9 +100,9 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
       </thead>
       <tbody>
         <tr>
-          <th scope="row" className="pt-1 pb-3 pr-2 text-left align-baseline text-[13px] font-semibold whitespace-nowrap text-ink-2">{cutName}</th>
+          <th scope="row" className="pt-1 pb-3 pr-2 text-left align-baseline text-[13px] font-semibold whitespace-nowrap text-ink-2">{ended ? "종료 컷" : "지금 컷"}</th>
           {tiers.map(({ key, t, floor }) => {
-            const day = floor ? null : dayDelta(t, data.updatedAt);
+            const day = floor || ended ? null : dayDelta(t, data.updatedAt);
             return (
               <td key={key} className="pt-1 pb-3 pl-2 align-baseline">
                 <span className="text-[32px] leading-none font-bold tracking-[-1px] sm:text-[40px]">
@@ -104,7 +111,7 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
                 </span>
                 {day && (
                   <Sub>
-                    {md(day[0] * 1000)} 9시보다 {day[1] > 0 ? `▲${int(day[1])}` : day[1] < 0 ? `▼${int(-day[1])}` : "변동 없음"}
+                    {dayName(day[0], data.updatedAt)} 9시보다 {day[1] > 0 ? `▲${int(day[1])}` : day[1] < 0 ? `▼${int(-day[1])}` : "변동 없음"}
                   </Sub>
                 )}
                 {!floor && t.board != null && t.cut != null && int(t.board) !== int(t.cut) && <Sub>순위표 {int(t.board)}</Sub>}
@@ -173,18 +180,12 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
       </tbody>
       {rp != null && (
         <tbody aria-live="polite">
-          <Row label={`${cutName}까지`}>
-            {tiers.map(({ key, t, floor }) => {
-              if (t.cut == null) return <td key={key} className={CELL}>-</td>;
-              // 컷이 하한이면 사이 인원이 컷을 움직이지 않아 적지 않음
-              const near = floor ? null : between(data.rps, rp, t.cut);
-              return (
-                <td key={key} className={CELL}>
-                  <span className={VAL}>{gapText(t.cut - rp)}</span>
-                  {near != null && <Sub>컷과 나 사이 {int(near)}명</Sub>}
-                </td>
-              );
-            })}
+          <Row label={ended ? "종료 컷과 차이" : "지금 컷까지"}>
+            {tiers.map(({ key, t }) => (
+              <td key={key} className={CELL}>
+                {t.cut == null ? "-" : <span className={VAL}>{gapText(t.cut - rp)}</span>}
+              </td>
+            ))}
           </Row>
           {ends && (
             <>
@@ -196,10 +197,10 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
                   </td>
                 ))}
               </Row>
-              <Row label="지금 RP로 끝나면">
+              <Row label="달성 가능성" sub="지금 RP로 끝나면">
                 {tiers.map(({ key, end, goal }) => (
                   <td key={key} className={CELL}>
-                    {end && goal != null ? <span className={VAL}>가능성 {chanceLabel(chance(rp, goal, end[4], end[3]))}</span> : "-"}
+                    {end && goal != null ? <span className={VAL}>{chanceLabel(chance(rp, goal, end[4], end[3]))}</span> : "-"}
                   </td>
                 ))}
               </Row>

@@ -78,11 +78,7 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
                     ))}
                     {faint && (
                       <span className="flex items-center gap-1.5">
-                        <span className="flex opacity-40" aria-hidden="true">
-                          {TIERS.map(({ key, color }) => (
-                            <span key={key} className="h-[2px] w-2" style={{ background: color }} />
-                          ))}
-                        </span>
+                        <span className="h-[2px] w-4 bg-ink-3 opacity-50" aria-hidden="true" />
                         순위표 컷
                       </span>
                     )}

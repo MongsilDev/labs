@@ -55,15 +55,6 @@ export function daysLeft(end: number, now: number): number {
   return Math.max(0, Math.round((dayStart(new Date(end + KST).toISOString().slice(0, 10)) - dayStart(new Date(now + KST).toISOString().slice(0, 10))) / DAY));
 }
 
-/** 순위표 RP 중 a와 b 사이(양 끝 제외) 인원. 순위표가 1000위까지라 더 낮은 쪽이 목록 최저값보다 낮으면 null */
-export function between(rps: number[], a: number, b: number): number | null {
-  if (!rps.length) return null;
-  const lo = Math.min(a, b);
-  const hi = Math.max(a, b);
-  if (lo < rps[rps.length - 1]) return null;
-  return rps.filter((v) => v > lo && v < hi).length;
-}
-
 function phi(z: number): number {
   // Abramowitz-Stegun 7.1.26
   const t = 1 / (1 + 0.3275911 * Math.abs(z) / Math.SQRT2);
