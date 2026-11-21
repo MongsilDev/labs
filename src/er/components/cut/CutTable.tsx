@@ -60,8 +60,8 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
   });
   const seats = tiers.some((x) => x.floor);
   const ends = tiers.some((x) => x.end);
-  // 두 컷이 같고 종료 예상이 없으면 내 RP 결과도 같아서 한 칸으로 합침
-  const same = !ends && tiers[0].t.cut === tiers[1].t.cut;
+  // 시즌이 끝난 뒤에는 순위가 굳어 지금 컷이 곧 종료 컷
+  const cutName = data.season.end != null && data.updatedAt >= data.season.end ? "종료 컷" : "지금 컷";
   const reached = data.rps.filter((v) => v >= GATE).length;
   const left = data.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
 
@@ -93,7 +93,7 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
       </thead>
       <tbody>
         <tr>
-          <th scope="row" className="pt-1 pb-3 pr-2 text-left align-baseline text-[13px] font-semibold whitespace-nowrap text-ink-2">지금 컷</th>
+          <th scope="row" className="pt-1 pb-3 pr-2 text-left align-baseline text-[13px] font-semibold whitespace-nowrap text-ink-2">{cutName}</th>
           {tiers.map(({ key, t, floor }) => {
             const day = floor ? null : dayDelta(t, data.updatedAt);
             return (
@@ -151,31 +151,37 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
             <label htmlFor="my-rp">내 RP</label>
           </th>
           <td colSpan={2} className="py-3 pl-2">
-            <input
-              id="my-rp"
-              className="field num"
-              inputMode="numeric"
-              autoComplete="off"
-              value={text}
-              onChange={(e) => setText(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
-            />
+            <div className="relative">
+              <input
+                id="my-rp"
+                className="field num"
+                inputMode="numeric"
+                autoComplete="off"
+                aria-describedby={rank ? "my-rank" : undefined}
+                value={text}
+                onChange={(e) => setText(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
+              />
+              {rank && (
+                <span id="my-rank" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[13px] text-ink-3">
+                  {rank.tied ? "공동 " : ""}
+                  {int(rank.rank)}위
+                </span>
+              )}
+            </div>
           </td>
         </tr>
       </tbody>
       {rp != null && (
         <tbody aria-live="polite">
-          <Row label="지금 컷까지">
-            {(same ? tiers.slice(0, 1) : tiers).map(({ key, t, floor }) => {
-              if (t.cut == null) return <td key={key} className={CELL} colSpan={same ? 2 : 1}>-</td>;
-              const near = between(data.rps, rp, t.cut);
+          <Row label={`${cutName}까지`}>
+            {tiers.map(({ key, t, floor }) => {
+              if (t.cut == null) return <td key={key} className={CELL}>-</td>;
+              // 컷이 하한이면 사이 인원이 컷을 움직이지 않아 적지 않음
+              const near = floor ? null : between(data.rps, rp, t.cut);
               return (
-                <td key={key} colSpan={same ? 2 : 1} className={CELL}>
+                <td key={key} className={CELL}>
                   <span className={VAL}>{gapText(t.cut - rp)}</span>
-                  {floor ? (
-                    <Sub>{rank ? `아시아1 ${rank.tied ? "공동 " : ""}${int(rank.rank)}위` : "아시아1 순위표 밖"}</Sub>
-                  ) : (
-                    near != null && <Sub>컷과 나 사이 {int(near)}명</Sub>
-                  )}
+                  {near != null && <Sub>컷과 나 사이 {int(near)}명</Sub>}
                 </td>
               );
             })}
@@ -197,7 +203,8 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
                   </td>
                 ))}
               </Row>
-              {quit != null && (
+              {/* 쉬어도 RP가 깎이지 않으면 종료 예상까지 행과 값이 같아 뺌 */}
+              {quit != null && quit !== rp && (
                 <Row
                   label="오늘부터 쉬면"
                   sub={

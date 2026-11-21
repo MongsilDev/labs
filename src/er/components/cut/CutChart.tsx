@@ -37,6 +37,7 @@ export default function CutChart({ data }: { data: CutData }) {
   const t1 = points[points.length - 1].t;
   // 시즌이 끝나면 예상이 없어 마지막 점이 오늘
   const ahead = t1 > now;
+  const ended = data.season.end != null && now >= data.season.end * 1000;
 
   const values = points.flatMap((p) => Object.values(p.v).flatMap((v) => [v.a, v.b, v.lo, v.hi].filter((x): x is number => x != null)));
   // 값이 모두 같거나 거의 같아도 눈금이 여럿 나오게 범위를 100 RP 이상으로 잡음
@@ -108,7 +109,7 @@ export default function CutChart({ data }: { data: CutData }) {
           </text>
         )}
         <text x={x(t1)} y={h - 8} textAnchor="end" fontSize="12" fontWeight="700" fill="var(--text)">
-          {ahead ? `${md(t1)} 종료` : md(t1)}
+          {ahead ? `${md(t1)} 종료` : ended ? md(t1) : "오늘"}
         </text>
 
         {TIERS.map(({ key, color }) => {
@@ -116,7 +117,13 @@ export default function CutChart({ data }: { data: CutData }) {
           if (tier.cut == null) return null;
           const past = points.filter((p) => p.kind !== "future");
           const board = past.flatMap((p) => (p.v[key]?.b != null ? [[p.t, p.v[key].b!] as [number, number]] : []));
-          const real = past.flatMap((p) => (p.v[key]?.a != null ? [[p.t, p.v[key].a!] as [number, number]] : []));
+          // 두 컷이 같은 날은 선이 겹쳐 한 색만 보여서, 선 두께의 절반씩 위아래로 벌림
+          const real = past.flatMap((p) => {
+            const a = p.v[key]?.a;
+            if (a == null) return [];
+            const twin = TIERS.every((m) => p.v[m.key]?.a === a);
+            return [`${x(p.t).toFixed(1)},${(y(a) + (twin ? (key === TIERS[0].key ? -1.5 : 1.5) : 0)).toFixed(1)}`];
+          });
           const fut = (tier.forecast ?? []).map(([t, mid, lo, hi]) => ({ t: t * 1000, mid, lo, hi }));
           const band = fut.length
             ? `M${x(now)},${y(tier.cut)}` + fut.map((f) => `L${x(f.t).toFixed(1)},${y(f.hi).toFixed(1)}`).join("") +
@@ -126,7 +133,7 @@ export default function CutChart({ data }: { data: CutData }) {
             <g key={key}>
               {band && <path d={band} fill={color} opacity="0.16" />}
               <path d={path(board)} fill="none" stroke={color} strokeOpacity="0.4" strokeWidth="1.5" />
-              <path d={path(real)} fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" />
+              <path d={real.length ? `M${real.join("L")}` : ""} fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" />
               {fut.length > 0 && (
                 <path d={path([[now, tier.cut], ...fut.map((f) => [f.t, f.mid] as [number, number])])} fill="none" stroke={color} strokeWidth="2" strokeDasharray="5 5" />
               )}

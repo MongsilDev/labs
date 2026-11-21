@@ -53,12 +53,12 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px]">이터컷 예측</h1>
         <p className="text-[13px] text-ink-3 num">
-          {data.season.name}, 아시아1{left != null ? `, 종료 D-${left}` : ""}, {race ? <RaceTime /> : timeKo(data.updatedAt * 1000)} 기준
+          {data.season.name}, 아시아1{left != null ? (data.updatedAt >= data.season.end! ? ", 종료" : `, 종료 D-${left}`) : ""}, {race ? <RaceTime /> : timeKo(data.updatedAt * 1000)} 기준
         </p>
       </div>
 
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-8 lg:grid-cols-12">
-        <div className={`min-w-0 ${side ? "lg:col-span-5" : "max-w-[560px] lg:col-span-12"}`}>
+        <div className="min-w-0 lg:col-span-5">
           <CutTable data={data} live={!!race} />
         </div>
         {side && (
@@ -76,7 +76,16 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
                         {name}
                       </span>
                     ))}
-                    {faint && <span>흐린 선 순위표 컷</span>}
+                    {faint && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="flex opacity-40" aria-hidden="true">
+                          {TIERS.map(({ key, color }) => (
+                            <span key={key} className="h-[2px] w-2" style={{ background: color }} />
+                          ))}
+                        </span>
+                        순위표 컷
+                      </span>
+                    )}
                   </p>
                   {/* CutChart는 폭을 잰 뒤 높이를 300 또는 360으로 정해서 그 높이를 미리 잡아 둠 */}
                   <div className="mt-3 min-h-[300px] sm:min-h-[360px]">
