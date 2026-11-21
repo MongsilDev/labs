@@ -295,6 +295,7 @@ export default function TierBoard(p: Props) {
             ) : (
               <>
                 {view.patches && <span>{`${view.patches[0]}~${view.patches.at(-1)} 패치`}</span>}
+                {view.partial && <span>{dayRange(view.from, view.to)}</span>}
                 <span>{timeKo(p.updatedAt)} 갱신</span>
               </>
             )}
