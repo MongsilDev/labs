@@ -119,8 +119,9 @@ export default function CutTable({ data, live }: { data: CutData; live: boolean 
             );
           })}
         </tr>
+        {/* 이터런 인원은 한 번 도달한 뒤 내려간 계정까지 세므로 「이상」이라 부르지 않음 */}
         {seats && (
-          <Row label={`${int(GATE)} 이상`}>
+          <Row label={`${int(GATE)} ${live ? "달성" : "이상"}`}>
             {tiers.map(({ key, t }) => {
               const head = floorHead(data.rps, t.place);
               return (
