@@ -62,15 +62,15 @@ export default function RouteTable({ list: full, dn: fullDn, top, info, items, p
     <>
       <div className="tdx-rh">
         <h2>
-          루트{!top && <small>상위 1,000명의 {int(fullDn)}판</small>}
+          루트{!top && <small>상위 1,000명의 {int(fullDn)}회</small>}
         </h2>
         {top && (
           <div className="tdx-seg" role="group" aria-label="루트를 센 범위">
             <button type="button" aria-pressed={!onlyTop} onClick={() => setOnlyTop(false)}>
-              상위 1,000명<small>{int(fullDn)}판</small>
+              상위 1,000명<small>{int(fullDn)}회</small>
             </button>
             <button type="button" aria-pressed={onlyTop} onClick={() => setOnlyTop(true)}>
-              300위 안<small>{int(top.dn)}판</small>
+              300위 안<small>{int(top.dn)}회</small>
             </button>
           </div>
         )}
@@ -85,7 +85,7 @@ export default function RouteTable({ list: full, dn: fullDn, top, info, items, p
               플레이어
             </th>
             <th scope="col" className="n">
-              판 수
+              플레이 수
             </th>
             <th scope="col" className="r">
               비율

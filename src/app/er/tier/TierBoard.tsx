@@ -25,7 +25,7 @@ const COLS: { key: SortKey; label: string; cls?: string; first: Dir; val: (c: Ti
     val: (c) => c.pick,
     show: (c) => (
       <>
-        <small>{int(c.n)}판</small>
+        <small>{int(c.n)}회</small>
         <b>{c.pick.toFixed(2)}%</b>
       </>
     ),
@@ -366,11 +366,11 @@ export default function TierBoard(p: Props) {
         <details className="tier-how">
           <summary>계산 방법</summary>
           <div className="tier-how-body">
-            <p className="tier-how-lead">점수는 평균보다 한 판에 RP를 얼마나 더 얻는지를 나타냅니다.</p>
+            <p className="tier-how-lead">점수는 한 번 플레이할 때 평균보다 RP를 얼마나 더 얻는지를 나타냅니다.</p>
             <ol>
               <li>시작 RP 구간마다 평균 성적이 달라서, 그 차이를 빼고 계산합니다.</li>
-              {p.cap != null && <li>점수에는 한 플레이어의 판을 그 실험체와 무기 조합 판 수의 <span className="whitespace-nowrap">{Math.round(p.cap * 100)}%까지만</span> 반영합니다.</li>}
-              <li>판 수가 적은 무기는 점수를 같은 실험체의 모든 무기를 합친 점수에 가깝게 맞춥니다.</li>
+              {p.cap != null && <li>점수에는 한 플레이어의 플레이 수를 그 실험체와 무기 조합 플레이 수의 <span className="whitespace-nowrap">{Math.round(p.cap * 100)}%까지만</span> 반영합니다.</li>}
+              <li>플레이 수가 적은 무기의 점수는 같은 실험체의 모든 무기를 합친 점수에 가깝게 맞춥니다.</li>
               {w && (
                 <li>
                   RP 획득 {w.gain * 100}%, 평균 순위 {w.place * 100}%, TOP 3 비율 {w.top3 * 100}%를 합쳐 RP 단위로 바꿉니다.
@@ -378,12 +378,12 @@ export default function TierBoard(p: Props) {
               )}
             </ol>
             <p>픽률은 경기에 참가한 팀 가운데 그 실험체와 무기 조합을 고른 팀의 비율입니다.</p>
-            <p>{p.few ? `${p.thin}판 미만이거나 유효 플레이어가 ${p.few}명 미만인 실험체는 흐리게 표시합니다.` : `${p.thin}판 미만인 실험체는 흐리게 표시합니다.`}</p>
+            <p>{p.few ? `${p.thin}회 미만 플레이했거나 유효 플레이어가 ${p.few}명 미만인 실험체는 흐리게 표시합니다.` : `${p.thin}회 미만 플레이한 실험체는 흐리게 표시합니다.`}</p>
             {p.few && (
               <p>
-                유효 플레이어는 판을 몇 명이 고르게 나눠 했는지 나타냅니다.
+                유효 플레이어는 플레이 수를 몇 명이 고르게 나눠 가졌는지 나타냅니다.
                 <br />
-                {p.few}명이 같은 판 수씩 했으면 {p.few}명이고, 한 명이 거의 다 했으면 1명에 가깝습니다.
+                {p.few}명이 같은 횟수씩 플레이했으면 유효 플레이어는 {p.few}명이고, 한 명이 거의 다 플레이했으면 1명에 가깝습니다.
               </p>
             )}
             {prev && <p>패치 비교에는 점수 차이가 90% 오차 범위를 넘어 우연으로 설명하기 어려운 실험체만 넣습니다.</p>}

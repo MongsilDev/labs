@@ -32,7 +32,7 @@ function Split({ title, icon, list, dn }: { title: string; icon: (code?: number)
               플레이어
             </th>
             <th scope="col" className="n">
-              판 수
+              플레이 수
             </th>
             <th scope="col" className="r">
               비율
@@ -72,7 +72,7 @@ function Metric({ name, m, base }: { name: string; m?: TierMetric; base?: TierMe
   return (
     <section className="tdx-sec" aria-label="경기 지표">
       <h2>
-        경기 지표<small>판당 평균</small>
+        경기 지표<small>1회 평균</small>
       </h2>
       <table className="tdx-tb tdx-mt">
         <thead>
@@ -138,7 +138,7 @@ export default function TierDetail({ who, c, view, views, fallback, routes, item
               </dd>
             </div>
             <div>
-              <dt>판 수</dt>
+              <dt>플레이 수</dt>
               <dd>
                 {int(c.n)}
                 <small>플레이어 {int(c.players)}명</small>
@@ -180,7 +180,7 @@ export default function TierDetail({ who, c, view, views, fallback, routes, item
         </p>
       ) : !dn ? (
         <p className="tdx-empty" role="status">
-          상위 1,000명이 직접 플레이한 판이 없어 루트와 특성 기록이 없습니다.
+          상위 1,000명이 직접 플레이한 기록이 없어 루트와 특성 기록이 없습니다.
           <br />
           다른 기간을 골라 주세요.
         </p>
