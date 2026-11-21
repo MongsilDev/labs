@@ -78,7 +78,12 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
                     ))}
                     {faint && (
                       <span className="flex items-center gap-1.5">
-                        <span className="h-[2px] w-4 bg-ink-3 opacity-50" aria-hidden="true" />
+                        {/* 그래프의 순위표 컷 선과 같은 색과 농도. 두 조각을 띄워 등급마다 하나씩임을 보임 */}
+                        <span className="flex gap-1 opacity-40" aria-hidden="true">
+                          {TIERS.map(({ key, color }) => (
+                            <span key={key} className="h-[2px] w-3" style={{ background: color }} />
+                          ))}
+                        </span>
                         순위표 컷
                       </span>
                     )}
