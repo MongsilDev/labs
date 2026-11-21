@@ -76,6 +76,7 @@ type Props = {
   cap?: number;
   publishRows: number;
   early?: { label: string; patch: string; rows: number };
+  notice?: ReactNode;
   weights?: { gain: number; place: number; top3: number };
 };
 
@@ -207,6 +208,8 @@ function RankTable({ list, sort, dir, onSort, thin, href, onOpen }: { list: Tier
 }
 
 export default function TierBoard(p: Props) {
+  // 시즌이 끝난 뒤에는 수집기가 updatedAt만 새로 써서 갱신 시각과 「N일째」가 진행 중처럼 읽힘
+  const ended = p.updatedAt >= p.seasonEnd;
   const [id, setId] = useState(p.initial);
   const [role, setRole] = useState<string | null>(p.initialRole);
   const [[sort, dir], setOrder] = useState<[SortKey, Dir]>(() => parseSort(p.initialSort, p.initialDir));
@@ -295,8 +298,8 @@ export default function TierBoard(p: Props) {
             ) : (
               <>
                 {view.patches && <span>{`${view.patches[0]}~${view.patches.at(-1)} 패치`}</span>}
-                {view.partial && kstDay(view.from) !== kstDay(view.to) && <span>{dayRange(view.from, view.to)}</span>}
-                <span>{timeKo(p.updatedAt)} 갱신</span>
+                {kstDay(view.from) !== kstDay(view.to) && <span>{dayRange(view.from, view.to)}</span>}
+                {!ended && <span>{timeKo(p.updatedAt)} 갱신</span>}
               </>
             )}
           </p>
@@ -304,6 +307,11 @@ export default function TierBoard(p: Props) {
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
+        {p.notice && (
+          <p className="text-[14px] text-fg-2" role="status">
+            {p.notice}
+          </p>
+        )}
         {p.early && view.patch === p.early.patch && !view.patches && !view.season && (
           <p className="text-[14px] text-fg-2" role="status">
             {p.early.label}는 기록이 적어 등급이 크게 바뀔 수 있습니다.
@@ -315,14 +323,14 @@ export default function TierBoard(p: Props) {
           <div className="tabs tier-period" role="tablist" aria-label="기간">
             {p.views.map((v) => (
               <button key={v.id} type="button" role="tab" aria-selected={v.id === view.id} onClick={() => pick(v.id)}>
-                {v.id === `patch-${p.patch}` && !v.season ? `${v.label} ${kstDay(Math.min(p.updatedAt, p.seasonEnd)) - kstDay(v.from) + 1}일째` : v.label}
+                {v.id === `patch-${p.patch}` && !v.season && !ended ? `${v.label} ${kstDay(Math.min(p.updatedAt, p.seasonEnd)) - kstDay(v.from) + 1}일째` : v.label}
               </button>
             ))}
           </div>
           <select className="field sm tier-sel" aria-label="기간" value={view.id} onChange={(e) => pick(e.target.value)}>
             {p.views.map((v) => (
               <option key={v.id} value={v.id}>
-                {v.id === `patch-${p.patch}` && !v.season ? `${v.label} ${kstDay(Math.min(p.updatedAt, p.seasonEnd)) - kstDay(v.from) + 1}일째` : v.label}
+                {v.id === `patch-${p.patch}` && !v.season && !ended ? `${v.label} ${kstDay(Math.min(p.updatedAt, p.seasonEnd)) - kstDay(v.from) + 1}일째` : v.label}
               </option>
             ))}
           </select>
