@@ -162,38 +162,16 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
 
       <details className="sec mt-10 text-[13px] leading-relaxed text-ink-2">
         <summary className="w-fit cursor-pointer text-[14px] font-semibold text-ink-3">계산 방법</summary>
-        <ul className="mt-3 grid max-w-[760px] gap-3">
+        <ul className="mt-3 grid max-w-[70ch] gap-3 text-pretty">
             <li>
-              휴면 반영 컷은 {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정의 RP에서 시즌 종료까지 깎일 RP를 빼고 다시 정렬한 순위표에서 이터니티 {int(data.tiers.eternity.place)}위와 데미갓 {int(data.tiers.demigod.place)}위의 RP입니다.
-              <br />
-              RP가 깎이는 규칙은 오래 쉬었다 돌아온 계정 341명의 RP 변화에 맞춰 정했습니다.
-              <br />
-              이 규칙은 341명 가운데 287명의 실제 변화와 일치합니다.
+              휴면 반영 컷은 {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정이 시즌 종료까지 잃을 RP를 빼고 다시 매긴 순위에서, 이터니티&nbsp;{int(data.tiers.eternity.place)}위와 데미갓&nbsp;{int(data.tiers.demigod.place)}위의 RP입니다.
             </li>
             <li>
-              종료 예상은 매일 오전 9시 컷이 오르는 추세에, 지난 두 시즌 마지막 14일 동안 컷이 급등한 폭을 더한 값입니다.
+              종료 예상은 지금 추세대로 오를 컷에, 지난 두 시즌 마지막 14일 동안 컷이 추세보다 더 오른 폭 가운데 아직 남은 날의 몫을 더한 값입니다.
               <br />
-              이번 시즌 기록으로 검증한 결과, 7일 뒤 예상에는 평균 6점의 오차가 있었고 24일 뒤 예상에는 45~70점의 오차가 있었습니다.
-              <br />
-              범위는 그 오차의 80% 구간입니다.
+              예상 범위는 이번 시즌 기록으로 검증했을 때 실제 컷이 10번 가운데 8번 들어온 구간입니다.
             </li>
-            <li>
-              {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정은 유예 기간이 지난 뒤 매일 15시에 RP가 {data.rule.step}점씩 깎입니다.
-              <br />
-              게임 기록은 매일 05시에 확인하므로, 05시 뒤에 한 게임은 그날 15시 차감을 막지 못합니다.
-              <br />
-              {data.updatedAt < data.rule.graceFrom
-                ? `유예는 최대 ${data.rule.grace.default}일이고, 10월 29일 12.7 패치부터 이터니티 최대 ${data.rule.grace.eternity}일, 데미갓 최대 ${data.rule.grace.demigod}일로 줄어듭니다.`
-                : `유예는 이터니티 최대 ${data.rule.grace.eternity}일, 데미갓 최대 ${data.rule.grace.demigod}일, 그 밖의 티어 최대 ${data.rule.grace.default}일입니다.`}
-            </li>
-            <li>순위표는 1,000위까지만 있으므로, 데미갓 컷은 휴면 계정이 내려간 자리를 채울 1,000위 밖 계정을 추정해 구합니다.</li>
-            <li>
-              {data.source === "global"
-                ? "컷은 통합 순위표에서 아시아1 계정만 골라 매긴 순위로 계산합니다."
-                : "컷은 몽실봇이 매시 기록하는 아시아1 상위 1,000명 순위표로 계산합니다."}
-              <br />
-              디스코드 <a className="underline" href="https://bot.mongsil.dev">몽실봇</a>의 /이터컷 명령도 같은 값을 보여 줍니다.
-            </li>
+            <li>순위표는 1,000위까지만 있어서, 휴면 계정이 빠진 데미갓 자리는 1,000위 밖 계정을 추정해 채웁니다.</li>
         </ul>
       </details>
     </>
