@@ -4,6 +4,7 @@ import { useState } from "react";
 import { type CutData, DAY, int, md, TIERS } from "@/er/lib/cut";
 import { ticks } from "@/er/lib/ticks";
 import { useWidth } from "@/er/lib/useWidth";
+import { useMyRp } from "./CutTable";
 
 type Point = { t: number; kind: "past" | "now" | "future"; v: Record<string, { a?: number | null; b?: number | null; mid?: number; lo?: number; hi?: number }> };
 
@@ -12,6 +13,7 @@ const PAST_DAYS = 21;
 export default function CutChart({ data }: { data: CutData }) {
   const [box, w] = useWidth<HTMLDivElement>(960);
   const [hover, setHover] = useState<number | null>(null);
+  const my = useMyRp();
 
   const now = data.updatedAt * 1000;
   const narrow = w < 560;
@@ -37,8 +39,14 @@ export default function CutChart({ data }: { data: CutData }) {
   const ahead = t1 > now;
 
   const values = points.flatMap((p) => Object.values(p.v).flatMap((v) => [v.a, v.b, v.lo, v.hi].filter((x): x is number => x != null)));
-  const span = Math.max(...values) - Math.min(...values);
-  const ys = ticks(Math.min(...values) - span * 0.05, Math.max(...values) + span * 0.05, narrow ? 4 : 5);
+  // 값이 모두 같거나 거의 같아도 눈금이 여럿 나오게 범위를 100 RP 이상으로 잡음
+  const mid = (Math.max(...values) + Math.min(...values)) / 2;
+  const span = Math.max(Math.max(...values) - Math.min(...values), 100);
+  let [lo, hi] = [mid - span / 2, mid + span / 2];
+  // 내 RP가 범위에서 멀면 선이 납작해져서, 범위의 절반 안쪽일 때만 축에 넣음
+  const mine = my != null && my >= lo - span / 2 && my <= hi + span / 2 ? my : null;
+  if (mine != null) [lo, hi] = [Math.min(lo, mine), Math.max(hi, mine)];
+  const ys = ticks(lo - span * 0.05, hi + span * 0.05, narrow ? 4 : 5);
   const [vlo, vhi] = [ys[0], ys[ys.length - 1]];
   const x = (t: number) => pad.l + ((t - t0) / Math.max(t1 - t0, 1)) * (w - pad.l - pad.r);
   const y = (v: number) => pad.t + (1 - (v - vlo) / (vhi - vlo)) * (h - pad.t - pad.b);
@@ -84,7 +92,7 @@ export default function CutChart({ data }: { data: CutData }) {
             </text>
           </g>
         ))}
-        {[now, t1].map((t) => (
+        {(ahead ? [now, t1] : [now]).map((t) => (
           <line key={t} x1={x(t)} x2={x(t)} y1={pad.t} y2={h - pad.b} stroke="var(--line-strong)" strokeDasharray="3 4" />
         ))}
         {weekly
@@ -127,6 +135,14 @@ export default function CutChart({ data }: { data: CutData }) {
             </g>
           );
         })}
+        {mine != null && (
+          <g>
+            <line x1={pad.l} x2={w - pad.r} y1={y(mine)} y2={y(mine)} stroke="var(--text)" strokeDasharray="2 4" />
+            <text x={pad.l + 4} y={y(mine) - 6} fontSize="12" fontWeight="700" fill="var(--text)">
+              내 RP
+            </text>
+          </g>
+        )}
         {hp && <line x1={x(hp.t)} x2={x(hp.t)} y1={pad.t} y2={h - pad.b} stroke="var(--text-3)" />}
       </svg>
       {hp && (

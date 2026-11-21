@@ -45,9 +45,10 @@ export function RaceTime() {
   return race ? hm(race.updatedAt) : null;
 }
 
-export function RaceCount() {
+/** max는 그 등급의 정원. 달성 인원이 정원을 넘어도 정원까지만 적음 */
+export function RaceCount({ max = Infinity }: { max?: number }) {
   const race = useRace();
-  return race ? int(race.count) : null;
+  return race ? int(Math.min(race.count, max)) : null;
 }
 
 /** 컷 그래프를 그릴 기록이 없는 시즌 초에 그 자리에 두는 8,300 도달 상위 목록. 옆 기둥 표와 같은 줄 높이 */

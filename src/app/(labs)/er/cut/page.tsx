@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import CutChart from "@/er/components/cut/CutChart";
+import CutTable, { MyRp } from "@/er/components/cut/CutTable";
 import DecayCalendar from "@/er/components/cut/DecayCalendar";
-import { RaceCount, RaceLive, RaceTable, RaceTime } from "@/er/components/cut/RaceLive";
-import RpCheck from "@/er/components/cut/RpCheck";
-import { type CutTier, DAY, daysLeft, floorHead, GATE, int, md, TIERS, tens } from "@/er/lib/cut";
+import { RaceLive, RaceTable, RaceTime } from "@/er/components/cut/RaceLive";
+import { daysLeft, GATE, int, TIERS } from "@/er/lib/cut";
 import { timeKo } from "@/er/lib/format";
 import { accountUser, currentUser } from "@/er/server/auth";
 import { getCut } from "@/er/server/cut";
@@ -15,21 +15,6 @@ export const metadata: Metadata = {
   title: "이터컷 예측",
   description: "아시아1 이터니티와 데미갓 컷을 휴면 강등까지 반영해 계산하고 시즌 종료 컷을 예상합니다.",
 };
-
-const LATE_DAYS = 14;
-
-/** 24시간 전에 가장 가까운 오전 9시 기록의 시각과, 지금 휴면 반영 컷과의 차이. 그 기록이 12시간보다 가까우면 null */
-function dayDelta(t: CutTier, at: number): [number, number] | null {
-  if (t.cut == null) return null;
-  const past = t.history.filter(([s, , a]) => a != null && at - s >= DAY / 2000);
-  if (!past.length) return null;
-  const [s, , a] = past.reduce((p, q) => (Math.abs(at - DAY / 1000 - q[0]) < Math.abs(at - DAY / 1000 - p[0]) ? q : p));
-  return [s, t.cut - (a as number)];
-}
-
-function Delta({ at, v }: { at: number; v: number }) {
-  return <span>{md(at * 1000)} 9시보다 {v > 0 ? `▲${int(v)}` : v < 0 ? `▼${int(-v)}` : "변동 없음"}</span>;
-}
 
 /** ?rp= 값. 진단 칸 입력 규칙과 같은 0~20000 정수만 */
 function rpParam(v: string | string[] | undefined): number | undefined {
@@ -53,18 +38,18 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
     );
   const race = await getRace(data.season.id);
   const left = data.season.end ? daysLeft(data.season.end * 1000, data.updatedAt * 1000) : null;
-  // 이터런이 열린 시즌 초, 종료 2주 전부터의 막바지, 그 사이 중반에 보여 줄 칸과 순서가 다름
-  const late = !race && left != null && left <= LATE_DAYS;
-  const decay = TIERS.some(({ key }) => data.tiers[key].decay.some(([, n]) => n > 0));
-  const chart = TIERS.some(({ key }) => data.tiers[key].history.length >= 2 || data.tiers[key].forecast?.length);
-  const decaySec = decay && (
-    <section className="sec" aria-labelledby="decay-h">
-      <h2 className="sec-h mb-3" id="decay-h">휴면 강등 일정</h2>
-      <DecayCalendar data={data} />
-    </section>
-  );
+  const tiers = TIERS.map(({ key }) => data.tiers[key]);
+  const above = tiers.some((t) => t.cut != null && t.cut > GATE);
+  const forecast = tiers.some((t) => t.forecast?.length);
+  const decay = tiers.some((t) => t.decay.some(([, n]) => n > 0));
+  // 컷이 줄곧 같은 값이면 그래프에 그릴 것이 없음
+  const flat = new Set(tiers.flatMap((t) => [t.cut, t.board, ...t.history.flatMap(([, b, a]) => [b, a])]).filter((v) => v != null)).size <= 1;
+  const chart = forecast || (!flat && tiers.some((t) => t.history.length >= 1));
+  // 흐린 선은 휴면 반영 전 순위표 컷. 굵은 선과 겹치지 않는 구간이 있을 때만 범례에 적음
+  const faint = tiers.some((t) => t.history.some(([, b, a]) => a == null || a !== b) || (t.board != null && t.board !== t.cut));
+  const side = race ? race.list.length > 0 : chart || decay;
   const body = (
-    <>
+    <MyRp initial={rpParam(query.rp)}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px]">이터컷 예측</h1>
         <p className="text-[13px] text-ink-3 num">
@@ -72,109 +57,70 @@ export default async function CutPage({ searchParams }: { searchParams: Promise<
         </p>
       </div>
 
-      <dl className="mt-4 grid border-t-2 border-ink lg:grid-cols-2">
-        {TIERS.map(({ key, name, color }, i) => {
-          const t = data.tiers[key];
-          const end = t.forecast?.[t.forecast.length - 1];
-          const head = t.cut == null || t.cut <= GATE ? floorHead(data.rps, t.place) : null;
-          const day = dayDelta(t, data.updatedAt);
-          return (
-            <div key={key} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 py-4 ${i ? "border-t border-rule lg:border-t-0 lg:border-l lg:pl-6" : "lg:pr-6"}`}>
-              <div>
-                <dt className="flex items-center gap-1.5 text-[12px] font-semibold text-ink-3">
-                  <span className="h-3 w-1" style={{ background: color }} aria-hidden="true" />
-                  {name} {head ? `${int(head.rank)}위 RP` : `${int(t.place)}위 컷`}
-                </dt>
-                <dd className="m-0 mt-1 text-[30px] leading-none font-bold tracking-[-1px] whitespace-nowrap num sm:text-[40px]">
-                  {head ? int(head.rp) : t.cut != null ? int(t.cut) : "-"}
-                </dd>
-                <dd className="m-0 mt-2 flex flex-wrap gap-x-3 text-[12px] whitespace-nowrap text-ink-3 num">
-                  {head ? (
-                    <>
-                      {head.rank < t.place && <span>{int(t.place)}위는 순위표 밖</span>}
-                      <span>RP 하한 {int(GATE)}</span>
-                    </>
-                  ) : (
-                    day && <Delta at={day[0]} v={day[1]} />
-                  )}
-                  {!head && t.board != null && t.cut != null && int(t.board) !== int(t.cut) && <span>순위표 {int(t.board)}</span>}
-                  {!head && t.estimated && <span>추정치</span>}
-                </dd>
-              </div>
-              {race ? (
-                <div className="text-right">
-                  <dt className="text-[12px] font-semibold text-ink-3">{int(GATE)} 달성</dt>
-                  <dd className="m-0 mt-1.5 text-[20px] leading-none font-bold num sm:text-[24px]">
-                    <RaceCount />
-                    <span className="text-[13px] font-semibold text-ink-3">/{int(t.place)}명</span>
-                  </dd>
-                </div>
-              ) : (
-                end && (
-                  <div className="text-right">
-                    <dt className="text-[12px] font-semibold text-ink-3">종료 예상</dt>
-                    <dd className="m-0 mt-1.5 text-[20px] leading-none font-bold num sm:text-[24px]">{tens(end[1])}</dd>
-                    <dd className="m-0 mt-2 text-[12px] text-ink-3 num">{tens(end[2])}~{tens(end[3])}</dd>
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-x-12 gap-y-8 lg:grid-cols-12">
+        <div className={`min-w-0 ${side ? "lg:col-span-5" : "max-w-[560px] lg:col-span-12"}`}>
+          <CutTable data={data} live={!!race} />
+        </div>
+        {side && (
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-8 lg:col-span-7">
+            {race ? (
+              <RaceTable />
+            ) : (
+              chart && (
+                <section className="sec min-w-0" aria-labelledby="chart-h">
+                  <h2 className="sec-h" id="chart-h">컷 추이</h2>
+                  <p className="mt-1 flex flex-wrap gap-x-4 text-[12px] text-ink-3">
+                    {TIERS.map(({ key, name, color }) => (
+                      <span key={key} className="flex items-center gap-1.5 text-ink-2">
+                        <span className="h-[2px] w-4" style={{ background: color }} aria-hidden="true" />
+                        {name}
+                      </span>
+                    ))}
+                    {faint && <span>흐린 선 순위표 컷</span>}
+                  </p>
+                  {/* CutChart는 폭을 잰 뒤 높이를 300 또는 360으로 정해서 그 높이를 미리 잡아 둠 */}
+                  <div className="mt-3 min-h-[300px] sm:min-h-[360px]">
+                    <CutChart data={data} />
                   </div>
-                )
-              )}
-            </div>
-          );
-        })}
-      </dl>
-
-      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-x-10 gap-y-10 lg:grid-cols-12">
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-10 lg:col-span-8">
-          {race ? (
-            <RaceTable />
-          ) : (
-            chart && (
-              <section className="sec min-w-0" aria-labelledby="chart-h">
-                <h2 className="sec-h" id="chart-h">컷 추이</h2>
-                <p className="mt-1 flex flex-wrap gap-x-4 text-[12px] text-ink-3">
-                  {TIERS.map(({ key, name, color }) => (
-                    <span key={key} className="flex items-center gap-1.5 text-ink-2">
-                      <span className="h-[2px] w-4" style={{ background: color }} aria-hidden="true" />
-                      {name}
-                    </span>
-                  ))}
-                  <span>굵은 선 휴면 반영 컷</span>
-                  <span>흐린 선 순위표 컷</span>
-                  {TIERS.some(({ key }) => data.tiers[key].forecast?.length) && <span>점선과 음영 종료 예상</span>}
-                </p>
-                {/* CutChart는 폭을 잰 뒤 높이를 300 또는 360으로 정해서 그 높이를 미리 잡아 둠 */}
-                <div className="mt-3 min-h-[300px] sm:min-h-[360px]">
-                  <CutChart data={data} />
-                </div>
+                </section>
+              )
+            )}
+            {decay && (
+              <section className="sec" aria-labelledby="decay-h">
+                <h2 className="sec-h mb-2" id="decay-h">휴면 강등 일정</h2>
+                <DecayCalendar data={data} />
               </section>
-            )
-          )}
-          {!late && decaySec}
-        </div>
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-10 lg:col-span-4">
-          {late && decaySec}
-          <section className="sec" aria-labelledby="check-h">
-            <h2 className="sec-h mb-3" id="check-h">내 RP 진단</h2>
-            <div className="rpcheck"><RpCheck data={data} initial={rpParam(query.rp)} floor={!!race} /></div>
-          </section>
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       <details className="sec mt-10 text-[13px] leading-relaxed text-ink-2">
         <summary className="w-fit cursor-pointer text-[14px] font-semibold text-ink-3">계산 방법</summary>
         <ul className="mt-3 grid max-w-[70ch] gap-3 text-pretty">
+          {tiers.some((t) => t.cut == null || t.cut <= GATE) && (
             <li>
-              휴면 반영 컷은 {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정이 시즌 종료까지 잃을 RP를 빼고 다시 매긴 순위에서, 이터니티&nbsp;{int(data.tiers.eternity.place)}위와 데미갓&nbsp;{int(data.tiers.demigod.place)}위의 RP입니다.
+              {int(GATE)} RP 이상인 계정이 {int(data.tiers.eternity.place)}명이 되기 전에는 이터니티 컷이, {int(data.tiers.demigod.place)}명이 되기 전에는 데미갓 컷이 {int(GATE)}입니다.
             </li>
+          )}
+          {above && (
             <li>
-              종료 예상은 지금 추세대로 오를 컷에, 지난 두 시즌 마지막 14일 동안 컷이 추세보다 더 오른 폭 가운데 아직 남은 날의 몫을 더한 값입니다.
+              지금 컷은 {data.rule.dormantDays}일 넘게 랭크 게임을 하지 않은 계정이 시즌 종료까지 잃을 RP를 빼고 다시 매긴 순위에서, 이터니티&nbsp;{int(data.tiers.eternity.place)}위와 데미갓&nbsp;{int(data.tiers.demigod.place)}위의 RP입니다.
+            </li>
+          )}
+          {forecast && (
+            <li>
+              종료 예상은 지금 추세대로 오를 컷에, 지난 두 시즌 마지막 14일 동안 컷이 추세보다 더 오른 폭을 더한 값입니다.
               <br />
-              예상 범위는 이번 시즌 기록으로 검증했을 때 실제 컷이 10번 가운데 8번 들어온 구간입니다.
+              그 아래 범위는 이번 시즌 기록으로 검증했을 때 실제 컷이 10번 가운데 8번 들어온 구간입니다.
             </li>
+          )}
+          {data.tiers.demigod.estimated && data.tiers.demigod.cut != null && data.tiers.demigod.cut > GATE && (
             <li>순위표는 1,000위까지만 있어서, 휴면 계정이 빠진 데미갓 자리는 1,000위 밖 계정을 추정해 채웁니다.</li>
+          )}
         </ul>
       </details>
-    </>
+    </MyRp>
   );
   return <Live user={user}>{race ? <RaceLive initial={race}>{body}</RaceLive> : body}</Live>;
 }

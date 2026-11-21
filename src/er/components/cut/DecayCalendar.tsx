@@ -21,21 +21,14 @@ export default function DecayCalendar({ data }: { data: CutData }) {
 
   return (
     <div>
-      <dl className="mb-5 flex flex-wrap gap-x-8 gap-y-3">
-        {TIERS.map(({ key, name, color }) => {
-          const tier = data.tiers[key];
-          const total = tier.decay.reduce((s, [, n]) => s + n, 0);
-          return (
-            <div key={key} className="grid gap-0.5">
-              <dt className="flex items-center gap-1.5 text-[13px] text-fg-3">
-                <span className="size-2 rounded-full" style={{ background: color }} aria-hidden="true" />
-                {name}에서 휴면 강등으로 내려갈 계정
-              </dt>
-              <dd className="text-[22px] leading-tight font-bold tabular-nums">{total}명</dd>
-            </div>
-          );
-        })}
-      </dl>
+      <ul className="mb-4 flex flex-wrap gap-x-4 text-[12px] text-ink-2">
+        {TIERS.map(({ key, name, color }) => (
+          <li key={key} className="flex items-center gap-1.5 tabular-nums">
+            <span className="size-2" style={{ background: color }} aria-hidden="true" />
+            {name} {data.tiers[key].decay.reduce((s, [, n]) => s + n, 0)}명
+          </li>
+        ))}
+      </ul>
       {any && (
       <div className="scroll-fade overflow-x-auto pb-1" tabIndex={0}>
         <ol className="flex w-full min-w-max items-end gap-0.5 sm:gap-1" aria-label="날짜별 휴면 강등으로 컷 아래로 내려가는 인원">
