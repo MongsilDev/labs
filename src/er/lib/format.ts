@@ -38,6 +38,18 @@ export function ago(at: number, now = Date.now()): string {
   return new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(at);
 }
 
+/** 같은 날이면 「11월 21일」, 같은 달이면 「11월 1일~21일」, 아니면 「10월 30일~11월 2일」 */
+export function dayRange(from: number, to: number): string {
+  const parts = (at: number) => {
+    const p = new Intl.DateTimeFormat("ko-KR", { month: "numeric", day: "numeric", timeZone: "Asia/Seoul" }).formatToParts(at);
+    return { m: p.find((x) => x.type === "month")!.value, d: p.find((x) => x.type === "day")!.value };
+  };
+  const a = parts(from);
+  const b = parts(to);
+  if (a.m === b.m && a.d === b.d) return `${a.m}월 ${a.d}일`;
+  return a.m === b.m ? `${a.m}월 ${a.d}일~${b.d}일` : `${a.m}월 ${a.d}일~${b.m}월 ${b.d}일`;
+}
+
 export const dateKo = (at: number) => new Intl.DateTimeFormat("ko-KR", { dateStyle: "long", timeZone: "Asia/Seoul" }).format(at);
 export const timeKo = (at: number) =>
   new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Seoul" }).format(at);

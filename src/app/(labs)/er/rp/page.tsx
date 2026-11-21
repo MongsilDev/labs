@@ -1,3 +1,4 @@
+import { dayRange } from "@/er/lib/format";
 import { accountUser, currentUser } from "@/er/server/auth";
 import Live from "@/next/Live";
 import Filters from "@/next/Filters";
@@ -23,13 +24,13 @@ export default async function RpPage({ searchParams }: { searchParams: Promise<{
   const rp = Number(q.rp);
   const band = data.bands.find((b) => rp >= b.lo && rp < b.hi) ?? data.bands.find((b) => b.lo === 8400) ?? data.bands[0];
   const even = breakEven(band);
-  const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
   return (
     <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">RP 손익</h1>
-        <p className="text-[13px] text-ink-3 num">
-          아시아1 상위 1,000명 {n(data.games)}경기, {day.format(data.from)}~{day.format(data.to)}
+        <p className="flex flex-wrap gap-x-3 text-[13px] text-ink-3 num">
+          <span>아시아1 상위 1,000명이 참가한 경기 {n(data.games)}개</span>
+          <span>{dayRange(data.from, data.to)}</span>
         </p>
       </div>
       <Filters groups={[{ name: "게임 전 RP", items: data.bands.map((b) => ({ href: `/er/rp?rp=${b.lo}`, label: bandName(b.lo, b.hi), on: b === band })) }]} />

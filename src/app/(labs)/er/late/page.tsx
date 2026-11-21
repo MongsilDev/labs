@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { dayRange } from "@/er/lib/format";
 import { accountUser, currentUser } from "@/er/server/auth";
 import Live from "@/next/Live";
 import Filters from "@/next/Filters";
@@ -26,14 +27,14 @@ export default async function LatePage({ searchParams }: { searchParams: Promise
   if (!data) return <Live user={user}><h1 className="text-[26px] font-black">초반과 막판</h1><p className="mt-3 text-ink-3" role="status">지금은 초반과 막판 표를 가져올 수 없습니다.<br />잠시 뒤 다시 열어주세요.</p></Live>;
   const s = q.s === "early" ? "early" : "fin";
   const rows = [...data.rows].sort(SORTS[s].by);
-  const day = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" });
   const min = Math.round(data.cut / 60);
   return (
     <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">초반과 막판</h1>
-        <p className="text-[13px] text-ink-3 num">
-          아시아1 상위 1,000명 {n(data.games)}경기, {day.format(data.from)}~{day.format(data.to)}
+        <p className="flex flex-wrap gap-x-3 text-[13px] text-ink-3 num">
+          <span>아시아1 상위 1,000명이 참가한 경기 {n(data.games)}개</span>
+          <span>{dayRange(data.from, data.to)}</span>
         </p>
       </div>
       <Filters

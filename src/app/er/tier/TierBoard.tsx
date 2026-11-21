@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { int } from "@/er/lib/cut";
-import { timeKo } from "@/er/lib/format";
+import { dayRange, timeKo } from "@/er/lib/format";
 import { comboPath, compareView, movedCombos, signed, sortCombos, type TierCombo, type TierMoved, type TierView } from "@/er/lib/tier";
 import { Weapon, WeaponText } from "./parts";
 
@@ -126,7 +126,6 @@ function MovedList({ title, list }: { title: string; list: TierMoved[] }) {
   );
 }
 
-const dayKo = (at: number) => new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", timeZone: "Asia/Seoul" }).format(at);
 const kstDay = (at: number) => Math.floor((at + 9 * 3_600_000) / 86_400_000);
 
 // 줄 어디를 눌러도 이름 링크를 누른 것과 같음. 키보드는 이름 링크로 엶
@@ -284,28 +283,32 @@ export default function TierBoard(p: Props) {
         </span>
         <div className="min-w-0">
           <h1 className="text-[26px] leading-tight font-bold tracking-[-0.5px]">실험체 티어</h1>
-          <p className="text-[14px] text-fg-3 tabular-nums">
-            {p.server} 상위 1,000명이 참가한 경기, {view.season && `${view.season}, `}
-            {view.partial && `${dayKo(view.from)}부터 ${dayKo(view.to)}까지, `}
-            {view.patches && `${view.patches[0]}~${view.patches.at(-1)} 패치, `}
-            {int(view.games)}경기, <span className="whitespace-nowrap">{view.season ? `${dayKo(view.to)} 경기까지` : `${timeKo(p.updatedAt)} 갱신`}</span>
+          <p className="text-[14px] text-fg-2 tabular-nums">
+            {p.server} 상위 1,000명이 참가한 경기 {int(view.games)}개
+          </p>
+          <p className="flex flex-wrap gap-x-3 text-[13px] text-fg-3 tabular-nums">
+            {view.season ? (
+              <>
+                <span>{view.season}</span>
+                <span>{dayRange(view.from, view.to)}</span>
+              </>
+            ) : (
+              <>
+                {view.patches && <span>{`${view.patches[0]}~${view.patches.at(-1)} 패치`}</span>}
+                <span>{timeKo(p.updatedAt)} 갱신</span>
+              </>
+            )}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
-        {p.early && view.patch === p.early.patch && !view.patches && !view.season ? (
+        {p.early && view.patch === p.early.patch && !view.patches && !view.season && (
           <p className="text-[14px] text-fg-2" role="status">
-            {p.early.label} 기록이 {int(p.publishRows)}판보다 적어 등급이 크게 바뀔 수 있습니다. 지금 {int(p.early.rows)}판입니다.
+            {p.early.label}는 기록이 적어 등급이 크게 바뀔 수 있습니다.
+            <br />
+            실험체 기록 {int(p.publishRows)}개 중 {int(p.early.rows)}개를 모았습니다.
           </p>
-        ) : (
-          // 새 시즌 첫 패치는 판 수와 상관없이 기본이라 이 안내가 없음
-          p.early &&
-          p.fallback !== `patch-${p.early.patch}` && (
-            <p className="text-[14px] text-fg-2" role="status">
-              {p.early.label} 표는 {int(p.publishRows)}판부터 기본으로 보여 줍니다. 지금 {int(p.early.rows)}판입니다.
-            </p>
-          )
         )}
         <div className="tier-ctl">
           <div className="tabs tier-period" role="tablist" aria-label="기간">

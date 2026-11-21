@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { num } from "../../src/er/lib/format";
+import { dayRange, num } from "../../src/er/lib/format";
 
 describe("순위표 점수 표기", () => {
   it("정수는 소수점 없이, 아니면 소수 첫째 자리까지 쓴다", () => {
@@ -10,4 +10,12 @@ describe("순위표 점수 표기", () => {
   it("반올림해 정수가 되면 소수점을 붙이지 않는다", () => {
     expect([2.96, 9.95, 0.04].map(num)).toEqual(["3", "10", "0"]);
   });
+});
+
+describe("dayRange", () => {
+  const at = (s: string) => Date.parse(`${s}+09:00`);
+  it("같은 날이면 날짜 하나만 쓴다", () => expect(dayRange(at("2026-11-21T04:00:00"), at("2026-11-21T23:58:00"))).toBe("11월 21일"));
+  it("같은 달이면 끝 날짜에 달을 빼고 쓴다", () => expect(dayRange(at("2026-11-01T00:00:00"), at("2026-11-21T00:00:00"))).toBe("11월 1일~21일"));
+  it("달이 다르면 둘 다 쓴다", () => expect(dayRange(at("2026-10-30T00:00:00"), at("2026-11-02T00:00:00"))).toBe("10월 30일~11월 2일"));
+  it("한국 시각 자정을 넘긴 경기는 다음 날로 센다", () => expect(dayRange(at("2026-11-21T23:00:00"), at("2026-11-22T00:30:00"))).toBe("11월 21일~22일"));
 });

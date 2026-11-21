@@ -68,8 +68,9 @@ export default async function MetaPage({ searchParams }: { searchParams: Promise
     <Live user={user}>
       <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
         <h1 className="text-[26px] leading-tight font-black tracking-[-0.5px]">메타 지도</h1>
-        <p className="text-[13px] text-ink-3 num">
-          {data.band.server} 상위 1,000명이 참가한 경기 {view.games.toLocaleString("ko-KR")}개, {at} 갱신
+        <p className="flex flex-wrap gap-x-3 text-[13px] text-ink-3 num">
+          <span>{data.band.server} 상위 1,000명이 참가한 경기 {view.games.toLocaleString("ko-KR")}개</span>
+          <span>{at} 갱신</span>
         </p>
       </div>
       <Filters groups={[{ name: "기간", items: data.views.map((x) => ({ href: `/er/meta?v=${x.id}`, label: x.label, on: x.id === view.id })) }]} />
